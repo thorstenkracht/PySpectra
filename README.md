@@ -1,2 +1,2 @@
 # PySpectra
-A re-write of Spectra
+A Python version of Spectra
