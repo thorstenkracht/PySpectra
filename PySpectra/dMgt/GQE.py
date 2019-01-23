@@ -1,5 +1,6 @@
 #!/bin/env python
 
+# 1.8.2
 import numpy as np
 
 slotList = []
@@ -77,22 +78,23 @@ class Scan():
         #
         # checking whether all keywards are supplied
         #
-        if 'xMin' not in kwars:
+        if 'xMin' not in kwargs:
             raise ValueError( "Gqe.Scan: 'xMin' not supplied")
         self.xMin = kwargs[ 'xMin']
-        if 'xMax' not in kwars:
+        if 'xMax' not in kwargs:
             raise ValueError( "Gqe.Scan: 'xMax' not supplied")
         self.xMax = kwargs[ 'xMax']
-        if 'nPts' not in kwars:
-            raise ValueError( "Gqe.Scan: 'np' not supplied")
+        if 'nPts' not in kwargs:
+            raise ValueError( "Gqe.Scan: 'nPts' not supplied")
         self.nPts = kwargs[ 'nPts']
-        if 'dType' not in kwars:
+        if 'dType' not in kwargs:
             self.dType = np.float64
         else:
             self.dType = np.float64
 
-        self.x = np.linspace( self.xMin, self.xMax, self.nPts, dtype = self.dType)
-        self.y = np.linspace( self.nPts, dtype = self.dType)
+        delta = (self.xMax - self.xMin)/(self.nPts - 1.)
+        self.x = np.arange( self.xMin, self.xMax, delta, dtype = self.dType)
+        self.y = np.zeros( self.nPts, dtype = self.dType)
 
         return
     
