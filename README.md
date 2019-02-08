@@ -4,15 +4,16 @@ A program to display 1-dimensional data
 
 Interfaces:
 
-* GUI:
-    * pyspViewer.py
+* GUI: pyspViewer.py
     
 * ipython:
-    * create t1
-    * create t2
-    * display
-    * delete
-    * cls
+     ```
+    create t1
+    create t2
+    display
+    delete
+    cls
+     ```
 
 * Python API
     ```
