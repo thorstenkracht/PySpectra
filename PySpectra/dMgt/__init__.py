@@ -1,5 +1,4 @@
-#!/bin/env python
-
-import GQE
-
-
+#!/usr/bin/env python
+'''
+the dMgt package contains classes that create, delete, show, etc. scans
+'''
