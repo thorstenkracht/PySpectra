@@ -15,11 +15,12 @@ Interfaces:
     * cls
 
 * Python API
-
+    ```
     pysp.create( "t1")
     pysp.create( "t2")
     pysp.display()
     pysp.delete()
     pysp.cls()
+    ```
 
 
