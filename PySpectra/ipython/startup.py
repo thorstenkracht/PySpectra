@@ -125,7 +125,7 @@ def pysp_help( line):
     print " ---------------------------------"
     print " These are the available commands"
     print "   antiderivative, cls, create, delete, derivative"
-    print "   display, overlay, procEventsLoop, read, show, y2my"
+    print "   display, overlay, procEventsLoop, read, set, show, y2my"
     print ""
     print "  for more help use, e.g.: create?"
     print ""
@@ -136,6 +136,14 @@ def read(line):
     print the list of scans
     '''
     ifc.command( "read " + line)
+
+@register_line_magic
+def set(line):
+    '''
+    set title einTitel
+    set comment einKommentar
+    '''
+    ifc.command( "set " + line)
 
 @register_line_magic
 def show(line):

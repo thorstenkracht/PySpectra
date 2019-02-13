@@ -11,6 +11,8 @@ import HasyUtils as _HasyUtils
 
 _scanList = []
 _scanIndex = None  # used by next/back
+_title = None
+_comment = None
 
 class Text(): 
     '''
@@ -109,6 +111,7 @@ class Scan():
         self.yMax = _np.max( self.y)
 
         self.nPts = len( self.x)
+        self.lastIndex = 0
         self.currentIndex = self.nPts - 1
 
         return
@@ -163,6 +166,7 @@ class Scan():
         # the currentIndex points to the last valid point.
         # it starts at 0.
         #
+        self.lastIndex = 0
         self.currentIndex = self.nPts - 1
             
         return
@@ -175,6 +179,8 @@ class Scan():
         ----------
         name:    string
                  The name of the scan
+        autorangeX, autorangeY
+                 if you know the x-range beforehand, set autorangeY to False
         color:   'red', 'green', 'blue', 'yellow', 'cyan', 'black'
         colSpan: def.: 1
         doty:    def. False
@@ -195,6 +201,8 @@ class Scan():
         None
         '''
 
+        self.autorangeX = False
+        self.autorangeY = True
         self.color = 'red'
         self.colSpan = 1
         self.doty = False            # x-axis is date-of-the year
@@ -212,7 +220,7 @@ class Scan():
         self.mouseLabel = None
         self.mouseProxy = None
 
-        for attr in [ 'at', 'color', 'colSpan', 'doty', 'fileName',  
+        for attr in [ 'at', 'autorangeX', 'autorangeY', 'color', 'colSpan', 'doty', 'fileName',  
                       'overlay', 'style', 'symbol', 'xLabel', 'yLabel']:
             if attr in kwargs:
                 setattr( self, attr, kwargs[ attr])
@@ -309,6 +317,34 @@ def getScan( name):
             return scan
     raise ValueError( "GQE.getScan: %s does not exist" % name)
 
+def setTitle( text = None): 
+    '''
+    the title appears across all columns
+
+    the title is cleared, if no argument is supplied
+    delete() also clears the title
+    '''
+    global _title 
+    _title = text
+    return 
+
+def getTitle():
+    return _title
+
+def setComment( text = None): 
+    '''
+    the comment line appears across all columns below the title
+
+    the comment is cleared, if no argument is supplied
+    delete() also clears the comment
+    '''
+    global _comment 
+    _comment = text
+    return 
+
+def getComment():
+    return _comment
+
 def delete( nameLst = None):
     '''
     if nameLst is supplied, delete the specified scans from the scanList
@@ -330,6 +366,8 @@ def delete( nameLst = None):
             tmp = _scanList.pop()
             del _PySpectra.__dict__[ tmp.name]
             _scanIndex = None
+        setTitle( None)
+        setComment( None)
         return 
 
     for name in nameLst:
@@ -372,11 +410,20 @@ def show():
         return 
 
     print "The List of Scans:"
+    count = 0
     for scan in _scanList:
-        print " - %s, xMin %g, xMax %g, nPts %d, len %d" % \
-            (scan.name, scan.xMin, scan.xMax, scan.nPts, len( scan.x))
+        print " - %s" % (scan.name)
+        print "   xMin %g, xMax %g, nPts %d, len %d" % \
+            (scan.xMin, scan.xMax, scan.nPts, len( scan.x))
         print "   yMin %s, yMax %s, overlay %s" % \
             ( repr(scan.yMin), repr( scan.yMax), scan.overlay)
+        count += 1
+    print " %s scans" % count
+
+    if _title: 
+        print "Title:  ", _title
+    if _comment: 
+        print "Comment:", _comment
 
 def nextScan():
     '''
@@ -421,14 +468,22 @@ def prevScan():
 
     return _scanList[ _scanIndex]
 
-def read( fileName):
+def read( lst):
     '''    
     Reads a file and creates a scan for each column, except the first
     column which is the common x-axis of the other columns. 
     Supported extensions: .fio, .dat
-    '''
 
-    fioObj = _HasyUtils.fioReader( fileName)
+    if '-mca' is in lst, the input file contains MCA data, no x-axis
+    '''
+    
+    fileName = lst[0]
+    flagMca = False
+    if '-mca' in lst:
+        flagMca = True
+
+    fioObj = _HasyUtils.fioReader( fileName, flagMca)
+
     for elm in fioObj.columns:
         scn =  Scan( name = elm.name, x = elm.x, y = elm.y, fileName = fileName)
 

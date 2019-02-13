@@ -18,32 +18,117 @@ import math
 
 class testGQE( unittest.TestCase):
 
+    
+    def test_titleAndComment( self):
+
+        PySpectra.cls()
+
+        PySpectra.delete()
+        PySpectra.setTitle( "a_title")
+        self.assertEqual( PySpectra.getTitle(), "a_title")
+        PySpectra.delete()
+        self.assertEqual( PySpectra.getTitle(), None)
+        PySpectra.setTitle( "a_title")
+        PySpectra.setTitle( None)
+        self.assertEqual( PySpectra.getTitle(), None)
+
+        PySpectra.delete()
+        PySpectra.setComment( "a_comment")
+        self.assertEqual( PySpectra.getComment(), "a_comment")
+        PySpectra.delete()
+        self.assertEqual( PySpectra.getComment(), None)
+        PySpectra.setComment( "a_comment")
+        PySpectra.setComment( None)
+        self.assertEqual( PySpectra.getComment(), None)
+
+        PySpectra.delete()
+        PySpectra.setTitle( "there must be this title")
+        PySpectra.setComment( "and there must be this comment")
+        PySpectra.Scan( "t1")
+        PySpectra.display()
+        PySpectra.show()
+        PySpectra.procEventsLoop()
+
+        PySpectra.cls()
+        PySpectra.delete()
+        PySpectra.setTitle( "there is only a title, no comment")
+        PySpectra.Scan( "t1")
+        PySpectra.display()
+        PySpectra.procEventsLoop()
+
+        PySpectra.cls()
+        PySpectra.delete()
+        PySpectra.setComment( "there is only a comment")
+        PySpectra.Scan( "t1")
+        PySpectra.display()
+        PySpectra.procEventsLoop()
+    
+    def test_readMca_v1( self):
+
+        PySpectra.cls()
+        PySpectra.delete()
+        PySpectra.read( ["%s/test/data/tst_09153_mca_s1.fio" % pySpectraPath, "-mca"])
+        lst = PySpectra.getScanList()
+        self.assertEqual( len( lst), 1)
+        self.assertEqual( lst[0].name, "d1_mca01")
+        self.assertEqual( lst[0].nPts, 2048)
+        
+        PySpectra.display()
+        PySpectra.show()
+        print "the graphics window should contain 1 MCA plot now"
+        PySpectra.procEventsLoop()
+
+    def test_readMca_v2( self):
+
+        PySpectra.cls()
+        PySpectra.delete()
+        PySpectra.read( ["%s/test/data/tst_09154_mca_s1.fio" % pySpectraPath, "-mca"])
+        lst = PySpectra.getScanList()
+        self.assertEqual( len( lst), 2)
+        self.assertEqual( lst[0].name, "d1_mca01")
+        self.assertEqual( lst[0].nPts, 8192)
+        self.assertEqual( lst[1].name, "d1_mca02")
+        self.assertEqual( lst[1].nPts, 8192)
+        
+        PySpectra.display()
+        PySpectra.show()
+        print "the graphics window should contain 2 MCA plots now"
+        PySpectra.procEventsLoop()
+
     def test_read( self):
 
         PySpectra.cls()
         PySpectra.delete()
-        PySpectra.read( "%s/test/data/ti_au_tio2_sio2_kat55a_0001.fio" % pySpectraPath)
+        PySpectra.read( ["%s/test/data/ti_au_tio2_sio2_kat55a_0001.fio" % pySpectraPath])
         lst = PySpectra.getScanList()
         self.assertEqual( len( lst), 24)
         self.assertEqual( lst[0].name, "TI_AU_TIO2_SIO2_KAT55A_0001")
         self.assertEqual( lst[1].name, "TI_AU_TIO2_SIO2_KAT55A_0001_RING")
+        
+        PySpectra.display()
+        PySpectra.show()
+        print "the graphics window should contain 24 plots now"
+        PySpectra.procEventsLoop()
 
-        #PySpectra.display()
-        #PySpectra.show()
-        #PySpectra.procEventsLoop()
-
+        PySpectra.cls()
         PySpectra.delete()
-        PySpectra.read( "%s/test/data/SPLITTER_PXE_BL_22_2.dat" % pySpectraPath)
+        print "reading splitter"
+        PySpectra.read( ["%s/test/data/SPLITTER_PXE_BL_22_2.dat" % pySpectraPath])
+        print "reading splitter DONE"
         lst = PySpectra.getScanList()
+        print "scanList", repr( lst)
         self.assertEqual( len( lst), 4)
         self.assertEqual( lst[0].name, "scan1")
         self.assertEqual( lst[1].name, "scan2")
         self.assertEqual( lst[2].name, "scan3")
         self.assertEqual( lst[3].name, "scan4")
         
-        #PySpectra.display()
-        #PySpectra.show()
-        #PySpectra.procEventsLoop()
+        print "before display"
+        PySpectra.display()
+        print "before show"
+        PySpectra.show()
+        print "the graphics window should contain 4 plots now"
+        PySpectra.procEventsLoop()
 
     def test_doty( self):
 
@@ -162,8 +247,8 @@ class testGQE( unittest.TestCase):
         PySpectra.cls()
         PySpectra.delete()
         scan = PySpectra.Scan( name = 't1', xLabel = "up to 1000 pts", 
-                               nPts = 1001, yMin = -10., yMax = 10.)
-        self.assertEqual( scan.currentIndex, 1000)
+                               nPts = 201, yMin = -10., yMax = 10.)
+        self.assertEqual( scan.currentIndex, 200)
         scan.y = np.sin( scan.x)
         
         startTime = time.time()

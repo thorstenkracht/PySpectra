@@ -6,7 +6,10 @@ this Gui uses PySpectra to
   - displays scans or single scans
 '''
 import sys, os, argparse, math, PyTango, time
-from PyQt4 import QtGui, QtCore
+#from PyQt4 import QtGui, QtCore
+from taurus.external.qt import QtGui 
+from taurus.external.qt import QtCore
+import taurus
 import numpy as np
 import HasyUtils
 import PySpectra as pysp
@@ -271,13 +274,12 @@ class pySpectraGui( QtGui.QMainWindow):
 
         #self.resize( 600, 600)
 
-    def keyPressEvent(self, event):
+    #def keyPressEvent(self, event):
 
-        key = event.key()
-        print "pyspFIO.keyPressEvent", key
+    #key = event.key()
 
-        if key == QtCore.Qt.Key_Left:
-            print('Left Arrow Pressed')
+    #   if key == QtCore.Qt.Key_Left:
+    #       print('Left Arrow Pressed')
 
     def eventFilter(self, obj, event):
         print "", repr( event), event.type()
@@ -287,7 +289,6 @@ class pySpectraGui( QtGui.QMainWindow):
         # Everything else is pass-thru
         #
         if obj is self.scrollAreaFiles and event.type() == event.KeyPress:
-            print "+++ here we go"
             key = event.key()
             if key == QtCore.Qt.Key_Up:
                 return True
@@ -738,6 +739,7 @@ def main():
     global win
     args = parseCLI()
     sys.argv = []
+    
     if os.getenv( "DISPLAY") != ':0':
         QtGui.QApplication.setStyle( 'Cleanlooks')
 
@@ -747,6 +749,33 @@ def main():
 
     o = pySpectraGui()
     o.show()
+
+    #import sys
+    #sys.path.append( '/home/kracht/Misc/Sardana/hasyutils/HasyUtils')
+
+    import pyspSpectraDoor
+
+    localDoors = HasyUtils.getLocalDoorNames()
+
+    doorName = localDoors[0]
+
+    try:
+        door = taurus.Device( doorName)
+    except Exception, e:
+        print "SardanaMonitor.main: trouble connecting to door", doorName
+        print repr( e)
+        sys.exit(255)
+
+
+    #pysp.cls()
+    #pysp.delete()
+
+    #square = pysp.Scan( name = 'square', xMin = 0., xMax = 1.0, nPts = 101, autorangeX = True)
+    #for i in range( square.nPts): 
+    #    square.setX( i, i/10.)
+    #    square.setY( i, i*i/100.)
+    #    pysp.display()
+    #    time.sleep( 0.1)
 
     try:
         sys.exit( app.exec_())

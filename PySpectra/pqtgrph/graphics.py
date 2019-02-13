@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 
-from pyqtgraph.Qt import QtCore as _QtCore
-from pyqtgraph.Qt import QtGui as _QtGui
+#from pyqtgraph.Qt import QtCore as _QtCore
+#from pyqtgraph.Qt import QtGui as _QtGui
+from taurus.external.qt import QtGui as _QtGui
+from taurus.external.qt import QtCore as _QtCore
+from taurus.qt.qtgui.application import TaurusApplication 
+
 import pyqtgraph as _pg
 import time as _time
+import os as _os
 import math as _math
 import numpy as _np
 import PySpectra.dMgt.GQE as _GQE
@@ -12,26 +17,29 @@ import datetime as _datetime
 
 _QApp = None
 _win = None
-win = None
-_geoScreen = None
 
 def initGraphic():
-    global _QApp, _win, _geoScreen, win
+    '''
+    haso107d1: 1920 x 1200
+    spectra: 640 x 450 def., A4:  680 x 471 
+    '''
+    global _QApp, _win
 
     if _QApp is not None: 
         return (_QApp, _win)
 
-    _pg.setConfigOption( 'background', 'w')
-    _pg.setConfigOption( 'foreground', 'k')
-    _QApp = _QtGui.QApplication([])
-    mw = _QtGui.QMainWindow()
-    _geoScreen = _QtGui.QDesktopWidget().screenGeometry(-1)
-    # 1920 x 1200
-    # spectra: 640 x 450 def., 680 x 471 a4
-    _win = _pg.GraphicsWindow( title="PySpectra Application")
-    _win.setGeometry( 30, 30, 680, int( 680./1.414))
-    #_win.setGeometry( 30, 30, 650, 500)
-    win = _win
+    _QApp = _QtGui.QApplication.instance()
+    if _QApp is None:
+        #_QApp = _QtGui.QApplication([])
+        _QApp = TaurusApplication( [])
+
+    #+++mw = _QtGui.QMainWindow()
+    if _win is None:
+        _pg.setConfigOption( 'background', 'w')
+        _pg.setConfigOption( 'foreground', 'k')
+        _win = _pg.GraphicsWindow( title="PySpectra Application")
+        _win.setGeometry( 30, 30, 680, int( 680./1.414))
+
     return (_QApp, _win)
 
 def _setSizeGraphicsWindow( nScan):
@@ -46,15 +54,32 @@ def _setSizeGraphicsWindow( nScan):
     geo = _win.geometry()
     #print "current geo", repr( geo), geo.width(), geo.height()
 
-    widthNew = int(_geoScreen.width()*factor)
+    geoScreen = _QtGui.QDesktopWidget().screenGeometry(-1)
+    widthNew = int( geoScreen.width()*factor)
     heightNew = int( widthNew/1.414)
-    if widthNew > _geoScreen.width(): 
-        widthNew = _geoScreen.width() - 60
-    if heightNew > _geoScreen.height(): 
-        heightNew = _geoScreen.height() - 60
+    if widthNew > geoScreen.width(): 
+        widthNew = geoScreen.width() - 60
+    if heightNew > geoScreen.height(): 
+        heightNew = geoScreen.height() - 60
     if widthNew > geo.width() or heightNew > geo.height():
         #print "set-geo, new", widthNew, heightNew, "curr", geo.width(), geo.height()
         _win.setGeometry( 30, 30, widthNew, heightNew)
+
+def setWsViewport( size = None):
+    '''
+    the workstation viewport is the graphics window
+    '''
+    if size is None:
+        return 
+
+    if size == "DINA4" or size == "DINA4L": 
+        pass
+    elif size == "DINA4P": 
+        pass
+    else:
+        raise ValueError( "graphics.setWsViewport: no valid size, %s" % size)
+
+    return 
 
 def cls():
     '''
@@ -100,7 +125,6 @@ def cls():
 
     _QApp.processEvents()
 
-
 def _doty2datetime(doty, year = None):
     """
     Convert the fractional day-of-the-year to a datetime structure.
@@ -120,10 +144,9 @@ def _doty2datetime(doty, year = None):
     return boy + _datetime.timedelta(seconds=dotySeconds)
 
 class _CAxisTime( _pg.AxisItem):
-    ## Formats axis label to human readable time.
-    # @param[in] values List of \c time_t.
-    # @param[in] scale Not used.
-    # @param[in] spacing Not used.
+    ''' 
+    Formats axis label to human readable time.
+    '''
     def tickStrings(self, values, scale, spacing):
         strns = []
         m = [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -213,7 +236,7 @@ def _isCellTaken( row, col):
 
 def _createPlotItem( scan, row = 0, col = 0):            
     '''
-    create a plotItem, aka viewport (?) with titel axis descriptions and texts
+    create a plotItem, aka viewport (?) with title, axis descriptions and texts
     '''
     #
     #
@@ -223,29 +246,60 @@ def _createPlotItem( scan, row = 0, col = 0):
 
     try:
         if scan.doty: 
-            plotItem = _win.addPlot( axisItems = { 'bottom': _CAxisTime( orientation='bottom')}, row = row, col = col, colspan = scan.colSpan) 
+            plotItem = _win.addPlot( axisItems = { 'bottom': _CAxisTime( orientation='bottom')}, 
+                                     row = row, col = col, colspan = scan.colSpan) 
         else:
             plotItem = _win.addPlot( row = row, col = col, colspan = scan.colSpan) 
     except Exception, e:
-        print "graphics.createPlotItem: caught exception"
+        print "graphics.createPlotItem: caught exception, row", row, "col", col, "colspan", scan.colSpan
         print repr( e)
+        raise ValueError( "graphics.createPlotItem, throwing exception")
+
     plotItem.showGrid( x = True, y = True)
-    plotItem.setTitle( title = scan.name)
+    
+    #
+    # the length of the title has to be limited. Otherwise pg 
+    # screws up. The plots will no longer fit into the workstation viewport
+    # and the following display command, even with less scans, will 
+    # also not fit into the graphics window
+    #
+    lenMax = 15
+    if len( _GQE.getScanList()) > 15: 
+        lenMax = 12
+
+    if len( scan.name) > lenMax:
+        tempName = "X_" + scan.name[-lenMax:]
+    else: 
+        tempName = scan.name
+
+    plotItem.setTitle( title = tempName)
 
     if hasattr( scan, 'xLabel'):
         plotItem.setLabel( 'bottom', text=scan.xLabel)
     if hasattr( scan, 'yLabel'):
         plotItem.setLabel( 'left', text=scan.yLabel)
+
+    arX = scan.autorangeX
+    arY = scan.autorangeY
+
     if scan.yMin is None:
-        plotItem.enableAutoRange( x = False, y = True)
+        arY = True
     else:
+        if not scan.autorangeY: 
+            arY = False
+
+    plotItem.enableAutoRange( x = arX, y = arY)
+
+    if not arY: 
         plotItem.setYRange( scan.yMin, scan.yMax)
     #
     # idea: control the zoom in such a way the y-axis 
     # is re-scaled when we zoom in.
     #
     plotItem.setMouseEnabled( x = True, y = True)
-    plotItem.setXRange( scan.xMin, scan.xMax)
+
+    if not arX: 
+        plotItem.setXRange( scan.xMin, scan.xMax)
 
     for elm in scan.textList:
         if elm.hAlign == 'left':
@@ -324,6 +378,7 @@ def display( nameList = None):
 
     if _QApp is None: 
         initGraphic()
+
     #
     # Do not put a cls() here because it takes a lot of time, especially when
     # fast displays are done. 
@@ -333,7 +388,6 @@ def display( nameList = None):
     # see if the scans exist
     #
     temp = [_GQE.getScan( nm) for nm in nameList]
-
 
     scanList = _GQE.getScanList()
     #
@@ -345,6 +399,8 @@ def display( nameList = None):
             scanList[i].mouseLabel = None
 
     ncol = _math.floor( _math.sqrt( len( scanList)) + 0.5)
+
+
     col = 0
     row = 0
     #
@@ -354,11 +410,21 @@ def display( nameList = None):
     flagDisplaySingle = False
     if len( nameList) == 1 or len( scanList) == 1:
         flagDisplaySingle = True
+
     #
     # adjust the graphics window to the number of displayed scans
     #
     _setSizeGraphicsWindow( _getNumberOfScansToBeDisplayed( nameList))
 
+    title = _GQE.getTitle()
+    if title is not None:
+        _win.addLabel( title, row = 0, col = 0, rowspan = 1, colspan = int( ncol))
+        row += 1
+    
+    comment = _GQE.getComment()
+    if comment is not None:
+        _win.addLabel( comment, row = row, col = 0, rowspan = 1, colspan = int( ncol))
+        row += 1
     #
     # first pass: run through the scans in scanList and display 
     # scans which have not been overlaid
@@ -368,6 +434,11 @@ def display( nameList = None):
         # 'scan' is a copy
         #
         scan = scanList[i]
+        #
+        # check, if theren is something to display
+        #
+        if scan.lastIndex == scan.currentIndex:
+            continue
         #
         # overlay? - don't create a plot for this scan. Plot it
         # in the second pass. But it is displayed, if it is the only 
@@ -400,6 +471,10 @@ def display( nameList = None):
 
         scan.plotDataItem.setData( scan.x[:(scan.currentIndex + 1)], 
                                    scan.y[:(scan.currentIndex + 1)])
+        #
+        # keep track of what has already been displayed
+        #
+        scan.lastIndex = scan.currentIndex
 
         if flagDisplaySingle: 
             _prepareMouse( scan)
@@ -417,6 +492,11 @@ def display( nameList = None):
         #
         if len( nameList) == 1:
             break
+        #
+        # check, if theren is something to display
+        #
+        if scan.lastIndex == scan.currentIndex:
+            continue
         #
         # 'scan' is a copy
         #
@@ -438,6 +518,7 @@ def display( nameList = None):
         target.plotItem.plot( scan.x[:(scan.currentIndex + 1)], 
                               scan.y[:(scan.currentIndex + 1)], 
                               pen = _getPen( scan))
+        scan.lastIndex = scan.currentIndex
         if scan.yMin is None:
             scan.plotItem.enableAutoRange( x = False, y = True)
         else:
@@ -451,11 +532,7 @@ def display( nameList = None):
     # appear in the upper left corner of the graphics screen
     #
     #_time.sleep(0.1)
-    try:
-        _QApp.processEvents()
-    except Exception, e:
-        print "graphics.display: caught an exception"
-        print repr(e)
+    _QApp.processEvents()
     return
 
 def procEventsLoop():

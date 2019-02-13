@@ -7,13 +7,25 @@ Interfaces:
 * GUI: pyspViewer.py
     
 * ipython:
-     ```
+
+    alias PySpectra='ipython --profile=PySpectra'
+
+    /home/<user>/.ipython/profile_PySpectra/startup/00-start.py
+
+    ```
+    #!/usr/bin/env python
+    import PySpectra as pysp
+    import numpy as np
+    import PySpectra.ipython.startup
+    ```
+
+    ```
     create t1
-    create t2
+    pysp.t1.y = np.sin( pysp.t1.x)
     display
     delete
     cls
-     ```
+    ```
 
 * Python API
     ```

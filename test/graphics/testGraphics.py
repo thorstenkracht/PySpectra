@@ -3,7 +3,7 @@
 cd /home/kracht/Misc/pySpectra
 python -m unittest discover -v
 
-python ./test/graphics/testGraphics.py testGraphics.testDisplaySingle
+python ./test/graphics/testGraphics.py testGraphics.testDisplayScan
 '''
 import sys
 pySpectraPath = "/home/kracht/Misc/pySpectra"
@@ -17,6 +17,65 @@ import math
 
 class testGraphics( unittest.TestCase):
 
+    def testDisplayScan_v1( self): 
+        '''
+        using setX and setY
+        '''
+        PySpectra.cls()
+        PySpectra.delete()
+
+        sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, color = 'red')
+        for i in range( sinus.nPts): 
+            sinus.setX( i, i/10.)
+            sinus.setY( i, math.sin( i/10.))
+            PySpectra.display( ['sinus'])
+            time.sleep( 0.05)
+
+    def testDisplayScan_v2( self): 
+        '''
+        using setY only
+        '''
+        PySpectra.cls()
+        PySpectra.delete() 
+        cosinus = PySpectra.Scan( name = 'cosinus', xMin = 0., 
+                                xMax = 6.0, nPts = 101, color = 'blue')
+        for i in range( cosinus.nPts): 
+            cosinus.setY( i, math.cos( cosinus.x[i]))
+            PySpectra.display( ['cosinus'])
+            time.sleep( 0.05)
+
+    def testDisplayScan_v3( self): 
+        '''
+        using setX and setY
+        '''
+        PySpectra.cls()
+        PySpectra.delete()
+
+        sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, color = 'red')
+        cosinus = PySpectra.Scan( name = 'cosinus', xMin = 0., xMax = 6.0, nPts = 101, color = 'blue')
+        for i in range( sinus.nPts): 
+            sinus.setX( i, i/10.)
+            sinus.setY( i, math.sin( i/10.))
+            cosinus.setX( i, i/10.)
+            cosinus.setY( i, math.cos( i/10.))
+            PySpectra.display( ['sinus', 'cosinus'])
+            time.sleep( 0.05)
+
+    def testDisplayScan_v4( self): 
+        '''
+        using setX and setY, autorangeX
+        '''
+        PySpectra.cls()
+        PySpectra.delete()
+
+        sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 100.0, nPts = 101, color = 'red',
+                                autorangeX = True)
+        for i in range( sinus.nPts): 
+            sinus.setX( i, i/10.)
+            sinus.setY( i, math.sin( i/10.))
+            PySpectra.display( ['sinus'])
+            time.sleep( 0.05)
+
     def testDisplaySingle( self): 
 
         PySpectra.cls()
@@ -25,6 +84,7 @@ class testGraphics( unittest.TestCase):
         sinus = PySpectra.Scan( name = 'sinus', xMin = 0., 
                                 xMax = 6.0, nPts = 101, dType = np.float64,
                                 at = (2,2,3), color = 'red', style = 'solidLine')
+
         sinus.y = np.sin( sinus.y)
         PySpectra.display( ['sinus'])
         PySpectra.show()

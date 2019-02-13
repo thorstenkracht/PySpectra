@@ -42,6 +42,8 @@ def command( line):
         return overlay( lineRest)
     elif lst[0] == 'read':
         return read( lineRest)
+    elif lst[0] == 'set':
+        return set( lineRest)
     elif lst[0] == 'show':
         return show( lineRest)
     elif lst[0] == 'y2my':
@@ -142,10 +144,29 @@ def read( line):
     lst = None
     if line: 
         lst = line.split(' ')
-    if len( lst) != 1:
-        raise ValueError( "ifc.read: expecting a file name")
+    if len( lst) == 0:
+        raise ValueError( "ifc.read: expecting a file name and optionally '-mca'")
         return 
-    _GQE.read( lst[0])
+    _GQE.read( lst)
+
+def set( line):
+    lst = None
+    if line:
+        lst = line.split( ' ')
+    if len( lst) == 0 or len( lst) > 2:
+        raise ValueError( "ifc.set: expecting one or two arguments")
+        return 
+
+    if lst[0] == 'comment':
+        if len( lst) == 2:
+            _GQE.setComment(  lst[1])
+        else:
+            _GQE.setComment( None)
+    if lst[0] == 'title':
+        if len( lst) == 2:
+            _GQE.setTitel(  lst[1])
+        else:
+            _GQE.setTitel( None)
 
 def show( line):
     _GQE.show()
