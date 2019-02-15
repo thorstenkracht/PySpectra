@@ -85,7 +85,7 @@ def cls():
     '''
     clear screen: allow for a new plot
     '''
-
+    print "graphics.cls"
     if _QApp is None:
         return 
     if _win is None:
@@ -227,6 +227,11 @@ def _isCellTaken( row, col):
     for item in _win.items():
         if isinstance( item, _pg.graphicsItems.GraphicsLayout.GraphicsLayout):
             if item.getItem( row, col) is not None:
+                for elm in item.items:
+                    if type( elm) == _pg.graphicsItems.LabelItem.LabelItem:
+                        print "graphics.isCellTaken (%d, %d) %s" % (row, col, elm.text)
+                    else: 
+                        print "graphics.isCellTaken (%d, %d) %s " % (row, col, repr( elm))
                 argout = True
                 break
             else:
@@ -325,30 +330,16 @@ def _createPlotItem( scan, row = 0, col = 0):
 
     return plotItem
 
-def _getNumberOfScansToBeDisplayed( nameList): 
+def _textIsOnDisplay( textStr):
     '''
-    return the number of scans to be displayed.
-    Scans that are overlaid do not require extra space
+    searches the list of Items to see whether textStr exists already
     '''
-    if len( nameList) == 0:
-        nOverlay = 0
-        scanList = _GQE.getScanList()
-        for scan in scanList:
-            if scan.overlay is not None:
-                nOverlay += 1
-        nScan = len( scanList) - nOverlay
-        if nScan < 1:
-            nScan = 1
-    else:
-        nOverlay = 0
-        for name in nameList:
-            if _GQE.getScan( name).overlay is not None:
-                nOverlay += 1
-        nScan = len( nameList) - nOverlay
-        if nScan < 1:
-            nScan = 1
-    #print "graphics.getNoOfScansToBeDisplayed: nScan %d" %(nScan)
-    return nScan
+    for item in _win.items():
+        if type( item) is _pg.graphicsItems.LabelItem.LabelItem: 
+            if textStr == item.text:
+                return True
+
+    return False
 
 def display( nameList = None):
     '''
@@ -371,8 +362,9 @@ def display( nameList = None):
     Module: PySpectra.graphics.<graphLib>.graphics.py
     '''
     #
-    # don't want to do a lot of checks below
+    # don't want to check for nameList is None below
     #
+    print "graphics.display"
     if nameList is None:
         nameList = []
 
@@ -382,12 +374,14 @@ def display( nameList = None):
     #
     # Do not put a cls() here because it takes a lot of time, especially when
     # fast displays are done. 
-    # Try /home/kracht/Misc/pySpectra/test/dMgt/testGQE.py testeFillData
+    # Try /home/kracht/Misc/pySpectra/test/dMgt/testGQE.py testFillData
 
     #
-    # see if the scans exist
+    # see if the members of nameList arr in the scanList
     #
-    temp = [_GQE.getScan( nm) for nm in nameList]
+    for nm in nameList:
+        if _GQE.getScan( nm) is None:
+            raise ValueError( "graphics.display: %s is not in the scanList" % nm)
 
     scanList = _GQE.getScanList()
     #
@@ -398,11 +392,6 @@ def display( nameList = None):
             scanList[i].mouseProxy = None
             scanList[i].mouseLabel = None
 
-    ncol = _math.floor( _math.sqrt( len( scanList)) + 0.5)
-
-
-    col = 0
-    row = 0
     #
     # find out whether only one scan will be displayed 
     # in this case the mouse-cursor will be activated
@@ -414,20 +403,27 @@ def display( nameList = None):
     #
     # adjust the graphics window to the number of displayed scans
     #
-    _setSizeGraphicsWindow( _getNumberOfScansToBeDisplayed( nameList))
+    _setSizeGraphicsWindow( _GQE.getNumberOfScansToBeDisplayed( nameList))
 
+    ncol = _math.floor( _math.sqrt( len( scanList)) + 0.5)
+    col = 0
+    row = 0
     title = _GQE.getTitle()
     if title is not None:
-        _win.addLabel( title, row = 0, col = 0, rowspan = 1, colspan = int( ncol))
+        if not _textIsOnDisplay( title):
+            _win.addLabel( title, row = row, col = 0, rowspan = 1, 
+                           colspan = int( ncol))
         row += 1
     
     comment = _GQE.getComment()
     if comment is not None:
-        _win.addLabel( comment, row = row, col = 0, rowspan = 1, colspan = int( ncol))
+        if not _textIsOnDisplay( comment):
+            _win.addLabel( comment, row = row, col = 0, 
+                           rowspan = 1, colspan = int( ncol))
         row += 1
     #
-    # first pass: run through the scans in scanList and display 
-    # scans which have not been overlaid
+    # --- first pass: run through the scans in scanList and display 
+    #     non-overlaid scans
     #
     for i in range( len( scanList)):
         #
@@ -460,7 +456,7 @@ def display( nameList = None):
             except ValueError, e:
                 print "graphics.display: exception from createPlotItem"
                 print "graphics.display: consider a 'cls'"
-                print repr( e)
+                print "graphics.display", repr( e)
                 return 
             scan.plotDataItem = scan.plotItem.plot( name = scan.name, pen = _getPen( scan))
 
@@ -475,7 +471,7 @@ def display( nameList = None):
         # keep track of what has already been displayed
         #
         scan.lastIndex = scan.currentIndex
-
+        print "+++graphics.display:name %s, current %d, last %d" % (scan.name, scan.lastIndex, scan.currentIndex)
         if flagDisplaySingle: 
             _prepareMouse( scan)
 
@@ -484,7 +480,7 @@ def display( nameList = None):
             col = 0
             row += 1
     #
-    # second pass: display overlaid scans
+    # --- second pass: display overlaid scans
     #
     for i in range( len( scanList)):
         #

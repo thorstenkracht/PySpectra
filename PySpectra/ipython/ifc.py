@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 '''
 An interface to PySpectra, used by ipython, see 00-start.py, 
-and by pyspFio.py
+and by pyspViewer.py
 '''
-
-import PySpectra.dMgt.GQE as _GQE
-import PySpectra.dMgt.calc as _calc
-import PySpectra.pqtgrph.graphics as _graphics
+import PySpectra as pysp
 import itertools
 
 def command( line):
@@ -42,8 +39,10 @@ def command( line):
         return overlay( lineRest)
     elif lst[0] == 'read':
         return read( lineRest)
-    elif lst[0] == 'set':
-        return set( lineRest)
+    elif lst[0] == 'setComment':
+        return setComment( lineRest)
+    elif lst[0] == 'setTitle':
+        return setTitle( lineRest)
     elif lst[0] == 'show':
         return show( lineRest)
     elif lst[0] == 'y2my':
@@ -63,10 +62,10 @@ def antiderivative( line):
         if len( line) > 0:
             lst = line.split( ' ')
         
-    _calc.antiderivative( lst)
+    pysp.antiderivative( lst)
 
 def cls( line):
-    _graphics.cls()
+    pysp.cls()
 
 def create( line):
     '''
@@ -102,7 +101,7 @@ def create( line):
     else:
         raise ValueError( "ifs.createScan: wrong syntax %s" % line)
         
-    _GQE.Scan( **hsh)
+    pysp.Scan( **hsh)
 
 def derivative( line):
     '''
@@ -114,7 +113,7 @@ def derivative( line):
         if len( line) > 0:
             lst = line.split( ' ')
         
-    _calc.derivative( lst)
+    pysp.derivative( lst)
 
 def display( line):
 
@@ -123,22 +122,22 @@ def display( line):
         if len( line) > 0:
             lst = line.split( ' ')
         
-    _graphics.display( lst)
+    pysp.display( lst)
 
 def delete( line):
     lst = None
     if line: 
         lst = line.split(' ')
-    _GQE.delete( lst)
+    pysp.delete( lst)
 
 def overlay( line):
     lst = line.split( ' ')
     if len( lst) != 2:
         raise ValueError( "ifc.overlay: expecting two scan names")
-    _GQE.overlay( lst[0], lst[1])
+    pysp.overlay( lst[0], lst[1])
 
 def procEventsLoop( line):
-    _graphics.procEventsLoop()
+    pysp.procEventsLoop()
 
 def read( line):
     lst = None
@@ -147,29 +146,36 @@ def read( line):
     if len( lst) == 0:
         raise ValueError( "ifc.read: expecting a file name and optionally '-mca'")
         return 
-    _GQE.read( lst)
+    pysp.read( lst)
 
-def set( line):
+def setComment( line):
     lst = None
     if line:
         lst = line.split( ' ')
-    if len( lst) == 0 or len( lst) > 2:
-        raise ValueError( "ifc.set: expecting one or two arguments")
+    if len( lst) > 1:
+        raise ValueError( "ifc.setComment: expecting zero or one arguments")
         return 
 
-    if lst[0] == 'comment':
-        if len( lst) == 2:
-            _GQE.setComment(  lst[1])
-        else:
-            _GQE.setComment( None)
-    if lst[0] == 'title':
-        if len( lst) == 2:
-            _GQE.setTitel(  lst[1])
-        else:
-            _GQE.setTitel( None)
+    if len( lst) == 0:
+        pysp.setComment( None)
+    else:
+        pysp.setComment( lst[0])
+
+def setTitle( line):
+    lst = None
+    if line:
+        lst = line.split( ' ')
+    if len( lst) > 1:
+        raise ValueError( "ifc.setTitle: expecting zero or one arguments")
+        return 
+
+    if len( lst) == 0:
+        pysp.setTitle( None)
+    else:
+        pysp.setTitle( lst[0])
 
 def show( line):
-    _GQE.show()
+    pysp.show()
 
 def y2my( line):
     lst = line.split( ' ')
@@ -179,7 +185,7 @@ def y2my( line):
     hsh[ 'name'] = lst[0]
     if len( lst) == 2:
         hsh[ 'nameNew'] = lst[1]
-    _calc.yToMinusY( **hsh)
+    pysp.yToMinusY( **hsh)
     
 
         

@@ -63,5 +63,9 @@ setup( name="python-pyspectra",
        scripts = [ 'PySpectra/pyspViewer.py',
                    'PySpectra/sardanaMonitor/pyspSM.py',
                    ],
-       packages = ['PySpectra', 'PySpectra/dMgt', 'PySpectra/ipython', 'PySpectra/pqtgrph']
+       packages = ['PySpectra', 
+                   'PySpectra/dMgt', 
+                   'PySpectra/ipython', 
+                   'PySpectra/mtpltlb', 
+                   'PySpectra/pqtgrph']
    )

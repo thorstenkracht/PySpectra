@@ -201,6 +201,7 @@ class Scan():
         None
         '''
 
+        self.at = None
         self.autorangeX = False
         self.autorangeY = True
         self.color = 'red'
@@ -220,7 +221,7 @@ class Scan():
         self.mouseLabel = None
         self.mouseProxy = None
 
-        for attr in [ 'at', 'autorangeX', 'autorangeY', 'color', 'colSpan', 'doty', 'fileName',  
+        for attr in [ 'autorangeX', 'autorangeY', 'color', 'colSpan', 'doty', 'fileName',  
                       'overlay', 'style', 'symbol', 'xLabel', 'yLabel']:
             if attr in kwargs:
                 setattr( self, attr, kwargs[ attr])
@@ -230,7 +231,20 @@ class Scan():
             if attr in kwargs:
                 setattr( self, attr, float( kwargs[ attr]))
                 del kwargs[ attr]
-
+        #
+        # if at is None, graphics.display() makes a guess
+        #
+        if 'at' in kwargs: 
+            atStr = kwargs[ 'at']
+            #
+            # the string '(2, 3, 4)' -> list of ints [1, 2, 3]
+            #
+            lstStr = a.strip()[1:-1].split( ',')
+            if len( lstStr) != 3:
+                self.at = [1, 1, 1]
+            else:
+                self.at = [int( i) for i in lstStr]
+            
         return 
 
     def addText( self, text = 'Empty', x = 0.5, y = 0.5, hAlign = 'left', vAlign = 'top', color = 'black'):
@@ -360,6 +374,7 @@ def delete( nameLst = None):
       delete all scans
     '''
     global _scanIndex
+    print "GQE.delete"
     
     if not nameLst:    
         while len( _scanList) > 0:
@@ -412,7 +427,7 @@ def show():
     print "The List of Scans:"
     count = 0
     for scan in _scanList:
-        print " - %s" % (scan.name)
+        print " - %s, current %d, last %d" % (scan.name, scan.currentIndex, scan.lastIndex)
         print "   xMin %g, xMax %g, nPts %d, len %d" % \
             (scan.xMin, scan.xMax, scan.nPts, len( scan.x))
         print "   yMin %s, yMax %s, overlay %s" % \
@@ -489,3 +504,26 @@ def read( lst):
 
     return 
     
+def getNumberOfScansToBeDisplayed( nameList): 
+    '''
+    return the number of scans to be displayed.
+    Scans that are overlaid do not require extra space
+    '''
+    if len( nameList) == 0:
+        nOverlay = 0
+        for scan in _scanList:
+            if scan.overlay is not None:
+                nOverlay += 1
+        nScan = len( _scanList) - nOverlay
+        if nScan < 1:
+            nScan = 1
+    else:
+        nOverlay = 0
+        for name in nameList:
+            if getScan( name).overlay is not None:
+                nOverlay += 1
+        nScan = len( nameList) - nOverlay
+        if nScan < 1:
+            nScan = 1
+    #print "graphics.getNoOfScansToBeDisplayed: nScan %d" %(nScan)
+    return nScan

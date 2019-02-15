@@ -34,6 +34,7 @@ PySpectra.overlay( src, trgt)
 '''
 from dMgt.GQE import *
 from dMgt.calc import *
-from pqtgrph.graphics import *
+#from pqtgrph.graphics import *
+from mtpltlb.graphics import *
 from utils import *
 import ipython.ifc 

@@ -14,6 +14,9 @@ see 'pysp_help'
 from IPython.core.magic import (register_line_magic)
 from IPython.core.getipython import get_ipython
 import PySpectra.ipython.ifc as ifc
+import PySpectra as pysp
+import numpy as np
+import matplotlib.pyplot as plt
 
 ip = get_ipython()
 
@@ -124,8 +127,9 @@ def pysp_help( line):
     print " The ipython - PySpectra interface"
     print " ---------------------------------"
     print " These are the available commands"
-    print "   antiderivative, cls, create, delete, derivative"
-    print "   display, overlay, procEventsLoop, read, set, show, y2my"
+    print "   antiderivative, cls, create, delete, derivative,"
+    print "   display, overlay, procEventsLoop, read, setTitle, "
+    print "   setComment, show, y2my"
     print ""
     print "  for more help use, e.g.: create?"
     print ""
@@ -138,12 +142,18 @@ def read(line):
     ifc.command( "read " + line)
 
 @register_line_magic
-def set(line):
+def setComment(line):
     '''
-    set title einTitel
-    set comment einKommentar
+    setComment aComment
     '''
-    ifc.command( "set " + line)
+    ifc.command( "setComment " + line)
+
+@register_line_magic
+def setTitle(line):
+    '''
+    setTitle einTitel
+    '''
+    ifc.command( "setTitle " + line)
 
 @register_line_magic
 def show(line):
@@ -252,6 +262,8 @@ del procEventsLoop
 del pysp_help
 del read
 del show
+del setComment
+del setTitle
 del y2my
 
 del sl1

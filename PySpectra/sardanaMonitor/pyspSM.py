@@ -9,12 +9,16 @@ import sys, os, argparse, math, PyTango, time
 #from PyQt4 import QtGui, QtCore
 from taurus.external.qt import QtGui 
 from taurus.external.qt import QtCore
+from taurus.qt.qtgui.application import TaurusApplication 
 import taurus
 import numpy as np
 import HasyUtils
 import PySpectra as pysp
+import __builtin__
+import threading
 
-win = None
+app = None
+
 ACTIVITY_SYMBOLS = ['|', '/', '-', '\\', '|', '/', '-', '\\'] 
 updateTime = 0.5
 
@@ -123,7 +127,7 @@ class ScanAttributes( QtGui.QMainWindow):
 
         self.paused = False
         self.updateTimer = QtCore.QTimer(self)
-        self.updateTimer.timeout.connect( self.cb_refreshMain)
+        self.updateTimer.timeout.connect( self.cb_refreshAttr)
         self.updateTimer.start( int( updateTime*1000))
         self.show()
         
@@ -198,10 +202,10 @@ class ScanAttributes( QtGui.QMainWindow):
         self.exit.clicked.connect( self.close)
         self.exit.setShortcut( "Alt+x")
         
-    def cb_refreshMain( self):
+    def cb_refreshAttr( self):
 
-        if self.isMinimized(): 
-            return
+        #if self.isMinimized(): 
+        #    return
         
         self.activityIndex += 1
         if self.activityIndex > (len( ACTIVITY_SYMBOLS) - 1):
@@ -231,12 +235,12 @@ class ScanAttributes( QtGui.QMainWindow):
 #
 # ===
 #
-class pySpectraGui( QtGui.QMainWindow):
+class pyspSM( QtGui.QMainWindow):
     '''
     the main class of the SardanaMotorMenu application
     '''
     def __init__( self, parent = None):
-        super( pySpectraGui, self).__init__( parent)
+        super( pyspSM, self).__init__( parent)
 
         self.setWindowTitle( "PySpectraGui")
         geo = QtGui.QDesktopWidget().screenGeometry(-1)
@@ -244,7 +248,8 @@ class pySpectraGui( QtGui.QMainWindow):
         self.heighthMax = geo.height()
         # size
         self.setGeometry( geo.width() - 680, 30, 650, 500)
-
+        self.scanNo = 0
+        __builtin__.__dict__[ 'scanNo'] = self.scanNo
         # used by cb_postscript
         self.lastFileWritten = None
 
@@ -374,7 +379,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.next.clicked.connect( self.cb_next)
         self.next.setShortcut( "Alt+n")
 
-        hBox.addStretch()            
+        hBox.addStretch()   
 
         self.layout_v.addLayout( hBox)
 
@@ -388,6 +393,23 @@ class pySpectraGui( QtGui.QMainWindow):
             self.activityIndex = 0
         self.activity.setTitle( ACTIVITY_SYMBOLS[ self.activityIndex])
         self.updateTimer.stop()
+        #
+        #
+        #
+        print "refreshMain, mutex", __builtin__.__dict__[ 'mutex'].locked()
+        __builtin__.__dict__[ 'mutex'].acquire()
+
+        scanNo = __builtin__.__dict__[ 'scanNo'] 
+        if scanNo != self.scanNo:
+            print "pyspSM.refresh: new scan detected, calling cls for old ", self.scanNo, "new ", scanNo
+            pysp.cls()
+            self.scanNo = scanNo
+
+        print "pyspSM.refresh: calling display", scanNo
+        pysp.display()
+        print "pyspSM.refresh: display, DONE"
+
+        __builtin__.__dict__[ 'mutex'].release()
         #
         # the scan layout is updated
         #   - nothing has been created before self.scanList == None
@@ -736,46 +758,32 @@ Examples:
 
 
 def main():
-    global win
+    global app
+
     args = parseCLI()
     sys.argv = []
     
     if os.getenv( "DISPLAY") != ':0':
         QtGui.QApplication.setStyle( 'Cleanlooks')
 
-    (app, win) = pysp.initGraphic()
+    app = QtGui.QApplication.instance()
+    if app is None:
+        #app = QtGui.QApplication(sys.argv)
+        app = TaurusApplication( [])
 
-    #app = QtGui.QApplication(sys.argv)
-
-    o = pySpectraGui()
+    __builtin__.__dict__[ 'mutex'] = threading.Lock()
+        
+    o = pyspSM()
     o.show()
-
-    #import sys
-    #sys.path.append( '/home/kracht/Misc/Sardana/hasyutils/HasyUtils')
 
     import pyspSpectraDoor
 
-    localDoors = HasyUtils.getLocalDoorNames()
-
-    doorName = localDoors[0]
-
     try:
-        door = taurus.Device( doorName)
+        door = taurus.Device( HasyUtils.getLocalDoorNames()[0])
     except Exception, e:
         print "SardanaMonitor.main: trouble connecting to door", doorName
         print repr( e)
         sys.exit(255)
-
-
-    #pysp.cls()
-    #pysp.delete()
-
-    #square = pysp.Scan( name = 'square', xMin = 0., xMax = 1.0, nPts = 101, autorangeX = True)
-    #for i in range( square.nPts): 
-    #    square.setX( i, i/10.)
-    #    square.setY( i, i*i/100.)
-    #    pysp.display()
-    #    time.sleep( 0.1)
 
     try:
         sys.exit( app.exec_())

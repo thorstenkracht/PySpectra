@@ -11,6 +11,8 @@ import time
 from taurus.external.qt import QtGui 
 from taurus.external.qt import QtCore
 from taurus.qt.qtgui.application import TaurusApplication 
+import PySpectra as pysp
+import time
 
 try:
     import sardana.taurus.core.tango.sardana.macroserver as sms
@@ -33,10 +35,12 @@ class demoDoor( sms.BaseDoor):
 
         self.initDone = False
         print "demoDoor.__init__()"
-        self.app = QtGui.QApplication.instance()
+
+        self.app = TaurusApplication( [])
         pg.setConfigOption( 'background', 'w')
         pg.setConfigOption( 'foreground', 'k')
         self.win = pg.GraphicsWindow( title="A Graphics Window")
+        
 
         self.x = np.arange( 0., 10., 0.1)
         self.t = np.tan(self.x)
@@ -44,11 +48,12 @@ class demoDoor( sms.BaseDoor):
         # *** this is not the place for calling addPlot() since
         # *** we don't know how many we have to allocate
         #
-        #self.tan = self.win.addPlot()
+        self.tan = self.win.addPlot()
         #self.app.processEvents()
-        self.i = 2
+        self.i = 10
         self.initDone = True
         self.call__init__( sms.BaseDoor, name, **kw)
+        self.app.processEvents()
         return 
 
     def recordDataReceived( self, s, t, v):
@@ -62,20 +67,26 @@ class demoDoor( sms.BaseDoor):
             #
             # *** here we would like to execute addPlot()
             #
-            try:
-                self.tan = self.win.addPlot( row=0, col=0)
-            except Exception, e: 
-                print "recordDataReceived: caught exception"
-                print repr( e)
-                return
-
+            #try:
+            #    self.tan = self.win.addPlot( row=0, col=0)
+            #except Exception, e: 
+            #    print "recordDataReceived: caught exception"
+            #    print repr( e)
+            #    return
+            print "+++ making plot()"
             self.tan.showGrid( x = True, y = True)
             self.tan.enableAutoRange( x = True, y = True)
             self.plot = self.tan.plot( name = "t1", pen=( 0, 0, 255))
-            self.plot.setData( self.x, self.t)
-        self.plot.setData( self.x[:self.i], self.t[:self.i])
+            #self.plot.setData( self.x, self.t)
+            self.app.processEvents()
+            return
+
+        print "plotting", self.i
         self.app.processEvents()
+        self.plot.setData( self.x[:self.i], self.t[:self.i])
         self.i += 1
+        self.app.processEvents()
+
 
 import taurus
 
