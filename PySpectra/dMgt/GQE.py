@@ -51,11 +51,25 @@ class Scan():
         if name is None:
             raise ValueError( "GQE.Scan: 'name' is missing")
         #
-        # a scan with the same name must not exist
+        # We 'reUse' e.g. MCA scans
         #
-        for scan in _scanList:
-            if name == scan.name:
-                raise ValueError( "GQE.Scan: %s exists already" % name)
+        for i in range( len( _scanList)): 
+            if name == _scanList[i].name:
+                if 'reUse' in kwargs: 
+                    if len( _scanList[i].x) != len( kwargs['x']):
+                        raise ValueError( "GQE.Scan: len( scan.x) %d != len( kwargs[ 'x'])" % \
+                                          ( len( _scanList[i].x), len( kwargs['x'])))
+                    if len( _scanList[i].y) != len( kwargs['y']):
+                        raise ValueError( "GQE.Scan: len( scan.y) %d != len( kwargs[ 'y'])" % \
+                                          ( len( _scanList[i].y), len( kwargs['y'])))
+                    _scanList[i].x = kwargs['x']
+                    _scanList[i].y = kwargs['y']
+                    _scanList[i].lastIndex = 0
+                    return
+                else:
+                    raise ValueError( "GQE.Scan: %s exists already" % name)
+        if 'reUse' in kwargs:
+            del kwargs[ 'reUse'] 
 
         self.name = name
         if 'x' in kwargs and 'y' not in kwargs or \
@@ -87,9 +101,6 @@ class Scan():
 
         _scanList.append( self)
 
-    def __del__( self):
-        pass
-
     def _createScanFromData( self, kwargs):
         '''
         creates a scan using x, y
@@ -97,13 +108,13 @@ class Scan():
         if 'y' not in kwargs:
             raise ValueError( "GQE.Scan._createScanFromData: 'y' not supplied")
 
-        self.x = _np.asarray( kwargs[ 'x'], dtype = _np.float64)
+        self.x = _np.copy( kwargs[ 'x'])
         del kwargs[ 'x']
-        self.y = _np.asarray( kwargs[ 'y'], dtype = _np.float64)
+        self.y = _np.copy( kwargs[ 'y'])
         del kwargs[ 'y']
 
         if len( self.x) != len( self.y):
-            raise ValueError( "GQE.Scan._createScanFromData: 'x' and 'y' differ in length %d %d" % (len( self.x), len( self.y)))
+            raise ValueError( "GQE.Scan._createScanFromData: 'x' and 'y' differ in length %d (x) %d (y)" % (len( self.x), len( self.y)))
 
         self.xMin = _np.min( self.x)
         self.xMax = _np.max( self.x)
@@ -208,6 +219,7 @@ class Scan():
         self.colSpan = 1
         self.doty = False            # x-axis is date-of-the year
         self.fileName = None
+        self.plotItem = None
         self.width = 1.
         self.style = 'solidLine'
         self.xLabel = 'position'
@@ -324,12 +336,13 @@ def getDisplayList():
 
 def getScan( name):
     '''
-    get the scan object with obj.name == name
+    return the scan object with obj.name == name, 
+    otherwise return None
     '''
     for scan in _scanList:
         if name == scan.name:
             return scan
-    raise ValueError( "GQE.getScan: %s does not exist" % name)
+    return None
 
 def setTitle( text = None): 
     '''
@@ -374,11 +387,13 @@ def delete( nameLst = None):
       delete all scans
     '''
     global _scanIndex
-    print "GQE.delete"
+    #print "GQE.delete, nameList:", repr( nameLst)
     
     if not nameLst:    
         while len( _scanList) > 0:
             tmp = _scanList.pop()
+            if tmp.plotItem is not None:
+                tmp.plotItem.clear()
             del _PySpectra.__dict__[ tmp.name]
             _scanIndex = None
         setTitle( None)
@@ -388,6 +403,11 @@ def delete( nameLst = None):
     for name in nameLst:
         for i in range( len( _scanList)):
             if name == _scanList[i].name:
+                #
+                # we had many MCA spectra displayed on top of each other
+                #
+                if _scanList[i].plotItem is not None:
+                    _scanList[i].plotItem.clear()
                 del _PySpectra.__dict__[ _scanList[i].name]
                 del _scanList[i]
                 break
@@ -527,3 +547,16 @@ def getNumberOfScansToBeDisplayed( nameList):
             nScan = 1
     #print "graphics.getNoOfScansToBeDisplayed: nScan %d" %(nScan)
     return nScan
+
+def getNoOverlaid():
+    '''
+    returns the number of scans which are overlaid to another, 
+    used by e.g. graphics.display()
+    '''
+    count = 0
+    for scan in _scanList:
+        if scan.overlay is not None:
+            count += 1
+
+    return count
+    

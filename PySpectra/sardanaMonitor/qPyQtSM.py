@@ -6,14 +6,24 @@ this Gui uses PySpectra to
   - displays scans or single scans
 '''
 import sys, os, argparse, math, PyTango, time
-from PyQt4 import QtGui, QtCore
+#from PyQt4 import QtGui, QtCore
+from taurus.external.qt import QtGui 
+from taurus.external.qt import QtCore
+from taurus.qt.qtgui.application import TaurusApplication 
+import taurus
 import numpy as np
 import HasyUtils
 import PySpectra as pysp
+import threading
 
-win = None
+import Queue
+import __builtin__
+
+app = None
+
 ACTIVITY_SYMBOLS = ['|', '/', '-', '\\', '|', '/', '-', '\\'] 
 updateTime = 0.5
+updateTimeFast = 0.1
 
 fileList = None
 fileDict = None
@@ -26,7 +36,7 @@ def handleFileCallBack( self, fileName):
     elif fileName.endswith( ".fio") or fileName.endswith( ".dat"):
         pysp.cls()
         pysp.delete()
-        pysp.read( [fileName])
+        pysp.read( fileName)
     else:
         if self is not None:
             self.logWidget.append(  "make_cb_files: bad fileName %s" % fileName)
@@ -120,7 +130,7 @@ class ScanAttributes( QtGui.QMainWindow):
 
         self.paused = False
         self.updateTimer = QtCore.QTimer(self)
-        self.updateTimer.timeout.connect( self.cb_refreshMain)
+        self.updateTimer.timeout.connect( self.cb_refreshAttr)
         self.updateTimer.start( int( updateTime*1000))
         self.show()
         
@@ -195,10 +205,10 @@ class ScanAttributes( QtGui.QMainWindow):
         self.exit.clicked.connect( self.close)
         self.exit.setShortcut( "Alt+x")
         
-    def cb_refreshMain( self):
+    def cb_refreshAttr( self):
 
-        if self.isMinimized(): 
-            return
+        #if self.isMinimized(): 
+        #    return
         
         self.activityIndex += 1
         if self.activityIndex > (len( ACTIVITY_SYMBOLS) - 1):
@@ -228,12 +238,16 @@ class ScanAttributes( QtGui.QMainWindow):
 #
 # ===
 #
-class pySpectraGui( QtGui.QMainWindow):
+class pyqtSM( QtGui.QMainWindow):
     '''
     the main class of the SardanaMotorMenu application
     '''
     def __init__( self, parent = None):
-        super( pySpectraGui, self).__init__( parent)
+        super( pyqtSM, self).__init__( parent)
+
+
+        self.queue = Queue.Queue()
+        __builtin__.__dict__[ 'queue'] = self.queue
 
         self.setWindowTitle( "PySpectraGui")
         geo = QtGui.QDesktopWidget().screenGeometry(-1)
@@ -241,7 +255,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.heighthMax = geo.height()
         # size
         self.setGeometry( geo.width() - 680, 30, 650, 500)
-
+        self.scanNo = 0
         # used by cb_postscript
         self.lastFileWritten = None
 
@@ -266,42 +280,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.paused = False
         self.updateTimer = QtCore.QTimer(self)
         self.updateTimer.timeout.connect( self.cb_refreshMain)
-        self.updateTimer.start( int( updateTime*1000))
-        #self.installEventFilter( self)
-
-        #self.resize( 600, 600)
-
-    def keyPressEvent(self, event):
-
-        key = event.key()
-        print "pyspFIO.keyPressEvent", key
-
-        if key == QtCore.Qt.Key_Left:
-            print('Left Arrow Pressed')
-
-    def eventFilter(self, obj, event):
-        print "", repr( event), event.type()
-        print "   ", dir( event)
-        #
-        # Only watch for specific slider keys.
-        # Everything else is pass-thru
-        #
-        if obj is self.scrollAreaFiles and event.type() == event.KeyPress:
-            print "+++ here we go"
-            key = event.key()
-            if key == QtCore.Qt.Key_Up:
-                return True
-            elif key == QtCore.Qt.Key_Down:
-                return True
-            elif key == QtCore.Qt.Key_Right:
-                self.cb_cursorRight()
-                return True
-            elif key == QtCore.Qt.Key_Left:
-                self.cb_cursorLeft()
-                return True
-            return False
-        return False
-
+        self.updateTimer.start( int( updateTimeFast*1000))
     #
     # the central widgets
     #
@@ -373,20 +352,79 @@ class pySpectraGui( QtGui.QMainWindow):
         self.next.clicked.connect( self.cb_next)
         self.next.setShortcut( "Alt+n")
 
-        hBox.addStretch()            
+        hBox.addStretch()   
 
         self.layout_v.addLayout( hBox)
+
+    def execHsh( self, hsh): 
+        #print "qPyQtSM.execHsh", repr( hsh)
+
+        if hsh.has_key( 'cls'):
+            pysp.cls()
+        elif hsh.has_key( 'delete'):
+            if hsh[ 'delete'] is None:
+                pysp.delete()
+            else: 
+                pysp.delete( hsh[ 'delete'])
+        elif hsh.has_key( 'display'):
+            if hsh[ 'display'] is None:
+                pysp.display()
+            else: 
+                pysp.display( hsh[ 'display'])
+        elif hsh.has_key( 'setTitle'):
+            pysp.setTitle( hsh[ 'setTitle'])
+        elif hsh.has_key( 'setComment'):
+            pysp.setComment( hsh[ 'setComment'])
+        elif hsh.has_key( 'Scan'):
+            if hsh[ 'Scan'].has_key( 'x'):
+                if hsh[ 'Scan'].has_key( 'reUse'):
+                    pysp.Scan( name = hsh[ 'Scan'][ 'name'], 
+                               reUse = hsh[ 'Scan'][ 'reUse'], 
+                               x = hsh[ 'Scan'][ 'x'], 
+                               y = hsh[ 'Scan'][ 'y'])
+                else:
+                    pysp.Scan( name = hsh[ 'Scan'][ 'name'], 
+                               x = hsh[ 'Scan'][ 'x'], 
+                               y = hsh[ 'Scan'][ 'y'])
+            else:
+                pysp.Scan( name = hsh[ 'Scan'][ 'name'], 
+                           color = hsh[ 'Scan'][ 'color'], 
+                           autorangeX = hsh[ 'Scan'][ 'autorangeX'], 
+                           xMax = hsh[ 'Scan'][ 'xMax'], 
+                           xMin = hsh[ 'Scan'][ 'xMin'], 
+                           nPts = hsh[ 'Scan'][ 'nPts'])
+        elif hsh.has_key( 'setX'):
+            scan = pysp.getScan( hsh[ 'setX'][ 'name'])
+            scan.setX(  hsh[ 'setX'][ 'index'], hsh[ 'setX'][ 'x'])
+        elif hsh.has_key( 'setY'):
+            scan = pysp.getScan( hsh[ 'setY'][ 'name'])
+            scan.setY(  hsh[ 'setY'][ 'index'], hsh[ 'setY'][ 'y'])
+        else: 
+            raise ValueError( "queueSM.execHsh: failed to identify key %s" % repr( hsh))
 
     def cb_refreshMain( self):
 
         if self.isMinimized(): 
             return
+
+        self.updateTimer.stop()
+
+        try:
+            cnt = 0
+            while True:
+                hsh = self.queue.get_nowait()
+                self.execHsh( hsh)
+                self.queue.task_done()
+                cnt += 1
+        except Queue.Empty, e:
+            pass
+            #if cnt > 0:
+            #    print "queueSM.cb_refreshMain: queue is empty, after", cnt
         
         self.activityIndex += 1
         if self.activityIndex > (len( ACTIVITY_SYMBOLS) - 1):
             self.activityIndex = 0
         self.activity.setTitle( ACTIVITY_SYMBOLS[ self.activityIndex])
-        self.updateTimer.stop()
         #
         # the scan layout is updated
         #   - nothing has been created before self.scanList == None
@@ -409,7 +447,7 @@ class pySpectraGui( QtGui.QMainWindow):
                         break
 
         if not flagUpdate: 
-            self.updateTimer.start( int( updateTime*1000))
+            self.updateTimer.start( int( updateTimeFast*1000))
             return 
        
         self.scanList = scanList
@@ -417,7 +455,7 @@ class pySpectraGui( QtGui.QMainWindow):
             self.baseScans.close()
 
         if len( self.scanList) == 0:
-            self.updateTimer.start( int( updateTime*1000))
+            self.updateTimer.start( int( updateTimeFast*1000))
             return 
             
         self.vBoxScans = QtGui.QVBoxLayout()
@@ -437,8 +475,8 @@ class pySpectraGui( QtGui.QMainWindow):
 
         self.scrollAreaScans.setWidget( self.baseScans)
         
-        self.updateTimer.start( int( updateTime*1000))
 
+        self.updateTimer.start( int( updateTimeFast*1000))
    
     def make_cb_files( self, fileName):
         def f():
@@ -735,17 +773,30 @@ Examples:
 
 
 def main():
+    global app
+
     args = parseCLI()
-    #sys.argv = []
+    sys.argv = []
+    
     if os.getenv( "DISPLAY") != ':0':
         QtGui.QApplication.setStyle( 'Cleanlooks')
 
-    pysp.initGraphic()
+    app = QtGui.QApplication.instance()
+    if app is None:
+        #app = QtGui.QApplication(sys.argv)
+        app = TaurusApplication( [])
 
-    app = QtGui.QApplication(sys.argv)
-
-    o = pySpectraGui()
+    o = pyqtSM()
     o.show()
+
+    import queueSpectraDoor
+
+    try:
+        door = taurus.Device( HasyUtils.getLocalDoorNames()[0])
+    except Exception, e:
+        print "SardanaMonitor.main: trouble connecting to door", doorName
+        print repr( e)
+        sys.exit(255)
 
     try:
         sys.exit( app.exec_())

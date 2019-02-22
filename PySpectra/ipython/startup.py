@@ -16,7 +16,6 @@ from IPython.core.getipython import get_ipython
 import PySpectra.ipython.ifc as ifc
 import PySpectra as pysp
 import numpy as np
-import matplotlib.pyplot as plt
 
 ip = get_ipython()
 

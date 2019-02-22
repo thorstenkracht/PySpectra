@@ -246,15 +246,18 @@ class testGQE( unittest.TestCase):
     def testFillData( self):
         PySpectra.cls()
         PySpectra.delete()
-        scan = PySpectra.Scan( name = 't1', xLabel = "up to 1000 pts", 
+        scan = PySpectra.Scan( name = 't1', xLabel = "up to 200 pts", 
                                nPts = 201, yMin = -10., yMax = 10.)
         self.assertEqual( scan.currentIndex, 200)
-        scan.y = np.sin( scan.x)
+        #scan.y = np.tan( scan.x)
         
         startTime = time.time()
         for i in range( len( scan.y)):
+            print "testGQE.testFillData", i
             scan.setY( i, math.tan( float( i)/10))
             PySpectra.display()
+            time.sleep(0.1)
+            
 
         diffTime = time.time() - startTime
         self.assertLess( diffTime, 5.)

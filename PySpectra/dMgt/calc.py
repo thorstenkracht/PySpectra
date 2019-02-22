@@ -19,14 +19,20 @@ def derivative( name = None, nameNew = None):
     if scan is None:
         raise ValueError( "calc.derivative: failed to find %s" % name)
                           
+    # 
+    # the length of diff(a) less than the length of the inputs, by 1
+    # 
     dydx = diff( scan.y)/diff(scan.x)
     if nameNew is None:
         temp = "%s_derivative" % scan.name
     else:
         temp = nameNew
-    argout = _GQE.Scan( name = temp, nPts = len( dydx))
-    argout.x = scan.x
-    argout.y = dydx
+    #
+    # shift the x-axis by half of the bin width and ignore the last point
+    #
+    delta = (scan.x[1] - scan.x[0])/2.
+    scan.x = scan.x + delta
+    argout = _GQE.Scan( name = temp, x = scan.x[:-1], y = dydx)
     return argout
 
 def antiderivative(name = None, nameNew = None):
@@ -49,11 +55,12 @@ def antiderivative(name = None, nameNew = None):
     else:
         temp = nameNew
 
-    argout = _GQE.Scan( name = temp, nPts = len( scan.y))
+    argout = _GQE.Scan( name = temp, x = scan.x, y = scan.y)
 
-    argout.y[0] = 0.
+    argout.setY( 0, 0.)
     for i in range(1, len( scan.x)):
-        argout.y[i] = _integrate.trapz( scan.y[:i], scan.x[:i])
+        temp = _integrate.trapz( scan.y[:i], scan.x[:i])
+        argout.setY( i, temp)
 
     return argout
 
@@ -62,7 +69,6 @@ def yToMinusY(name = None, nameNew = None):
     ytominusy <scanName> [<newScanName>]
       the y-values of the new scan are the negative of the scan
       the result is stored in <newScanName> or <scanName>_y2my
-
     returns the created scan
     '''
     if name is None:

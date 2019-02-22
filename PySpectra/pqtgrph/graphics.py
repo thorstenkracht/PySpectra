@@ -85,7 +85,7 @@ def cls():
     '''
     clear screen: allow for a new plot
     '''
-    print "graphics.cls"
+    #print "graphics.cls"
     if _QApp is None:
         return 
     if _win is None:
@@ -122,6 +122,7 @@ def cls():
 
         scanList[i].plotItem = None
         scanList[i].plotDataItem = None
+        scanList[i].lastIndex = 0
 
     _QApp.processEvents()
 
@@ -231,7 +232,8 @@ def _isCellTaken( row, col):
                     if type( elm) == _pg.graphicsItems.LabelItem.LabelItem:
                         print "graphics.isCellTaken (%d, %d) %s" % (row, col, elm.text)
                     else: 
-                        print "graphics.isCellTaken (%d, %d) %s " % (row, col, repr( elm))
+                        #print "graphics.isCellTaken (%d, %d) %s " % (row, col, repr( elm))
+                        pass
                 argout = True
                 break
             else:
@@ -243,6 +245,8 @@ def _createPlotItem( scan, row = 0, col = 0):
     '''
     create a plotItem, aka viewport (?) with title, axis descriptions and texts
     '''
+    #
+    #print "graphics.createPlotItem", scan.name, row, col
     #
     #
     #
@@ -364,9 +368,10 @@ def display( nameList = None):
     #
     # don't want to check for nameList is None below
     #
-    print "graphics.display"
     if nameList is None:
         nameList = []
+
+    #print "graphics.displaY, nameList", repr( nameList)
 
     if _QApp is None: 
         initGraphic()
@@ -404,8 +409,8 @@ def display( nameList = None):
     # adjust the graphics window to the number of displayed scans
     #
     _setSizeGraphicsWindow( _GQE.getNumberOfScansToBeDisplayed( nameList))
-
-    ncol = _math.floor( _math.sqrt( len( scanList)) + 0.5)
+    lenTemp = len( scanList) - _GQE.getNoOverlaid()
+    ncol = _math.floor( _math.sqrt( lenTemp) + 0.5)
     col = 0
     row = 0
     title = _GQE.getTitle()
@@ -426,15 +431,12 @@ def display( nameList = None):
     #     non-overlaid scans
     #
     for i in range( len( scanList)):
+
         #
         # 'scan' is a copy
         #
         scan = scanList[i]
-        #
-        # check, if theren is something to display
-        #
-        if scan.lastIndex == scan.currentIndex:
-            continue
+        #print "graphics.display.firstPass,", scan.name, scan.lastIndex, scan.currentIndex
         #
         # overlay? - don't create a plot for this scan. Plot it
         # in the second pass. But it is displayed, if it is the only 
@@ -454,24 +456,32 @@ def display( nameList = None):
             try:
                 scan.plotItem = _createPlotItem( scan, row, col)
             except ValueError, e:
-                print "graphics.display: exception from createPlotItem"
-                print "graphics.display: consider a 'cls'"
                 print "graphics.display", repr( e)
+                print "graphics.display: exception from createPlotItem"
                 return 
             scan.plotDataItem = scan.plotItem.plot( name = scan.name, pen = _getPen( scan))
+
+        #
+        # check, if there is something to display
+        # 
+        if scan.lastIndex == scan.currentIndex:
+            col += scan.colSpan
+            if col >= ncol:
+                col = 0
+                row += 1
+            continue
 
         #
         # modify the scan 
         #
         scanList[i].plotItem = scan.plotItem
-
+        #print "graphics.display, plotting %s %d pts out of %d" % (scan.name, scan.currentIndex, len( scan.x)) 
         scan.plotDataItem.setData( scan.x[:(scan.currentIndex + 1)], 
                                    scan.y[:(scan.currentIndex + 1)])
         #
         # keep track of what has already been displayed
         #
         scan.lastIndex = scan.currentIndex
-        print "+++graphics.display:name %s, current %d, last %d" % (scan.name, scan.lastIndex, scan.currentIndex)
         if flagDisplaySingle: 
             _prepareMouse( scan)
 
@@ -489,15 +499,16 @@ def display( nameList = None):
         if len( nameList) == 1:
             break
         #
-        # check, if theren is something to display
-        #
-        if scan.lastIndex == scan.currentIndex:
-            continue
-        #
         # 'scan' is a copy
         #
         scan = scanList[i]
         if scan.overlay is None:
+            continue
+
+        #
+        # check, if theren is something to display
+        #
+        if scan.lastIndex == scan.currentIndex:
             continue
         
         if len( nameList) > 0 and scan.name not in nameList:

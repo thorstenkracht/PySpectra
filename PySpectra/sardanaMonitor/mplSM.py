@@ -6,12 +6,20 @@ this Gui uses PySpectra to
   - displays scans or single scans
 '''
 import sys, os, argparse, math, PyTango, time
-from PyQt4 import QtGui, QtCore
+#from PyQt4 import QtGui, QtCore
+from taurus.external.qt import QtGui 
+from taurus.external.qt import QtCore
+from taurus.qt.qtgui.application import TaurusApplication 
+import taurus
 import numpy as np
 import HasyUtils
 import PySpectra as pysp
+import threading
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.figure import Figure
 
-win = None
 ACTIVITY_SYMBOLS = ['|', '/', '-', '\\', '|', '/', '-', '\\'] 
 updateTime = 0.5
 
@@ -26,7 +34,7 @@ def handleFileCallBack( self, fileName):
     elif fileName.endswith( ".fio") or fileName.endswith( ".dat"):
         pysp.cls()
         pysp.delete()
-        pysp.read( [fileName])
+        pysp.read( fileName)
     else:
         if self is not None:
             self.logWidget.append(  "make_cb_files: bad fileName %s" % fileName)
@@ -89,6 +97,128 @@ class QPushButtonTK( QtGui.QPushButton):
             print 'Down Arrow Pressed', obj.text()
         else:
             print "QPush.keyPressEvent", key, self.text()
+
+#
+#
+#
+class MplWidget( QtGui.QMainWindow):
+    def __init__( self, parent = None):
+        super( MplWidget, self).__init__( parent)
+        self.parent = parent
+
+        self.setWindowTitle( "Matplotlib Widget")
+        #geo = QtGui.QDesktopWidget().screenGeometry(-1)
+        # size
+        #self.setGeometry( geo.width() - 680, 30, 650, 500)
+        self.prepareWidgets()
+
+        self.menuBar = QtGui.QMenuBar()
+        self.setMenuBar( self.menuBar)
+        self.prepareMenuBar()
+
+        #
+        # Status Bar
+        #
+        self.statusBar = QtGui.QStatusBar()
+        self.setStatusBar( self.statusBar)
+        self.prepareStatusBar()
+
+        self.paused = False
+        self.updateTimer = QtCore.QTimer(self)
+        self.updateTimer.timeout.connect( self.cb_refreshMain)
+        self.updateTimer.start( int( updateTime*1000))
+        self.show()
+        
+    def prepareWidgets( self):
+        w = QtGui.QWidget()
+        #
+        # start with a vertical layout
+        #
+        self.layout_v = QtGui.QVBoxLayout()
+        w.setLayout( self.layout_v)
+        self.setCentralWidget( w)
+
+        self.figure = Figure()
+
+        self.canvas = FigureCanvas( self.figure)
+        pysp.initGraphic( self.figure, self.canvas)
+        self.toolbarMpl = NavigationToolbar(self.canvas, self)
+        self.layout_v.addWidget(self.toolbarMpl)
+        self.layout_v.addWidget(self.canvas)
+    #
+    # the menu bar
+    #
+    def prepareMenuBar( self): 
+
+        self.fileMenu = self.menuBar.addMenu('&File')
+
+        self.exitAction = QtGui.QAction('E&xit', self)        
+        self.exitAction.setStatusTip('Exit application')
+        self.exitAction.triggered.connect( sys.exit)
+        self.fileMenu.addAction( self.exitAction)
+
+        #
+        # the activity menubar: help and activity
+        #
+        self.menuBarActivity = QtGui.QMenuBar( self.menuBar)
+        self.menuBar.setCornerWidget( self.menuBarActivity, QtCore.Qt.TopRightCorner)
+
+        #
+        # Help menu (bottom part)
+        #
+        self.helpMenu = self.menuBarActivity.addMenu('Help')
+        self.widgetAction = self.helpMenu.addAction(self.tr("Widget"))
+        self.widgetAction.triggered.connect( self.cb_helpWidget)
+
+        self.activityIndex = 0
+        self.activity = self.menuBarActivity.addMenu( "|")
+
+    #
+    # the status bar
+    #
+    def prepareStatusBar( self): 
+
+        self.display = QtGui.QPushButton(self.tr("&Display")) 
+        self.statusBar.addPermanentWidget( self.display) # 'permanent' to shift it right
+        self.display.clicked.connect( self.cb_display)
+        self.display.setShortcut( "Alt+d")
+
+        self.exit = QtGui.QPushButton(self.tr("&Exit")) 
+        self.statusBar.addPermanentWidget( self.exit) # 'permanent' to shift it right
+        self.exit.clicked.connect( self.close)
+        self.exit.setShortcut( "Alt+x")
+        
+    def cb_refreshMain( self):
+
+        if self.isMinimized(): 
+            return
+        
+        self.activityIndex += 1
+        if self.activityIndex > (len( ACTIVITY_SYMBOLS) - 1):
+            self.activityIndex = 0
+        self.activity.setTitle( ACTIVITY_SYMBOLS[ self.activityIndex])
+        self.updateTimer.stop()
+        
+        self.updateTimer.start( int( updateTime*1000))
+
+    def cb_display( self): 
+        pysp.cls()
+        pysp.display()
+
+    def cb_helpWidget(self):
+        QtGui.QMessageBox.about(self, self.tr("Help Widget"), self.tr(
+                "<h3> ScanAttributes</h3>"
+                "The attributes of a scan"
+                "<ul>"
+                "<li> some remarks</li>"
+                "</ul>"
+                ))
+
+    def cb_dotyChanged( self):
+        self.scan.doty = self.w_dotyCheckBox.isChecked()
+
+        return 
+
 #
 #
 #
@@ -120,7 +250,7 @@ class ScanAttributes( QtGui.QMainWindow):
 
         self.paused = False
         self.updateTimer = QtCore.QTimer(self)
-        self.updateTimer.timeout.connect( self.cb_refreshMain)
+        self.updateTimer.timeout.connect( self.cb_refreshAttr)
         self.updateTimer.start( int( updateTime*1000))
         self.show()
         
@@ -195,10 +325,10 @@ class ScanAttributes( QtGui.QMainWindow):
         self.exit.clicked.connect( self.close)
         self.exit.setShortcut( "Alt+x")
         
-    def cb_refreshMain( self):
+    def cb_refreshAttr( self):
 
-        if self.isMinimized(): 
-            return
+        #if self.isMinimized(): 
+        #    return
         
         self.activityIndex += 1
         if self.activityIndex > (len( ACTIVITY_SYMBOLS) - 1):
@@ -228,12 +358,12 @@ class ScanAttributes( QtGui.QMainWindow):
 #
 # ===
 #
-class pySpectraGui( QtGui.QMainWindow):
+class pyspSM( QtGui.QMainWindow):
     '''
     the main class of the SardanaMotorMenu application
     '''
     def __init__( self, parent = None):
-        super( pySpectraGui, self).__init__( parent)
+        super( pyspSM, self).__init__( parent)
 
         self.setWindowTitle( "PySpectraGui")
         geo = QtGui.QDesktopWidget().screenGeometry(-1)
@@ -241,7 +371,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.heighthMax = geo.height()
         # size
         self.setGeometry( geo.width() - 680, 30, 650, 500)
-
+        self.scanNo = 0
         # used by cb_postscript
         self.lastFileWritten = None
 
@@ -271,37 +401,8 @@ class pySpectraGui( QtGui.QMainWindow):
 
         #self.resize( 600, 600)
 
-    def keyPressEvent(self, event):
-
-        key = event.key()
-        print "pyspFIO.keyPressEvent", key
-
-        if key == QtCore.Qt.Key_Left:
-            print('Left Arrow Pressed')
-
-    def eventFilter(self, obj, event):
-        print "", repr( event), event.type()
-        print "   ", dir( event)
-        #
-        # Only watch for specific slider keys.
-        # Everything else is pass-thru
-        #
-        if obj is self.scrollAreaFiles and event.type() == event.KeyPress:
-            print "+++ here we go"
-            key = event.key()
-            if key == QtCore.Qt.Key_Up:
-                return True
-            elif key == QtCore.Qt.Key_Down:
-                return True
-            elif key == QtCore.Qt.Key_Right:
-                self.cb_cursorRight()
-                return True
-            elif key == QtCore.Qt.Key_Left:
-                self.cb_cursorLeft()
-                return True
-            return False
-        return False
-
+        self.mplWidget = MplWidget()
+        
     #
     # the central widgets
     #
@@ -373,7 +474,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.next.clicked.connect( self.cb_next)
         self.next.setShortcut( "Alt+n")
 
-        hBox.addStretch()            
+        hBox.addStretch()   
 
         self.layout_v.addLayout( hBox)
 
@@ -718,34 +819,27 @@ class pySpectraGui( QtGui.QMainWindow):
                 "</ul>"
                 ))
 
-def parseCLI():
-    parser = argparse.ArgumentParser( 
-        formatter_class = argparse.RawDescriptionHelpFormatter,
-        description="PySpectraGui", 
-        epilog='''\
-Examples:
-  PySpectRAGui
-
-    ''')
-    # parser.add_argument('-n', dest='np', default = 2000, help='the no. of points per plot')
-
-    args = parser.parse_args()
-
-    return args
-
-
 def main():
-    args = parseCLI()
-    #sys.argv = []
+
     if os.getenv( "DISPLAY") != ':0':
         QtGui.QApplication.setStyle( 'Cleanlooks')
 
-    pysp.initGraphic()
+    app = QtGui.QApplication.instance()
+    if app is None:
+        #app = QtGui.QApplication(sys.argv)
+        app = TaurusApplication( sys.argv)
 
-    app = QtGui.QApplication(sys.argv)
-
-    o = pySpectraGui()
+    o = pyspSM()
     o.show()
+
+    import mplSpectraDoor
+
+    try:
+        door = taurus.Device( HasyUtils.getLocalDoorNames()[0])
+    except Exception, e:
+        print "SardanaMonitor.main: trouble connecting to door", HasyUtils.getLocalDoorNames()[0]
+        print repr( e)
+        sys.exit(255)
 
     try:
         sys.exit( app.exec_())

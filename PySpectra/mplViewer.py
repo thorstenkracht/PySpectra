@@ -10,6 +10,10 @@ from PyQt4 import QtGui, QtCore
 import numpy as np
 import HasyUtils
 import PySpectra as pysp
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.figure import Figure
 
 win = None
 ACTIVITY_SYMBOLS = ['|', '/', '-', '\\', '|', '/', '-', '\\'] 
@@ -27,6 +31,7 @@ def handleFileCallBack( self, fileName):
         pysp.cls()
         pysp.delete()
         pysp.read( [fileName])
+        pysp.setTitle( fileName)
     else:
         if self is not None:
             self.logWidget.append(  "make_cb_files: bad fileName %s" % fileName)
@@ -226,6 +231,127 @@ class ScanAttributes( QtGui.QMainWindow):
 
         return 
 #
+#
+#
+class MplWidget( QtGui.QMainWindow):
+    def __init__( self, parent = None):
+        super( MplWidget, self).__init__( parent)
+        self.parent = parent
+
+        self.setWindowTitle( "Matplotlib Widget")
+        #geo = QtGui.QDesktopWidget().screenGeometry(-1)
+        # size
+        #self.setGeometry( geo.width() - 680, 30, 650, 500)
+        self.prepareWidgets()
+
+        self.menuBar = QtGui.QMenuBar()
+        self.setMenuBar( self.menuBar)
+        self.prepareMenuBar()
+
+        #
+        # Status Bar
+        #
+        self.statusBar = QtGui.QStatusBar()
+        self.setStatusBar( self.statusBar)
+        self.prepareStatusBar()
+
+        self.paused = False
+        self.updateTimer = QtCore.QTimer(self)
+        self.updateTimer.timeout.connect( self.cb_refreshMain)
+        self.updateTimer.start( int( updateTime*1000))
+        self.show()
+        
+    def prepareWidgets( self):
+        w = QtGui.QWidget()
+        #
+        # start with a vertical layout
+        #
+        self.layout_v = QtGui.QVBoxLayout()
+        w.setLayout( self.layout_v)
+        self.setCentralWidget( w)
+
+
+        self.figure = Figure()
+
+        self.canvas = FigureCanvas( self.figure)
+        pysp.initGraphic( self.figure, self.canvas)
+        self.toolbarMpl = NavigationToolbar(self.canvas, self)
+        self.layout_v.addWidget(self.toolbarMpl)
+        self.layout_v.addWidget(self.canvas)
+    #
+    # the menu bar
+    #
+    def prepareMenuBar( self): 
+
+        self.fileMenu = self.menuBar.addMenu('&File')
+
+        self.exitAction = QtGui.QAction('E&xit', self)        
+        self.exitAction.setStatusTip('Exit application')
+        self.exitAction.triggered.connect( sys.exit)
+        self.fileMenu.addAction( self.exitAction)
+
+        #
+        # the activity menubar: help and activity
+        #
+        self.menuBarActivity = QtGui.QMenuBar( self.menuBar)
+        self.menuBar.setCornerWidget( self.menuBarActivity, QtCore.Qt.TopRightCorner)
+
+        #
+        # Help menu (bottom part)
+        #
+        self.helpMenu = self.menuBarActivity.addMenu('Help')
+        self.widgetAction = self.helpMenu.addAction(self.tr("Widget"))
+        self.widgetAction.triggered.connect( self.cb_helpWidget)
+
+        self.activityIndex = 0
+        self.activity = self.menuBarActivity.addMenu( "|")
+
+    #
+    # the status bar
+    #
+    def prepareStatusBar( self): 
+
+        self.display = QtGui.QPushButton(self.tr("&Display")) 
+        self.statusBar.addPermanentWidget( self.display) # 'permanent' to shift it right
+        self.display.clicked.connect( self.cb_display)
+        self.display.setShortcut( "Alt+d")
+
+        self.exit = QtGui.QPushButton(self.tr("&Exit")) 
+        self.statusBar.addPermanentWidget( self.exit) # 'permanent' to shift it right
+        self.exit.clicked.connect( self.close)
+        self.exit.setShortcut( "Alt+x")
+        
+    def cb_refreshMain( self):
+
+        if self.isMinimized(): 
+            return
+        
+        self.activityIndex += 1
+        if self.activityIndex > (len( ACTIVITY_SYMBOLS) - 1):
+            self.activityIndex = 0
+        self.activity.setTitle( ACTIVITY_SYMBOLS[ self.activityIndex])
+        self.updateTimer.stop()
+        
+        self.updateTimer.start( int( updateTime*1000))
+
+    def cb_display( self): 
+        pysp.cls()
+        pysp.display( [self.scan.name])
+
+    def cb_helpWidget(self):
+        QtGui.QMessageBox.about(self, self.tr("Help Widget"), self.tr(
+                "<h3> ScanAttributes</h3>"
+                "The attributes of a scan"
+                "<ul>"
+                "<li> some remarks</li>"
+                "</ul>"
+                ))
+
+    def cb_dotyChanged( self):
+        self.scan.doty = self.w_dotyCheckBox.isChecked()
+
+        return 
+#
 # ===
 #
 class pySpectraGui( QtGui.QMainWindow):
@@ -267,40 +393,10 @@ class pySpectraGui( QtGui.QMainWindow):
         self.updateTimer = QtCore.QTimer(self)
         self.updateTimer.timeout.connect( self.cb_refreshMain)
         self.updateTimer.start( int( updateTime*1000))
-        #self.installEventFilter( self)
 
         #self.resize( 600, 600)
 
-    def keyPressEvent(self, event):
-
-        key = event.key()
-        print "pyspFIO.keyPressEvent", key
-
-        if key == QtCore.Qt.Key_Left:
-            print('Left Arrow Pressed')
-
-    def eventFilter(self, obj, event):
-        print "", repr( event), event.type()
-        print "   ", dir( event)
-        #
-        # Only watch for specific slider keys.
-        # Everything else is pass-thru
-        #
-        if obj is self.scrollAreaFiles and event.type() == event.KeyPress:
-            print "+++ here we go"
-            key = event.key()
-            if key == QtCore.Qt.Key_Up:
-                return True
-            elif key == QtCore.Qt.Key_Down:
-                return True
-            elif key == QtCore.Qt.Key_Right:
-                self.cb_cursorRight()
-                return True
-            elif key == QtCore.Qt.Key_Left:
-                self.cb_cursorLeft()
-                return True
-            return False
-        return False
+        self.mplWidget = MplWidget()        
 
     #
     # the central widgets
@@ -607,10 +703,33 @@ class pySpectraGui( QtGui.QMainWindow):
     #
     def prepareStatusBar( self): 
 
+        self.clsBtn = QtGui.QPushButton(self.tr("&Cls")) 
+        self.statusBar.addWidget( self.clsBtn) 
+        self.clsBtn.clicked.connect( self.cb_cls)
+        self.clsBtn.setShortcut( "Alt+c")
+
+        self.deleteBtn = QtGui.QPushButton(self.tr("&Delete")) 
+        self.statusBar.addWidget( self.deleteBtn) 
+        self.deleteBtn.clicked.connect( self.cb_delete)
+        self.deleteBtn.setShortcut( "Alt+d")
+
         self.exit = QtGui.QPushButton(self.tr("&Exit")) 
         self.statusBar.addPermanentWidget( self.exit) # 'permanent' to shift it right
         self.exit.clicked.connect( sys.exit)
         self.exit.setShortcut( "Alt+x")
+
+    def cb_cls( self):
+        '''
+        clear screen
+        '''
+        self.mplWidget.figure.clear()
+        self.mplWidget.canvas.draw()
+        
+    def cb_delete( self): 
+        '''
+        delete the scans, internally
+        '''
+        pysp.delete()
 
     def cb_doty( self):
         lst = pysp.getScanList()
@@ -740,7 +859,7 @@ def main():
     if os.getenv( "DISPLAY") != ':0':
         QtGui.QApplication.setStyle( 'Cleanlooks')
 
-    pysp.initGraphic()
+#    pysp.initGraphic()
 
     app = QtGui.QApplication(sys.argv)
 
