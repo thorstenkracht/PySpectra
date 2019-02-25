@@ -34,7 +34,15 @@ PySpectra.overlay( src, trgt)
 '''
 from dMgt.GQE import *
 from dMgt.calc import *
-#from pqtgrph.graphics import *
-from mtpltlb.graphics import *
+
+import __builtin__
+try:
+    if __builtin__.__dict__[ 'graphicsLib'] == 'matplotlib':
+        from mtpltlb.graphics import *
+    else: 
+        from pqtgrph.graphics import *
+except: 
+    from pqtgrph.graphics import *
+
 from utils import *
 import ipython.ifc 

@@ -70,20 +70,6 @@ def setWsViewport( size = None):
 
     return 
 
-
-def procEventsLoop():
-    print "\nPress <return> to continue ",
-    while True:
-        _time.sleep(0.01)
-        plt.draw()
-        key = _HasyUtils.inkey()        
-        if key == 10:
-            break
-    print ""
-
-def processEvents(): 
-    raise ValueError( "mtpltlb.graphics.processEvents: this is for pyqtgraph")
-
 def cls():
     '''
     clear screen: allow for a new plot
@@ -318,12 +304,12 @@ def display( nameList = None):
         # 'scan' is a copy
         #
         scan = scanList[i]
-        #print "graphics.display", scan.name
+        print "graphics.display", scan.name, "currentIndex", scan.currentIndex, "LastIndex", scan.lastIndex
         #
         # check, if theren is something to display
         #
-        if scan.lastIndex == scan.currentIndex:
-            continue
+        #if scan.lastIndex == scan.currentIndex:
+        #    continue
         #
         # overlay? - don't create a plot for this scan. Plot it
         # in the second pass. But it is displayed, if it is the only 
@@ -445,3 +431,19 @@ def display( nameList = None):
     if Canvas is not None:
         Canvas.draw()
     return
+
+def procEventsLoop():
+    print "\nPress <return> to continue ",
+    while True:
+        _time.sleep(0.01)
+        processEvents()
+        key = _HasyUtils.inkey()        
+        if key == 10:
+            break
+    print ""
+
+def processEvents(): 
+    #_QApp.processEvents()
+    plt.draw()
+    if Canvas is not None:
+        Canvas.draw()

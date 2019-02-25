@@ -297,6 +297,8 @@ def _createPlotItem( scan, row = 0, col = 0):
         if not scan.autorangeY: 
             arY = False
 
+    print "graphics.createPlotItem", scan.name, "autorange x, y", arX, arY
+    
     plotItem.enableAutoRange( x = arX, y = arY)
 
     if not arY: 
@@ -308,7 +310,7 @@ def _createPlotItem( scan, row = 0, col = 0):
     plotItem.setMouseEnabled( x = True, y = True)
 
     if not arX: 
-        plotItem.setXRange( scan.xMin, scan.xMax)
+        plotItem.setXRange( scan.xMin, scan.xMax, padding=0)
 
     for elm in scan.textList:
         if elm.hAlign == 'left':
@@ -554,6 +556,3 @@ def procEventsLoop():
 
 def processEvents(): 
     _QApp.processEvents()
-
-
-     
