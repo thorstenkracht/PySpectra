@@ -1,8 +1,10 @@
 # PySpectra
 
-A program to display 1-dimensional data
+A program to display 1-dimensional data using pyqtgraph or matplotlib.
 
 Interfaces:
+
+* Monitor pyspMonitor.py (uses pyspDoor.py) 
 
 * GUI: pyspViewer.py
     
@@ -14,6 +16,9 @@ Interfaces:
 
     ```
     #!/usr/bin/env python
+    import __builtin__
+    #__builtin__.__dict__[ 'graphicsLib'] = 'matplotlib'
+    __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
     import PySpectra as pysp
     import numpy as np
     import PySpectra.ipython.startup
@@ -29,6 +34,10 @@ Interfaces:
 
 * Python API
     ```
+    #!/usr/bin/env python
+    import __builtin__
+    #__builtin__.__dict__[ 'graphicsLib'] = 'matplotlib'
+    __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
     pysp.create( "t1")
     pysp.create( "t2")
     pysp.display()
