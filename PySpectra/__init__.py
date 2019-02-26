@@ -38,11 +38,16 @@ from dMgt.calc import *
 import __builtin__
 try:
     if __builtin__.__dict__[ 'graphicsLib'] == 'matplotlib':
+        #print "PySpectra.__init__, importing matplotlib"
         from mtpltlb.graphics import *
     else: 
+        #print "PySpectra.__init__, importing pyqtgraph"
         from pqtgrph.graphics import *
+        import mtpltlb.graphics as mpl_graphics # to create postscript
 except: 
+    #print "PySpectra.__init__, importing pyqtgraph"
     from pqtgrph.graphics import *
+    import mtpltlb.graphics as mpl_graphics
 
 from utils import *
 import ipython.ifc 

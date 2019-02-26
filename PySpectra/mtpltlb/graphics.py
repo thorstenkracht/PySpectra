@@ -27,7 +27,7 @@ def initGraphic( figureIn = None, canvasIn = None):
         return 
 
     plt.ion()
-    print "graphics.initGraphic, Fig", id( Fig)
+    #print "graphics.initGraphic"
 
     if not plt.get_fignums():
         Fig = plt.figure(1, figsize=(11.6,8.2))
@@ -36,6 +36,15 @@ def initGraphic( figureIn = None, canvasIn = None):
         Fig.clear()
 
     return
+
+def close(): 
+    global Fig
+    if Fig is None:
+        return
+    cls()
+    Fig.close()
+    Fig = None
+    return 
 
 def _setSizeGraphicsWindow( nScan):
 
@@ -74,7 +83,7 @@ def cls():
     '''
     clear screen: allow for a new plot
     '''
-    print "graphics.cls"
+    #print "graphics.cls"
     if Fig is None:
         print "graphics.cls, Fig is None"
         return 
@@ -85,10 +94,15 @@ def cls():
     #
     scanList = _GQE.getScanList()
     for i in range( len( scanList)):
-        print "graphics.cls, clearing %s" % (scanList[i].name)
+        #print "graphics.cls, clearing %s" % (scanList[i].name)
         scanList[i].plotItem = None
         scanList[i].plotDataItem = None
         scanList[i].lastIndex = 0
+
+
+def listGraphicsItems(): 
+    print "mtpltlb.graphics.listGraphicsItems"
+    return
 
 def _doty2datetime(doty, year = None):
     """
@@ -188,19 +202,6 @@ def _adjustFigure():
 
     return 
 
-def _getNumberOfPlottedScans(): 
-    '''
-    returns the number of scans which already the plotItem - 
-    the number of scans that have already at least partially plotted
-    '''
-    scanList = _GQE.getScanList()
-    count = 0
-    for scan in scanList:
-        if scan.plotItem is not None:
-            count += 1
-    print "graphics.getNumberOfPlottedScans", count
-    return count
-    
 def display( nameList = None):
     '''
     display one or more or all scans
@@ -225,7 +226,7 @@ def display( nameList = None):
     #
     # don't want to check for nameList is None below
     #
-    print "graphics.display, nameList", nameList
+    #print "graphics.display, nameList", nameList
     if nameList is None:
         nameList = []
 
@@ -266,8 +267,6 @@ def display( nameList = None):
             return 
         ncol = int( _math.floor( _math.sqrt( lenTemp) + 0.5))
         nrow = int( _math.ceil( float(lenTemp)/float(ncol)))
-        #nplot = 1 + _getNumberOfPlottedScans()
-        #print "graphics.display: lenTemp %d, ncol %d, nrow %d" % (lenTemp, ncol, nrow)
         nplot = 1 
     elif len( nameList) == 1:
         if lenPlotted != 1 and lenPlotted != -1: 
@@ -304,7 +303,7 @@ def display( nameList = None):
         # 'scan' is a copy
         #
         scan = scanList[i]
-        print "graphics.display", scan.name, "currentIndex", scan.currentIndex, "LastIndex", scan.lastIndex
+        #print "graphics.display", scan.name, "currentIndex", scan.currentIndex, "LastIndex", scan.lastIndex
         #
         # check, if theren is something to display
         #
@@ -327,7 +326,7 @@ def display( nameList = None):
         #
         if scan.plotItem is None:
             try:
-                print "graphics.display: creating plot for", scan.name, nrow, ncol, nplot
+                #print "graphics.display: creating plot for", scan.name, nrow, ncol, nplot
                 scan.plotItem = _createPlotItem( scan, nrow, ncol, nplot)
             except ValueError, e:
                 print "graphics.display: exception from createPlotItem"
@@ -366,8 +365,8 @@ def display( nameList = None):
             #xDateMpl = matplotlib.date2num( xDate)
             #scan.plotItem.plot_date( xDateMpl, scan.y, xdate = True)
         else:
-            print "graphics.display: plotting %s %d of %d" % \
-                (scan.name, scan.currentIndex + 1, len( scan.x))
+            #print "graphics.display: plotting %s %d of %d" % \
+            #    (scan.name, scan.currentIndex + 1, len( scan.x))
             scan.plotDataItem.set_data( scan.x[:(scan.currentIndex + 1)], 
                                         scan.y[:(scan.currentIndex + 1)])
 
@@ -409,7 +408,7 @@ def display( nameList = None):
         #
         scan.plotItem = target.plotItem.twinx()
 
-        print "display: overlying %s to %s" % (scan.name, target.name)
+        #print "display: overlaying %s to %s" % (scan.name, target.name)
 
         scan.plotDataItem, = scan.plotItem.plot( scan.x[:(scan.currentIndex + 1)], 
                                                         scan.y[:(scan.currentIndex + 1)], scan.color)
@@ -426,7 +425,6 @@ def display( nameList = None):
             scan.plotItem.set_ylim( scan.yMin, scan.yMax)
         scan.plotItem.set_xlim( scan.xMin, scan.xMax)
 
-    print "graphics.display, calling draw()"
     plt.draw()
     if Canvas is not None:
         Canvas.draw()

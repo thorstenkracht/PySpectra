@@ -256,8 +256,6 @@ class testGQE( unittest.TestCase):
             print "testGQE.testFillData", i
             scan.setY( i, math.tan( float( i)/10))
             PySpectra.display()
-            time.sleep(0.1)
-            
 
         diffTime = time.time() - startTime
         self.assertLess( diffTime, 5.)

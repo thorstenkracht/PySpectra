@@ -194,32 +194,6 @@ def sl1(line):
 @register_line_magic
 def sl2(line):
     '''
-    create 2 scans
-    '''
-    pysp.cls()
-    pysp.delete()
-    t1 = pysp.Scan( name = "t1", color = 'blue', yLabel = 'sin')
-    t1.y = np.sin( t1.x)
-    t2 = pysp.Scan( name = "t2", color = 'green', yLabel = 'tan')
-    t2.y = np.tan( t2.x)
-
-@register_line_magic
-def sl3(line):
-    '''
-    scan list 1, creates some scans, fill them with data
-    '''
-    pysp.cls()
-    pysp.delete()
-    t1 = pysp.Scan( name = "t1", color = 'blue', yLabel = 'sin')
-    t1.y = np.sin( t1.x)
-    t2 = pysp.Scan( "t2", yLabel = 'cos')
-    t2.y = np.cos( t2.x)
-    t3 = pysp.Scan( name = "t3", color = 'green', yLabel = 'tan')
-    t3.y = np.tan( t3.x)
-
-@register_line_magic
-def sl4(line):
-    '''
     scan list 1, creates some scans, fill them with data
     '''
     pysp.cls()
@@ -237,7 +211,7 @@ def sl4(line):
     pysp.overlay( 't5', 't3')
 
 @register_line_magic
-def sl5(line):
+def sl3(line):
     '''
     many scans
     '''
@@ -268,6 +242,4 @@ del y2my
 del sl1
 del sl2
 del sl3
-del sl4
-del sl5
 

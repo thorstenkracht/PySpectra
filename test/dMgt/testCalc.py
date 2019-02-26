@@ -17,6 +17,21 @@ import math
 class testCalc( unittest.TestCase):
         
     def testDerivative( self):
+        '''
+        This test case produces this error, maybe it is related to the fact
+        that the derivative is from 0.025 to 9.975 and one point less.
+
+        Traceback (most recent call last):
+        File "/usr/lib/python2.7/dist-packages/pyqtgraph/graphicsItems/AxisItem.py", line 412, in paint
+        specs = self.generateDrawSpecs(painter)
+        File "/usr/lib/python2.7/dist-packages/pyqtgraph/graphicsItems/AxisItem.py", line 819, in generateDrawSpecs
+        textSize2 = np.max([r.height() for r in textRects])
+        File "/usr/lib/python2.7/dist-packages/numpy/core/fromnumeric.py", line 2125, in amax
+        out=out, keepdims=keepdims)
+        File "/usr/lib/python2.7/dist-packages/numpy/core/_methods.py", line 17, in _amax
+        out=out, keepdims=keepdims)
+        ValueError: zero-size array to reduction operation maximum which has no identity
+        '''
 
         PySpectra.cls()
         PySpectra.delete()
@@ -44,7 +59,7 @@ class testCalc( unittest.TestCase):
         PySpectra.display()
         PySpectra.show()
         PySpectra.procEventsLoop()
-
+        
     def testAntiDerivative( self):
 
         PySpectra.cls()

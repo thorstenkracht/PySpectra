@@ -38,9 +38,20 @@ def initGraphic():
         _pg.setConfigOption( 'background', 'w')
         _pg.setConfigOption( 'foreground', 'k')
         _win = _pg.GraphicsWindow( title="PySpectra Application")
-        _win.setGeometry( 30, 30, 680, int( 680./1.414))
+        #_win.setGeometry( 30, 30, 680, int( 680./1.414))
+        _win.setGeometry( 30, 30, 750, int( 750./1.414))
 
     return (_QApp, _win)
+
+def close(): 
+    global _win, _QApp
+    if _win is None:
+        return 
+    cls()
+    _win.close()
+    _win = None
+    _QApp = None
+    return 
 
 def _setSizeGraphicsWindow( nScan):
 
@@ -125,6 +136,16 @@ def cls():
         scanList[i].lastIndex = 0
 
     _QApp.processEvents()
+
+def listGraphicsItems(): 
+    '''
+    debugging tool
+    '''
+    return 
+    for item in _win.items():
+        print "item:", type( item)
+        #if type( item) == _QtGui.QGraphicsTextItem:
+        #    print "text", dir( item)
 
 def _doty2datetime(doty, year = None):
     """
@@ -297,7 +318,7 @@ def _createPlotItem( scan, row = 0, col = 0):
         if not scan.autorangeY: 
             arY = False
 
-    print "graphics.createPlotItem", scan.name, "autorange x, y", arX, arY
+    #print "graphics.createPlotItem", scan.name, "autorange x, y", arX, arY
     
     plotItem.enableAutoRange( x = arX, y = arY)
 
@@ -477,7 +498,7 @@ def display( nameList = None):
         # modify the scan 
         #
         scanList[i].plotItem = scan.plotItem
-        #print "graphics.display, plotting %s %d pts out of %d" % (scan.name, scan.currentIndex, len( scan.x)) 
+        #print "graphics.display, plotting %s currentIndex %d len: %d" % (scan.name, scan.currentIndex, len( scan.x)) 
         scan.plotDataItem.setData( scan.x[:(scan.currentIndex + 1)], 
                                    scan.y[:(scan.currentIndex + 1)])
         #
@@ -541,6 +562,10 @@ def display( nameList = None):
     # appear in the upper left corner of the graphics screen
     #
     #_time.sleep(0.1)
+    #
+    # /usr/lib/python2.7/dist-packages/pyqtgraph/graphicsItems/AxisItem.py L.818
+    # crashed because len( textRects) == 0
+    #
     _QApp.processEvents()
     return
 

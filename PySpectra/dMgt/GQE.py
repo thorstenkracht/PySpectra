@@ -248,14 +248,18 @@ class Scan():
         #
         if 'at' in kwargs: 
             atStr = kwargs[ 'at']
+            del kwargs[ 'at']
             #
             # the string '(2, 3, 4)' -> list of ints [1, 2, 3]
             #
-            lstStr = a.strip()[1:-1].split( ',')
-            if len( lstStr) != 3:
-                self.at = [1, 1, 1]
+            if type( atStr) is tuple:
+                self.at = list( atStr)
             else:
-                self.at = [int( i) for i in lstStr]
+                lstStr = atStr.strip()[1:-1].split( ',')
+                if len( lstStr) != 3:
+                    self.at = [1, 1, 1]
+                else:
+                    self.at = [int( i) for i in lstStr]
             
         return 
 
@@ -452,7 +456,12 @@ def show():
             (scan.xMin, scan.xMax, scan.nPts, len( scan.x))
         print "   yMin %s, yMax %s, overlay %s" % \
             ( repr(scan.yMin), repr( scan.yMax), scan.overlay)
+        print "   x[0] %s, x[-1] %s" % \
+            ( repr(scan.x[0]), repr( scan.x[-1]))
         count += 1
+
+    _PySpectra.listGraphicsItems()
+
     print " %s scans" % count
 
     if _title: 

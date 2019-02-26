@@ -255,7 +255,7 @@ class testGraphics( unittest.TestCase):
             PySpectra.processEvents()
 
         diffTime = time.time() - startTime
-        self.assertLess( diffTime, 5.)
+        self.assertLess( diffTime, 7.)
 
 if __name__ == "__main__":
     unittest.main()

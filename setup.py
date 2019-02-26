@@ -61,7 +61,7 @@ setup( name="python-pyspectra",
        # beware: MANIFEST somehow memorizes the script names (can be deleted)
        #
        scripts = [ 'PySpectra/pyspViewer.py',
-                   'PySpectra/sardanaMonitor/pyspSM.py',
+                   'PySpectra/pyspMonitor.py',
                    ],
        packages = ['PySpectra', 
                    'PySpectra/dMgt', 
