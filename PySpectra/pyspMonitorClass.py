@@ -11,7 +11,6 @@ make it run-time importable. The selection pyqtgraph/matplotlib
 has to be done in advance.
 '''
 import __builtin__
-
 import pySpectraGuiClass
 import PySpectra as pysp
 import HasyUtils

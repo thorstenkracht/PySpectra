@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 '''
+
 This is the main PySpectra Gui class. It is used by pyspMonitor, pyspViewer. 
 Both applications select the graphics library in their first code lines. 
 '''
