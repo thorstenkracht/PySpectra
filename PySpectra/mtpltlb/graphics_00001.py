@@ -8,7 +8,6 @@ import os as _os
 import math as _math
 import numpy as _np
 import PySpectra.dMgt.GQE as _GQE
-import PySpectra.utils as _utils
 import HasyUtils as _HasyUtils
 import datetime as _datetime
 
@@ -46,9 +45,6 @@ def close():
     Fig.close()
     Fig = None
     return 
-
-def createPDF():
-    Fig.savefig( "pyspOutput.pdf", bbox_inches='tight')
 
 def _setSizeGraphicsWindow( nScan):
 
@@ -140,18 +136,19 @@ def _doty2datetime(doty, year = None):
         year = now.year
     dotySeconds = doty*24.*60.*60
     boy = _datetime.datetime(year, 1, 1)
-    tmp = boy + _datetime.timedelta(seconds=dotySeconds)
-    #print "doty2datatime doty", doty, "to", repr( tmp)
-    return tmp
+    return boy + _datetime.timedelta(seconds=dotySeconds)
 
-def _createPlotItem( scan):            
+def _createPlotItem( scan, nrow = 0, ncol = 0, nplot = 0):            
     '''
     create a plotItem, aka viewport (?) with title, axis descriptions and texts
     '''
     try:
-        plotItem = Fig.add_subplot( scan.nrow, scan.ncol, scan.nplot)
+        if nrow == 0 or ncol == 0 or nplot == 0:
+            plotItem = Fig.add_subplot( scan.at[0], scan.at[1], scan.at[2])
+        else:
+            plotItem = Fig.add_subplot( nrow, ncol, nplot)
     except Exception, e:
-        print "graphics.createPlotItem: caught exception"
+        print "graphics.createPlotItem: caught exception, nrow", nrow, "ncol", ncol, "nplot", nplot
         print repr( e)
         raise ValueError( "graphics.createPlotItem, throwing exception")
 
@@ -201,9 +198,7 @@ def _textIsOnDisplay( textStr):
     return False
 
 def _adjustFigure():
-    '''
-    configures the figure
-    '''
+
     left = 0.125   # the left side of the subplots of the figure
     right = 0.9    # the right side of the subplots of the figure
     bottom = 0.1   # the bottom of the subplots of the figure
@@ -222,22 +217,6 @@ def _adjustFigure():
                          top = top, wspace = 0.2, hspace = 0.2)
 
     return 
-
-def _displayTitleComment():     
-    title = _GQE.getTitle()
-    if title is not None:
-        if not _textIsOnDisplay( title):
-            Fig.text( 0.5, 0.95, title, va='center', ha='center')
-    
-    comment = _GQE.getComment()
-    if comment is not None:
-        if title is not None:
-            if not _textIsOnDisplay( comment):
-                Fig.text( 0.5, 0.90, comment, va='center', ha='center')
-        else:
-            if not _textIsOnDisplay( comment):
-                Fig.text( 0.5, 0.95, comment, va='center', ha='center')
-    return
 
 def display( nameList = None):
     '''
@@ -295,18 +274,51 @@ def display( nameList = None):
     #
     _setSizeGraphicsWindow( _GQE.getNumberOfScansToBeDisplayed( nameList))
 
-    _adjustFigure()
+    if len( nameList) == 0:
+        lenTemp = len( scanList) - _GQE.getNoOverlaid()
+        if lenTemp != lenPlotted and lenPlotted != -1: 
+            cls()
+        lenPlotted = lenTemp
+        if lenTemp == 0:
+            return 
+        ncol = int( _math.floor( _math.sqrt( lenTemp) + 0.5))
+        nrow = int( _math.ceil( float(lenTemp)/float(ncol)))
+        nplot = 1 
+    elif len( nameList) == 1:
+        if lenPlotted != 1 and lenPlotted != -1: 
+            cls()
+        lenPlotted = 1
+        ncol = 1
+        nrow = 1
+        nplot = 1
+    else:
+        raise ValueError( "graphics.display: to be done")
 
-    _displayTitleComment()
+    _adjustFigure()
+    
+    title = _GQE.getTitle()
+    if title is not None:
+        if not _textIsOnDisplay( title):
+            Fig.text( 0.5, 0.95, title, va='center', ha='center')
+    
+    comment = _GQE.getComment()
+    if comment is not None:
+        if title is not None:
+            if not _textIsOnDisplay( comment):
+                Fig.text( 0.5, 0.90, comment, va='center', ha='center')
+        else:
+            if not _textIsOnDisplay( comment):
+                Fig.text( 0.5, 0.95, comment, va='center', ha='center')
+
     #
     # --- first pass: run through the scans in scanList and display 
     #     non-overlaid scans
     #
-    # set scan.nrow, scan.ncol, scan.nplot
-    #
-    _utils._setScanVPs( nameList, flagDisplaySingle)
-    #
-    for scan in scanList:
+    for i in range( len( scanList)):
+        #
+        # 'scan' is a copy
+        #
+        scan = scanList[i]
         #print "graphics.display", scan.name, "currentIndex", scan.currentIndex, "LastIndex", scan.lastIndex
         #
         # check, if theren is something to display
@@ -331,7 +343,7 @@ def display( nameList = None):
         if scan.plotItem is None:
             try:
                 #print "graphics.display: creating plot for", scan.name, nrow, ncol, nplot
-                scan.plotItem = _createPlotItem( scan)
+                scan.plotItem = _createPlotItem( scan, nrow, ncol, nplot)
             except ValueError, e:
                 print "graphics.display: exception from createPlotItem"
                 print "graphics.display: consider a 'cls'"
@@ -342,56 +354,51 @@ def display( nameList = None):
                 for x in scan.x[:(scan.currentIndex + 1)]:
                     xDate.append( _doty2datetime( x))
                 xDateMpl = matplotlib.dates.date2num( xDate)
-                scan.plotDataItem, = scan.plotItem.plot_date( xDateMpl, 
-                                                              scan.y[:(scan.currentIndex + 1)], 
-                                                              xdate = True,
-                                                              linestyle='solid', marker='None')
-                plt.draw()
-                if Canvas is not None:
-                    Canvas.draw()
-                scan.lastIndex = scan.currentIndex
-
+                scan.plotItem.plot_date( xDateMpl, scan.y[:(scan.currentIndex + 1)], xdate = True,
+                                         linestyle='solid', marker='None')
             else:
                 scan.plotDataItem, = scan.plotItem.plot( scan.x[:(scan.currentIndex + 1)], 
                                                          scan.y[:(scan.currentIndex + 1)], scan.color)
-                scan.lastIndex = scan.currentIndex
 
         #
         # modify the scan 
         #
-        scan.plotItem = scan.plotItem
+        scanList[i].plotItem = scan.plotItem
 
         #
         # check, if there is something to display
         # 
         if scan.lastIndex == scan.currentIndex or \
            scan.currentIndex  == 0:
+            nplot += 1
             continue
 
         if scan.doty:
-            xDate = []
-            for x in scan.x[:(scan.currentIndex + 1)]:
-                xDate.append( _doty2datetime( x))
-            xDateMpl = matplotlib.dates.date2num( xDate)
-            scan.plotItem.plot_date( xDateMpl, scan.y, xdate = True, 
-                                     linestyle='solid', marker='None')
+            pass
+            #xDate = []
+            #for x in scan.x[:(scan.currentIndex + 1)]:
+            #    xDate.append( _doty2datetime( x))
+            #xDateMpl = matplotlib.date2num( xDate)
+            #scan.plotItem.plot_date( xDateMpl, scan.y, xdate = True)
         else:
             #print "graphics.display: plotting %s %d of %d" % \
             #    (scan.name, scan.currentIndex + 1, len( scan.x))
             scan.plotDataItem.set_data( scan.x[:(scan.currentIndex + 1)], 
                                         scan.y[:(scan.currentIndex + 1)])
 
-            scan.plotItem.set_xlim( scan.x[0], scan.x[scan.currentIndex])
-            scan.plotItem.set_ylim( _np.min( scan.y[:(scan.currentIndex + 1)]), 
+        scan.plotItem.set_xlim( scan.x[0], scan.x[scan.currentIndex])
+        scan.plotItem.set_ylim( _np.min( scan.y[:(scan.currentIndex + 1)]), 
                                 _np.max( scan.y[:(scan.currentIndex + 1)]))
         #
         # keep track of what has already been displayed
         #
         scan.lastIndex = scan.currentIndex
+
+        nplot += 1
     #
     # --- second pass: display overlaid scans
     #
-    for scan in scanList:
+    for i in range( len( scanList)):
         #
         # if only one scan is displayed, there is no overlay
         #
@@ -400,17 +407,18 @@ def display( nameList = None):
         #
         # check, if theren is something to display
         #
-        if scan.lastIndex == scan.currentIndex:
+        if scanList[i].lastIndex == scanList[i].currentIndex:
             continue
         #
         # 'scan' is a copy
         #
-        if scan.overlay is None:
+        if scanList[i].overlay is None:
             continue
         
-        if len( nameList) > 0 and scan.name not in nameList:
+        if len( nameList) > 0 and scanList[i].name not in nameList:
             continue
-        target = _GQE.getScan( scan.overlay)
+        target = _GQE.getScan( scanList[i].overlay)
+        scan = scanList[i]
         #
         # modify the overlaid scan 
         #

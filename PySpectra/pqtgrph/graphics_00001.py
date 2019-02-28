@@ -12,13 +12,11 @@ import os as _os
 import math as _math
 import numpy as _np
 import PySpectra.dMgt.GQE as _GQE
-import PySpectra.utils as _utils
 import HasyUtils as _HasyUtils
 import datetime as _datetime
 
 _QApp = None
 _win = None
-lenPlotted = -1
 
 def initGraphic():
     '''
@@ -139,20 +137,6 @@ def cls():
 
     _QApp.processEvents()
 
-
-def procEventsLoop():
-    print "\nPress <return> to continue ",
-    while True:
-        _time.sleep(0.01)
-        _QApp.processEvents()
-        key = _HasyUtils.inkey()        
-        if key == 10:
-            break
-    print ""
-
-def processEvents(): 
-    _QApp.processEvents()
-
 def listGraphicsItems(): 
     '''
     debugging tool
@@ -243,29 +227,9 @@ def _make_cb_mouseMoved( scan):
     return a callback function for the moveMouse signal
     '''
     def mouseMoved(evt):
-        m = [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         mousePoint = scan.plotItem.vb.mapSceneToView(evt[0])
         #print "+++ scene", repr( evt[0]), "view", repr( mousePoint)
-        if scan.doty:
-            now = _datetime.datetime.now()
-            year = now.year
-            x = mousePoint.x()
-            if x < 0: 
-                x += 365.
-                year = year - 1
-            a = _doty2datetime( x, year)
-            #
-            # with zooming ...
-            #
-            if a.month < 1: 
-                a.month = 1
-            if a.month > 12: 
-                a.month = 12
-            xStr = "%s %d, %02d:%02d" % (m[ a.month - 1], a.day, a.hour, a.minute)
-
-            scan.mouseLabel.setText( "x %s, y %g" % (xStr, mousePoint.y()), color = 'k')
-        else:
-            scan.mouseLabel.setText( "x %g, y %g" % (mousePoint.x(), mousePoint.y()), color = 'k')
+        scan.mouseLabel.setText( "x %g, y %g" % (mousePoint.x(), mousePoint.y()), color = 'k')
         scan.mouseLabel.setPos( mousePoint.x(), mousePoint.y())
         scan.mouseLabel.show()
     return mouseMoved
@@ -298,28 +262,10 @@ def _isCellTaken( row, col):
                 break
     return argout
 
-def _createPlotItem( scan):            
+def _createPlotItem( scan, row = 0, col = 0):            
     '''
     create a plotItem, aka viewport (?) with title, axis descriptions and texts
     '''
-    #
-    # (nrow, ncol, nplot) -> (row, col)
-    #
-    # (1, 1, 1) -> (0, 0)
-    #
-    # (2, 2, 1) -> (0, 0)
-    # (2, 2, 2) -> (0, 1)
-    # (2, 2, 3) -> (1, 0)
-    # (2, 2, 4) -> (1, 1)
-    #
-    row = _math.floor(float( scan.nplot - 1)/float(scan.ncol)) 
-    col = scan.nplot - 1 - row*scan.ncol
-    #print "graphics.createPlotItem, nrow, ncol, nplot", scan.nrow, scan.ncol, scan.nplot,\
-    #    "row, col", row, col
-    #
-    # take title and comment into account
-    #
-    row += 2
     #
     #print "graphics.createPlotItem", scan.name, row, col
     #
@@ -422,23 +368,6 @@ def _textIsOnDisplay( textStr):
 
     return False
 
-def _displayTitleComment():
-    '''
-    display title and comment.
-    - title is over comment
-    - colspan is infinity
-    '''
-    title = _GQE.getTitle()
-    if title is not None:
-        if not _textIsOnDisplay( title):
-            _win.addLabel( title, row = 0, col = 0, colspan = 10)
-    
-    comment = _GQE.getComment()
-    if comment is not None:
-        if not _textIsOnDisplay( comment):
-            _win.addLabel( comment, row = 1, col = 0, colspan = 10)
-
-
 def display( nameList = None):
     '''
     display one or more or all scans
@@ -503,19 +432,33 @@ def display( nameList = None):
     # adjust the graphics window to the number of displayed scans
     #
     _setSizeGraphicsWindow( _GQE.getNumberOfScansToBeDisplayed( nameList))
-    #
-    # _displayTitleComment() uses (0,0) and (1, 0)
-    #
-    _displayTitleComment()
-    #
-    # set scan.nrow, scan.ncol, scan.nplot
-    #
-    _utils._setScanVPs( nameList, flagDisplaySingle)
+    lenTemp = len( scanList) - _GQE.getNoOverlaid()
+    ncol = _math.floor( _math.sqrt( lenTemp) + 0.5)
+    col = 0
+    row = 0
+    title = _GQE.getTitle()
+    if title is not None:
+        if not _textIsOnDisplay( title):
+            _win.addLabel( title, row = row, col = 0, rowspan = 1, 
+                           colspan = int( ncol))
+        row += 1
+    
+    comment = _GQE.getComment()
+    if comment is not None:
+        if not _textIsOnDisplay( comment):
+            _win.addLabel( comment, row = row, col = 0, 
+                           rowspan = 1, colspan = int( ncol))
+        row += 1
     #
     # --- first pass: run through the scans in scanList and display 
     #     non-overlaid scans
     #
-    for scan in scanList:
+    for i in range( len( scanList)):
+
+        #
+        # 'scan' is a copy
+        #
+        scan = scanList[i]
         #print "graphics.display.firstPass,", scan.name, scan.lastIndex, scan.currentIndex
         #
         # overlay? - don't create a plot for this scan. Plot it
@@ -534,25 +477,27 @@ def display( nameList = None):
         #
         if scan.plotItem is None:
             try:
-                scan.plotItem = _createPlotItem( scan)
+                scan.plotItem = _createPlotItem( scan, row, col)
             except ValueError, e:
                 print "graphics.display", repr( e)
                 print "graphics.display: exception from createPlotItem"
                 return 
-            #legend = scan.plotItem.addLegend( None, offset = (20, 20))
-            #style = _pg.PlotDataItem(pen='w')
-            #legend.addItem(style, 'SomeLegend')
-            #
-            # the name which is specified below becomes the legend
-            #
-            scan.plotDataItem = scan.plotItem.plot(pen = _getPen( scan))
+            scan.plotDataItem = scan.plotItem.plot( name = scan.name, pen = _getPen( scan))
 
         #
         # check, if there is something to display
         # 
         if scan.lastIndex == scan.currentIndex:
+            col += scan.colSpan
+            if col >= ncol:
+                col = 0
+                row += 1
             continue
 
+        #
+        # modify the scan 
+        #
+        scanList[i].plotItem = scan.plotItem
         #print "graphics.display, plotting %s currentIndex %d len: %d" % (scan.name, scan.currentIndex, len( scan.x)) 
         scan.plotDataItem.setData( scan.x[:(scan.currentIndex + 1)], 
                                    scan.y[:(scan.currentIndex + 1)])
@@ -563,16 +508,23 @@ def display( nameList = None):
         if flagDisplaySingle: 
             _prepareMouse( scan)
 
+        col += scan.colSpan
+        if col >= ncol:
+            col = 0
+            row += 1
     #
     # --- second pass: display overlaid scans
     #
-    for scan in scanList:
+    for i in range( len( scanList)):
         #
         # if only one scan is displayed, there is no overlay
         #
         if len( nameList) == 1:
             break
-
+        #
+        # 'scan' is a copy
+        #
+        scan = scanList[i]
         if scan.overlay is None:
             continue
 
@@ -586,6 +538,10 @@ def display( nameList = None):
             continue
         target = _GQE.getScan( scan.overlay)
         scan.plotItem = target.plotItem
+        #
+        # modify the overlaid scan 
+        #
+        scanList[i].plot = scan.plotItem
 
         target.plotItem.setTitle( title ="%s and %s" % (target.name, scan.name))
 
@@ -612,3 +568,16 @@ def display( nameList = None):
     #
     _QApp.processEvents()
     return
+
+def procEventsLoop():
+    print "\nPress <return> to continue ",
+    while True:
+        _time.sleep(0.01)
+        _QApp.processEvents()
+        key = _HasyUtils.inkey()        
+        if key == 10:
+            break
+    print ""
+
+def processEvents(): 
+    _QApp.processEvents()

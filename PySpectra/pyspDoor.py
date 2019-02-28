@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-#
-# files
-#
+'''
+the Door which communicates to pyspMonitor via a queue
+'''
 import PyTango
 import time, sys, os, math
 import numpy as np
@@ -145,18 +145,11 @@ class spectraDoor( sms.BaseDoor):
 
     def cleanupSpectra( self):
         """
-        cleans the Spectra internal storage by deleting the 
-        gqes from the dictionary, thereby calling the destructors
+        cleans the internal storage and the graphics screen.
         """
-        #for k in self.counter_gqes.keys():
-        #    del self.counter_gqes[k]
-
-        #print "door.cleanupSpectra"
 
         self.sendHsh( { 'delete': None})
         self.sendHsh( { 'cls': None})
-        #pysp.delete()
-        #pysp.cls() # +++
 
     def waitForFile( self, filename):
         """
@@ -201,11 +194,6 @@ class spectraDoor( sms.BaseDoor):
                                       'x': x, 
                                       'y': y}}) 
             
-            #if pysp.getScan( self.mcaAliases[n]):
-            #    pysp.delete( [self.mcaAliases[n]])
-            #pysp.Scan( name = self.mcaAliases[n], x = x, y = y)
-        
-
 
     def toBeDisplayed( self, name, dataRecord):
         """
@@ -326,8 +314,6 @@ class spectraDoor( sms.BaseDoor):
 
         self.sendHsh( { 'setTitle': self.title})
         self.sendHsh( { 'setComment': "%s, %s" % (self.startTime, self.filename)})
-        #pysp.setTitle( self.title)
-        #pysp.setComment( "%s, %s" % (self.startTime, self.filename))
 
     def getPosition( self, name): 
         pos = None
@@ -872,13 +858,6 @@ class spectraDoor( sms.BaseDoor):
                                         'nPts': npTemp,
                                         'autorangeX': True}})
             
-            #self.counter_gqes[ elm] = pysp.Scan( name = elm, 
-            #                                     xMin = self.start, 
-            #                                     xMax = self.stop, 
-            #                                     color = 'red', 
-            #                                     nPts = npTemp,
-            #                                     autorangeX = True)
-
         env = self.getEnvironment()
         if env.has_key( 'SignalCounter'):
             self.signalCounter = env['SignalCounter']

@@ -7,6 +7,9 @@ code also in
 
 '''
 import numpy as _np
+import PySpectra.dMgt.GQE as _GQE
+import math as _math
+import PySpectra as _pysp
 
 def ssa( xIn, yIn, flagNbs = False, stbr = 3):
     '''
@@ -210,3 +213,60 @@ def ssa( xIn, yIn, flagNbs = False, stbr = 3):
     dct['l_back'] = l_back
     
     return dct
+
+lenPlotted = -1
+
+def _setScanVPs( nameList, flagDisplaySingle):
+    '''
+    set the scan viewport, we use the at = (2,3,2) syntax
+    title and comment are ignored here. they are taken 
+    care of in createPlotItem()
+    '''
+    global lenPlotted
+
+    scanList = _GQE.getScanList()
+    lenTemp = len( scanList) - _GQE.getNoOverlaid()
+    ncol = _math.floor( _math.sqrt( lenTemp) + 0.5)
+    col = 0
+    row = 0
+
+    if len( nameList) == 0:
+        lenTemp = len( scanList) - _GQE.getNoOverlaid()
+        if lenTemp != lenPlotted and lenPlotted != -1: 
+            _pysp.cls()
+        lenPlotted = lenTemp
+        if lenTemp == 0:
+            return 
+        ncol = int( _math.floor( _math.sqrt( lenTemp) + 0.5))
+        nrow = int( _math.ceil( float(lenTemp)/float(ncol)))
+        nplot = 1 
+    elif len( nameList) == 1:
+        if lenPlotted != 1 and lenPlotted != -1: 
+            _pysp.cls()
+        lenPlotted = 1
+        ncol = 1
+        nrow = 1
+        nplot = 1
+    else:
+        raise ValueError( "utils.setScanVPs: to be done")
+
+    for scan in scanList:
+        #
+        # overlay? - don't create a plot for this scan. Plot it
+        # in the second pass. But it is displayed, if it is the only 
+        # scan or if it is the only scan mentioned in nameList
+        #
+        if scan.overlay is not None and not flagDisplaySingle:
+            continue
+
+        if len( nameList) > 0: 
+            if scan.name not in nameList:
+                continue
+
+        if scan.plotItem is None:
+            scan.nrow = nrow
+            scan.ncol = ncol
+            scan.nplot = nplot
+            #print "utils.setScanVPs", scan.name, \
+            #    "nrow", scan.nrow, "ncol", scan.ncol, "nplot", scan.nplot
+            nplot += 1

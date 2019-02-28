@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 '''
-this Gui uses PySpectra to 
-  - display some data, aka scans
-  - use a cursor
-  - displays scans or single scans
+This is the main PySpectra Gui class. It is used by pyspMonitor, pyspViewer. 
+Both applications select the graphics library in their first code lines. 
 '''
 import sys, os, argparse, math, PyTango, time
 from PyQt4 import QtGui, QtCore
@@ -246,23 +244,17 @@ class MplWidget( QtGui.QMainWindow):
         #self.setGeometry( geo.width() - 680, 30, 650, 500)
         self.prepareWidgets()
 
-        self.menuBar = QtGui.QMenuBar()
-        self.setMenuBar( self.menuBar)
-        self.prepareMenuBar()
+        #self.menuBar = QtGui.QMenuBar()
+        #self.setMenuBar( self.menuBar)
+        #self.prepareMenuBar()
 
         #
         # Status Bar
         #
-        self.statusBar = QtGui.QStatusBar()
-        self.setStatusBar( self.statusBar)
-        self.prepareStatusBar()
+        #self.statusBar = QtGui.QStatusBar()
+        #self.setStatusBar( self.statusBar)
+        #self.prepareStatusBar()
 
-        self.paused = False
-        self.updateTimer = QtCore.QTimer(self)
-        self.updateTimer.timeout.connect( self.cb_refreshMpl)
-        self.updateTimer.start( int( updateTime*1000))
-        self.show()
-        
     def prepareWidgets( self):
         w = QtGui.QWidget()
         #
@@ -278,10 +270,6 @@ class MplWidget( QtGui.QMainWindow):
         
         pysp.mpl_graphics.initGraphic( self.figure, self.canvas)
 
-        #if __builtin__.__dict__[ 'graphicsLib'] == 'matplotlib':
-        #    pysp.initGraphic( self.figure, self.canvas)
-        #else:
-        #    pysp.initGraphic()
         self.toolbarMpl = NavigationToolbar(self.canvas, self)
         self.layout_v.addWidget(self.toolbarMpl)
         self.layout_v.addWidget(self.canvas)
@@ -297,58 +285,35 @@ class MplWidget( QtGui.QMainWindow):
         self.exitAction.triggered.connect( sys.exit)
         self.fileMenu.addAction( self.exitAction)
 
+
         #
         # the activity menubar: help and activity
         #
-        self.menuBarActivity = QtGui.QMenuBar( self.menuBar)
-        self.menuBar.setCornerWidget( self.menuBarActivity, QtCore.Qt.TopRightCorner)
+        self.menuBarHelp = QtGui.QMenuBar( self.menuBar)
+        self.menuBar.setCornerWidget( self.menuBarHelp, QtCore.Qt.TopRightCorner)
+
 
         #
         # Help menu (bottom part)
         #
-        self.helpMenu = self.menuBarActivity.addMenu('Help')
+        self.helpMenu = self.menuBarHelp.addMenu('Help')
         self.widgetAction = self.helpMenu.addAction(self.tr("Widget"))
         self.widgetAction.triggered.connect( self.cb_helpWidget)
-
-        self.activityIndex = 0
-        self.activity = self.menuBarActivity.addMenu( "|")
 
     #
     # the status bar
     #
     def prepareStatusBar( self): 
 
-        self.display = QtGui.QPushButton(self.tr("&Display")) 
-        self.statusBar.addPermanentWidget( self.display) # 'permanent' to shift it right
-        self.display.clicked.connect( self.cb_display)
-        self.display.setShortcut( "Alt+d")
-
         self.exit = QtGui.QPushButton(self.tr("&Exit")) 
         self.statusBar.addPermanentWidget( self.exit) # 'permanent' to shift it right
         self.exit.clicked.connect( self.close)
         self.exit.setShortcut( "Alt+x")
         
-    def cb_refreshMpl( self):
-
-        if self.isMinimized(): 
-            return
-        
-        self.activityIndex += 1
-        if self.activityIndex > (len( ACTIVITY_SYMBOLS) - 1):
-            self.activityIndex = 0
-        self.activity.setTitle( ACTIVITY_SYMBOLS[ self.activityIndex])
-        self.updateTimer.stop()
-        
-        self.updateTimer.start( int( updateTime*1000))
-
-    def cb_display( self): 
-        pysp.cls()
-        pysp.display( [self.scan.name])
-
     def cb_helpWidget(self):
         QtGui.QMessageBox.about(self, self.tr("Help Widget"), self.tr(
-                "<h3> ScanAttributes</h3>"
-                "The attributes of a scan"
+                "<h3> matplotlib viewer</h3>"
+                "A list with "
                 "<ul>"
                 "<li> some remarks</li>"
                 "</ul>"
@@ -363,7 +328,6 @@ class MplWidget( QtGui.QMainWindow):
 #
 class pySpectraGui( QtGui.QMainWindow):
     '''
-    the main class of the SardanaMotorMenu application
     '''
     def __init__( self, parent = None):
         #print "pySpectraGui.__init__"
@@ -406,6 +370,7 @@ class pySpectraGui( QtGui.QMainWindow):
 
         if __builtin__.__dict__[ 'graphicsLib'] == 'matplotlib':
             self.mplWidget = MplWidget()        
+            self.mplWidget.show()
 
     #
     # the central widgets
@@ -808,6 +773,8 @@ class pySpectraGui( QtGui.QMainWindow):
     def cb_sl2( self):
         pysp.cls()
         pysp.delete()
+        pysp.setTitle( "this is a title")
+        pysp.setComment( "this is a comment")
         t1 = pysp.Scan( name = "t1", color = 'blue', yLabel = 'sin')
         t1.y = np.sin( t1.x)
         t2 = pysp.Scan( "t2", yLabel = 'cos')
@@ -872,30 +839,4 @@ def parseCLI():
     args = parser.parse_args()
 
     return args
-
-def main():
-    args = parseCLI()
-    #sys.argv = []
-    if os.getenv( "DISPLAY") != ':0':
-        QtGui.QApplication.setStyle( 'Cleanlooks')
-
-    app = QtGui.QApplication(sys.argv)
-
-    o = pySpectraGui()
-    o.show()
-
-    try:
-        sys.exit( app.exec_())
-    except Exception, e:
-        print repr( e)
-
-#if __name__ == "__main__":
-#    args = parseCLI()
-#    if args.matplotlib is True: 
-#        __builtin__.__dict__[ 'graphicsLib'] = 'matplotlib'
-#    else: 
-#        __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
-#    import PySpectra as pysp
-#    main()
-    
 

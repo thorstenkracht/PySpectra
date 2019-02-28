@@ -1,10 +1,12 @@
 #!/usr/bin/env python
-
+'''
+the main programs that imports pySpectraGui
+'''
 import __builtin__
 #__builtin__.__dict__[ 'graphicsLib'] = 'matplotlib'
-__builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
-import PySpectra as pysp
-import pySpectraGui
+#__builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
+#import PySpectra as pysp
+#import pySpectraGui
 
 import argparse, sys, os
 from PyQt4 import QtGui, QtCore
@@ -17,7 +19,7 @@ def parseCLI():
   queueSM.py -m 
     uses matplotlib
     ''')
-    #parser.add_argument( '-m', dest="matplotlib", action="store_true", help='graphics from matplotlib')
+    parser.add_argument( '-m', dest="matplotlib", action="store_true", help='graphics from matplotlib')
     args = parser.parse_args()
 
     return args
@@ -30,7 +32,7 @@ def main():
 
     app = QtGui.QApplication(sys.argv)
 
-    o = pySpectraGui.pySpectraGui()
+    o = pySpectraGuiClass.pySpectraGui()
     o.show()
 
     try:
@@ -39,13 +41,13 @@ def main():
         print repr( e)
 
 if __name__ == "__main__":
-    #args = parseCLI()
-    #if args.matplotlib is True: 
-    #    __builtin__.__dict__[ 'graphicsLib'] = 'matplotlib'
-    #else: 
-    #    __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
-    #import PySpectra as pysp
-    #import pySpectraGui
+    args = parseCLI()
+    if args.matplotlib is True: 
+        __builtin__.__dict__[ 'graphicsLib'] = 'matplotlib'
+    else: 
+        __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
+    import PySpectra as pysp
+    import pySpectraGuiClass
     main()
 
      
