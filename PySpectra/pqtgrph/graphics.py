@@ -18,7 +18,6 @@ import datetime as _datetime
 
 _QApp = None
 _win = None
-lenPlotted = -1
 
 def initGraphic():
     '''
@@ -35,25 +34,16 @@ def initGraphic():
         #_QApp = _QtGui.QApplication([])
         _QApp = TaurusApplication( [])
 
+    screen_resolution = _QApp.desktop().screenGeometry()
+    width, height = screen_resolution.width(), screen_resolution.height()
     #+++mw = _QtGui.QMainWindow()
     if _win is None:
         _pg.setConfigOption( 'background', 'w')
         _pg.setConfigOption( 'foreground', 'k')
         _win = _pg.GraphicsWindow( title="PySpectra Application")
-        #_win.setGeometry( 30, 30, 680, int( 680./1.414))
-        _win.setGeometry( 30, 30, 750, int( 750./1.414))
+        _win.setGeometry( 30, 30, 793, int( 793./1.414))
 
     return (_QApp, _win)
-
-def close(): 
-    global _win, _QApp
-    if _win is None:
-        return 
-    cls()
-    _win.close()
-    _win = None
-    _QApp = None
-    return 
 
 def _setSizeGraphicsWindow( nScan):
 
@@ -65,7 +55,6 @@ def _setSizeGraphicsWindow( nScan):
         factor = 0.35 # 1920 -> 680
 
     geo = _win.geometry()
-    #print "current geo", repr( geo), geo.width(), geo.height()
 
     geoScreen = _QtGui.QDesktopWidget().screenGeometry(-1)
     widthNew = int( geoScreen.width()*factor)
@@ -80,17 +69,40 @@ def _setSizeGraphicsWindow( nScan):
 
 def setWsViewport( size = None):
     '''
-    the workstation viewport is the graphics window
+    size: DINA4, DINA4P, DINA3, DINA3P
     '''
     if size is None:
         return 
 
-    if size == "DINA4" or size == "DINA4L": 
-        pass
-    elif size == "DINA4P": 
-        pass
+    if size.upper() == "DINA4" or size.upper() == "DINA4L": 
+        w = 29.7
+        h = 21
+    elif size.upper() == "DINA4P": 
+        w = 21
+        h = 29.7
+    elif size.upper() == "DINA5" or size.upper() == "DINA5L": 
+        w = 21
+        h = 14.85
+    elif size.upper() == "DINA5P": 
+        w = 14.85
+        h = 21.0
+    elif size.upper() == "DINA6" or size.upper() == "DINA6L": 
+        w = 14.85
+        h = 10.5
+    elif size.upper() == "DINA6P": 
+        w = 10.5
+        h = 14.85
     else:
         raise ValueError( "graphics.setWsViewport: no valid size, %s" % size)
+
+    #
+    # 3778: pixel per meter (spectra)
+    #
+    wPixel = w*3778./100.
+    hPixel = h*3778./100.
+    print "graphics.setWsViewport", wPixel, hPixel
+    _win.setGeometry( 30, 30, int(wPixel), int(hPixel))
+    _QApp.processEvents()
 
     return 
 
@@ -438,6 +450,8 @@ def _displayTitleComment():
         if not _textIsOnDisplay( comment):
             _win.addLabel( comment, row = 1, col = 0, colspan = 10)
 
+def _adjustFigure( nDisplay): 
+    return 
 
 def display( nameList = None):
     '''
@@ -502,7 +516,9 @@ def display( nameList = None):
     #
     # adjust the graphics window to the number of displayed scans
     #
-    _setSizeGraphicsWindow( _GQE.getNumberOfScansToBeDisplayed( nameList))
+    nDisplay = _GQE.getNumberOfScansToBeDisplayed( nameList)
+    _setSizeGraphicsWindow( nDisplay)
+    _adjustFigure( nDisplay)
     #
     # _displayTitleComment() uses (0,0) and (1, 0)
     #

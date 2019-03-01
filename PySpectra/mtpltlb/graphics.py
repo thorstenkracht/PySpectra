@@ -9,13 +9,12 @@ import math as _math
 import numpy as _np
 import PySpectra.dMgt.GQE as _GQE
 import PySpectra.utils as _utils
+import PySpectra.pqtgrph.graphics as _pqt_graphics
 import HasyUtils as _HasyUtils
 import datetime as _datetime
 
 Fig = None
 Canvas = None
-lenPlotted = -1
-
 def initGraphic( figureIn = None, canvasIn = None):
     '''
     haso107d1: 1920 x 1200
@@ -24,6 +23,7 @@ def initGraphic( figureIn = None, canvasIn = None):
     global Fig, Canvas
     if figureIn is not None:
         Fig = figureIn
+        #print "+++mpl.graphics.initGraphic", dir( Fig)
         Canvas = canvasIn
         return 
 
@@ -31,55 +31,91 @@ def initGraphic( figureIn = None, canvasIn = None):
     #print "graphics.initGraphic"
 
     if not plt.get_fignums():
-        Fig = plt.figure(1, figsize=(11.6,8.2))
+        Fig = plt.figure(1, figsize=(21./2.54, 14.85/2.54))
     else:
         Fig = plt.figure(1)
         Fig.clear()
 
     return
 
-def close(): 
-    global Fig
-    if Fig is None:
-        return
-    cls()
-    Fig.close()
-    Fig = None
-    return 
+def createPDF( fileName = None): 
+    '''
+    '''
+    #flag = False
+    #if Fig is None:
+    #    _pqt_graphics.close()
+    #    initGraphic()
+    #    display()
+    #    flag = True
 
-def createPDF():
-    Fig.savefig( "pyspOutput.pdf", bbox_inches='tight')
+    if fileName is None:
+        fileName = "pyspOutput.pdf"
+    if _os.system( "/usr/local/bin/vrsn -s -nolog %s" % fileName):
+        print "graphics.createPDF: failed to save the current version of %s" % fileName
+    
+    try:
+        Fig.savefig( fileName, bbox_inches='tight')
+    except Exception, e:
+        print "graphics.createPDF: failed to create", fileName
+        print repr( e)
+        return None
 
+    #if flag:
+    #    close()
+    #    _pqt_graphics.initGraphic()
+        
+    return fileName
+    
 def _setSizeGraphicsWindow( nScan):
+    '''
+    '''
 
-    #print "graphics.setSizeGraphicsView, nScan", nScan, "returning"
-    return
-
-    if nScan > 10:
-        w = 30
+    if nScan > 9:
+        w = 29.7
     elif nScan > 4: 
-        w = 25
+        w = 21
     else: 
-        w = 20
-    h = w/1.414
-    fig = matplotlib.pyplot.gcf()
-    fig.set_size_inches( w/2.54, h/2.54, forward = True)
+        w = 14.85
 
+    h = w/1.414
+    #print "mpl_graphics.setSizeGraphicsWindow", w/2.54, h/2.54, Fig.get_figwidth(), Fig.get_figheight()
+
+    if w/2.54 > (Fig.get_figwidth() + 0.1) or h/2.54 > (Fig.get_figheight() + 0.1): 
+        if w > 29.6:
+            setWsViewport( "DINA4")
+        else:
+            setWsViewport( "DINA5")
     return 
 
 def setWsViewport( size = None):
     '''
-    the workstation viewport is the graphics window
+    size: DINA4, DINA4P, DINA3, DINA3P
     '''
     if size is None:
         return 
-
-    if size == "DINA4" or size == "DINA4L": 
-        pass
-    elif size == "DINA4P": 
-        pass
+    if size.upper() == "DINA4" or size.upper() == "DINA4L": 
+        w = 29.7
+        h = 21
+    elif size.upper() == "DINA4P": 
+        w = 21
+        h = 29.7
+    elif size.upper() == "DINA5" or size.upper() == "DINA3L": 
+        w = 21
+        h = 14.85
+    elif size.upper() == "DINA5P": 
+        w = 14.85
+        h = 21.0
+    elif size.upper() == "DINA6" or size.upper() == "DINA6L": 
+        w = 14.85
+        h = 10.5
+    elif size.upper() == "DINA6P": 
+        w = 10.5
+        h = 14.85
     else:
         raise ValueError( "graphics.setWsViewport: no valid size, %s" % size)
+
+    fig = matplotlib.pyplot.gcf()
+    fig.set_size_inches( w/2.54, h/2.54, forward = True)
 
     return 
 
@@ -190,17 +226,16 @@ def _createPlotItem( scan):
 
 def _textIsOnDisplay( textStr):
     '''
-    searches the list of Items to see whether textStr exists already
+    searches the Fig.texts() to see whether textStr exists already
     '''
-    return False # +++
-    for item in _win.items():
-        if type( item) is _pg.graphicsItems.LabelItem.LabelItem: 
-            if textStr == item.text:
-                return True
+    argout = False
+    for t in Fig.texts: 
+        if textStr == t.get_text(): 
+            argout = True
+            break
+    return argout
 
-    return False
-
-def _adjustFigure():
+def _adjustFigure( nDisplay):
     '''
     configures the figure
     '''
@@ -213,30 +248,65 @@ def _adjustFigure():
     hspace = 0.2   # the amount of height reserved for space between subplots,
                    # expressed as a fraction of the average axis height
 
+    if nDisplay == 3: 
+        nDisplay = 4
+    if nDisplay > 4: 
+        nDisplay = 10
+
     if _GQE.getTitle() is not None:
         top -= 0.05
     if _GQE.getComment() is not None:
         top -= 0.05
-    #print "graphics.adjustFigure, top", top
-    plt.subplots_adjust( left = left, bottom = bottom, right = right,
-                         top = top, wspace = 0.2, hspace = 0.2)
+
+    hsh = { '1':  { 'top': top,
+                    'bottom': 0.10,
+                    'left': 0.125,
+                    'right': 0.9,
+                    'hspace': 0.2,
+                    'wspace': 0.2}, 
+            '2':  { 'top': top,
+                    'bottom': 0.10,
+                    'left': 0.12,
+                    'right': 0.90,
+                    'hspace': 0.42,
+                    'wspace': 0.20}, 
+            '4':  { 'top': top + 0.02,
+                    'bottom': 0.10,
+                    'left': 0.10,
+                    'right': 0.96,
+                    'hspace': 0.44,
+                    'wspace': 0.34}, 
+            '10':  { 'top': top + 0.02,
+                    'bottom': 0.07,
+                    'left': 0.07,
+                    'right': 0.97,
+                    'hspace': 0.62,
+                     'wspace': 0.20}
+            }
+    Fig.subplots_adjust( **hsh[ str(nDisplay)])
 
     return 
 
 def _displayTitleComment():     
+    '''
+    '''
+    sz = 14
     title = _GQE.getTitle()
     if title is not None:
         if not _textIsOnDisplay( title):
-            Fig.text( 0.5, 0.95, title, va='center', ha='center')
+            t = Fig.text( 0.5, 0.95, title, va='center', ha='center')
+            t.set_fontsize( sz)
     
     comment = _GQE.getComment()
     if comment is not None:
         if title is not None:
             if not _textIsOnDisplay( comment):
-                Fig.text( 0.5, 0.90, comment, va='center', ha='center')
+                t = Fig.text( 0.5, 0.90, comment, va='center', ha='center')
+                t.set_fontsize( sz)
         else:
             if not _textIsOnDisplay( comment):
-                Fig.text( 0.5, 0.95, comment, va='center', ha='center')
+                t = Fig.text( 0.5, 0.95, comment, va='center', ha='center')
+                t.set_fontsize( sz)
     return
 
 def display( nameList = None):
@@ -259,7 +329,6 @@ def display( nameList = None):
 
     Module: PySpectra.graphics.<graphLib>.graphics.py
     '''
-    global lenPlotted
     #
     # don't want to check for nameList is None below
     #
@@ -293,18 +362,20 @@ def display( nameList = None):
     #
     # adjust the graphics window to the number of displayed scans
     #
-    _setSizeGraphicsWindow( _GQE.getNumberOfScansToBeDisplayed( nameList))
+    nDisplay = _GQE.getNumberOfScansToBeDisplayed( nameList)
+    _setSizeGraphicsWindow( nDisplay)
 
-    _adjustFigure()
+    _adjustFigure( nDisplay)
+
+    #
+    # set scan.nrow, scan.ncol, scan.nplot
+    #
+    _utils._setScanVPs( nameList, flagDisplaySingle)
 
     _displayTitleComment()
     #
     # --- first pass: run through the scans in scanList and display 
     #     non-overlaid scans
-    #
-    # set scan.nrow, scan.ncol, scan.nplot
-    #
-    _utils._setScanVPs( nameList, flagDisplaySingle)
     #
     for scan in scanList:
         #print "graphics.display", scan.name, "currentIndex", scan.currentIndex, "LastIndex", scan.lastIndex

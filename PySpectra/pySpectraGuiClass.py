@@ -235,10 +235,10 @@ class ScanAttributes( QtGui.QMainWindow):
 #
 #
 class MplWidget( QtGui.QMainWindow):
-    def __init__( self, parent = None):
+    def __init__( self, logWidget, parent = None):
         super( MplWidget, self).__init__( parent)
         self.parent = parent
-
+        self.logWidget = logWidget
         self.setWindowTitle( "Matplotlib Widget")
         #geo = QtGui.QDesktopWidget().screenGeometry(-1)
         # size
@@ -252,9 +252,11 @@ class MplWidget( QtGui.QMainWindow):
         #
         # Status Bar
         #
-        #self.statusBar = QtGui.QStatusBar()
-        #self.setStatusBar( self.statusBar)
-        #self.prepareStatusBar()
+        self.statusBar = QtGui.QStatusBar()
+        self.setStatusBar( self.statusBar)
+        self.prepareStatusBar()
+        pysp.cls()
+        pysp.mpl_graphics.display()
 
     def prepareWidgets( self):
         w = QtGui.QWidget()
@@ -265,7 +267,8 @@ class MplWidget( QtGui.QMainWindow):
         w.setLayout( self.layout_v)
         self.setCentralWidget( w)
 
-        self.figure = Figure()
+        self.figure = Figure( figsize=(29.7/2.54, 21.0/2.54))
+        #self.figure = Figure( figsize=(21./2.54, 14.85/2.54))
 
         self.canvas = FigureCanvas( self.figure)
         
@@ -306,6 +309,16 @@ class MplWidget( QtGui.QMainWindow):
     #
     def prepareStatusBar( self): 
 
+        self.display = QtGui.QPushButton(self.tr("&Display")) 
+        self.statusBar.addPermanentWidget( self.display) # 'permanent' to shift it right
+        self.display.clicked.connect( self.cb_display)
+        self.display.setShortcut( "Alt+d")
+
+        self.pdf = QtGui.QPushButton(self.tr("&PDF")) 
+        self.statusBar.addPermanentWidget( self.pdf) # 'permanent' to shift it right
+        self.pdf.clicked.connect( self.cb_pdf)
+        self.pdf.setShortcut( "Alt+p")
+
         self.exit = QtGui.QPushButton(self.tr("&Exit")) 
         self.statusBar.addPermanentWidget( self.exit) # 'permanent' to shift it right
         self.exit.clicked.connect( self.close)
@@ -320,6 +333,19 @@ class MplWidget( QtGui.QMainWindow):
                 "</ul>"
                 ))
 
+    def cb_display( self): 
+        pysp.cls()
+        pysp.mpl_graphics.cls()
+        pysp.mpl_graphics.display()
+
+    def cb_pdf( self): 
+        fileName = pysp.mpl_graphics.createPDF()
+        if fileName:
+            self.logWidget.append( "created %s" % fileName)
+            os.system( "evince %s &" % fileName)
+        else:
+            self.logWidget.append( "failed to create PDF file")
+        
     def cb_dotyChanged( self):
         self.scan.doty = self.w_dotyCheckBox.isChecked()
 
@@ -330,7 +356,7 @@ class MplWidget( QtGui.QMainWindow):
 class pySpectraGui( QtGui.QMainWindow):
     '''
     '''
-    def __init__( self, parent = None):
+    def __init__( self, files = None, parent = None):
         #print "pySpectraGui.__init__"
         super( pySpectraGui, self).__init__( parent)
 
@@ -349,6 +375,17 @@ class pySpectraGui( QtGui.QMainWindow):
         self.scanList = None
         self.scanAttributes = None
 
+        #
+        # 'files' come from the command line. If nothing is supplied
+        # files == []
+        #
+        self.files = None
+        if len( files) > 0:
+            self.files = self.getMatchingFiles( files)
+            if len( self.files) > 0:
+                pysp.read( [self.files[0]])
+            pysp.display()
+
         self.prepareWidgets()
 
         self.menuBar = QtGui.QMenuBar()
@@ -366,11 +403,15 @@ class pySpectraGui( QtGui.QMainWindow):
         self.updateTimerPySpectraGui = QtCore.QTimer(self)
         self.updateTimerPySpectraGui.timeout.connect( self.cb_refreshPySpectraGui)
         self.updateTimerPySpectraGui.start( int( updateTime*1000))
-
-        #self.resize( 600, 600)
-
+        #
+        # (1) if the matplotlib widget is created within QtGui, we canoot 
+        #     change the size (so far)
+        # (2) if we create it outside QtGui, the mouse is not active inside the widget 
+        #
+        # compromise: start with a big widget (DINA4) in QtGui
+        #
         if __builtin__.__dict__[ 'graphicsLib'] == 'matplotlib':
-            self.mplWidget = MplWidget()        
+            self.mplWidget = MplWidget( self.logWidget)        
             self.mplWidget.show()
 
     #
@@ -538,13 +579,20 @@ class pySpectraGui( QtGui.QMainWindow):
 
 
         self.vBoxFiles.addWidget( QtGui.QLabel( os.getcwd()))
+        #
+        # if 'files' were supplied from the command line, do not offer '../'
+        #
+        if self.files is None:
+            btn = QPushButtonTK( "../")
+            btn.setStyleSheet( "QPushButton { text-align: left}")
+            btn.mb1.connect( self.make_cb_files( "../"))
+            self.vBoxFiles.addWidget( btn)
 
-        btn = QPushButtonTK( "../")
-        btn.setStyleSheet( "QPushButton { text-align: left}")
-        btn.mb1.connect( self.make_cb_files( "../"))
-        self.vBoxFiles.addWidget( btn)
-        lst = os.listdir( "./")
-        lst.sort()
+        if self.files is None:
+            lst = os.listdir( "./")
+            lst.sort()
+        else:
+            lst = self.files
         
         fileList = []
         fileDict = {}
@@ -558,7 +606,7 @@ class pySpectraGui( QtGui.QMainWindow):
                 fileDict[ file] = btn
             elif file.startswith( "."):
                 continue
-            elif os.path.isdir( file):
+            elif self.files is None and os.path.isdir( file):
                 btn = QPushButtonTK( file)
                 btn.setStyleSheet( "QPushButton { text-align: left}")
                 btn.mb1.connect( self.make_cb_files( file))
@@ -567,6 +615,18 @@ class pySpectraGui( QtGui.QMainWindow):
                 fileDict[ file] = btn
         self.scrollAreaFiles.setWidget( self.baseFiles)
         #self.scrollAreaFiles.setFocusPolicy( QtCore.Qt.StrongFocus)
+
+    def getMatchingFiles( self, patternList):
+        '''
+        patternList is specified on the command line
+        '''
+        argout = []
+        for file in os.listdir( "."):
+            if file.upper().endswith( ".DAT") or file.upper().endswith( ".FIO"):
+                for pat in patternList:
+                    if HasyUtils.match( file, pat): 
+                        argout.append( file)
+        return argout
 
 
     def make_cb_scan( self, name):
@@ -610,10 +670,11 @@ class pySpectraGui( QtGui.QMainWindow):
         self.writeFileAction.triggered.connect( self.cb_writeFile)
         self.fileMenu.addAction( self.writeFileAction)
 
-        self.postscriptAction = QtGui.QAction('Postscript', self)        
-        self.postscriptAction.setStatusTip('Launch matplotlib to create postscript output')
-        self.postscriptAction.triggered.connect( self.cb_postscript)
-        self.fileMenu.addAction( self.postscriptAction)
+        if __builtin__.__dict__[ 'graphicsLib'] != 'matplotlib':
+            self.matplotlibAction = QtGui.QAction('matplotlib', self)        
+            self.matplotlibAction.setStatusTip('Launch matplotlib to create ps or pdf output')
+            self.matplotlibAction.triggered.connect( self.cb_matplotlib)
+            self.fileMenu.addAction( self.matplotlibAction)
 
         self.utilsMenu = self.menuBar.addMenu('&Utils')
 
@@ -696,6 +757,19 @@ class pySpectraGui( QtGui.QMainWindow):
         self.deleteBtn.clicked.connect( self.cb_delete)
         self.deleteBtn.setShortcut( "Alt+d")
 
+        if __builtin__.__dict__[ 'graphicsLib'] != 'matplotlib':
+            self.matplotlibBtn = QtGui.QPushButton(self.tr("&matplotlib")) 
+            self.statusBar.addWidget( self.matplotlibBtn) 
+            self.matplotlibBtn.clicked.connect( self.cb_matplotlib)
+            self.matplotlibBtn.setShortcut( "Alt+m")
+            self.matplotlibBtn.setToolTip( "Launch matplotlib widget to create PDF")
+        else: 
+            self.pdfBtn = QtGui.QPushButton(self.tr("&PDF")) 
+            self.statusBar.addWidget( self.pdfBtn) 
+            self.pdfBtn.clicked.connect( self.cb_pdf)
+            self.pdfBtn.setShortcut( "Alt+p")
+            self.pdfBtn.setToolTip( "Create PDF file")
+
         self.exit = QtGui.QPushButton(self.tr("&Exit")) 
         self.statusBar.addPermanentWidget( self.exit) # 'permanent' to shift it right
         self.exit.clicked.connect( sys.exit)
@@ -705,8 +779,7 @@ class pySpectraGui( QtGui.QMainWindow):
         '''
         clear screen
         '''
-        self.mplWidget.figure.clear()
-        self.mplWidget.canvas.draw()
+        pysp.cls()
         
     def cb_delete( self): 
         '''
@@ -714,6 +787,14 @@ class pySpectraGui( QtGui.QMainWindow):
         '''
         pysp.delete()
 
+    def cb_pdf( self): 
+        fileName = pysp.mpl_graphics.createPDF()
+        if fileName:
+            self.logWidget.append( "created %s" % fileName)
+            os.system( "evince %s &" % fileName)
+        else:
+            self.logWidget.append( "failed to create PDF file")
+        
     def cb_doty( self):
         lst = pysp.getScanList()
         if self.dotyAction.isChecked():
@@ -767,6 +848,8 @@ class pySpectraGui( QtGui.QMainWindow):
     def cb_sl1( self):
         pysp.cls()
         pysp.delete()
+        pysp.setTitle( "Ein Titel")
+        pysp.setComment( "Ein Kommentar")
         t1 = pysp.Scan( name = "t1", color = 'blue', yLabel = 'sin')
         t1.y = np.sin( t1.x)
         pysp.display()
@@ -774,8 +857,8 @@ class pySpectraGui( QtGui.QMainWindow):
     def cb_sl2( self):
         pysp.cls()
         pysp.delete()
-        pysp.setTitle( "this is a title")
-        pysp.setComment( "this is a comment")
+        pysp.setTitle( "Ein Titel")
+        pysp.setComment( "Ein Kommentar")
         t1 = pysp.Scan( name = "t1", color = 'blue', yLabel = 'sin')
         t1.y = np.sin( t1.x)
         t2 = pysp.Scan( "t2", yLabel = 'cos')
@@ -792,9 +875,12 @@ class pySpectraGui( QtGui.QMainWindow):
     def cb_sl3( self):
         pysp.cls()
         pysp.delete()
+        pysp.setTitle( "Ein Titel")
+        pysp.setComment( "Ein Kommentar")
         for i in range( 10): 
             t = pysp.Scan( name = "t%d" % i, color = 'blue', yLabel = 'rand')
             t.y = np.random.random_sample( (len( t.x), ))
+        pysp.display()
 
     def cb_sl4( self):
         '''
@@ -802,22 +888,22 @@ class pySpectraGui( QtGui.QMainWindow):
         '''
         pysp.cls()
         pysp.delete()
+        pysp.setTitle( "Ein Titel")
+        pysp.setComment( "Ein Kommentar")
         g = pysp.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
         mu = 0.
         sigma = 1.
         g.y = 1/(sigma * np.sqrt(2 * np.pi)) * \
               np.exp( - (g.y - mu)**2 / (2 * sigma**2))
-
         pysp.display()
 
     def cb_writeFile( self):
         pass
 
-    def cb_postscript( self):
-        pysp.close()
-        self.mplWidget = MplWidget()
+    def cb_matplotlib( self):
+        self.mplWidget = MplWidget( self.logWidget)
+        self.mplWidget.show()
         pysp.mpl_graphics.display()
-        
 
     def cb_helpWidget(self):
         QtGui.QMessageBox.about(self, self.tr("Help Widget"), self.tr(
@@ -828,16 +914,4 @@ class pySpectraGui( QtGui.QMainWindow):
                 "</ul>"
                 ))
 
-def parseCLI():
-    parser = argparse.ArgumentParser( 
-        formatter_class = argparse.RawDescriptionHelpFormatter,
-        description="Sardana Monitor Queue Version", 
-        epilog='''\
-  queueSM.py -m 
-    uses matplotlib
-    ''')
-    parser.add_argument( '-m', dest="matplotlib", action="store_true", help='graphics from matplotlib')
-    args = parser.parse_args()
-
-    return args
 

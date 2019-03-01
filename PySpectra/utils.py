@@ -214,7 +214,7 @@ def ssa( xIn, yIn, flagNbs = False, stbr = 3):
     
     return dct
 
-lenPlotted = -1
+_lenPlotted = -1
 
 def _setScanVPs( nameList, flagDisplaySingle):
     '''
@@ -222,7 +222,7 @@ def _setScanVPs( nameList, flagDisplaySingle):
     title and comment are ignored here. they are taken 
     care of in createPlotItem()
     '''
-    global lenPlotted
+    global _lenPlotted
 
     scanList = _GQE.getScanList()
     lenTemp = len( scanList) - _GQE.getNoOverlaid()
@@ -232,18 +232,18 @@ def _setScanVPs( nameList, flagDisplaySingle):
 
     if len( nameList) == 0:
         lenTemp = len( scanList) - _GQE.getNoOverlaid()
-        if lenTemp != lenPlotted and lenPlotted != -1: 
+        if lenTemp != _lenPlotted and _lenPlotted != -1: 
             _pysp.cls()
-        lenPlotted = lenTemp
+        _lenPlotted = lenTemp
         if lenTemp == 0:
             return 
         ncol = int( _math.floor( _math.sqrt( lenTemp) + 0.5))
         nrow = int( _math.ceil( float(lenTemp)/float(ncol)))
         nplot = 1 
     elif len( nameList) == 1:
-        if lenPlotted != 1 and lenPlotted != -1: 
+        if _lenPlotted != 1 and _lenPlotted != -1: 
             _pysp.cls()
-        lenPlotted = 1
+        _lenPlotted = 1
         ncol = 1
         nrow = 1
         nplot = 1

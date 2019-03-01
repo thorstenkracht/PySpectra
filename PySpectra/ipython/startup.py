@@ -54,6 +54,13 @@ def create(line):
     ifc.command( "create " + line)
 
 @register_line_magic
+def createPDF(line):
+    '''
+    Create a pdf file
+    '''
+    ifc.command( "createPDF " + line)
+
+@register_line_magic
 def delete(line):
     '''
     Delete one or all scans
@@ -155,6 +162,13 @@ def setTitle(line):
     ifc.command( "setTitle " + line)
 
 @register_line_magic
+def setWsViewport(line):
+    '''
+    setWsViewport DINA4
+    '''
+    ifc.command( "setWsViewport " + line)
+
+@register_line_magic
 def show(line):
     '''
     print the list of scans
@@ -227,6 +241,7 @@ pysp_help("")
 del antiderivative
 del cls
 del create
+del createPDF
 del delete
 del derivative
 del display
@@ -237,6 +252,7 @@ del read
 del show
 del setComment
 del setTitle
+del setWsViewport
 del y2my
 
 del sl1

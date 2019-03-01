@@ -19,6 +19,8 @@ def parseCLI():
   queueSM.py -m 
     uses matplotlib
     ''')
+
+    parser.add_argument( 'files', nargs='*', help='file name pattern')
     parser.add_argument( '-m', dest="matplotlib", action="store_true", help='graphics from matplotlib')
     args = parser.parse_args()
 
@@ -32,7 +34,7 @@ def main():
 
     app = QtGui.QApplication(sys.argv)
 
-    o = pySpectraGuiClass.pySpectraGui()
+    o = pySpectraGuiClass.pySpectraGui( args.files)
     o.show()
 
     try:

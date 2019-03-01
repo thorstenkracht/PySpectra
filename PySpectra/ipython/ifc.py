@@ -29,6 +29,8 @@ def command( line):
         return cls( lineRest)
     elif lst[0] == 'create':
         return create( lineRest)
+    elif lst[0] == 'createPDF':
+        return createPDF( lineRest)
     elif lst[0] == 'delete':
         return delete( lineRest)
     elif lst[0] == 'derivative':
@@ -43,6 +45,8 @@ def command( line):
         return setComment( lineRest)
     elif lst[0] == 'setTitle':
         return setTitle( lineRest)
+    elif lst[0] == 'setWsViewport':
+        return setWsViewport( lineRest)
     elif lst[0] == 'show':
         return show( lineRest)
     elif lst[0] == 'y2my':
@@ -102,6 +106,15 @@ def create( line):
         raise ValueError( "ifs.createScan: wrong syntax %s" % line)
         
     pysp.Scan( **hsh)
+
+def createPDF( line):
+    fileName = None
+    if line is not None:
+        l = line.split( ' ')
+        if l is not None and len(l) > 0:
+            fileName = l[0]
+
+    pysp.mpl_graphics.createPDF( fileName)
 
 def derivative( line):
     '''
@@ -173,6 +186,19 @@ def setTitle( line):
         pysp.setTitle( None)
     else:
         pysp.setTitle( lst[0])
+
+def setWsViewport( line):
+    lst = None
+    if line:
+        lst = line.split( ' ')
+    if len( lst) > 1:
+        raise ValueError( "ifc.setWsViewport: expecting zero or one arguments")
+        return 
+
+    if len( lst) == 0:
+        pysp.setWsViewport( None)
+    else:
+        pysp.setWsViewport( lst[0])
 
 def show( line):
     pysp.show()
