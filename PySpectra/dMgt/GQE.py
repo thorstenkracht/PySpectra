@@ -557,13 +557,16 @@ def getNumberOfScansToBeDisplayed( nameList):
     #print "graphics.getNoOfScansToBeDisplayed: nScan %d" %(nScan)
     return nScan
 
-def getNoOverlaid():
+def getNoOverlaid( nameList = None):
     '''
     returns the number of scans which are overlaid to another, 
     used by e.g. graphics.display()
     '''
     count = 0
     for scan in _scanList:
+        if nameList is not None: 
+            if scan.name not in nameList:
+                continue
         if scan.overlay is not None:
             count += 1
 

@@ -248,7 +248,16 @@ def _setScanVPs( nameList, flagDisplaySingle):
         nrow = 1
         nplot = 1
     else:
-        raise ValueError( "utils.setScanVPs: to be done")
+        lenTemp = len( nameList) - _GQE.getNoOverlaid( nameList)
+        if lenTemp != _lenPlotted and _lenPlotted != -1: 
+            _pysp.cls()
+        _lenPlotted = lenTemp
+        if lenTemp == 0:
+            return 
+        ncol = int( _math.floor( _math.sqrt( lenTemp) + 0.5))
+        nrow = int( _math.ceil( float(lenTemp)/float(ncol)))
+        nplot = 1 
+
 
     for scan in scanList:
         #

@@ -65,7 +65,6 @@ class QPushButtonTK( QtGui.QPushButton):
 
     def __init__( self, *args, **kwargs):
         QtGui.QWidget.__init__( self, *args, **kwargs)
-
     def mousePressEvent( self, event):
         if event.button() == QtCore.Qt.LeftButton:
             self.mb1.emit()
@@ -88,11 +87,14 @@ class QPushButtonTK( QtGui.QPushButton):
         elif key == QtCore.Qt.Key_Up:
             obj = prevFile( str(self.text()))
             obj.setFocus()
-            print 'Up Arrow Pressed', obj.text()
+            #print 'Up Arrow Pressed', obj.text()
+            self.mb1.emit()
         elif key == QtCore.Qt.Key_Down:
             obj = nextFile( str(self.text()))
             obj.setFocus()
-            print 'Down Arrow Pressed', obj.text()
+            #obj.setStyleSheet( "background-color:#45b545;")
+            #print 'Down Arrow Pressed', obj.text()
+            self.mb1.emit()
         else:
             print "QPush.keyPressEvent", key, self.text()
 #
@@ -547,7 +549,7 @@ class pySpectraGui( QtGui.QMainWindow):
         for scan in self.scanList:
             btn = QPushButtonTK( scan.name)
             btn.setStyleSheet( "QPushButton { text-align: left}")
-            btn.mb1.connect( self.make_cb_scan( scan.name))
+            btn.mb1.connect( self.make_cb_scan( scan.name, btn))
             self.vBoxScans.addWidget( btn)
 
         self.scrollAreaScans.setWidget( self.baseScans)
@@ -555,7 +557,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.updateTimerPySpectraGui.start( int( updateTime*1000))
         return 
    
-    def make_cb_files( self, fileName):
+    def make_cb_files( self, fileName, btn):
         def f():
             handleFileCallBack( self, fileName)
             if self.dotyAction.isChecked():
@@ -585,7 +587,7 @@ class pySpectraGui( QtGui.QMainWindow):
         if self.files is None:
             btn = QPushButtonTK( "../")
             btn.setStyleSheet( "QPushButton { text-align: left}")
-            btn.mb1.connect( self.make_cb_files( "../"))
+            btn.mb1.connect( self.make_cb_files( "../", btn))
             self.vBoxFiles.addWidget( btn)
 
         if self.files is None:
@@ -600,7 +602,7 @@ class pySpectraGui( QtGui.QMainWindow):
             if file.endswith( ".fio") or file.endswith( ".dat"):
                 btn = QPushButtonTK( file)
                 btn.setStyleSheet( "QPushButton { text-align: left}")
-                btn.mb1.connect( self.make_cb_files( file))
+                btn.mb1.connect( self.make_cb_files( file, btn))
                 self.vBoxFiles.addWidget( btn)
                 fileList.append( file)
                 fileDict[ file] = btn
@@ -609,7 +611,7 @@ class pySpectraGui( QtGui.QMainWindow):
             elif self.files is None and os.path.isdir( file):
                 btn = QPushButtonTK( file)
                 btn.setStyleSheet( "QPushButton { text-align: left}")
-                btn.mb1.connect( self.make_cb_files( file))
+                btn.mb1.connect( self.make_cb_files( file, btn))
                 self.vBoxFiles.addWidget( btn)
                 fileList.append( file)
                 fileDict[ file] = btn
@@ -629,7 +631,7 @@ class pySpectraGui( QtGui.QMainWindow):
         return argout
 
 
-    def make_cb_scan( self, name):
+    def make_cb_scan( self, name, btn):
         def f():
             pysp.cls()
             pysp.display( [name])
