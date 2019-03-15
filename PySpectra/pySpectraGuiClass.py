@@ -18,85 +18,53 @@ from matplotlib.figure import Figure
 
 win = None
 ACTIVITY_SYMBOLS = ['|', '/', '-', '\\', '|', '/', '-', '\\'] 
-updateTime = 0.5
+updateTime = 1.0
 
-fileList = None
-fileDict = None
+class QListWidgetTK( QtGui.QListWidget): 
+    '''
+    newItemSelected is called, if a new item is selected, 
+    can be a file, a directory or a scan
+    '''
+    def __init__( self, parent, newItemSelected): 
+        QtGui.QListWidget.__init__(self)
+        self.parent = parent
+        self.newItemSelected = newItemSelected
 
-def handleFileCallBack( self, fileName): 
-    if os.path.isdir( fileName):
-        os.chdir( fileName)
-        if self is not None:
-            self.fillFiles()
-    elif fileName.endswith( ".fio") or fileName.endswith( ".dat"):
-        pysp.cls()
-        pysp.delete()
-        pysp.read( [fileName])
-        pysp.setTitle( fileName)
-    else:
-        if self is not None:
-            self.logWidget.append(  "make_cb_files: bad fileName %s" % fileName)
-        return 
-
-def nextFile( fileName): 
-    for i in range( len( fileList)):
-        if fileName == fileList[i]:
-            i = i + 1
-            if i < len( fileList):
-                return fileDict[fileList[i]]
-            else:
-                return fileDict[fileList[0]]
-    return fileDict[fileList[0]]
-
-def prevFile( fileName): 
-    for i in range( len( fileList)):
-        if fileName == fileList[i]:
-            i = i - 1
-            if i > -1:
-                return fileDict[fileList[i]]
-            else:
-                return fileDict[fileList[-1]]
-    return fileList[0]
-                    
-class QPushButtonTK( QtGui.QPushButton):
-    mb1 = QtCore.pyqtSignal()
-    mb2 = QtCore.pyqtSignal()
-    mb3 = QtCore.pyqtSignal()
-
-    def __init__( self, *args, **kwargs):
-        QtGui.QWidget.__init__( self, *args, **kwargs)
-    def mousePressEvent( self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            self.mb1.emit()
-        elif event.button() == QtCore.Qt.MiddleButton:
-            self.mb2.emit()
-        elif event.button() == QtCore.Qt.RightButton:
-            self.mb3.emit()
-
-    def keyPressEvent(self, event):
-        key = event.key()
-        if key == 32: 
-            handleFileCallBack( None, str( self.text()))
-            pysp.display()
-            return 
-
+    def keyPressEvent (self, eventQKeyEvent):
+        key = eventQKeyEvent.key()
         if key == QtCore.Qt.Key_Left:
-            print('Left Arrow Pressed')
+            if self.parent.filesListWidget.count() > 0:
+                self.parent.filesListWidget.setFocus()
+                self.parent.filesListWidget.setCurrentRow( 0)
         elif key == QtCore.Qt.Key_Right:
-            print('Right Arrow Pressed')
-        elif key == QtCore.Qt.Key_Up:
-            obj = prevFile( str(self.text()))
-            obj.setFocus()
-            #print 'Up Arrow Pressed', obj.text()
-            self.mb1.emit()
+            if self.parent.scansListWidget.count() > 0:
+                self.parent.scansListWidget.setFocus()
+                self.parent.scansListWidget.setCurrentRow( 0)
         elif key == QtCore.Qt.Key_Down:
-            obj = nextFile( str(self.text()))
-            obj.setFocus()
-            #obj.setStyleSheet( "background-color:#45b545;")
-            #print 'Down Arrow Pressed', obj.text()
-            self.mb1.emit()
-        else:
-            print "QPush.keyPressEvent", key, self.text()
+            pass
+        elif key == QtCore.Qt.Key_Up:
+            pass
+        elif key == QtCore.Qt.Key_Return or key == 32:
+            item = self.currentItem()
+            self.newItemSelected( str(item.text()))
+        else: 
+            print "key", key
+
+        return QtGui.QListWidget.keyPressEvent(self, eventQKeyEvent)
+
+    def mouseReleaseEvent( self, event): 
+        if event.button() == QtCore.Qt.LeftButton:
+            item = self.currentItem()
+            if item is not None:
+                self.newItemSelected( str( item.text()))
+        if event.button() == QtCore.Qt.RightButton:
+            item = self.currentItem()
+            if item.checkState() == QtCore.Qt.Checked:
+                item.setCheckState(QtCore.Qt.Unchecked)       
+            else:
+                item.setCheckState(QtCore.Qt.Checked)       
+            if item is not None:
+                self.parent.displayChecked()
 #
 #
 #
@@ -363,17 +331,10 @@ class pySpectraGui( QtGui.QMainWindow):
         super( pySpectraGui, self).__init__( parent)
 
         self.setWindowTitle( "PySpectraGui")
-        geo = QtGui.QDesktopWidget().screenGeometry(-1)
-        self.widthMax = geo.width()
-        self.heighthMax = geo.height()
-        # size
-        self.setGeometry( geo.width() - 680, 30, 650, 500)
 
         # used by cb_postscript
         self.lastFileWritten = None
 
-        self.baseFiles = None
-        self.baseScans = None
         self.scanList = None
         self.scanAttributes = None
 
@@ -382,13 +343,13 @@ class pySpectraGui( QtGui.QMainWindow):
         # files == []
         #
         self.files = None
-        if len( files) > 0:
+        if files is not None and len( files) > 0:
             self.files = self.getMatchingFiles( files)
             if len( self.files) > 0:
                 pysp.read( [self.files[0]])
             pysp.display()
 
-        self.prepareWidgets()
+        self.prepareCentralWidgets()
 
         self.menuBar = QtGui.QMenuBar()
         self.setMenuBar( self.menuBar)
@@ -415,11 +376,21 @@ class pySpectraGui( QtGui.QMainWindow):
         if __builtin__.__dict__[ 'graphicsLib'] == 'matplotlib':
             self.mplWidget = MplWidget( self.logWidget)        
             self.mplWidget.show()
+        #
+        # after show() we see where we are. then we move the widget
+        #
+        geoWin = self.geometry()
+        geo = QtGui.QDesktopWidget().screenGeometry(-1)
+        #self.widthMax = geo.width()
+        #self.heighthMax = geo.height()
+        self.show()
+        geoWin = self.geometry()
+        self.setGeometry( geo.width() - 710, 30, geoWin.width(), geoWin.height())
 
     #
     # the central widgets
     #
-    def prepareWidgets( self):
+    def prepareCentralWidgets( self):
         w = QtGui.QWidget()
         #
         # start with a vertical layout
@@ -433,21 +404,29 @@ class pySpectraGui( QtGui.QMainWindow):
         #
         hBox = QtGui.QHBoxLayout()
 
+        #
+        # the files ListWidget
+        #
+        vBox = QtGui.QVBoxLayout()
+        self.dirNameLabel = QtGui.QLabel( "dirName")
+        vBox.addWidget( self.dirNameLabel)
         self.scrollAreaFiles = QtGui.QScrollArea()
-        hBox.addWidget( self.scrollAreaFiles)
-
-        self.fillFiles()
-
+        vBox.addWidget( self.scrollAreaFiles)
+        self.filesListWidget = QListWidgetTK( self, self.newPathSelected)
+        self.scrollAreaFiles.setWidget( self.filesListWidget)
+        hBox.addLayout( vBox)
+        #
+        # the scans ListWidget
+        #
+        vBox = QtGui.QVBoxLayout()
+        self.fileNameLabel = QtGui.QLabel( "fileName")
+        vBox.addWidget( self.fileNameLabel)
         self.scrollAreaScans = QtGui.QScrollArea()
-        hBox.addWidget( self.scrollAreaScans)
+        vBox.addWidget( self.scrollAreaScans)
+        self.scansListWidget = QListWidgetTK( self, self.newScanSelected)
+        self.scrollAreaScans.setWidget( self.scansListWidget)
+        hBox.addLayout( vBox)
 
-        #self.fillScans()
-
-        self.vBoxScans = QtGui.QVBoxLayout()
-        self.baseScans = QtGui.QWidget()
-        self.baseScans.setLayout( self.vBoxScans)
-
-        self.scrollAreaScans.setWidget( self.baseScans)
         self.layout_v.addLayout( hBox)
         #
         # the log widget
@@ -456,7 +435,6 @@ class pySpectraGui( QtGui.QMainWindow):
         self.logWidget.setMaximumHeight( 100)
         self.logWidget.setReadOnly( 1)
         self.layout_v.addWidget( self.logWidget)
-
         #
         # the lineEdit line
         #
@@ -480,7 +458,14 @@ class pySpectraGui( QtGui.QMainWindow):
         self.all = QtGui.QPushButton(self.tr("&All"))
         hBox.addWidget( self.all)
         self.all.clicked.connect( self.cb_all)
+        self.all.setToolTip( "Display all scans")
         self.all.setShortcut( "Alt+a")
+
+        self.checked = QtGui.QPushButton(self.tr("&Checked"))
+        hBox.addWidget( self.checked)
+        self.checked.clicked.connect( self.displayChecked)
+        self.checked.setToolTip( "Display checked scans. MB-3 checks.")
+        self.checked.setShortcut( "Alt+c")
 
         self.next = QtGui.QPushButton(self.tr("&Next"))
         hBox.addWidget( self.next)
@@ -491,9 +476,56 @@ class pySpectraGui( QtGui.QMainWindow):
 
         self.layout_v.addLayout( hBox)
 
+        self.updateFilesList()
+
+    def displayChecked( self): 
+        pysp.cls()
+        pysp.display( self.getCheckedNameList())
+
+    def newPathSelected( self, pathName): 
+        '''
+        can be called with a dir name or a file name
+        '''
+        #
+        # pathName is a directory: update filesList
+        #
+        if os.path.isdir( pathName):
+            os.chdir( pathName)
+            if self is not None:
+                self.updateFilesList()
+                return
+        #
+        # pathName is a file: update scansList
+        #
+        elif pathName.endswith( ".fio") or pathName.endswith( ".dat"):
+            pysp.cls()
+            pysp.delete()
+            try: 
+                pysp.read( [pathName])
+            except Exception, e:
+                print "pySpectraGui.newPathSelected: trouble reading", pathName
+                print repr( e)
+                return 
+
+            pysp.setTitle( pathName)
+            pysp.display()
+            self.updateScansList()
+        else:
+            if self is not None:
+                self.logWidget.append(  "newItemSelected: bad pathName %s" % pathName)
+        return 
+
+    def newScanSelected( self, scanName): 
+        '''
+        called with the name of a scan
+        '''
+        pysp.cls()
+        pysp.display( [scanName])
+
+        return 
+
     def cb_refreshPySpectraGui( self):
 
-        #print "pySpectraGui.refreshPySpectraGui"
         if self.isMinimized(): 
             return
         
@@ -502,20 +534,26 @@ class pySpectraGui( QtGui.QMainWindow):
             self.activityIndex = 0
         self.activity.setTitle( ACTIVITY_SYMBOLS[ self.activityIndex])
 
-        self.updateTimerPySpectraGui.stop()        
+        #self.updateTimerPySpectraGui.stop()        
         
+        #self.updateFilesList()
+        self.updateScansList()
+
+        #self.updateTimerPySpectraGui.start( int( updateTime*1000))
+        return 
+   
+    def updateScansList( self):
         #
-        # the scan layout is updated
+        # the scan layout is updated, if
         #   - nothing has been created before self.scanList == None
         #   - the current scanList and the displayed scanList are different
         #
+
         scanList = pysp.getScanList()[:]
         
         flagUpdate = False
         if self.scanList is None:
             flagUpdate = True
-            if self.baseScans is not None:
-                self.baseScans.close()
         else:
             if len( scanList) != len( self.scanList):
                 flagUpdate = True
@@ -528,67 +566,42 @@ class pySpectraGui( QtGui.QMainWindow):
         if not flagUpdate: 
             self.updateTimerPySpectraGui.start( int( updateTime*1000))
             return 
+        #
+        # so we have to make an update, clear the scanListWidget first
+        #
+        if self.scansListWidget.count() > 0:
+            self.scansListWidget.clear()
        
-        self.scanList = scanList
-        if self.baseScans is not None:
-            self.baseScans.close()
+        self.scanList = scanList[:]
 
         if len( self.scanList) == 0:
-            self.updateTimerPySpectraGui.start( int( updateTime*1000))
             return 
             
-        self.vBoxScans = QtGui.QVBoxLayout()
-        self.baseScans = QtGui.QWidget()
-        self.baseScans.setLayout( self.vBoxScans)
 
         if len( self.scanList) > 0:
             if self.scanList[0].fileName is not None:
-                self.vBoxScans.addWidget( QtGui.QLabel( self.scanList[0].fileName))
-        
-
+                self.fileNameLabel.setText( self.scanList[0].fileName)
         for scan in self.scanList:
-            btn = QPushButtonTK( scan.name)
-            btn.setStyleSheet( "QPushButton { text-align: left}")
-            btn.mb1.connect( self.make_cb_scan( scan.name, btn))
-            self.vBoxScans.addWidget( btn)
+            item = QtGui.QListWidgetItem( scan.name)
+            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+            item.setCheckState(QtCore.Qt.Unchecked)       
+            self.scansListWidget.addItem( item)
 
-        self.scrollAreaScans.setWidget( self.baseScans)
-        
-        self.updateTimerPySpectraGui.start( int( updateTime*1000))
-        return 
-   
-    def make_cb_files( self, fileName, btn):
-        def f():
-            handleFileCallBack( self, fileName)
-            if self.dotyAction.isChecked():
-                for elm in pysp.getScanList(): 
-                    elm.doty = True
-            pysp.display()
+    def updateFilesList( self):
+        '''
+        file the file list in the scrolling area
+        '''
+        #print "updateFilesList, count", self.filesListWidget.count()
 
-            return 
-        return f
+        if self.filesListWidget.count() > 0:
+            self.filesListWidget.clear()
 
-    def fillFiles( self):
-        global fileList, fileDict
-        if self.baseFiles is not None:
-            self.baseFiles.destroy( True, True)
-            self.vBoxFiles = None
-
-        self.vBoxFiles = QtGui.QVBoxLayout()
-
-        self.baseFiles = QtGui.QWidget()
-        self.baseFiles.setLayout( self.vBoxFiles)
-
-
-        self.vBoxFiles.addWidget( QtGui.QLabel( os.getcwd()))
+        self.dirNameLabel.setText( os.getcwd())
         #
         # if 'files' were supplied from the command line, do not offer '../'
         #
         if self.files is None:
-            btn = QPushButtonTK( "../")
-            btn.setStyleSheet( "QPushButton { text-align: left}")
-            btn.mb1.connect( self.make_cb_files( "../", btn))
-            self.vBoxFiles.addWidget( btn)
+            self.filesListWidget.addItem( "../")
 
         if self.files is None:
             lst = os.listdir( "./")
@@ -596,26 +609,14 @@ class pySpectraGui( QtGui.QMainWindow):
         else:
             lst = self.files
         
-        fileList = []
-        fileDict = {}
         for file in lst:
             if file.endswith( ".fio") or file.endswith( ".dat"):
-                btn = QPushButtonTK( file)
-                btn.setStyleSheet( "QPushButton { text-align: left}")
-                btn.mb1.connect( self.make_cb_files( file, btn))
-                self.vBoxFiles.addWidget( btn)
-                fileList.append( file)
-                fileDict[ file] = btn
+                self.filesListWidget.addItem( file)
             elif file.startswith( "."):
                 continue
             elif self.files is None and os.path.isdir( file):
-                btn = QPushButtonTK( file)
-                btn.setStyleSheet( "QPushButton { text-align: left}")
-                btn.mb1.connect( self.make_cb_files( file, btn))
-                self.vBoxFiles.addWidget( btn)
-                fileList.append( file)
-                fileDict[ file] = btn
-        self.scrollAreaFiles.setWidget( self.baseFiles)
+                self.filesListWidget.addItem( file)
+        #print "updateFilesList DONE"
         #self.scrollAreaFiles.setFocusPolicy( QtCore.Qt.StrongFocus)
 
     def getMatchingFiles( self, patternList):
@@ -630,30 +631,23 @@ class pySpectraGui( QtGui.QMainWindow):
                         argout.append( file)
         return argout
 
-
-    def make_cb_scan( self, name, btn):
-        def f():
-            pysp.cls()
-            pysp.display( [name])
-            #if self.scanAttributes is not None:
-            #    self.scanAttributes.close()
-            #self.scanAttributes = ScanAttributes( self, name)
-            return 
-        return f
-
     def cb_all( self): 
         pysp.cls()
         pysp.display()
 
     def cb_prev( self): 
         scan = pysp.prevScan()
+        index = pysp.getIndex( scan.name)
         pysp.cls()
         pysp.display( [ scan.name])
+        self.scansListWidget.setCurrentRow( index)
 
     def cb_next( self): 
         scan = pysp.nextScan()
+        index = pysp.getIndex( scan.name)
         pysp.cls()
         pysp.display( [ scan.name])
+        self.scansListWidget.setCurrentRow( index)
 
     def cb_lineEdit( self): 
         pysp.ipython.ifc.command( str(self.lineEdit.text()))
@@ -703,6 +697,22 @@ class pySpectraGui( QtGui.QMainWindow):
         self.dotyAction = QtGui.QAction('DOTY', self, checkable = True)        
         self.dotyAction.triggered.connect( self.cb_doty)
         self.optionsMenu.addAction( self.dotyAction)
+
+        self.gridAction = QtGui.QAction('GRID', self, checkable = True)        
+        self.gridAction.triggered.connect( self.cb_grid)
+        self.optionsMenu.addAction( self.gridAction)
+
+        self.dina4Action = QtGui.QAction('DINA4', self)        
+        self.dina4Action.triggered.connect( lambda : pysp.setWsViewport( 'dina4'))
+        self.optionsMenu.addAction( self.dina4Action)
+
+        self.dina5Action = QtGui.QAction('DINA5', self)        
+        self.dina5Action.triggered.connect( lambda : pysp.setWsViewport( 'dina5'))
+        self.optionsMenu.addAction( self.dina5Action)
+
+        self.dina6Action = QtGui.QAction('DINA6', self)        
+        self.dina6Action.triggered.connect( lambda : pysp.setWsViewport( 'dina6'))
+        self.optionsMenu.addAction( self.dina6Action)
         #
         # scan lists
         #
@@ -712,17 +722,21 @@ class pySpectraGui( QtGui.QMainWindow):
         self.sl1Action.triggered.connect( self.cb_sl1)
         self.scanListsMenu.addAction( self.sl1Action)
 
-        self.sl2Action = QtGui.QAction('5 Scans', self)        
+        self.sl2Action = QtGui.QAction('2 Scans', self)        
         self.sl2Action.triggered.connect( self.cb_sl2)
         self.scanListsMenu.addAction( self.sl2Action)
 
-        self.sl3Action = QtGui.QAction('10 Scans', self)        
+        self.sl3Action = QtGui.QAction('5 Scans', self)        
         self.sl3Action.triggered.connect( self.cb_sl3)
         self.scanListsMenu.addAction( self.sl3Action)
 
-        self.sl4Action = QtGui.QAction('Gauss Scan', self)        
+        self.sl4Action = QtGui.QAction('10 Scans', self)        
         self.sl4Action.triggered.connect( self.cb_sl4)
         self.scanListsMenu.addAction( self.sl4Action)
+
+        self.sl5Action = QtGui.QAction('Gauss Scan', self)        
+        self.sl5Action.triggered.connect( self.cb_sl5)
+        self.scanListsMenu.addAction( self.sl5Action)
 
         self.exitAction = QtGui.QAction('E&xit', self)        
         self.exitAction.setStatusTip('Exit application')
@@ -757,6 +771,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.deleteBtn = QtGui.QPushButton(self.tr("&Delete")) 
         self.statusBar.addWidget( self.deleteBtn) 
         self.deleteBtn.clicked.connect( self.cb_delete)
+        self.deleteBtn.setToolTip( "Delete checked scans")
         self.deleteBtn.setShortcut( "Alt+d")
 
         if __builtin__.__dict__[ 'graphicsLib'] != 'matplotlib':
@@ -772,22 +787,48 @@ class pySpectraGui( QtGui.QMainWindow):
             self.pdfBtn.setShortcut( "Alt+p")
             self.pdfBtn.setToolTip( "Create PDF file")
 
+        self.pausedBtn = QtGui.QPushButton(self.tr("Pause")) 
+        self.statusBar.addPermanentWidget( self.pausedBtn) # 'permanent' to shift it right
+        self.pausedBtn.clicked.connect( self.cb_paused)
+
         self.exit = QtGui.QPushButton(self.tr("&Exit")) 
         self.statusBar.addPermanentWidget( self.exit) # 'permanent' to shift it right
         self.exit.clicked.connect( sys.exit)
         self.exit.setShortcut( "Alt+x")
 
+    def cb_paused( self): 
+        if self.paused: 
+            self.paused = False
+            self.pausedBtn.setText( "Pause")
+        else: 
+            self.paused = True
+            self.pausedBtn.setText( "Start")
+            
     def cb_cls( self):
         '''
         clear screen
         '''
         pysp.cls()
         
+    def getCheckedNameList( self): 
+        nameList = []
+        for row in range( self.scansListWidget.count()):
+            item = self.scansListWidget.item( row)
+            if item.checkState() == QtCore.Qt.Checked:
+                nameList.append( item.text())
+        return nameList
+
     def cb_delete( self): 
         '''
         delete the scans, internally
         '''
-        pysp.delete()
+        lst = self.getCheckedNameList()
+        for name in lst: 
+            self.logWidget.append(  "Deleting %s" % name)
+        pysp.delete( lst)
+        pysp.cls()
+        pysp.display()
+        return 
 
     def cb_pdf( self): 
         fileName = pysp.mpl_graphics.createPDF()
@@ -805,6 +846,19 @@ class pySpectraGui( QtGui.QMainWindow):
         else:
             for elm in lst:
                 elm.doty = False
+        pysp.cls()
+        pysp.display()
+
+    def cb_grid( self): 
+        lst = pysp.getScanList()
+        if self.gridAction.isChecked():
+            for scan in lst:
+                scan.showGridX = True
+                scan.showGridY = True
+        else:
+            for scan in lst:
+                scan.showGridX = False
+                scan.showGridY = False
         pysp.cls()
         pysp.display()
 
@@ -865,6 +919,17 @@ class pySpectraGui( QtGui.QMainWindow):
         t1.y = np.sin( t1.x)
         t2 = pysp.Scan( "t2", yLabel = 'cos')
         t2.y = np.cos( t2.x)
+        pysp.display()
+
+    def cb_sl3( self):
+        pysp.cls()
+        pysp.delete()
+        pysp.setTitle( "Ein Titel")
+        pysp.setComment( "Ein Kommentar")
+        t1 = pysp.Scan( name = "t1", color = 'blue', yLabel = 'sin')
+        t1.y = np.sin( t1.x)
+        t2 = pysp.Scan( "t2", yLabel = 'cos')
+        t2.y = np.cos( t2.x)
         t3 = pysp.Scan( name = "t3", color = 'green', yLabel = 'tan')
         t3.y = np.tan( t3.x)
         t4 = pysp.Scan( name = "t4", color = 'cyan', yLabel = 'random')
@@ -874,7 +939,7 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.overlay( 't5', 't3')
         pysp.display()
 
-    def cb_sl3( self):
+    def cb_sl4( self):
         pysp.cls()
         pysp.delete()
         pysp.setTitle( "Ein Titel")
@@ -884,7 +949,7 @@ class pySpectraGui( QtGui.QMainWindow):
             t.y = np.random.random_sample( (len( t.x), ))
         pysp.display()
 
-    def cb_sl4( self):
+    def cb_sl5( self):
         '''
         gauss scan
         '''
@@ -900,7 +965,7 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.display()
 
     def cb_writeFile( self):
-        pass
+        pysp.write()
 
     def cb_matplotlib( self):
         self.mplWidget = MplWidget( self.logWidget)

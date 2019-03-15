@@ -47,6 +47,9 @@ def initGraphic():
 
 def _setSizeGraphicsWindow( nScan):
 
+    if _GQE.getWsViewportFixed(): 
+        return 
+
     if nScan > 10:
         factor = 0.625
     elif nScan > 4: 
@@ -98,11 +101,12 @@ def setWsViewport( size = None):
     #
     # 3778: pixel per meter (spectra)
     #
-    wPixel = w*3778./100.
+    wPixel = w*3778./100. 
     hPixel = h*3778./100.
-    print "graphics.setWsViewport", wPixel, hPixel
+    #print "graphics.setWsViewport", wPixel, hPixel
     _win.setGeometry( 30, 30, int(wPixel), int(hPixel))
     _QApp.processEvents()
+    _GQE.setWsViewportFixed( True)
 
     return 
 
@@ -237,8 +241,8 @@ def _getPen( scan):
               'dashDotDotLine': _QtCore.Qt.DashDotDotLine,
           }
 
-    if scan.color in col: 
-        clr = col[ scan.color]
+    if scan.color.lower() in col: 
+        clr = col[ scan.color.lower()]
     else:
         clr = 'k'
 
@@ -324,14 +328,14 @@ def _createPlotItem( scan):
     # (2, 2, 3) -> (1, 0)
     # (2, 2, 4) -> (1, 1)
     #
-    row = _math.floor(float( scan.nplot - 1)/float(scan.ncol)) 
-    col = scan.nplot - 1 - row*scan.ncol
-    #print "graphics.createPlotItem, nrow, ncol, nplot", scan.nrow, scan.ncol, scan.nplot,\
-    #    "row, col", row, col
+    row = int( _math.floor(float( scan.nplot - 1)/float(scan.ncol)))
+    col = int( scan.nplot - 1 - row*scan.ncol)
     #
     # take title and comment into account
     #
     row += 2
+    #print "graphics.createPlotItem, nrow, ncol, nplot", scan.name, scan.nrow, scan.ncol, scan.nplot,\
+    #    "row, col", row, col
     #
     #print "graphics.createPlotItem", scan.name, row, col
     #
@@ -345,13 +349,13 @@ def _createPlotItem( scan):
             plotItem = _win.addPlot( axisItems = { 'bottom': _CAxisTime( orientation='bottom')}, 
                                      row = row, col = col, colspan = scan.colSpan) 
         else:
-            plotItem = _win.addPlot( row = row, col = col, colspan = scan.colSpan) 
+            plotItem = _win.addPlot( row = row, col = col, colspan = scan.colSpan)
     except Exception, e:
         print "graphics.createPlotItem: caught exception, row", row, "col", col, "colspan", scan.colSpan
         print repr( e)
         raise ValueError( "graphics.createPlotItem, throwing exception")
 
-    plotItem.showGrid( x = True, y = True)
+    plotItem.showGrid( x = scan.showGridX, y = scan.showGridY)
     
     #
     # the length of the title has to be limited. Otherwise pg 
@@ -386,10 +390,13 @@ def _createPlotItem( scan):
 
     #print "graphics.createPlotItem", scan.name, "autorange x, y", arX, arY
     
+    #
+    # problem: autorange needs padding != 0
+    #
     plotItem.enableAutoRange( x = arX, y = arY)
 
     if not arY: 
-        plotItem.setYRange( scan.yMin, scan.yMax)
+        plotItem.setYRange( scan.yMin, scan.yMax, padding = 0)
     #
     # idea: control the zoom in such a way the y-axis 
     # is re-scaled when we zoom in.
@@ -451,6 +458,9 @@ def _displayTitleComment():
             _win.addLabel( comment, row = 1, col = 0, colspan = 10)
 
 def _adjustFigure( nDisplay): 
+    '''
+    used for matplotlib
+    '''
     return 
 
 def display( nameList = None):
@@ -473,6 +483,7 @@ def display( nameList = None):
 
     Module: PySpectra.graphics.<graphLib>.graphics.py
     '''
+    #print "pqt_graphics.display", repr( nameList)
     #
     # don't want to check for nameList is None below
     #
@@ -519,14 +530,20 @@ def display( nameList = None):
     nDisplay = _GQE.getNumberOfScansToBeDisplayed( nameList)
     _setSizeGraphicsWindow( nDisplay)
     _adjustFigure( nDisplay)
-    #
-    # _displayTitleComment() uses (0,0) and (1, 0)
-    #
-    _displayTitleComment()
+
+
     #
     # set scan.nrow, scan.ncol, scan.nplot
     #
     _utils._setScanVPs( nameList, flagDisplaySingle)
+
+    #
+    # _displayTitleComment() uses (0,0) and (1, 0)
+    # this has to follow setScanVPs because this function
+    # might execute a cls()
+    #
+    _displayTitleComment()
+    
     #
     # --- first pass: run through the scans in scanList and display 
     #     non-overlaid scans
@@ -539,7 +556,13 @@ def display( nameList = None):
         # scan or if it is the only scan mentioned in nameList
         #
         if scan.overlay is not None and not flagDisplaySingle:
-            continue
+            #
+            # maybe the scan.overlay has beed deleted
+            #
+            if _GQE.getScan( scan.overlay) is None:
+                scan.overlay = None
+            else:
+                continue
 
         if len( nameList) > 0: 
             if scan.name not in nameList:
@@ -551,6 +574,15 @@ def display( nameList = None):
         if scan.plotItem is None:
             try:
                 scan.plotItem = _createPlotItem( scan)
+                #
+                # the showValues option is not operational
+                # see also: /home/kracht/Misc/pySpectra/examples/pyqtgraph/axis.py
+                # this would be the way: 
+                # scan.plotItem.showAxis( 'right')
+                # scan.plotItem.getAxis('right').showValues = False
+                # scan.plotItem.getAxis('right').style[ 'showValues'] = False
+                # scan.plotItem.getAxis('right').setStyle( showValues = False)
+                #
             except ValueError, e:
                 print "graphics.display", repr( e)
                 print "graphics.display: exception from createPlotItem"
@@ -601,6 +633,10 @@ def display( nameList = None):
         if len( nameList) > 0 and scan.name not in nameList:
             continue
         target = _GQE.getScan( scan.overlay)
+        if target is None:
+            raise ValueError( "pqt_graphics.display: %s tries to overlay to %s" %
+                              (scan.name, scan.overlay))
+
         scan.plotItem = target.plotItem
 
         target.plotItem.setTitle( title ="%s and %s" % (target.name, scan.name))
@@ -626,5 +662,10 @@ def display( nameList = None):
     # /usr/lib/python2.7/dist-packages/pyqtgraph/graphicsItems/AxisItem.py L.818
     # crashed because len( textRects) == 0
     #
-    _QApp.processEvents()
+    try: 
+        _QApp.processEvents()
+    except Exception, e:
+        print "pyqt_graphics.display: caught exception"
+        print repr( e)
+
     return

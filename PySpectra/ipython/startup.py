@@ -135,7 +135,7 @@ def pysp_help( line):
     print " These are the available commands"
     print "   antiderivative, cls, create, delete, derivative,"
     print "   display, overlay, procEventsLoop, read, setTitle, "
-    print "   setComment, show, y2my"
+    print "   setComment, show, write, y2my"
     print ""
     print "  for more help use, e.g.: create?"
     print ""
@@ -146,6 +146,13 @@ def read(line):
     print the list of scans
     '''
     ifc.command( "read " + line)
+
+@register_line_magic
+def write(line):
+    '''
+    write a .fio file
+    '''
+    ifc.command( "write " + line)
 
 @register_line_magic
 def setComment(line):
@@ -253,6 +260,7 @@ del show
 del setComment
 del setTitle
 del setWsViewport
+del write
 del y2my
 
 del sl1

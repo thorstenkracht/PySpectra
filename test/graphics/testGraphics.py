@@ -17,6 +17,28 @@ import math
 
 class testGraphics( unittest.TestCase):
 
+    def testGrid( self): 
+        '''
+        using showGridX, showGridY
+        '''
+        PySpectra.cls()
+        PySpectra.delete()
+        PySpectra.setTitle( "check grids")
+
+        sinus = PySpectra.Scan( name = 'sinus', 
+                                xMin = 0., showGridX = True, xMax = 6.0, nPts = 101, color = 'red')
+        cos = PySpectra.Scan( name = 'cos', 
+                                xMin = 0., showGridY = True, xMax = 6.0, nPts = 101, color = 'red')
+        tan = PySpectra.Scan( name = 'tan', 
+                                xMin = 0., showGridY = True, showGridX = True, xMax = 6.0, nPts = 101, color = 'red')
+        sinus.y = np.sin( sinus.y)
+        cos.y = np.cos( cos.y)
+        tan.y = np.tan( tan.y)
+
+        PySpectra.display()
+        PySpectra.show()
+        PySpectra.procEventsLoop()
+
     def testDisplayScan_v1( self): 
         '''
         using setX and setY

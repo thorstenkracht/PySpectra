@@ -69,6 +69,8 @@ def createPDF( fileName = None):
 def _setSizeGraphicsWindow( nScan):
     '''
     '''
+    if _GQE.getWsViewportFixed(): 
+        return 
 
     if nScan > 9:
         w = 29.7
@@ -116,6 +118,7 @@ def setWsViewport( size = None):
 
     fig = matplotlib.pyplot.gcf()
     fig.set_size_inches( w/2.54, h/2.54, forward = True)
+    _GQE.setWsViewportFixed( True)
 
     return 
 
@@ -390,7 +393,13 @@ def display( nameList = None):
         # scan or if it is the only scan mentioned in nameList
         #
         if scan.overlay is not None and not flagDisplaySingle:
-            continue
+            #
+            # maybe the scan.overlay has beed deleted
+            #
+            if _GQE.getScan( scan.overlay) is None:
+                scan.overlay = None
+            else:
+                continue
 
         if len( nameList) > 0: 
             if scan.name not in nameList:

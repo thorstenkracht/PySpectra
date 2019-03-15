@@ -40,6 +40,7 @@ def main():
     try:
         sys.exit( app.exec_())
     except Exception, e:
+        print "pyspViewer.main, exception"
         print repr( e)
 
 if __name__ == "__main__":

@@ -237,8 +237,15 @@ def _setScanVPs( nameList, flagDisplaySingle):
         _lenPlotted = lenTemp
         if lenTemp == 0:
             return 
-        ncol = int( _math.floor( _math.sqrt( lenTemp) + 0.5))
-        nrow = int( _math.ceil( float(lenTemp)/float(ncol)))
+
+        #ncol = int( _math.floor( _math.sqrt( lenTemp) + 0.5))
+        if lenTemp == 2:
+            ncol = 1
+            nrow = 2
+        else:
+            #ncol = int( _math.floor( _math.sqrt( lenTemp) + 0.5))
+            ncol = int( _math.ceil( _math.sqrt( lenTemp)))
+            nrow = int( _math.ceil( float(lenTemp)/float(ncol)))
         nplot = 1 
     elif len( nameList) == 1:
         if _lenPlotted != 1 and _lenPlotted != -1: 
@@ -254,8 +261,13 @@ def _setScanVPs( nameList, flagDisplaySingle):
         _lenPlotted = lenTemp
         if lenTemp == 0:
             return 
-        ncol = int( _math.floor( _math.sqrt( lenTemp) + 0.5))
-        nrow = int( _math.ceil( float(lenTemp)/float(ncol)))
+        if lenTemp == 2:
+            ncol = 1
+            nrow = 2
+        else:
+            #ncol = int( _math.floor( _math.sqrt( lenTemp) + 0.5))
+            ncol = int( _math.ceil( _math.sqrt( lenTemp)))
+            nrow = int( _math.ceil( float(lenTemp)/float(ncol)))
         nplot = 1 
 
 
@@ -266,16 +278,27 @@ def _setScanVPs( nameList, flagDisplaySingle):
         # scan or if it is the only scan mentioned in nameList
         #
         if scan.overlay is not None and not flagDisplaySingle:
-            continue
+            #
+            # maybe the scan.overlay has beed deleted
+            #
+            if _GQE.getScan( scan.overlay) is None:
+                scan.overlay = None
+            else:
+                continue
 
         if len( nameList) > 0: 
             if scan.name not in nameList:
                 continue
 
         if scan.plotItem is None:
-            scan.nrow = nrow
-            scan.ncol = ncol
-            scan.nplot = nplot
+            if scan.at is None:
+                scan.ncol = ncol
+                scan.nrow = nrow
+                scan.nplot = nplot
+            else: 
+                scan.ncol = scan.at[0]
+                scan.nrow = scan.at[1]
+                scan.nplot = scan.at[2]
             #print "utils.setScanVPs", scan.name, \
             #    "nrow", scan.nrow, "ncol", scan.ncol, "nplot", scan.nplot
             nplot += 1

@@ -32,7 +32,6 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
     The queue is filled from pyspDoor.
     '''
     def __init__( self, parent = None):
-        print "pyspMonitor.__init__"
         super( pyspMonitor, self).__init__( parent)
 
         self.queue = Queue.Queue()
@@ -63,23 +62,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         elif hsh.has_key( 'setComment'):
             pysp.setComment( hsh[ 'setComment'])
         elif hsh.has_key( 'Scan'):
-            if hsh[ 'Scan'].has_key( 'x'):
-                if hsh[ 'Scan'].has_key( 'reUse'):
-                    pysp.Scan( name = hsh[ 'Scan'][ 'name'], 
-                               reUse = True, 
-                               x = hsh[ 'Scan'][ 'x'], 
-                               y = hsh[ 'Scan'][ 'y'])
-                else:
-                    pysp.Scan( name = hsh[ 'Scan'][ 'name'], 
-                               x = hsh[ 'Scan'][ 'x'], 
-                               y = hsh[ 'Scan'][ 'y'])
-            else:
-                pysp.Scan( name = hsh[ 'Scan'][ 'name'], 
-                           color = hsh[ 'Scan'][ 'color'], 
-                           autorangeX = hsh[ 'Scan'][ 'autorangeX'], 
-                           xMax = hsh[ 'Scan'][ 'xMax'], 
-                           xMin = hsh[ 'Scan'][ 'xMin'], 
-                           nPts = hsh[ 'Scan'][ 'nPts'])
+            pysp.Scan( **hsh[ 'Scan']) 
         elif hsh.has_key( 'setX'):
             scan = pysp.getScan( hsh[ 'setX'][ 'name'])
             scan.setX(  hsh[ 'setX'][ 'index'], hsh[ 'setX'][ 'x'])
@@ -108,7 +91,5 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
                 cnt += 1
         except Queue.Empty, e:
             pass
-            if cnt > 0:
-                print "pyspMonitor.cb_refreshMain: queue is empty, after", cnt
 
         self.updateTimer.start( int( updateTime*1000))

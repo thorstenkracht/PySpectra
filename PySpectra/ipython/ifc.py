@@ -49,6 +49,8 @@ def command( line):
         return setWsViewport( lineRest)
     elif lst[0] == 'show':
         return show( lineRest)
+    elif lst[0] == 'write':
+        return write( lineRest)
     elif lst[0] == 'y2my':
         return y2my( lineRest)
     else:
@@ -202,6 +204,9 @@ def setWsViewport( line):
 
 def show( line):
     pysp.show()
+
+def write( line):
+    pysp.write()
 
 def y2my( line):
     lst = line.split( ' ')

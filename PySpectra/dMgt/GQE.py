@@ -13,6 +13,11 @@ _scanList = []
 _scanIndex = None  # used by next/back
 _title = None
 _comment = None
+#
+# if the wsViewport is set, e.g. to dina4, it is fixed, i.e. independent 
+# of how many scans are displayed 
+#
+_wsViewportFixed = False
 
 class Text(): 
     '''
@@ -20,7 +25,8 @@ class Text():
     hAlign: 'left', 'right', 'center'
     vAlign: 'top', 'bottom', 'center'
     '''
-    def __init__( self, text = 'Empty', x = 0.5, y = 0.5, hAlign = 'left', vAlign = 'top', color = 'black'): 
+    def __init__( self, text = 'Empty', x = 0.5, y = 0.5, 
+                  hAlign = 'left', vAlign = 'top', color = 'black'): 
 
         self.text = text
         self.x = x
@@ -105,6 +111,7 @@ class Scan():
         '''
         creates a scan using x, y
         '''
+
         if 'y' not in kwargs:
             raise ValueError( "GQE.Scan._createScanFromData: 'y' not supplied")
 
@@ -116,6 +123,8 @@ class Scan():
         if len( self.x) != len( self.y):
             raise ValueError( "GQE.Scan._createScanFromData: 'x' and 'y' differ in length %d (x) %d (y)" % (len( self.x), len( self.y)))
 
+        if len( self.x) == 0:
+            raise ValueError( "GQE.Scan._createScanFromData: %s len(x) == 0" % (self.name))
         self.xMin = _np.min( self.x)
         self.xMax = _np.max( self.x)
         self.yMin = _np.min( self.y)
@@ -198,6 +207,8 @@ class Scan():
         fileName 
         overlay: string 
                  the name of the scan occupying the target viewport 
+        showGridX, 
+        showGridY: True/False
         stype:   'solidLine', 'dashLine', 'dotLine', ...
         symbol:  o, s, t, d, +,
         width:   float
@@ -220,6 +231,8 @@ class Scan():
         self.doty = False            # x-axis is date-of-the year
         self.fileName = None
         self.plotItem = None
+        self.showGridX = False
+        self.showGridY = False
         self.width = 1.
         self.style = 'solidLine'
         self.xLabel = 'position'
@@ -234,7 +247,8 @@ class Scan():
         self.mouseProxy = None
 
         for attr in [ 'autorangeX', 'autorangeY', 'color', 'colSpan', 'doty', 'fileName',  
-                      'overlay', 'style', 'symbol', 'xLabel', 'yLabel']:
+                      'ncol', 'nrow', 'nplot', 'overlay', 'showGridX', 'showGridY', 
+                      'style', 'symbol', 'xLabel', 'yLabel']:
             if attr in kwargs:
                 setattr( self, attr, kwargs[ attr])
                 del kwargs[ attr]
@@ -253,6 +267,8 @@ class Scan():
             # the string '(2, 3, 4)' -> list of ints [1, 2, 3]
             #
             if type( atStr) is tuple:
+                self.at = list( atStr)
+            elif type( atStr) is list:
                 self.at = list( atStr)
             else:
                 lstStr = atStr.strip()[1:-1].split( ',')
@@ -317,6 +333,29 @@ class Scan():
             raise ValueError( "GQE.Scan.setX: %s, index %d out of range [0, %d]" % 
                               ( self.name, index, self.x.size))
         self.x[ index] = xValue
+        self.currentIndex = index
+        return
+
+    def setXY( self, index, xValue, yValue):
+        '''
+        Sets the x- and y-value at index
+
+        The currentIndex, which is used for display, is set to index. 
+
+        Parameters:
+        -----------
+        index: int
+          The index of the first point is 0
+        xValue: float
+          the x-value
+        yValue: float
+          the y-value
+        '''
+        if index >= self.y.size:
+            raise ValueError( "GQE.Scan.setX: %s, index %d out of range [0, %d]" % 
+                              ( self.name, index, self.x.size))
+        self.x[ index] = xValue
+        self.y[ index] = yValue
         self.currentIndex = index
         return
     
@@ -476,8 +515,7 @@ def nextScan():
     global _scanIndex
 
     if len( _scanList) == 0:
-        print "GQE.nextScan: _scanList is empty"
-        return None
+        raise ValueError( "GQE.nextScan: scan list empty")
 
     if _scanIndex is None:
         _scanIndex = 0
@@ -496,8 +534,7 @@ def prevScan():
     global _scanIndex
 
     if len( _scanList) == 0:
-        print "GQE.prevScan: _scanList is empty"
-        return None
+        raise ValueError( "GQE.prevScan: scan list empty")
 
     if _scanIndex is None:
         _scanIndex = 0
@@ -512,6 +549,14 @@ def prevScan():
 
     return _scanList[ _scanIndex]
 
+def getIndex( name): 
+    index = 0
+    for scan in _scanList:
+        if scan.name == name:
+            return index
+        index += 1
+    raise ValueError( "GQE.getIndex: not found %s" % name)
+    
 def read( lst):
     '''    
     Reads a file and creates a scan for each column, except the first
@@ -532,6 +577,32 @@ def read( lst):
         scn =  Scan( name = elm.name, x = elm.x, y = elm.y, fileName = fileName)
 
     return 
+    
+def write( lst = None): 
+    '''
+    write the specified scans of all scans
+    '''
+    if len(_scanList) == 0: 
+        raise ValueError( "GQE.write: scan list is empty")
+
+    #
+    # check if all scans have the same length
+    #
+    lngth = len( _scanList[0].x)
+    obj = _HasyUtils.fioObj( namePrefix = "pysp")
+    for scan in _scanList:
+        if lst is not None:
+            if scan.name not in lst:
+                continue
+        if lngth != len( scan.x): 
+            raise ValueError( "GQE.display: wrong length %s" % scan.name)
+    
+        col = _HasyUtils.fioColumn( scan.name)
+        col.x = scan.x
+        col.y = scan.y
+        obj.columns.append( col)
+    fileName = obj.write()
+    print "created", fileName
     
 def getNumberOfScansToBeDisplayed( nameList): 
     '''
@@ -572,3 +643,16 @@ def getNoOverlaid( nameList = None):
 
     return count
     
+def setWsViewportFixed( flag):
+    '''
+    flag: True or False
+    
+    if True, the wsViewport is not changed automatically 
+             to take many scans into account
+    '''
+    global _wsViewportFixed 
+    _wsViewportFixed = flag
+    return 
+    
+def getWsViewportFixed():
+    return _wsViewportFixed 

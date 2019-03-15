@@ -191,6 +191,7 @@ class spectraDoor( sms.BaseDoor):
             #
             self.sendHsh( { 'Scan': { 'name': self.mcaAliases[n],
                                       'reUse': True, 
+                                      'color': 'blue', 
                                       'x': x, 
                                       'y': y}}) 
             
@@ -852,11 +853,11 @@ class spectraDoor( sms.BaseDoor):
         for elm in self.counterAliases:
 
             self.sendHsh( { 'Scan': { 'name': elm,
-                                        'xMin': self.start,
-                                        'xMax': self.stop,
-                                        'color': 'red',
-                                        'nPts': npTemp,
-                                        'autorangeX': True}})
+                                      'xMin': self.start,
+                                      'xMax': self.stop,
+                                      'color': 'red',
+                                      'nPts': npTemp,
+                                      'autorangeX': False}})
             
         env = self.getEnvironment()
         if env.has_key( 'SignalCounter'):
