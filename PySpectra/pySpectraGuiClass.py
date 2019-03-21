@@ -16,21 +16,38 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 
+colorDct = { 'RED': 0, 
+              'GREEN': 1, 
+              'BLUE': 2, 
+              'YELLOW': 3,
+              'CYAN': 4,
+              'MAGENTA': 5,
+              'BLACK': 6}
+
 win = None
 ACTIVITY_SYMBOLS = ['|', '/', '-', '\\', '|', '/', '-', '\\'] 
-updateTime = 1.0
+updateTime = 0.5
+
+class HLineTK( QtGui.QFrame):
+    def __init__( self):
+        QtGui.QFrame.__init__(self)
+        self.setFrameShape( QtGui.QFrame.HLine)
+        self.setFrameShadow(QtGui.QFrame.Sunken)
 
 class QListWidgetTK( QtGui.QListWidget): 
     '''
     newItemSelected is called, if a new item is selected, 
     can be a file, a directory or a scan
     '''
-    def __init__( self, parent, newItemSelected): 
+    def __init__( self, parent, newItemSelected, name): 
         QtGui.QListWidget.__init__(self)
         self.parent = parent
         self.newItemSelected = newItemSelected
+        self.name = name
+        self.connect( self, QtCore.SIGNAL("itemDoubleClicked (QListWidgetItem *)"),self.cb_doubleClicked)
 
     def keyPressEvent (self, eventQKeyEvent):
+        print "keyPress"
         key = eventQKeyEvent.key()
         if key == QtCore.Qt.Key_Left:
             if self.parent.filesListWidget.count() > 0:
@@ -52,12 +69,25 @@ class QListWidgetTK( QtGui.QListWidget):
 
         return QtGui.QListWidget.keyPressEvent(self, eventQKeyEvent)
 
+    def cb_doubleClicked( self, item): 
+        '''
+        double click: reads a file
+        '''
+        print "doubleClicket", item.text()
+
+        if self.name == "filesListWidget":
+            self.newItemSelected( str( item.text()))
+        return 
+
     def mouseReleaseEvent( self, event): 
+        '''
+        left-MB:  change checkState of a scan
+        right-MB: opens the attributesWidget
+        '''
+        print "keyRelease"
+        if self.name == "filesListWidget":
+            return 
         if event.button() == QtCore.Qt.LeftButton:
-            item = self.currentItem()
-            if item is not None:
-                self.newItemSelected( str( item.text()))
-        if event.button() == QtCore.Qt.RightButton:
             item = self.currentItem()
             if item.checkState() == QtCore.Qt.Checked:
                 item.setCheckState(QtCore.Qt.Unchecked)       
@@ -65,6 +95,11 @@ class QListWidgetTK( QtGui.QListWidget):
                 item.setCheckState(QtCore.Qt.Checked)       
             if item is not None:
                 self.parent.displayChecked()
+        if event.button() == QtCore.Qt.RightButton:
+            item = self.currentItem()
+            self.scanAttributes = ScanAttributes( self.parent, item.text())
+        return 
+
 #
 #
 #
@@ -94,7 +129,6 @@ class ScanAttributes( QtGui.QMainWindow):
         self.setStatusBar( self.statusBar)
         self.prepareStatusBar()
 
-        self.paused = False
         self.updateTimer = QtCore.QTimer(self)
         self.updateTimer.timeout.connect( self.cb_refreshAttr)
         self.updateTimer.start( int( updateTime*1000))
@@ -125,8 +159,47 @@ class ScanAttributes( QtGui.QMainWindow):
         self.w_dotyCheckBox.setToolTip( "x-axis is day-of-the-year")
         hBox.addWidget( self.w_dotyCheckBox) 
         self.layout_v.addLayout( hBox)
-
         self.w_dotyCheckBox.stateChanged.connect( self.cb_dotyChanged)
+        #
+        # color
+        #
+        hBox = QtGui.QHBoxLayout()
+        hBox.addWidget( QtGui.QLabel( "Color"))
+        self.w_colorComboBox = QtGui.QComboBox()
+        self.w_colorComboBox.addItem( "Red")
+        self.w_colorComboBox.addItem( "Green")
+        self.w_colorComboBox.addItem( "Blue")
+        self.w_colorComboBox.addItem( "Yellow")
+        self.w_colorComboBox.addItem( "Cyan")
+        self.w_colorComboBox.addItem( "Magenta")
+        self.w_colorComboBox.addItem( "Black")
+        self.w_colorComboBox.currentIndexChanged.connect( self.cb_color)
+        self.w_colorComboBox.setCurrentIndex( colorDct[ self.scan.color.upper()])
+        hBox.addWidget( self.w_colorComboBox) 
+        self.layout_v.addLayout( hBox)
+        #
+        # overlay
+        #
+        hBox = QtGui.QHBoxLayout()
+        hBox.addWidget( QtGui.QLabel( "Overlay"))
+        self.w_overlayComboBox = QtGui.QComboBox()
+        self.w_overlayComboBox.addItem( "None")
+        count = 1 
+        countTemp = -1
+        for scan in pysp.getScanList(): 
+            if scan.name == self.name:
+                continue
+            if self.scan.overlay is not None and self.scan.overlay == scan.name:
+                countTemp = count
+            self.w_overlayComboBox.addItem( scan.name)
+            count += 1
+        if countTemp > 0: 
+            print "countTemp", countTemp
+            self.w_overlayComboBox.setCurrentIndex( countTemp)
+        self.w_overlayComboBox.currentIndexChanged.connect( self.cb_overlay)
+        hBox.addWidget( self.w_overlayComboBox) 
+        self.layout_v.addLayout( hBox)
+
 
     #
     # the menu bar
@@ -170,6 +243,21 @@ class ScanAttributes( QtGui.QMainWindow):
         self.statusBar.addPermanentWidget( self.exit) # 'permanent' to shift it right
         self.exit.clicked.connect( self.close)
         self.exit.setShortcut( "Alt+x")
+        
+
+    def cb_color( self): 
+        temp = self.w_colorComboBox.currentText()
+        scan = pysp.getScan( self.name)
+        scan.color = str( temp)
+        return
+
+    def cb_overlay( self): 
+        temp = str( self.w_overlayComboBox.currentText())
+        scan = pysp.getScan( self.name)
+        if temp == 'None': 
+            temp = None
+        scan.overlay = temp
+        return
         
     def cb_refreshAttr( self):
 
@@ -337,6 +425,7 @@ class pySpectraGui( QtGui.QMainWindow):
 
         self.scanList = None
         self.scanAttributes = None
+        self.proxyDoor = None
 
         #
         # 'files' come from the command line. If nothing is supplied
@@ -362,7 +451,6 @@ class pySpectraGui( QtGui.QMainWindow):
         self.setStatusBar( self.statusBar)
         self.prepareStatusBar()
 
-        self.paused = False
         self.updateTimerPySpectraGui = QtCore.QTimer(self)
         self.updateTimerPySpectraGui.timeout.connect( self.cb_refreshPySpectraGui)
         self.updateTimerPySpectraGui.start( int( updateTime*1000))
@@ -412,7 +500,7 @@ class pySpectraGui( QtGui.QMainWindow):
         vBox.addWidget( self.dirNameLabel)
         self.scrollAreaFiles = QtGui.QScrollArea()
         vBox.addWidget( self.scrollAreaFiles)
-        self.filesListWidget = QListWidgetTK( self, self.newPathSelected)
+        self.filesListWidget = QListWidgetTK( self, self.newPathSelected, "filesListWidget")
         self.scrollAreaFiles.setWidget( self.filesListWidget)
         hBox.addLayout( vBox)
         #
@@ -423,7 +511,7 @@ class pySpectraGui( QtGui.QMainWindow):
         vBox.addWidget( self.fileNameLabel)
         self.scrollAreaScans = QtGui.QScrollArea()
         vBox.addWidget( self.scrollAreaScans)
-        self.scansListWidget = QListWidgetTK( self, self.newScanSelected)
+        self.scansListWidget = QListWidgetTK( self, self.newScanSelected, "scansListWidget")
         self.scrollAreaScans.setWidget( self.scansListWidget)
         hBox.addLayout( vBox)
 
@@ -446,6 +534,25 @@ class pySpectraGui( QtGui.QMainWindow):
         QtCore.QObject.connect( self.lineEdit, 
                                 QtCore.SIGNAL("returnPressed()"),self.cb_lineEdit)
 
+        #
+        # horizontal line
+        #
+        self.layout_v.addWidget( HLineTK())
+
+        self.addPrevNextLine()
+
+        self.layout_v.addWidget( HLineTK())
+
+        self.addDoorLine()
+
+        self.layout_v.addWidget( HLineTK())
+
+        self.updateFilesList()
+
+    def addPrevNextLine( self): 
+        '''
+        Prev | All | Checked | Next
+        '''
         hBox = QtGui.QHBoxLayout()
 
         hBox.addStretch()            
@@ -461,7 +568,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.all.setToolTip( "Display all scans")
         self.all.setShortcut( "Alt+a")
 
-        self.checked = QtGui.QPushButton(self.tr("&Checked"))
+        self.checked = QtGui.QPushButton(self.tr("Checked"))
         hBox.addWidget( self.checked)
         self.checked.clicked.connect( self.displayChecked)
         self.checked.setToolTip( "Display checked scans. MB-3 checks.")
@@ -476,7 +583,61 @@ class pySpectraGui( QtGui.QMainWindow):
 
         self.layout_v.addLayout( hBox)
 
-        self.updateFilesList()
+    def addDoorLine( self): 
+        '''
+        Abort | Stop | StopAllMoves
+        '''
+        hBox = QtGui.QHBoxLayout()
+
+        hBox.addStretch()            
+
+        self.abort = QtGui.QPushButton(self.tr("Abort"))
+        hBox.addWidget( self.abort)
+        self.abort.clicked.connect( self.cb_abort)
+        self.abort.setToolTip( "Send AbortMacro to the MacroServer")
+
+        self.stop = QtGui.QPushButton(self.tr("Stop"))
+        hBox.addWidget( self.stop)
+        self.stop.clicked.connect( self.cb_stop)
+        self.stop.setToolTip( "Send StopMacro to the MacroServer")
+
+        self.stopAllMoves = QtGui.QPushButton(self.tr("StopAllMoves"))
+        hBox.addWidget( self.stopAllMoves)
+        self.stopAllMoves.clicked.connect( self.cb_stopAllMoves)
+
+        hBox.addStretch()            
+
+        self.layout_v.addLayout( hBox)
+
+    def cb_abort( self): 
+        '''
+        execute AbortMacro on Door
+        '''
+        if self.proxyDoor is None:
+            try:
+                self.proxyDoor = PyTango.DeviceProxy( HasyUtils.getDoorNames()[0])
+            except Exception, e: 
+                print "pySpectraGui.cb_abort: failed to create proxy to door", HasyUtils.getDoorNames()[0]
+                return 
+            self.proxyDoor = PyTango.DeviceProxy( HasyUtils.getDoorNames()[0])
+        self.proxyDoor.AbortMacro()
+            
+    def cb_stop( self): 
+        '''
+        execute StopMacro on Door
+        '''
+        if self.proxyDoor is None:
+            try:
+                self.proxyDoor = PyTango.DeviceProxy( HasyUtils.getDoorNames()[0])
+            except Exception, e: 
+                print "pySpectraGui.cb_stop: failed to create proxy to door", HasyUtils.getDoorNames()[0]
+                return 
+        if self.proxyDoor.State() != PyTango.DevState.ON:        
+            self.proxyDoor.StopMacro()
+
+    def cb_stopAllMoves( self): 
+        HasyUtils.stopAllMoves()
+        
 
     def displayChecked( self): 
         pysp.cls()
@@ -774,36 +935,18 @@ class pySpectraGui( QtGui.QMainWindow):
         self.deleteBtn.setToolTip( "Delete checked scans")
         self.deleteBtn.setShortcut( "Alt+d")
 
-        if __builtin__.__dict__[ 'graphicsLib'] != 'matplotlib':
-            self.matplotlibBtn = QtGui.QPushButton(self.tr("&matplotlib")) 
-            self.statusBar.addWidget( self.matplotlibBtn) 
-            self.matplotlibBtn.clicked.connect( self.cb_matplotlib)
-            self.matplotlibBtn.setShortcut( "Alt+m")
-            self.matplotlibBtn.setToolTip( "Launch matplotlib widget to create PDF")
-        else: 
+        if __builtin__.__dict__[ 'graphicsLib'] == 'matplotlib':
             self.pdfBtn = QtGui.QPushButton(self.tr("&PDF")) 
             self.statusBar.addWidget( self.pdfBtn) 
             self.pdfBtn.clicked.connect( self.cb_pdf)
             self.pdfBtn.setShortcut( "Alt+p")
             self.pdfBtn.setToolTip( "Create PDF file")
 
-        self.pausedBtn = QtGui.QPushButton(self.tr("Pause")) 
-        self.statusBar.addPermanentWidget( self.pausedBtn) # 'permanent' to shift it right
-        self.pausedBtn.clicked.connect( self.cb_paused)
-
         self.exit = QtGui.QPushButton(self.tr("&Exit")) 
         self.statusBar.addPermanentWidget( self.exit) # 'permanent' to shift it right
         self.exit.clicked.connect( sys.exit)
         self.exit.setShortcut( "Alt+x")
 
-    def cb_paused( self): 
-        if self.paused: 
-            self.paused = False
-            self.pausedBtn.setText( "Pause")
-        else: 
-            self.paused = True
-            self.pausedBtn.setText( "Start")
-            
     def cb_cls( self):
         '''
         clear screen
@@ -823,6 +966,9 @@ class pySpectraGui( QtGui.QMainWindow):
         delete the scans, internally
         '''
         lst = self.getCheckedNameList()
+        if len( lst) == 0:
+            self.logWidget.append(  "cb_Delete: no scans checked")
+            return 
         for name in lst: 
             self.logWidget.append(  "Deleting %s" % name)
         pysp.delete( lst)

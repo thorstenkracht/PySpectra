@@ -499,7 +499,7 @@ def display( nameList = None):
         #print "display: overlaying %s to %s" % (scan.name, target.name)
 
         scan.plotDataItem, = scan.plotItem.plot( scan.x[:(scan.currentIndex + 1)], 
-                                                        scan.y[:(scan.currentIndex + 1)], scan.color)
+                                                 scan.y[:(scan.currentIndex + 1)], scan.color)
 
         scan.plotItem.relim()
         scan.plotItem.autoscale_view( True, False, True)
@@ -507,10 +507,10 @@ def display( nameList = None):
         target.plotItem.set_title( "%s and %s" % (target.name, scan.name))
 
         scan.lastIndex = scan.currentIndex
-        if scan.yMin is None:
-            scan.plotItem.set_autoscale_on( True)
-        else:
-            scan.plotItem.set_ylim( scan.yMin, scan.yMax)
+        #if scan.yMin is None:
+        #    scan.plotItem.set_autoscale_on( True)
+        #else:
+        #    scan.plotItem.set_ylim( scan.yMin, scan.yMax)
         scan.plotItem.set_xlim( scan.xMin, scan.xMax)
 
     plt.draw()

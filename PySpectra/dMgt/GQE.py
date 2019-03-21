@@ -201,7 +201,7 @@ class Scan():
                  The name of the scan
         autorangeX, autorangeY
                  if you know the x-range beforehand, set autorangeY to False
-        color:   'red', 'green', 'blue', 'yellow', 'cyan', 'black'
+        color:   'red', 'green', 'blue', 'yellow', 'cyan', 'magenta', 'black'
         colSpan: def.: 1
         doty:    def. False
         fileName 

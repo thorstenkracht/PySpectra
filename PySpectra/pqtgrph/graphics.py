@@ -16,6 +16,15 @@ import PySpectra.utils as _utils
 import HasyUtils as _HasyUtils
 import datetime as _datetime
 
+colorCode = { 'red': 'r', 
+        'blue': 'b',
+        'green': 'g',
+        'cyan': 'c',
+        'magenta': 'm',
+        'yellow': 'y',
+        'black': 'k',
+}
+
 _QApp = None
 _win = None
 
@@ -226,14 +235,6 @@ class _CAxisTime( _pg.AxisItem):
         return strns
 
 def _getPen( scan):
-    col = { 'red': 'r', 
-            'blue': 'b',
-            'green': 'g',
-            'cyan': 'c',
-            'magenta': 'm',
-            'yellow': 'y',
-            'black': 'k',
-            }
     style = { 'solidLine': _QtCore.Qt.SolidLine,
               'dashLine': _QtCore.Qt.DashLine,
               'dotLine': _QtCore.Qt.DotLine,
@@ -241,8 +242,8 @@ def _getPen( scan):
               'dashDotDotLine': _QtCore.Qt.DashDotDotLine,
           }
 
-    if scan.color.lower() in col: 
-        clr = col[ scan.color.lower()]
+    if scan.color.lower() in colorCode: 
+        clr = colorCode[ scan.color.lower()]
     else:
         clr = 'k'
 
@@ -259,6 +260,7 @@ def _make_cb_mouseMoved( scan):
     return a callback function for the moveMouse signal
     '''
     def mouseMoved(evt):
+        #print "+++ mouseMoved, evt[0]", scan.name, repr( evt[0])
         m = [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         mousePoint = scan.plotItem.vb.mapSceneToView(evt[0])
         #print "+++ scene", repr( evt[0]), "view", repr( mousePoint)
@@ -286,9 +288,20 @@ def _make_cb_mouseMoved( scan):
         scan.mouseLabel.show()
     return mouseMoved
 
+def _make_cb_mouseClicked( scan):
+    '''
+    return a callback function for the mouseClicked signal
+    '''
+    def mouseClicked(evt):
+        mousePoint = scan.plotItem.vb.mapSceneToView(evt[0].scenePos())
+        print "pos", mousePoint.x(), mousePoint.y()
+    return mouseClicked
+
 def _prepareMouse( scan):
     scan.mouseProxy = _pg.SignalProxy( scan.plotItem.scene().sigMouseMoved, 
-                                  rateLimit=60, slot=_make_cb_mouseMoved( scan))
+                                       rateLimit=60, slot=_make_cb_mouseMoved( scan))
+    scan.mouseClick = _pg.SignalProxy( scan.plotItem.scene().sigMouseClicked, 
+                                       rateLimit=60, slot=_make_cb_mouseClicked( scan))
     scan.mouseLabel = _pg.TextItem( "cursor", color='b', anchor = (0, 1.0))
     scan.plotItem.addItem( scan.mouseLabel)
     scan.mouseLabel.hide()
@@ -419,7 +432,11 @@ def _createPlotItem( scan):
             anchorY = 1
         elif elm.vAlign == 'center':
             anchorY = 0.5
-        txt = _pg.TextItem( elm.text, color=elm.color, anchor = ( anchorX, anchorY))
+        #txt = _pg.TextItem( elm.text, color=elm.color, anchor = ( anchorX, anchorY))
+        if elm.color.lower() in colorCode:
+            txt = _pg.TextItem( elm.text, color=colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
+        else:
+            txt = _pg.TextItem( elm.text, color='k', anchor = ( anchorX, anchorY))
         x = (scan.xMax - scan.xMin)*elm.x + scan.xMin
         y = ( _np.max( scan.y) - _np.min( scan.y))*elm.y + _np.min( scan.y)
         #txt.setParentItem( plotItem.getViewBox())
@@ -645,11 +662,11 @@ def display( nameList = None):
                               scan.y[:(scan.currentIndex + 1)], 
                               pen = _getPen( scan))
         scan.lastIndex = scan.currentIndex
-        if scan.yMin is None:
-            scan.plotItem.enableAutoRange( x = False, y = True)
-        else:
-            scan.plotItem.setYRange( scan.yMin, scan.yMax)
-        scan.plotItem.setXRange( scan.xMin, scan.xMax)
+        #if scan.yMin is None:
+        #    scan.plotItem.enableAutoRange( x = False, y = True)
+        #else:
+        #    scan.plotItem.setYRange( scan.yMin, scan.yMax)
+        #scan.plotItem.setXRange( scan.xMin, scan.xMax)
 
     #_QApp.processEvents()
     #

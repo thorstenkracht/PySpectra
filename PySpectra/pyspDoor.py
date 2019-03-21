@@ -1121,7 +1121,6 @@ class spectraDoor( sms.BaseDoor):
 
         self.indexScan += 1
 
-
     def sendHsh( self, hsh): 
         try:
             self.queue.put( hsh)
@@ -1129,7 +1128,7 @@ class spectraDoor( sms.BaseDoor):
             print "queueSpectraDoor.sendHsh"
             print "hsh", repr( hsh)
             print "exception", repr( e)
-            raise ValueError( "pyspDoor.sendHsh: somethine went wrong")
+            raise ValueError( "pyspDoor.sendHsh: something went wrong")
 
     def displayMeshScan( self, pos, posY):
         self.meshScan.setX( self.meshIndex, pos)
