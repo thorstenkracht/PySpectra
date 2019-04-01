@@ -8,6 +8,9 @@ GQE - contains the Scan() class and functions to handle scans:
 import numpy as _np
 import PySpectra as _PySpectra
 import HasyUtils as _HasyUtils
+from taurus.external.qt import QtGui as _QtGui
+from taurus.external.qt import QtCore as _QtCore
+import PyTango as _PyTango
 
 _scanList = []
 _scanIndex = None  # used by next/back
@@ -18,6 +21,12 @@ _comment = None
 # of how many scans are displayed 
 #
 _wsViewportFixed = False
+
+ScanAttrs = [ 'at', 'autorangeX', 'autorangeY', 'colSpan', 'color', 'currentIndex', 
+              'dType', 'doty', 'fileName', 'lastIndex', 
+              'nPts', 'name', 'ncol', 'nplot', 'nrow', 'overlay', 'showGridX', 
+              'showGridY', 'style', 'textList', 'width', 'xLabel', 'xMax', 'xMin',
+              'xLabel', 'yLabel', 'yMin', 'yMax'] 
 
 class Text(): 
     '''
@@ -45,10 +54,17 @@ class Scan():
       - a scan contains 2 arrays, x and y, and graphics attributes
 
     PySpectra.Scan( name = 'name', filename = 'test.fio', x = 1, y = 2)
+    PySpectra.Scan( name = 'name', x = xArr, y = yArr)
     PySpectra.Scan( name = 'name', xMin = 0., xMax = 10., nPts = 101)
     PySpectra.Scan( name = 'name')
-
+      the same as PySpectra.Scan( name = 'name', xMin = 0., xMax = 10., nPts = 101)
     '''
+    #
+    # this class variable stores the Gui, needed to configure the motorsWidget, 
+    # which happens for each new scan
+    #
+    monitorGui = None
+
     def __init__( self, name = None, **kwargs):
         global _scanList
 
@@ -56,6 +72,10 @@ class Scan():
 
         if name is None:
             raise ValueError( "GQE.Scan: 'name' is missing")
+        #
+        #
+        #
+        self.textOnly = False
         #
         # We 'reUse' e.g. MCA scans
         #
@@ -76,15 +96,32 @@ class Scan():
                     raise ValueError( "GQE.Scan: %s exists already" % name)
         if 'reUse' in kwargs:
             del kwargs[ 'reUse'] 
-
+            
         self.name = name
         if 'x' in kwargs and 'y' not in kwargs or \
            'x' not in kwargs and 'y' in kwargs:
             raise ValueError( "GQE.Scan.__init__: if 'x' or 'y' then both have to be supplied")
         #
+        # noData means no texts
+        #
+        if 'textOnly' in kwargs:
+            self.textOnly = True
+            del kwargs[ 'textOnly']
+            pass
+        #    
+        # 'fileName': data are read from a file
+        #    
+        elif 'fileName' in kwargs: 
+            if 'x' not in kwargs or 'y' not in kwargs:
+                raise ValueError( "GQE.Scan.__init__: 'fileName' but no 'x' and 'y', %s" % kwargs[ 'fileName'])
+            fioCol = read( kwargs[ 'fileName'], kwargs[ 'x'], kwargs[ 'y'])
+            kwargs[ 'x']= fioCol.x
+            kwargs[ 'y']= fioCol.y
+            self._createScanFromData( kwargs)
+        #
         # if 'x' and 'y' are supplied the scan is created using data
         #
-        if 'x' in kwargs:
+        elif 'x' in kwargs:
             self._createScanFromData( kwargs)
         #
         # otherwise we use limits and the limits have defaults
@@ -97,7 +134,7 @@ class Scan():
         # can access it via e.g.: pysp.t1
         #
         _PySpectra.__dict__[ name] = self
-
+        
         self.setAttr( kwargs)
 
         if kwargs:
@@ -107,6 +144,91 @@ class Scan():
 
         _scanList.append( self)
 
+    @staticmethod
+    def move( target): 
+        #print "GQE.Scan.move: to", target, "using", Scan.monitorGui.scanInfo
+        if Scan.monitorGui is None or Scan.monitorGui.scanInfo is None: 
+            return
+
+        motorArr = Scan.monitorGui.scanInfo['motors']        
+        length = len( motorArr)
+        if  length == 0 or length > 3:
+            _QtGui.QMessageBox.about( None, 'Info Box', "no. of motors == 0 or > 3") 
+            return
+
+        motorIndex = Scan.monitorGui.scanInfo['motorIndex']
+
+        if motorIndex >= length:
+            _QtGui.QMessageBox.about( None, 'Info Box', "motorIndex %d >= no. of motors %d" % (motorIndex, length))
+            return
+            
+        motorArr[motorIndex]['targetPos'] = target
+        r = (motorArr[motorIndex]['targetPos'] - motorArr[motorIndex]['start']) / (motorArr[motorIndex]['stop'] - motorArr[motorIndex]['start']) 
+
+        if length == 1:
+            p0 = _PyTango.DeviceProxy( motorArr[0]['name'])
+            msg = "Move %s from %s to %s" % (motorArr[0]['name'], 
+                                             repr(p0.read_attribute( 'Position').value), 
+                                             repr(motorArr[0]['targetPos']))
+            reply = _QtGui.QMessageBox.question( None, 'YesNo', msg, _QtGui.QMessageBox.Yes, _QtGui.QMessageBox.No)        
+
+        #
+        # for hklscan: a h-move may move the same motors as a k-move, etc. 
+        #
+        elif length == 2:
+            motorArr[0]['targetPos'] = (motorArr[0]['stop'] - motorArr[0]['start'])*r + motorArr[0]['start']
+            motorArr[1]['targetPos'] = (motorArr[1]['stop'] - motorArr[1]['start'])*r + motorArr[1]['start']
+            p0 = _PyTango.DeviceProxy( motorArr[0]['name'])
+            p1 = _PyTango.DeviceProxy( motorArr[1]['name'])
+            msg = "Move\n  %s from %g to %g\n  %s from %g to %g " % \
+                  (motorArr[0]['name'], p0.read_attribute( 'Position').value, motorArr[0]['targetPos'],
+                   motorArr[1]['name'], p1.read_attribute( 'Position').value, motorArr[1]['targetPos'])
+            reply = _QtGui.QMessageBox.question( None, 'YesNo', msg, _QtGui.QMessageBox.Yes, _QtGui.QMessageBox.No)
+
+        #
+        # for hklscan: a h-move may move the same motors as a k-move, etc. 
+        #   - therefore we may have to repeat the Move2Cursor
+        #   - and we have to check whether a motor is already in-target
+        #
+        elif length == 3:
+            motorArr[0]['targetPos'] = (motorArr[0]['stop'] - motorArr[0]['start'])*r + motorArr[0]['start']
+            motorArr[1]['targetPos'] = (motorArr[1]['stop'] - motorArr[1]['start'])*r + motorArr[1]['start']
+            motorArr[2]['targetPos'] = (motorArr[2]['stop'] - motorArr[2]['start'])*r + motorArr[2]['start']
+            p0 = _PyTango.DeviceProxy( motorArr[0]['name'])
+            p1 = _PyTango.DeviceProxy( motorArr[1]['name'])
+            p2 = _PyTango.DeviceProxy( motorArr[2]['name'])
+            msg = "Move\n  %s from %g to %g\n  %s from %g to %g\n  %s from %g to %g " % \
+                  (motorArr[0]['name'], p0.read_attribute( 'Position').value, motorArr[0]['targetPos'],
+                   motorArr[1]['name'], p1.read_attribute( 'Position').value, motorArr[1]['targetPos'],
+                   motorArr[2]['name'], p2.read_attribute( 'Position').value, motorArr[2]['targetPos'])
+            reply = _QtGui.QMessageBox.question( None, 'YesNo', msg, _QtGui.QMessageBox.Yes, _QtGui.QMessageBox.No)
+
+        if not reply == _QtGui.QMessageBox.Yes:
+            Scan.monitorGui.logWidget.append( "Move: move not confirmed")
+            return
+
+        if Scan.monitorGui.scanInfo['title'].find( "hklscan") == 0:
+            Scan.monitorGui.logWidget.append( "br %g %g %g" % (motorArr[0]['targetPos'],motorArr[1]['targetPos'],motorArr[2]['targetPos']))
+            Scan.monitorGui.door.RunMacro( ["br",  
+                                 "%g" %  motorArr[0]['targetPos'], 
+                                 "%g" %  motorArr[1]['targetPos'], 
+                                 "%g" %  motorArr[2]['targetPos']])
+        else:
+            lst = [ "umv"]
+            for hsh in motorArr:
+                lst.append( "%s" % (hsh['name']))
+                lst.append( "%g" % (hsh['targetPos']))
+                Scan.monitorGui.logWidget.append( "%s to %g" % (hsh['name'], hsh['targetPos']))
+            Scan.monitorGui.door.RunMacro( lst)
+        return 
+
+    #
+    # called from pyspMonitorClass, if scanInfo is received
+    #
+    @staticmethod
+    def setMonitorGui( monitorGui): 
+        Scan.monitorGui = monitorGui
+    
     def _createScanFromData( self, kwargs):
         '''
         creates a scan using x, y
@@ -209,9 +331,9 @@ class Scan():
                  the name of the scan occupying the target viewport 
         showGridX, 
         showGridY: True/False
-        stype:   'solidLine', 'dashLine', 'dotLine', ...
+        style:   'SOLID', 'DASHED', 'DOTTED', 'DASHDOTTED', 'DASHDOTDOTTED'
         symbol:  o, s, t, d, +,
-        width:   float
+        width:   float: 1.0, 1.2, 1.4, 1.6, 1.8, 2.0
                  line width, def.: 1
         xLabel:  string
                  the description of the x-axis, def. 'position'
@@ -234,7 +356,7 @@ class Scan():
         self.showGridX = False
         self.showGridY = False
         self.width = 1.
-        self.style = 'solidLine'
+        self.style = 'SOLID'
         self.xLabel = 'position'
         self.yLabel = 'signal'
         self.overlay = None
@@ -248,15 +370,18 @@ class Scan():
 
         for attr in [ 'autorangeX', 'autorangeY', 'color', 'colSpan', 'doty', 'fileName',  
                       'ncol', 'nrow', 'nplot', 'overlay', 'showGridX', 'showGridY', 
-                      'style', 'symbol', 'xLabel', 'yLabel']:
+                      'style', 'symbol', 'xLabel', 'yLabel', 'yMin', 'yMax']:
             if attr in kwargs:
                 setattr( self, attr, kwargs[ attr])
                 del kwargs[ attr]
 
-        for attr in [ 'width']:
-            if attr in kwargs:
+        attr = 'width'
+        if attr in kwargs:
+            if str(kwargs[ attr]) in pysp.widthArr:
                 setattr( self, attr, float( kwargs[ attr]))
-                del kwargs[ attr]
+            else: 
+                setattr( self, attr, 1.0)
+            del kwargs[ attr]
         #
         # if at is None, graphics.display() makes a guess
         #
@@ -276,7 +401,16 @@ class Scan():
                     self.at = [1, 1, 1]
                 else:
                     self.at = [int( i) for i in lstStr]
-            
+            for scan in _scanList: 
+                if scan is self:
+                    continue
+                if self.at is None or scan.at is None: 
+                    continue
+                if self.at[0] == scan.at[0] and \
+                   self.at[1] == scan.at[1] and \
+                   self.at[2] == scan.at[2]:
+                    raise ValueError( "GQE.Scan.setAttr: %s is already at %s %s" % 
+                                      (scan.name, str( self.at), self.name))
         return 
 
     def addText( self, text = 'Empty', x = 0.5, y = 0.5, hAlign = 'left', vAlign = 'top', color = 'black'):
@@ -358,7 +492,7 @@ class Scan():
         self.y[ index] = yValue
         self.currentIndex = index
         return
-    
+
 def getScanList():
     '''
     returns the list of scans
@@ -479,25 +613,23 @@ def overlay( src, trgt):
     scanSrc.overlay = scanTrgt.name
     return 
     
-def show():
+def show( scanName = None):
     '''
-    prints the contents of scanList
+    if no scan is supplied, prints the contents of scanList
     '''
+
+    if scanName is not None:
+        scan = getScan( scanName)
+        _showScan( scan)
+        return 
+
     if not _scanList:
         print "GQE.show: scanList is empty"
         return 
 
     print "The List of Scans:"
-    count = 0
     for scan in _scanList:
-        print " - %s, current %d, last %d" % (scan.name, scan.currentIndex, scan.lastIndex)
-        print "   xMin %g, xMax %g, nPts %d, len %d" % \
-            (scan.xMin, scan.xMax, scan.nPts, len( scan.x))
-        print "   yMin %s, yMax %s, overlay %s" % \
-            ( repr(scan.yMin), repr( scan.yMax), scan.overlay)
-        print "   x[0] %s, x[-1] %s" % \
-            ( repr(scan.x[0]), repr( scan.x[-1]))
-        count += 1
+        _showScan( scan)
 
     _PySpectra.listGraphicsItems()
 
@@ -507,6 +639,17 @@ def show():
         print "Title:  ", _title
     if _comment: 
         print "Comment:", _comment
+
+def _showScan( scan): 
+    '''
+    '''
+    print "--- \n", scan.name
+    for attr in ScanAttrs:
+        try:
+            print "%s -> %s" % ( attr, repr( getattr( scan, attr)))
+        except Exception, e:
+            print "GQE._showScan: trouble with", scan.name
+            print repr( e)
 
 def nextScan():
     '''
@@ -557,26 +700,31 @@ def getIndex( name):
         index += 1
     raise ValueError( "GQE.getIndex: not found %s" % name)
     
-def read( lst):
+def read( fileName, x = 1, y = None, flagMCA = False):
     '''    
-    Reads a file and creates a scan for each column, except the first
-    column which is the common x-axis of the other columns. 
+    if y is None: 
+      read all columns from a file
+      creating many scans
+      return None
+    otherwise: 
+      return a fioColumn object
+
     Supported extensions: .fio, .dat
 
-    if '-mca' is in lst, the input file contains MCA data, no x-axis
+    if flagMCA, the input file contains MCA data, no x-axis
     '''
-    
-    fileName = lst[0]
-    flagMca = False
-    if '-mca' in lst:
-        flagMca = True
 
-    fioObj = _HasyUtils.fioReader( fileName, flagMca)
+    fioObj = _HasyUtils.fioReader( fileName, flagMCA)
+
+    if y is not None:
+        if y > len( fioObj.columns): 
+            raise ValueError( "GQE.read: %s, y %d > len( columns) %d" % ( fileName, y, len( fioObj.columns)))
+        return fioObj.columns[ y - 1]
 
     for elm in fioObj.columns:
         scn =  Scan( name = elm.name, x = elm.x, y = elm.y, fileName = fileName)
 
-    return 
+    return None
     
 def write( lst = None): 
     '''

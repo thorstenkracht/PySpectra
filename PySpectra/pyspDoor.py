@@ -839,6 +839,13 @@ class spectraDoor( sms.BaseDoor):
                 print "prepareNewScan: caught exception: ", repr(e)
             return False
 
+        #
+        # sending the scanInfo makes GQE.Scan to create a new move() and
+        # to prepare the motorsWidget of the GUI
+        #
+        self.scanInfo[ 'motorIndex'] = self.motorIndex
+        self.sendHsh( { 'ScanInfo': self.scanInfo})
+        
         if self.isMesh:
             at_str = "(%d,%d,%d)" % (self.ncol, self.nrow, count)
             Spectra.gra_command( "set %s/at=%s" % (self.meshScan.gqeName, at_str))

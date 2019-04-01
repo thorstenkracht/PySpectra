@@ -13,17 +13,9 @@ import math as _math
 import numpy as _np
 import PySpectra.dMgt.GQE as _GQE
 import PySpectra.utils as _utils
+import PySpectra.definitions as _defs
 import HasyUtils as _HasyUtils
 import datetime as _datetime
-
-colorCode = { 'red': 'r', 
-        'blue': 'b',
-        'green': 'g',
-        'cyan': 'c',
-        'magenta': 'm',
-        'yellow': 'y',
-        'black': 'k',
-}
 
 _QApp = None
 _win = None
@@ -235,20 +227,14 @@ class _CAxisTime( _pg.AxisItem):
         return strns
 
 def _getPen( scan):
-    style = { 'solidLine': _QtCore.Qt.SolidLine,
-              'dashLine': _QtCore.Qt.DashLine,
-              'dotLine': _QtCore.Qt.DotLine,
-              'dashDotLine': _QtCore.Qt.DashDotLine,
-              'dashDotDotLine': _QtCore.Qt.DashDotDotLine,
-          }
 
-    if scan.color.lower() in colorCode: 
-        clr = colorCode[ scan.color.lower()]
+    if scan.color.lower() in _defs.colorCode: 
+        clr = _defs.colorCode[ scan.color.lower()]
     else:
         clr = 'k'
 
-    if scan.style in style:
-        stl = style[ scan.style]
+    if scan.style in _defs.style:
+        stl = _defs.style[ scan.style]
     else:
         stl = _QtCore.Qt.DashLine
 
@@ -294,7 +280,7 @@ def _make_cb_mouseClicked( scan):
     '''
     def mouseClicked(evt):
         mousePoint = scan.plotItem.vb.mapSceneToView(evt[0].scenePos())
-        print "pos", mousePoint.x(), mousePoint.y()
+        scan.move( mousePoint.x())
     return mouseClicked
 
 def _prepareMouse( scan):
@@ -305,6 +291,25 @@ def _prepareMouse( scan):
     scan.mouseLabel = _pg.TextItem( "cursor", color='b', anchor = (0, 1.0))
     scan.plotItem.addItem( scan.mouseLabel)
     scan.mouseLabel.hide()
+    return 
+
+
+def _textIsOnDisplay( textStr):
+    '''
+    searches the list of Items to see whether textStr exists already
+    '''
+    for item in _win.items():
+        if type( item) is _pg.graphicsItems.LabelItem.LabelItem: 
+            if textStr == item.text:
+                return True
+
+    return False
+
+def _adjustFigure( nDisplay): 
+    '''
+    used for matplotlib
+    '''
+    return 
 
 def _isCellTaken( row, col):
     '''
@@ -327,6 +332,92 @@ def _isCellTaken( row, col):
                 break
     return argout
 
+def _displayTitleComment():
+    '''
+    display title and comment.
+    - title is over comment
+    - colspan is infinity
+    '''
+    print "graphics.displayTitleComment"
+    title = _GQE.getTitle()
+    if title is not None:
+        if not _textIsOnDisplay( title):
+            _win.addLabel( title, row = 0, col = 0, colspan = 10)
+
+    _isCellTaken( 0, 0)
+    
+    comment = _GQE.getComment()
+    if comment is not None:
+        if not _textIsOnDisplay( comment):
+            _win.addLabel( comment, row = 1, col = 0, colspan = 10)
+
+    _isCellTaken( 1, 0)
+    print "graphics.displayTitleComment DONE"
+
+def _addTexts( scan): 
+    for elm in scan.textList:
+        if elm.hAlign == 'left':
+            anchorX = 0
+        elif elm.hAlign == 'right':
+            anchorX = 1
+        elif elm.hAlign == 'center':
+            anchorX = 0.5
+        if elm.vAlign == 'top':
+            anchorY = 0
+        elif elm.vAlign == 'bottom':
+            anchorY = 1
+        elif elm.vAlign == 'center':
+            anchorY = 0.5
+        #txt = _pg.TextItem( elm.text, color=elm.color, anchor = ( anchorX, anchorY))
+        if elm.color.lower() in _defs.colorCode:
+            txt = _pg.TextItem( elm.text, color=_defs.colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
+        else:
+            txt = _pg.TextItem( elm.text, color='k', anchor = ( anchorX, anchorY))
+
+        if scan.textOnly:
+            x = elm.x
+            y = elm.y
+        else:
+            x = (scan.xMax - scan.xMin)*elm.x + scan.xMin
+            y = ( _np.max( scan.y) - _np.min( scan.y))*elm.y + _np.min( scan.y)
+            
+        scan.plotItem.addItem( txt)
+        txt.setPos( x, y)
+        txt.show()
+
+def _setTitle( scan): 
+    #
+    # the length of the title has to be limited. Otherwise pg 
+    # screws up. The plots will no longer fit into the workstation viewport
+    # and the following display command, even with less scans, will 
+    # also not fit into the graphics window
+    #
+    lenMax = 15
+    if len( _GQE._scanList) > 15: 
+        lenMax = 12
+
+    if len( scan.name) > lenMax:
+        tempName = "X_" + scan.name[-lenMax:]
+    else: 
+        tempName = scan.name
+
+    if len( _GQE._scanList) < _defs.MANY_SCANS:
+        scan.plotItem.setTitle( title = tempName)
+    else:
+        vb = scan.plotItem.getViewBox()
+        print "graphics.setTitle: %s, viewRange %s" % (scan.name, str( vb.viewRange()))
+        txt = _pg.TextItem( tempName, color='k', anchor = ( 0.5, 0.5))
+        x = (scan.xMax - scan.xMin)*0.5 + scan.xMin
+        if scan.autorangeY: 
+            y = ( _np.max( scan.y) - _np.min( scan.y))*0.90 + _np.min( scan.y)
+        else: 
+            y = ( scan.yMax - scan.yMin)*0.90 + scan.yMin
+            
+        txt.setPos( x, y)
+        print "graphics.setTitle: %s at %g %g" % ( tempName, x, y)
+        vb.addItem( txt)
+        #scan.plotItem.addItem( txt)
+
 def _createPlotItem( scan):            
     '''
     create a plotItem, aka viewport (?) with title, axis descriptions and texts
@@ -341,56 +432,50 @@ def _createPlotItem( scan):
     # (2, 2, 3) -> (1, 0)
     # (2, 2, 4) -> (1, 1)
     #
+    #print "graphics.createPlotItem", scan.name, repr( scan.at)
+    #print "graphics.createPlotItem, nrow", scan.nrow, "ncol", scan.ncol, \
+    #    "nplot", scan.nplot
     row = int( _math.floor(float( scan.nplot - 1)/float(scan.ncol)))
     col = int( scan.nplot - 1 - row*scan.ncol)
+    #print "graphics.createPlotItem, row", row, "col", col
     #
     # take title and comment into account
     #
     row += 2
-    #print "graphics.createPlotItem, nrow, ncol, nplot", scan.name, scan.nrow, scan.ncol, scan.nplot,\
-    #    "row, col", row, col
-    #
-    #print "graphics.createPlotItem", scan.name, row, col
-    #
-    #
-    #
+    
     if _isCellTaken( row, col):
         raise ValueError( "graphics.createPlotItem: cell (%d, %d) is already taken" % ( row, col))
 
     try:
-        if scan.doty: 
-            plotItem = _win.addPlot( axisItems = { 'bottom': _CAxisTime( orientation='bottom')}, 
-                                     row = row, col = col, colspan = scan.colSpan) 
+        if scan.textOnly:
+            plotItem = _win.addViewBox( row, col)
+            plotItem.setRange( xRange = ( 0, 1), yRange = ( 0., 1.))
+            scan.plotItem = plotItem
+            _addTexts( scan)
+            return plotItem
+
         else:
-            plotItem = _win.addPlot( row = row, col = col, colspan = scan.colSpan)
+            if scan.doty: 
+                plotItem = _win.addPlot( axisItems = { 'bottom': _CAxisTime( orientation='bottom')}, 
+                                         row = row, col = col, colspan = scan.colSpan) 
+                scan.plotItem = plotItem
+            else:
+                plotItem = _win.addPlot( row = row, col = col, colspan = scan.colSpan)
+                scan.plotItem = plotItem
     except Exception, e:
         print "graphics.createPlotItem: caught exception, row", row, "col", col, "colspan", scan.colSpan
         print repr( e)
         raise ValueError( "graphics.createPlotItem, throwing exception")
 
-    plotItem.showGrid( x = scan.showGridX, y = scan.showGridY)
+    scan.plotItem.showGrid( x = scan.showGridX, y = scan.showGridY)
     
-    #
-    # the length of the title has to be limited. Otherwise pg 
-    # screws up. The plots will no longer fit into the workstation viewport
-    # and the following display command, even with less scans, will 
-    # also not fit into the graphics window
-    #
-    lenMax = 15
-    if len( _GQE.getScanList()) > 15: 
-        lenMax = 12
+    _setTitle( scan)
 
-    if len( scan.name) > lenMax:
-        tempName = "X_" + scan.name[-lenMax:]
-    else: 
-        tempName = scan.name
-
-    plotItem.setTitle( title = tempName)
-
-    if hasattr( scan, 'xLabel'):
-        plotItem.setLabel( 'bottom', text=scan.xLabel)
-    if hasattr( scan, 'yLabel'):
-        plotItem.setLabel( 'left', text=scan.yLabel)
+    if len( _GQE._scanList) < _defs.MANY_SCANS:
+        if hasattr( scan, 'xLabel'):
+            scan.plotItem.setLabel( 'bottom', text=scan.xLabel)
+        if hasattr( scan, 'yLabel'):
+            scan.plotItem.setLabel( 'left', text=scan.yLabel)
 
     arX = scan.autorangeX
     arY = scan.autorangeY
@@ -406,79 +491,30 @@ def _createPlotItem( scan):
     #
     # problem: autorange needs padding != 0
     #
-    plotItem.enableAutoRange( x = arX, y = arY)
+    scan.plotItem.enableAutoRange( x = arX, y = arY)
 
     if not arY: 
-        plotItem.setYRange( scan.yMin, scan.yMax, padding = 0)
+        scan.plotItem.setYRange( scan.yMin, scan.yMax, padding = 0)
     #
     # idea: control the zoom in such a way the y-axis 
     # is re-scaled when we zoom in.
     #
-    plotItem.setMouseEnabled( x = True, y = True)
+    scan.plotItem.setMouseEnabled( x = True, y = True)
 
     if not arX: 
-        plotItem.setXRange( scan.xMin, scan.xMax, padding=0)
+        scan.plotItem.setXRange( scan.xMin, scan.xMax, padding=0)
 
-    for elm in scan.textList:
-        if elm.hAlign == 'left':
-            anchorX = 0
-        elif elm.hAlign == 'right':
-            anchorX = 1
-        elif elm.hAlign == 'center':
-            anchorX = 0.5
-        if elm.vAlign == 'top':
-            anchorY = 0
-        elif elm.vAlign == 'bottom':
-            anchorY = 1
-        elif elm.vAlign == 'center':
-            anchorY = 0.5
-        #txt = _pg.TextItem( elm.text, color=elm.color, anchor = ( anchorX, anchorY))
-        if elm.color.lower() in colorCode:
-            txt = _pg.TextItem( elm.text, color=colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
-        else:
-            txt = _pg.TextItem( elm.text, color='k', anchor = ( anchorX, anchorY))
-        x = (scan.xMax - scan.xMin)*elm.x + scan.xMin
-        y = ( _np.max( scan.y) - _np.min( scan.y))*elm.y + _np.min( scan.y)
-        #txt.setParentItem( plotItem.getViewBox())
-        #txt.setPos( 20, 20)
-        plotItem.addItem( txt)
-        txt.setPos( x, y)
-        txt.show()
+    _addTexts( scan)
 
-    return plotItem
+    return scan.plotItem
 
-def _textIsOnDisplay( textStr):
-    '''
-    searches the list of Items to see whether textStr exists already
-    '''
-    for item in _win.items():
-        if type( item) is _pg.graphicsItems.LabelItem.LabelItem: 
-            if textStr == item.text:
-                return True
-
-    return False
-
-def _displayTitleComment():
-    '''
-    display title and comment.
-    - title is over comment
-    - colspan is infinity
-    '''
-    title = _GQE.getTitle()
-    if title is not None:
-        if not _textIsOnDisplay( title):
-            _win.addLabel( title, row = 0, col = 0, colspan = 10)
-    
-    comment = _GQE.getComment()
-    if comment is not None:
-        if not _textIsOnDisplay( comment):
-            _win.addLabel( comment, row = 1, col = 0, colspan = 10)
-
-def _adjustFigure( nDisplay): 
-    '''
-    used for matplotlib
-    '''
-    return 
+#def _allocateViewBox(): 
+#    vb = _win.addViewBox( 2, 0)
+#    vb.setRange( xRange = ( 0, 1), yRange = ( 0., 1.))
+#    t1 = _pg.TextItem( text = "this is a text", anchor = ( 0., 0.5), color = 'k')
+#    t1.setPos( 0., 0.9)
+#    vb.addItem( t1)
+#    return 
 
 def display( nameList = None):
     '''
@@ -548,7 +584,6 @@ def display( nameList = None):
     _setSizeGraphicsWindow( nDisplay)
     _adjustFigure( nDisplay)
 
-
     #
     # set scan.nrow, scan.ncol, scan.nplot
     #
@@ -561,6 +596,7 @@ def display( nameList = None):
     #
     _displayTitleComment()
     
+    #_allocateViewBox()
     #
     # --- first pass: run through the scans in scanList and display 
     #     non-overlaid scans
@@ -591,27 +627,15 @@ def display( nameList = None):
         if scan.plotItem is None:
             try:
                 scan.plotItem = _createPlotItem( scan)
-                #
-                # the showValues option is not operational
-                # see also: /home/kracht/Misc/pySpectra/examples/pyqtgraph/axis.py
-                # this would be the way: 
-                # scan.plotItem.showAxis( 'right')
-                # scan.plotItem.getAxis('right').showValues = False
-                # scan.plotItem.getAxis('right').style[ 'showValues'] = False
-                # scan.plotItem.getAxis('right').setStyle( showValues = False)
-                #
             except ValueError, e:
                 print "graphics.display", repr( e)
                 print "graphics.display: exception from createPlotItem"
                 return 
-            #legend = scan.plotItem.addLegend( None, offset = (20, 20))
-            #style = _pg.PlotDataItem(pen='w')
-            #legend.addItem(style, 'SomeLegend')
-            #
-            # the name which is specified below becomes the legend
-            #
-            scan.plotDataItem = scan.plotItem.plot(pen = _getPen( scan))
+            if not scan.textOnly:
+                scan.plotDataItem = scan.plotItem.plot(pen = _getPen( scan))
 
+        if scan.textOnly:
+            continue
         #
         # check, if there is something to display
         # 
@@ -637,7 +661,9 @@ def display( nameList = None):
         #
         if len( nameList) == 1:
             break
-
+        #
+        # textContainers are not overlaid
+        #
         if scan.overlay is None:
             continue
 
@@ -655,8 +681,6 @@ def display( nameList = None):
                               (scan.name, scan.overlay))
 
         scan.plotItem = target.plotItem
-
-        target.plotItem.setTitle( title ="%s and %s" % (target.name, scan.name))
 
         target.plotItem.plot( scan.x[:(scan.currentIndex + 1)], 
                               scan.y[:(scan.currentIndex + 1)], 

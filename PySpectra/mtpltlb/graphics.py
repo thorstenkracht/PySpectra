@@ -9,6 +9,7 @@ import math as _math
 import numpy as _np
 import PySpectra.dMgt.GQE as _GQE
 import PySpectra.utils as _utils
+import PySpectra.definitions as _defs
 import PySpectra.pqtgrph.graphics as _pqt_graphics
 import HasyUtils as _HasyUtils
 import datetime as _datetime
@@ -183,20 +184,15 @@ def _doty2datetime(doty, year = None):
     #print "doty2datatime doty", doty, "to", repr( tmp)
     return tmp
 
-def _createPlotItem( scan):            
-    '''
-    create a plotItem, aka viewport (?) with title, axis descriptions and texts
-    '''
-    try:
-        plotItem = Fig.add_subplot( scan.nrow, scan.ncol, scan.nplot)
-    except Exception, e:
-        print "graphics.createPlotItem: caught exception"
-        print repr( e)
-        raise ValueError( "graphics.createPlotItem, throwing exception")
+def _addTexts( scan):
 
-    plotItem.set_autoscale_on( True)
-    plotItem.grid( True)
-    
+    for elm in scan.textList:
+        scan.plotItem.text( elm.x, elm.y, elm.text, va = elm.vAlign, ha = elm.hAlign)
+
+def _setTitle( scan): 
+
+    if scan.textOnly:
+        return 
     #
     # the length of the title has to be limited. Otherwise pg 
     # screws up. The plots will no longer fit into the workstation viewport
@@ -212,20 +208,39 @@ def _createPlotItem( scan):
     else: 
         tempName = scan.name
 
-    plotItem.set_title( tempName)
+    if len( _GQE._scanList) < _defs.MANY_SCANS:
+        scan.plotItem.set_title( tempName)
+    else:
+        scan.plotItem.text( 0.5, 0.8, tempName, transform = scan.plotItem.transAxes, va = 'center', ha = 'center')
+        
+def _createPlotItem( scan):            
+    '''
+    create a plotItem, aka viewport (?) with title, axis descriptions and texts
+    '''
+    try:
+        scan.plotItem = Fig.add_subplot( scan.nrow, scan.ncol, scan.nplot, frame_on = False)
+        if scan.textOnly: 
+            scan.plotItem.axis( 'off')
+    except Exception, e:
+        print "graphics.createPlotItem: caught exception"
+        print repr( e)
+        raise ValueError( "graphics.createPlotItem, throwing exception")
 
-    if hasattr( scan, 'xLabel'):
-        plotItem.set_xlabel( scan.xLabel)
-    if hasattr( scan, 'yLabel'):
-        plotItem.set_ylabel( scan.yLabel)
+    if not scan.textOnly:
+        scan.plotItem.set_autoscale_on( True)
+        scan.plotItem.grid( True)
+    
+    _setTitle( scan)
 
-    #if not arX: 
-    #    plotItem.setXRange( scan.xMin, scan.xMax)
+    if len( _GQE._scanList) < _defs.MANY_SCANS:
+        if hasattr( scan, 'xLabel'):
+            scan.plotItem.set_xlabel( scan.xLabel)
+        if hasattr( scan, 'yLabel'):
+            scan.plotItem.set_ylabel( scan.yLabel)
 
-    for elm in scan.textList:
-        plotItem.text( elm.x, elm.y, elm.text, va = elm.vAlign, ha = elm.hAlign)
+    _addTexts( scan)
 
-    return plotItem
+    return
 
 def _textIsOnDisplay( textStr):
     '''
@@ -335,7 +350,7 @@ def display( nameList = None):
     #
     # don't want to check for nameList is None below
     #
-    #print "graphics.display, nameList", nameList
+    print "mpl_graphics.display, nameList", nameList
     if nameList is None:
         nameList = []
 
@@ -411,12 +426,16 @@ def display( nameList = None):
         if scan.plotItem is None:
             try:
                 #print "graphics.display: creating plot for", scan.name, nrow, ncol, nplot
-                scan.plotItem = _createPlotItem( scan)
+                _createPlotItem( scan)
             except ValueError, e:
                 print "graphics.display: exception from createPlotItem"
                 print "graphics.display: consider a 'cls'"
                 print "graphics.display", repr( e)
                 return 
+
+            if scan.textOnly: 
+                continue
+
             if scan.doty:
                 xDate = []
                 for x in scan.x[:(scan.currentIndex + 1)]:
@@ -425,7 +444,9 @@ def display( nameList = None):
                 scan.plotDataItem, = scan.plotItem.plot_date( xDateMpl, 
                                                               scan.y[:(scan.currentIndex + 1)], 
                                                               xdate = True,
-                                                              linestyle='solid', marker='None')
+                                                              linestyle=scan.style.lower(), 
+                                                              linewidth = scan.width, 
+                                                              marker='None')
                 plt.draw()
                 if Canvas is not None:
                     Canvas.draw()
@@ -433,9 +454,14 @@ def display( nameList = None):
 
             else:
                 scan.plotDataItem, = scan.plotItem.plot( scan.x[:(scan.currentIndex + 1)], 
-                                                         scan.y[:(scan.currentIndex + 1)], scan.color)
+                                                         scan.y[:(scan.currentIndex + 1)], 
+                                                         linestyle = scan.style.lower(), 
+                                                         linewidth = scan.width, 
+                                                         color = scan.color)
                 scan.lastIndex = scan.currentIndex
 
+        if scan.textOnly: 
+            continue
         #
         # modify the scan 
         #
@@ -454,7 +480,9 @@ def display( nameList = None):
                 xDate.append( _doty2datetime( x))
             xDateMpl = matplotlib.dates.date2num( xDate)
             scan.plotItem.plot_date( xDateMpl, scan.y, xdate = True, 
-                                     linestyle='solid', marker='None')
+                                     linestyle=scan.style.lower(), 
+                                     linewidth = scan.width, 
+                                     marker='None')
         else:
             #print "graphics.display: plotting %s %d of %d" % \
             #    (scan.name, scan.currentIndex + 1, len( scan.x))
@@ -478,33 +506,39 @@ def display( nameList = None):
         if len( nameList) == 1:
             break
         #
-        # check, if theren is something to display
-        #
-        if scan.lastIndex == scan.currentIndex:
-            continue
-        #
         # 'scan' is a copy
         #
         if scan.overlay is None:
+            continue
+        #
+        # check, if theren is something to display
+        #
+        if scan.lastIndex == scan.currentIndex:
             continue
         
         if len( nameList) > 0 and scan.name not in nameList:
             continue
         target = _GQE.getScan( scan.overlay)
         #
-        # modify the overlaid scan 
+        # instantiate a second axes that shares the same x-axis 
         #
         scan.plotItem = target.plotItem.twinx()
+        
+        if len( _GQE._scanList) >= _defs.MANY_SCANS:
+            plt.setp( scan.plotItem.get_yticklabels(), visible=False)
+
+        #scan.plotItem = target.plotItem
 
         #print "display: overlaying %s to %s" % (scan.name, target.name)
 
         scan.plotDataItem, = scan.plotItem.plot( scan.x[:(scan.currentIndex + 1)], 
-                                                 scan.y[:(scan.currentIndex + 1)], scan.color)
+                                                 scan.y[:(scan.currentIndex + 1)], 
+                                                 linestyle = scan.style.lower(), 
+                                                 linewidth = scan.width, 
+                                                 color = scan.color)
 
         scan.plotItem.relim()
         scan.plotItem.autoscale_view( True, False, True)
-
-        target.plotItem.set_title( "%s and %s" % (target.name, scan.name))
 
         scan.lastIndex = scan.currentIndex
         #if scan.yMin is None:

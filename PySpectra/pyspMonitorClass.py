@@ -13,13 +13,14 @@ has to be done in advance.
 import __builtin__
 import pySpectraGuiClass
 import PySpectra as pysp
-import HasyUtils
+import HasyUtils 
 
 import Queue, argparse, sys, os
 from taurus.external.qt import QtGui 
 from taurus.external.qt import QtCore
 from taurus.qt.qtgui.application import TaurusApplication 
 import taurus
+import PyTango as _PyTango
 
 updateTime = 0.1
 
@@ -32,7 +33,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
     The queue is filled from pyspDoor.
     '''
     def __init__( self, parent = None):
-        super( pyspMonitor, self).__init__( parent)
+        super( pyspMonitor, self).__init__( parent, calledFromMonitorApp = True)
 
         self.queue = Queue.Queue()
         __builtin__.__dict__[ 'queue'] = self.queue
@@ -41,6 +42,10 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         self.updateTimer = QtCore.QTimer(self)
         self.updateTimer.timeout.connect( self.cb_refreshMain)
         self.updateTimer.start( int( updateTime*1000))
+        try: 
+            self.door = _PyTango.DeviceProxy( HasyUtils.getDoorNames()[0])
+        except Exception, e:
+            print "pyspMonitor.__init__: failed to get Door proxy", HasyUtils.getDoorNames()[0]
 
     def execHsh( self, hsh): 
         #print "queueSM.execHsh", repr( hsh)
@@ -63,6 +68,12 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             pysp.setComment( hsh[ 'setComment'])
         elif hsh.has_key( 'Scan'):
             pysp.Scan( **hsh[ 'Scan']) 
+        #
+        # the scanInfo dictionary is sent when a new scan starts
+        #
+        elif hsh.has_key( 'ScanInfo'):
+            self.scanInfo = hsh[ 'ScanInfo']
+            self.configureMotorsWidget()
         elif hsh.has_key( 'setX'):
             scan = pysp.getScan( hsh[ 'setX'][ 'name'])
             scan.setX(  hsh[ 'setX'][ 'index'], hsh[ 'setX'][ 'x'])
@@ -72,6 +83,33 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         else: 
             raise ValueError( "queueSM.execHsh: failed to identify key %s" % repr( hsh))
         
+    def configureMotorsWidget( self): 
+        '''
+        we received a scanInfo block indicating that a new scan has started
+        now we configure the motors widget using information from the scanInfo block
+        '''
+        pysp.Scan.setMonitorGui( self)
+
+        length = len( self.scanInfo['motors'])
+        if  length == 0 or length > 3:
+            _QtGui.QMessageBox.about( None, 'Info Box', 
+                                      "pyspMonitorClass: # of motors == 0 or > 3") 
+            return
+
+        motorArr = self.scanInfo['motors']        
+
+        for i in range( 3):
+            if i < length: 
+                self.motNameLabels[i].setText( motorArr[i]['name'])
+                self.motProxies[i] = _PyTango.DeviceProxy( motorArr[i]['name'])
+                self.motNameLabels[i].show()
+                self.motPosLabels[i].show()
+            else:
+                self.motNameLabels[i].hide()
+                self.motPosLabels[i].hide()
+
+        self.nMotor = length
+
     def cb_refreshMain( self):
 
         #print "pyspMonitor.cb_refreshMain", self.refreshCount

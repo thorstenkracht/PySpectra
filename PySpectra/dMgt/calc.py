@@ -1,8 +1,10 @@
 #!/usr/bin/env
 
 import GQE as _GQE
+
 from numpy import diff
 from scipy import integrate as _integrate
+import numpy as _np
 
 def derivative( name = None, nameNew = None):
     '''
@@ -57,10 +59,12 @@ def antiderivative(name = None, nameNew = None):
 
     argout = _GQE.Scan( name = temp, x = scan.x, y = scan.y)
 
-    argout.setY( 0, 0.)
+    #
+    #  tested the 3 lines below using sin/cosine
+    #
     for i in range(1, len( scan.x)):
         temp = _integrate.trapz( scan.y[:i], scan.x[:i])
-        argout.setY( i, temp)
+        argout.setY( i - 1, temp)
 
     return argout
 

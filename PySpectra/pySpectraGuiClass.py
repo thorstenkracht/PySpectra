@@ -16,14 +16,6 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 
-colorDct = { 'RED': 0, 
-              'GREEN': 1, 
-              'BLUE': 2, 
-              'YELLOW': 3,
-              'CYAN': 4,
-              'MAGENTA': 5,
-              'BLACK': 6}
-
 win = None
 ACTIVITY_SYMBOLS = ['|', '/', '-', '\\', '|', '/', '-', '\\'] 
 updateTime = 0.5
@@ -84,7 +76,6 @@ class QListWidgetTK( QtGui.QListWidget):
         left-MB:  change checkState of a scan
         right-MB: opens the attributesWidget
         '''
-        print "keyRelease"
         if self.name == "filesListWidget":
             return 
         if event.button() == QtCore.Qt.LeftButton:
@@ -112,6 +103,7 @@ class ScanAttributes( QtGui.QMainWindow):
             raise ValueError( "pyspFio.ScanAttributes: name not specified")
         self.name = name
         self.scan = pysp.getScan( self.name)
+        pysp.show( self.name)
         self.setWindowTitle( "ScanAttributes")
         #geo = QtGui.QDesktopWidget().screenGeometry(-1)
         # size
@@ -142,12 +134,19 @@ class ScanAttributes( QtGui.QMainWindow):
         self.layout_v = QtGui.QVBoxLayout()
         w.setLayout( self.layout_v)
         self.setCentralWidget( w)
-        hBox = QtGui.QHBoxLayout()
         #
         # name
         #
+        hBox = QtGui.QHBoxLayout()
         hBox.addWidget( QtGui.QLabel( "Name"))
         hBox.addWidget( QtGui.QLabel( self.name))
+        self.layout_v.addLayout( hBox)
+        #
+        # length
+        #
+        hBox = QtGui.QHBoxLayout()
+        hBox.addWidget( QtGui.QLabel( "Length"))
+        hBox.addWidget( QtGui.QLabel( "%d" % len(self.scan.x)))
         self.layout_v.addLayout( hBox)
         #
         # doty
@@ -161,21 +160,66 @@ class ScanAttributes( QtGui.QMainWindow):
         self.layout_v.addLayout( hBox)
         self.w_dotyCheckBox.stateChanged.connect( self.cb_dotyChanged)
         #
+        # GridX
+        #
+        hBox = QtGui.QHBoxLayout()
+        hBox.addWidget( QtGui.QLabel( "GridX"))
+        self.w_gridXCheckBox = QtGui.QCheckBox()
+        self.w_gridXCheckBox.setChecked( self.scan.showGridX)
+        self.w_gridXCheckBox.setToolTip( "Grid-X")
+        hBox.addWidget( self.w_gridXCheckBox) 
+        self.layout_v.addLayout( hBox)
+        self.w_gridXCheckBox.stateChanged.connect( self.cb_gridXChanged)
+        #
+        # GridY
+        #
+        hBox = QtGui.QHBoxLayout()
+        hBox.addWidget( QtGui.QLabel( "GridY"))
+        self.w_gridYCheckBox = QtGui.QCheckBox()
+        self.w_gridYCheckBox.setChecked( self.scan.showGridY)
+        self.w_gridYCheckBox.setToolTip( "Grid-Y")
+        hBox.addWidget( self.w_gridYCheckBox) 
+        self.layout_v.addLayout( hBox)
+        self.w_gridYCheckBox.stateChanged.connect( self.cb_gridYChanged)
+        #
         # color
         #
         hBox = QtGui.QHBoxLayout()
         hBox.addWidget( QtGui.QLabel( "Color"))
         self.w_colorComboBox = QtGui.QComboBox()
-        self.w_colorComboBox.addItem( "Red")
-        self.w_colorComboBox.addItem( "Green")
-        self.w_colorComboBox.addItem( "Blue")
-        self.w_colorComboBox.addItem( "Yellow")
-        self.w_colorComboBox.addItem( "Cyan")
-        self.w_colorComboBox.addItem( "Magenta")
-        self.w_colorComboBox.addItem( "Black")
+        for color in pysp.colorArr:
+            self.w_colorComboBox.addItem( color)
         self.w_colorComboBox.currentIndexChanged.connect( self.cb_color)
-        self.w_colorComboBox.setCurrentIndex( colorDct[ self.scan.color.upper()])
+        self.w_colorComboBox.setCurrentIndex( pysp.colorDct[ self.scan.color.upper()])
         hBox.addWidget( self.w_colorComboBox) 
+        self.layout_v.addLayout( hBox)
+        #
+        # style
+        #
+        hBox = QtGui.QHBoxLayout()
+        hBox.addWidget( QtGui.QLabel( "Style"))
+
+        self.w_styleComboBox = QtGui.QComboBox()
+        for style in pysp.styleArr:
+            self.w_styleComboBox.addItem( style)
+        self.w_styleComboBox.currentIndexChanged.connect( self.cb_style)
+        self.w_styleComboBox.setCurrentIndex( pysp.styleDct[ self.scan.style.upper()])
+        hBox.addWidget( self.w_styleComboBox) 
+        self.layout_v.addLayout( hBox)
+        #
+        # width
+        #
+        hBox = QtGui.QHBoxLayout()
+        hBox.addWidget( QtGui.QLabel( "Width"))
+
+        self.w_widthComboBox = QtGui.QComboBox()
+        if str( self.scan.width) not in pysp.widthDct.keys():
+            self.scan.width = 1.0
+        for width in pysp.widthArr:
+            self.w_widthComboBox.addItem( width)
+        self.w_widthComboBox.currentIndexChanged.connect( self.cb_width)
+        self.w_widthComboBox.setCurrentIndex( pysp.widthDct[ str( self.scan.width)])
+        hBox.addWidget( self.w_widthComboBox) 
         self.layout_v.addLayout( hBox)
         #
         # overlay
@@ -244,19 +288,34 @@ class ScanAttributes( QtGui.QMainWindow):
         self.exit.clicked.connect( self.close)
         self.exit.setShortcut( "Alt+x")
         
-
     def cb_color( self): 
         temp = self.w_colorComboBox.currentText()
-        scan = pysp.getScan( self.name)
-        scan.color = str( temp)
+        self.scan.color = str( temp)
+        pysp.cls()
+        pysp.display()
+        return
+
+    def cb_style( self): 
+        temp = self.w_styleComboBox.currentText()
+        self.scan.style = str( temp)
+        pysp.cls()
+        pysp.display()
+        return
+
+    def cb_width( self): 
+        temp = self.w_widthComboBox.currentText()
+        self.scan.width = float( temp)
+        pysp.cls()
+        pysp.display()
         return
 
     def cb_overlay( self): 
         temp = str( self.w_overlayComboBox.currentText())
-        scan = pysp.getScan( self.name)
         if temp == 'None': 
             temp = None
-        scan.overlay = temp
+        self.scan.overlay = temp
+        pysp.cls()
+        pysp.display()
         return
         
     def cb_refreshAttr( self):
@@ -269,7 +328,10 @@ class ScanAttributes( QtGui.QMainWindow):
             self.activityIndex = 0
         self.activity.setTitle( ACTIVITY_SYMBOLS[ self.activityIndex])
         self.updateTimer.stop()
-        
+
+        self.w_gridXCheckBox.setCheckState( self.scan.showGridX) 
+        self.w_gridYCheckBox.setCheckState( self.scan.showGridY) 
+
         self.updateTimer.start( int( updateTime*1000))
 
     def cb_display( self): 
@@ -287,6 +349,22 @@ class ScanAttributes( QtGui.QMainWindow):
 
     def cb_dotyChanged( self):
         self.scan.doty = self.w_dotyCheckBox.isChecked()
+        pysp.cls()
+        pysp.display()
+
+        return 
+
+    def cb_gridXChanged( self):
+        self.scan.showGridX = self.w_gridXCheckBox.isChecked()
+        pysp.cls()
+        pysp.display()
+
+        return 
+
+    def cb_gridYChanged( self):
+        self.scan.showGridY = self.w_gridYCheckBox.isChecked()
+        pysp.cls()
+        pysp.display()
 
         return 
 #
@@ -414,9 +492,11 @@ class MplWidget( QtGui.QMainWindow):
 class pySpectraGui( QtGui.QMainWindow):
     '''
     '''
-    def __init__( self, files = None, parent = None):
+    def __init__( self, files = None, parent = None, calledFromMonitorApp = False):
         #print "pySpectraGui.__init__"
         super( pySpectraGui, self).__init__( parent)
+
+        self.calledFromMonitorApp = calledFromMonitorApp
 
         self.setWindowTitle( "PySpectraGui")
 
@@ -426,6 +506,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.scanList = None
         self.scanAttributes = None
         self.proxyDoor = None
+        self.nMotor = 0
 
         #
         # 'files' come from the command line. If nothing is supplied
@@ -524,68 +605,54 @@ class pySpectraGui( QtGui.QMainWindow):
         self.logWidget.setReadOnly( 1)
         self.layout_v.addWidget( self.logWidget)
         #
-        # the lineEdit line
+        # motors and Macroserver
         #
-        hBox = QtGui.QHBoxLayout()
-        self.lineEdit = QtGui.QLineEdit()
-        hBox.addWidget( self.lineEdit)
-        self.layout_v.addLayout( hBox)
+        if self.calledFromMonitorApp: 
+            self.addHardwareFrame()
 
-        QtCore.QObject.connect( self.lineEdit, 
-                                QtCore.SIGNAL("returnPressed()"),self.cb_lineEdit)
-
-        #
-        # horizontal line
-        #
-        self.layout_v.addWidget( HLineTK())
-
-        self.addPrevNextLine()
-
-        self.layout_v.addWidget( HLineTK())
-
-        self.addDoorLine()
-
+        self.addScanFrame()
         self.layout_v.addWidget( HLineTK())
 
         self.updateFilesList()
 
-    def addPrevNextLine( self): 
+    def addHardwareFrame( self): 
+
+        frame = QtGui.QFrame()
+        frame.setFrameShape( QtGui.QFrame.Box)
+        self.layout_v.addWidget( frame)
+        self.layout_frame_v = QtGui.QVBoxLayout()
+        frame.setLayout( self.layout_frame_v)
+
         '''
-        Prev | All | Checked | Next
+        mot1: pos | mot2: pos | mot3: pos
         '''
         hBox = QtGui.QHBoxLayout()
 
         hBox.addStretch()            
+        self.motProxies = []
+        self.motNameLabels = []
+        self.motPosLabels = []
+        names = [ 'mot1', 'mot2', 'mot3']
+        for i in range( len( names)):
+            w = QtGui.QLabel( names[i])
+            self.motNameLabels.append( w)
+            hBox.addWidget( w)
+            w.hide()
 
-        self.prev = QtGui.QPushButton(self.tr("&Prev"))
-        hBox.addWidget( self.prev)
-        self.prev.clicked.connect( self.cb_prev)
-        self.prev.setShortcut( "Alt+p")
+            w = QtGui.QLabel( "pos")
+            w.setMinimumWidth( 70)
 
-        self.all = QtGui.QPushButton(self.tr("&All"))
-        hBox.addWidget( self.all)
-        self.all.clicked.connect( self.cb_all)
-        self.all.setToolTip( "Display all scans")
-        self.all.setShortcut( "Alt+a")
-
-        self.checked = QtGui.QPushButton(self.tr("Checked"))
-        hBox.addWidget( self.checked)
-        self.checked.clicked.connect( self.displayChecked)
-        self.checked.setToolTip( "Display checked scans. MB-3 checks.")
-        self.checked.setShortcut( "Alt+c")
-
-        self.next = QtGui.QPushButton(self.tr("&Next"))
-        hBox.addWidget( self.next)
-        self.next.clicked.connect( self.cb_next)
-        self.next.setShortcut( "Alt+n")
+            self.motPosLabels.append( w)
+            hBox.addWidget( w)
+            self.motProxies.append( None)
+            w.hide()
 
         hBox.addStretch()            
 
-        self.layout_v.addLayout( hBox)
+        self.layout_frame_v.addLayout( hBox)
 
-    def addDoorLine( self): 
         '''
-        Abort | Stop | StopAllMoves
+        Abort | Stop | StopAllMoves | RequestStop
         '''
         hBox = QtGui.QHBoxLayout()
 
@@ -605,9 +672,99 @@ class pySpectraGui( QtGui.QMainWindow):
         hBox.addWidget( self.stopAllMoves)
         self.stopAllMoves.clicked.connect( self.cb_stopAllMoves)
 
+        self.requestStop = QtGui.QPushButton(self.tr("RequestStop"))
+        hBox.addWidget( self.requestStop)
+        self.requestStop.setToolTip( "Set RequestStop == True, optionally sensed by Macros")
+        self.requestStop.clicked.connect( self.cb_requestStop)
+
         hBox.addStretch()            
 
-        self.layout_v.addLayout( hBox)
+        self.layout_frame_v.addLayout( hBox)
+
+    def updateMotorWidgets( self): 
+        
+        if self.nMotor == 0: 
+            return 
+
+        for i in range( self.nMotor): 
+            self.motPosLabels[ i].setText( "%g" % self.motProxies[i].position) 
+            if self.motProxies[i].state() == PyTango.DevState.MOVING:
+                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % _BLUE_MOVING)
+            elif self.motProxies[i].state() == PyTango.DevState.ON:
+                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % _GREEN_OK)
+            else:
+                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % _RED_ALARM)
+
+
+    def addScanFrame( self): 
+        '''
+        Prev | All | Checked | Next
+        '''
+
+        frame = QtGui.QFrame()
+        frame.setFrameShape( QtGui.QFrame.Box)
+        self.layout_v.addWidget( frame)
+        self.layout_frame_v = QtGui.QVBoxLayout()
+        frame.setLayout( self.layout_frame_v)
+        #
+        # the lineEdit line
+        #
+        hBox = QtGui.QHBoxLayout()
+        self.lineEdit = QtGui.QLineEdit()
+        hBox.addWidget( self.lineEdit)
+        self.layout_frame_v.addLayout( hBox)
+
+        QtCore.QObject.connect( self.lineEdit, 
+                                QtCore.SIGNAL("returnPressed()"),self.cb_lineEdit)
+        #
+        # prev, all, checked, next
+        #
+        hBox = QtGui.QHBoxLayout()
+        hBox.addStretch()            
+
+        self.prev = QtGui.QPushButton(self.tr("&Prev"))
+        hBox.addWidget( self.prev)
+        self.prev.clicked.connect( self.cb_prev)
+        self.prev.setShortcut( "Alt+p")
+
+        self.all = QtGui.QPushButton(self.tr("&All"))
+        hBox.addWidget( self.all)
+        self.all.clicked.connect( self.cb_all)
+        self.all.setToolTip( "Display all scans")
+        self.all.setShortcut( "Alt+a")
+
+        self.checked = QtGui.QPushButton(self.tr("Checked"))
+        hBox.addWidget( self.checked)
+        self.checked.clicked.connect( self.displayChecked)
+        self.checked.setToolTip( "Display checked scans.")
+        self.checked.setShortcut( "Alt+c")
+
+        self.next = QtGui.QPushButton(self.tr("&Next"))
+        hBox.addWidget( self.next)
+        self.next.clicked.connect( self.cb_next)
+        self.next.setShortcut( "Alt+n")
+
+        hBox.addStretch()            
+        self.layout_frame_v.addLayout( hBox)
+        #
+        # cls, delete
+        #
+        hBox = QtGui.QHBoxLayout()
+        hBox.addStretch()            
+
+        self.clsBtn = QtGui.QPushButton(self.tr("&Cls")) 
+        hBox.addWidget( self.clsBtn) 
+        self.clsBtn.clicked.connect( self.cb_cls)
+        self.clsBtn.setShortcut( "Alt+c")
+
+        self.deleteBtn = QtGui.QPushButton(self.tr("&Delete")) 
+        hBox.addWidget( self.deleteBtn) 
+        self.deleteBtn.clicked.connect( self.cb_delete)
+        self.deleteBtn.setToolTip( "Delete checked scans")
+        self.deleteBtn.setShortcut( "Alt+d")
+        hBox.addStretch()            
+        self.layout_frame_v.addLayout( hBox)
+
 
     def cb_abort( self): 
         '''
@@ -637,6 +794,10 @@ class pySpectraGui( QtGui.QMainWindow):
 
     def cb_stopAllMoves( self): 
         HasyUtils.stopAllMoves()
+
+    def cb_requestStop( self): 
+        HasyUtils.setEnv( "RequestStop", True)
+        self.logWidget.append( "RequestStop == True")
         
 
     def displayChecked( self): 
@@ -699,6 +860,8 @@ class pySpectraGui( QtGui.QMainWindow):
         
         #self.updateFilesList()
         self.updateScansList()
+
+        self.updateMotorWidgets()
 
         #self.updateTimerPySpectraGui.start( int( updateTime*1000))
         return 
@@ -880,23 +1043,23 @@ class pySpectraGui( QtGui.QMainWindow):
         self.scanListsMenu = self.menuBar.addMenu('&ScanLists')
 
         self.sl1Action = QtGui.QAction('1 Scan', self)        
-        self.sl1Action.triggered.connect( self.cb_sl1)
+        self.sl1Action.triggered.connect( scanList1)
         self.scanListsMenu.addAction( self.sl1Action)
 
         self.sl2Action = QtGui.QAction('2 Scans', self)        
-        self.sl2Action.triggered.connect( self.cb_sl2)
+        self.sl2Action.triggered.connect( scanList2)
         self.scanListsMenu.addAction( self.sl2Action)
 
         self.sl3Action = QtGui.QAction('5 Scans', self)        
-        self.sl3Action.triggered.connect( self.cb_sl3)
+        self.sl3Action.triggered.connect( scanList3)
         self.scanListsMenu.addAction( self.sl3Action)
 
         self.sl4Action = QtGui.QAction('10 Scans', self)        
-        self.sl4Action.triggered.connect( self.cb_sl4)
+        self.sl4Action.triggered.connect( scanList4)
         self.scanListsMenu.addAction( self.sl4Action)
 
         self.sl5Action = QtGui.QAction('Gauss Scan', self)        
-        self.sl5Action.triggered.connect( self.cb_sl5)
+        self.sl5Action.triggered.connect( scanList5)
         self.scanListsMenu.addAction( self.sl5Action)
 
         self.exitAction = QtGui.QAction('E&xit', self)        
@@ -924,17 +1087,6 @@ class pySpectraGui( QtGui.QMainWindow):
     #
     def prepareStatusBar( self): 
 
-        self.clsBtn = QtGui.QPushButton(self.tr("&Cls")) 
-        self.statusBar.addWidget( self.clsBtn) 
-        self.clsBtn.clicked.connect( self.cb_cls)
-        self.clsBtn.setShortcut( "Alt+c")
-
-        self.deleteBtn = QtGui.QPushButton(self.tr("&Delete")) 
-        self.statusBar.addWidget( self.deleteBtn) 
-        self.deleteBtn.clicked.connect( self.cb_delete)
-        self.deleteBtn.setToolTip( "Delete checked scans")
-        self.deleteBtn.setShortcut( "Alt+d")
-
         if __builtin__.__dict__[ 'graphicsLib'] == 'matplotlib':
             self.pdfBtn = QtGui.QPushButton(self.tr("&PDF")) 
             self.statusBar.addWidget( self.pdfBtn) 
@@ -942,10 +1094,19 @@ class pySpectraGui( QtGui.QMainWindow):
             self.pdfBtn.setShortcut( "Alt+p")
             self.pdfBtn.setToolTip( "Create PDF file")
 
+        self.clearLog = QtGui.QPushButton(self.tr("&ClearLog")) 
+        self.statusBar.addPermanentWidget( self.clearLog) # 'permanent' to shift it right
+        self.clearLog.clicked.connect( self.cb_clearLog)
+        self.clearLog.setToolTip( "Clear log widget")
+        self.clearLog.setShortcut( "Alt+c")
+
         self.exit = QtGui.QPushButton(self.tr("&Exit")) 
         self.statusBar.addPermanentWidget( self.exit) # 'permanent' to shift it right
         self.exit.clicked.connect( sys.exit)
         self.exit.setShortcut( "Alt+x")
+
+    def cb_clearLog( self): 
+        self.logWidget.clear()
 
     def cb_cls( self):
         '''
@@ -1047,68 +1208,6 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.cls()
         pysp.display( [scan.name])
 
-    def cb_sl1( self):
-        pysp.cls()
-        pysp.delete()
-        pysp.setTitle( "Ein Titel")
-        pysp.setComment( "Ein Kommentar")
-        t1 = pysp.Scan( name = "t1", color = 'blue', yLabel = 'sin')
-        t1.y = np.sin( t1.x)
-        pysp.display()
-
-    def cb_sl2( self):
-        pysp.cls()
-        pysp.delete()
-        pysp.setTitle( "Ein Titel")
-        pysp.setComment( "Ein Kommentar")
-        t1 = pysp.Scan( name = "t1", color = 'blue', yLabel = 'sin')
-        t1.y = np.sin( t1.x)
-        t2 = pysp.Scan( "t2", yLabel = 'cos')
-        t2.y = np.cos( t2.x)
-        pysp.display()
-
-    def cb_sl3( self):
-        pysp.cls()
-        pysp.delete()
-        pysp.setTitle( "Ein Titel")
-        pysp.setComment( "Ein Kommentar")
-        t1 = pysp.Scan( name = "t1", color = 'blue', yLabel = 'sin')
-        t1.y = np.sin( t1.x)
-        t2 = pysp.Scan( "t2", yLabel = 'cos')
-        t2.y = np.cos( t2.x)
-        t3 = pysp.Scan( name = "t3", color = 'green', yLabel = 'tan')
-        t3.y = np.tan( t3.x)
-        t4 = pysp.Scan( name = "t4", color = 'cyan', yLabel = 'random')
-        t4.y = np.random.random_sample( (len( t4.y), ))
-        t5 = pysp.Scan( name = "t5", color = 'magenta', yLabel = 'x**2')
-        t5.y = t5.x * t5.x
-        pysp.overlay( 't5', 't3')
-        pysp.display()
-
-    def cb_sl4( self):
-        pysp.cls()
-        pysp.delete()
-        pysp.setTitle( "Ein Titel")
-        pysp.setComment( "Ein Kommentar")
-        for i in range( 10): 
-            t = pysp.Scan( name = "t%d" % i, color = 'blue', yLabel = 'rand')
-            t.y = np.random.random_sample( (len( t.x), ))
-        pysp.display()
-
-    def cb_sl5( self):
-        '''
-        gauss scan
-        '''
-        pysp.cls()
-        pysp.delete()
-        pysp.setTitle( "Ein Titel")
-        pysp.setComment( "Ein Kommentar")
-        g = pysp.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
-        mu = 0.
-        sigma = 1.
-        g.y = 1/(sigma * np.sqrt(2 * np.pi)) * \
-              np.exp( - (g.y - mu)**2 / (2 * sigma**2))
-        pysp.display()
 
     def cb_writeFile( self):
         pysp.write()
@@ -1116,6 +1215,7 @@ class pySpectraGui( QtGui.QMainWindow):
     def cb_matplotlib( self):
         self.mplWidget = MplWidget( self.logWidget)
         self.mplWidget.show()
+        print "pySpectraGuiClass: hello"
         pysp.mpl_graphics.display()
 
     def cb_helpWidget(self):
@@ -1128,3 +1228,66 @@ class pySpectraGui( QtGui.QMainWindow):
                 ))
 
 
+
+def scanList1( self):
+    pysp.cls()
+    pysp.delete()
+    pysp.setTitle( "Ein Titel")
+    pysp.setComment( "Ein Kommentar")
+    t1 = pysp.Scan( name = "t1", color = 'blue', yLabel = 'sin')
+    t1.y = np.sin( t1.x)
+    pysp.display()
+
+def scanList2( self):
+    pysp.cls()
+    pysp.delete()
+    pysp.setTitle( "Ein Titel")
+    pysp.setComment( "Ein Kommentar")
+    t1 = pysp.Scan( name = "t1", color = 'blue', yLabel = 'sin')
+    t1.y = np.sin( t1.x)
+    t2 = pysp.Scan( "t2", yLabel = 'cos')
+    t2.y = np.cos( t2.x)
+    pysp.display()
+
+def scanList3( self):
+    pysp.cls()
+    pysp.delete()
+    pysp.setTitle( "Ein Titel")
+    pysp.setComment( "Ein Kommentar")
+    t1 = pysp.Scan( name = "t1", color = 'blue', yLabel = 'sin')
+    t1.y = np.sin( t1.x)
+    t2 = pysp.Scan( "t2", yLabel = 'cos')
+    t2.y = np.cos( t2.x)
+    t3 = pysp.Scan( name = "t3", color = 'green', yLabel = 'tan')
+    t3.y = np.tan( t3.x)
+    t4 = pysp.Scan( name = "t4", color = 'cyan', yLabel = 'random')
+    t4.y = np.random.random_sample( (len( t4.y), ))
+    t5 = pysp.Scan( name = "t5", color = 'magenta', yLabel = 'x**2')
+    t5.y = t5.x * t5.x
+    pysp.overlay( 't5', 't3')
+    pysp.display()
+
+def scanList4( self):
+    pysp.cls()
+    pysp.delete()
+    pysp.setTitle( "Ein Titel")
+    pysp.setComment( "Ein Kommentar")
+    for i in range( 10): 
+        t = pysp.Scan( name = "t%d" % i, color = 'blue', yLabel = 'rand')
+        t.y = np.random.random_sample( (len( t.x), ))
+    pysp.display()
+
+def scanList5( self):
+    '''
+    gauss scan
+    '''
+    pysp.cls()
+    pysp.delete()
+    pysp.setTitle( "Ein Titel")
+    pysp.setComment( "Ein Kommentar")
+    g = pysp.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
+    mu = 0.
+    sigma = 1.
+    g.y = 1/(sigma * np.sqrt(2 * np.pi)) * \
+          np.exp( - (g.y - mu)**2 / (2 * sigma**2))
+    pysp.display()

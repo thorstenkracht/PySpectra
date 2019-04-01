@@ -49,4 +49,5 @@ except:
     from pqtgrph.graphics import *
 
 from utils import *
+from definitions import *
 import ipython.ifc 

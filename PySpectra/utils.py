@@ -219,6 +219,7 @@ _lenPlotted = -1
 def _setScanVPs( nameList, flagDisplaySingle):
     '''
     set the scan viewport, we use the at = (2,3,2) syntax
+    which is (nrow, ncol, nplot)
     title and comment are ignored here. they are taken 
     care of in createPlotItem()
     '''
@@ -270,7 +271,6 @@ def _setScanVPs( nameList, flagDisplaySingle):
             nrow = int( _math.ceil( float(lenTemp)/float(ncol)))
         nplot = 1 
 
-
     for scan in scanList:
         #
         # overlay? - don't create a plot for this scan. Plot it
@@ -286,7 +286,8 @@ def _setScanVPs( nameList, flagDisplaySingle):
             else:
                 continue
 
-        if len( nameList) > 0: 
+        if len( nameList) > 0:
+            
             if scan.name not in nameList:
                 continue
 
@@ -296,8 +297,8 @@ def _setScanVPs( nameList, flagDisplaySingle):
                 scan.nrow = nrow
                 scan.nplot = nplot
             else: 
-                scan.ncol = scan.at[0]
-                scan.nrow = scan.at[1]
+                scan.nrow = scan.at[0]
+                scan.ncol = scan.at[1]
                 scan.nplot = scan.at[2]
             #print "utils.setScanVPs", scan.name, \
             #    "nrow", scan.nrow, "ncol", scan.ncol, "nplot", scan.nplot
