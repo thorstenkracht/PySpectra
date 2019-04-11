@@ -10,6 +10,7 @@ import numpy as _np
 import PySpectra.dMgt.GQE as _GQE
 import math as _math
 import PySpectra as _pysp
+import PySpectra.definitions as _defs
 
 def ssa( xIn, yIn, flagNbs = False, stbr = 3):
     '''
@@ -222,31 +223,35 @@ def _setScanVPs( nameList, flagDisplaySingle):
     which is (nrow, ncol, nplot)
     title and comment are ignored here. they are taken 
     care of in createPlotItem()
+
+    if a scan has an 'at' field, like (2,2,3), these values
+    have higher priority.
     '''
     global _lenPlotted
 
     scanList = _GQE.getScanList()
-    lenTemp = len( scanList) - _GQE.getNoOverlaid()
-    ncol = _math.floor( _math.sqrt( lenTemp) + 0.5)
-    col = 0
-    row = 0
 
     if len( nameList) == 0:
-        lenTemp = len( scanList) - _GQE.getNoOverlaid()
-        if lenTemp != _lenPlotted and _lenPlotted != -1: 
+        #
+        # the number of used viewports is (len( scanList) - numberOfOverlaid) 
+        #
+        usedVPs = len( scanList) - _GQE.getNumberOfOverlaid()
+        if usedVPs != _lenPlotted and _lenPlotted != -1: 
             _pysp.cls()
-        _lenPlotted = lenTemp
-        if lenTemp == 0:
+        _lenPlotted = usedVPs
+        if usedVPs == 0:
             return 
-
-        #ncol = int( _math.floor( _math.sqrt( lenTemp) + 0.5))
-        if lenTemp == 2:
+        if usedVPs == 1:
+            ncol = 1
+            nrow = 1
+        elif usedVPs == 2:
             ncol = 1
             nrow = 2
         else:
-            #ncol = int( _math.floor( _math.sqrt( lenTemp) + 0.5))
-            ncol = int( _math.ceil( _math.sqrt( lenTemp)))
-            nrow = int( _math.ceil( float(lenTemp)/float(ncol)))
+            ncol = int( _math.floor( _math.sqrt( usedVPs)))
+            if usedVPs > _defs.MANY_SCANS: 
+                ncol -= 1
+            nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
         nplot = 1 
     elif len( nameList) == 1:
         if _lenPlotted != 1 and _lenPlotted != -1: 
@@ -256,26 +261,31 @@ def _setScanVPs( nameList, flagDisplaySingle):
         nrow = 1
         nplot = 1
     else:
-        lenTemp = len( nameList) - _GQE.getNoOverlaid( nameList)
-        if lenTemp != _lenPlotted and _lenPlotted != -1: 
+        #
+        # the number of used viewports is (len( nameList) - numberOfOverlaid( nameList)) 
+        #
+        usedVPs = len( nameList) - _GQE.getNumberOfOverlaid( nameList)
+        if usedVPs != _lenPlotted and _lenPlotted != -1: 
             _pysp.cls()
-        _lenPlotted = lenTemp
-        if lenTemp == 0:
+        _lenPlotted = usedVPs
+        if usedVPs == 0:
             return 
-        if lenTemp == 2:
+        if usedVPs == 1:
+            ncol = 1
+            nrow = 1
+        elif usedVPs == 2:
             ncol = 1
             nrow = 2
         else:
-            #ncol = int( _math.floor( _math.sqrt( lenTemp) + 0.5))
-            ncol = int( _math.ceil( _math.sqrt( lenTemp)))
-            nrow = int( _math.ceil( float(lenTemp)/float(ncol)))
+            ncol = int( _math.floor( _math.sqrt( usedVPs)))
+            if usedVPs > _defs.MANY_SCANS: 
+                ncol -= 1
+            nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
         nplot = 1 
 
     for scan in scanList:
         #
-        # overlay? - don't create a plot for this scan. Plot it
-        # in the second pass. But it is displayed, if it is the only 
-        # scan or if it is the only scan mentioned in nameList
+        # overlay? - don't create a viewport scan.
         #
         if scan.overlay is not None and not flagDisplaySingle:
             #
@@ -287,7 +297,6 @@ def _setScanVPs( nameList, flagDisplaySingle):
                 continue
 
         if len( nameList) > 0:
-            
             if scan.name not in nameList:
                 continue
 
@@ -302,4 +311,6 @@ def _setScanVPs( nameList, flagDisplaySingle):
                 scan.nplot = scan.at[2]
             #print "utils.setScanVPs", scan.name, \
             #    "nrow", scan.nrow, "ncol", scan.ncol, "nplot", scan.nplot
+            if scan.nrow*scan.ncol < scan.nplot:
+                raise ValueError( "utils.setScanVPs: nrow %d * ncol %d < nplot %d" % (scan.nrow, scan.ncol, scan.nplot))
             nplot += 1

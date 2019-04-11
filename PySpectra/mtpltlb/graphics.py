@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
-import matplotlib
+import matplotlib 
 matplotlib.use( 'TkAgg')
 import matplotlib.pyplot as plt
+from taurus.external.qt import QtGui as _QtGui
+from taurus.external.qt import QtCore as _QtCore
 import time as _time
 import os as _os
 import math as _math
@@ -16,15 +18,20 @@ import datetime as _datetime
 
 Fig = None
 Canvas = None
+_QApp = None
+
 def initGraphic( figureIn = None, canvasIn = None):
     '''
     haso107d1: 1920 x 1200
     spectra: 640 x 450 def., A4:  680 x 471 
     '''
-    global Fig, Canvas
+    global Fig, Canvas, _QApp
+
+    if _QApp is None:
+        _QApp = _QtGui.QApplication.instance()
+
     if figureIn is not None:
         Fig = figureIn
-        #print "+++mpl.graphics.initGraphic", dir( Fig)
         Canvas = canvasIn
         return 
 
@@ -36,7 +43,6 @@ def initGraphic( figureIn = None, canvasIn = None):
     else:
         Fig = plt.figure(1)
         Fig.clear()
-
     return
 
 def createPDF( fileName = None): 
@@ -127,10 +133,11 @@ def cls():
     '''
     clear screen: allow for a new plot
     '''
-    #print "graphics.cls"
-    if Fig is None:
-        print "graphics.cls, Fig is None"
-        return 
+    #print "mpl_graphics.cls"
+
+    if Fig is None: 
+        initGraphic()
+
     Fig.clear()
     plt.draw()
     #
@@ -155,10 +162,15 @@ def procEventsLoop():
     print ""
 
 def processEvents(): 
-    #_QApp.processEvents()
+
+    if Fig is None: 
+        initGraphic()
+
     plt.draw()
     if Canvas is not None:
         Canvas.draw()
+    _QApp.processEvents()
+    
 
 def listGraphicsItems(): 
     print "mtpltlb.graphics.listGraphicsItems"
@@ -184,12 +196,7 @@ def _doty2datetime(doty, year = None):
     #print "doty2datatime doty", doty, "to", repr( tmp)
     return tmp
 
-def _addTexts( scan):
-
-    for elm in scan.textList:
-        scan.plotItem.text( elm.x, elm.y, elm.text, va = elm.vAlign, ha = elm.hAlign)
-
-def _setTitle( scan): 
+def _setTitle( scan, nameList): 
 
     if scan.textOnly:
         return 
@@ -199,48 +206,19 @@ def _setTitle( scan):
     # and the following display command, even with less scans, will 
     # also not fit into the graphics window
     #
-    lenMax = 15
+    lenMax = 20
     if len( _GQE.getScanList()) > 15: 
-        lenMax = 12
+        lenMax = 17
 
     if len( scan.name) > lenMax:
         tempName = "X_" + scan.name[-lenMax:]
     else: 
         tempName = scan.name
 
-    if len( _GQE._scanList) < _defs.MANY_SCANS:
+    if _GQE.getNumberOfScansToBeDisplayed( nameList) < _defs.MANY_SCANS:
         scan.plotItem.set_title( tempName)
     else:
-        scan.plotItem.text( 0.5, 0.8, tempName, transform = scan.plotItem.transAxes, va = 'center', ha = 'center')
-        
-def _createPlotItem( scan):            
-    '''
-    create a plotItem, aka viewport (?) with title, axis descriptions and texts
-    '''
-    try:
-        scan.plotItem = Fig.add_subplot( scan.nrow, scan.ncol, scan.nplot, frame_on = False)
-        if scan.textOnly: 
-            scan.plotItem.axis( 'off')
-    except Exception, e:
-        print "graphics.createPlotItem: caught exception"
-        print repr( e)
-        raise ValueError( "graphics.createPlotItem, throwing exception")
-
-    if not scan.textOnly:
-        scan.plotItem.set_autoscale_on( True)
-        scan.plotItem.grid( True)
-    
-    _setTitle( scan)
-
-    if len( _GQE._scanList) < _defs.MANY_SCANS:
-        if hasattr( scan, 'xLabel'):
-            scan.plotItem.set_xlabel( scan.xLabel)
-        if hasattr( scan, 'yLabel'):
-            scan.plotItem.set_ylabel( scan.yLabel)
-
-    _addTexts( scan)
-
-    return
+        scan.plotItem.text( 0.95, 0.8, tempName, transform = scan.plotItem.transAxes, va = 'center', ha = 'right')
 
 def _textIsOnDisplay( textStr):
     '''
@@ -327,6 +305,78 @@ def _displayTitleComment():
                 t.set_fontsize( sz)
     return
 
+
+def _addTexts( scan):
+    #print "mpl_graphics.addTexts"
+    for elm in scan.textList:
+        #print "mpl_graphics.addTexts: %s, x %g, y %g" % (elm.text, elm.x, elm.y)
+        scan.plotItem.text( elm.x, elm.y, elm.text, transform = scan.plotItem.transAxes, va = elm.vAlign, ha = elm.hAlign)
+
+def _createPlotItem( scan, nameList):            
+    '''
+    create a plotItem, aka viewport (?) with title, axis descriptions and texts
+    '''
+
+    #print "mpl_graphics.createPlotItem: %s at nrow %d, ncol %d, nplot %d" % (scan.name, scan.nrow, scan.ncol, scan.nplot)
+
+    try:
+        scan.plotItem = Fig.add_subplot( scan.nrow, scan.ncol, scan.nplot)
+        if scan.textOnly: 
+            scan.plotItem.axis( 'off')
+            scan.plotItem.set_xlim( [0., 1.])
+            scan.plotItem.set_ylim( [0., 1.])
+            _addTexts( scan)
+            return 
+            
+    except Exception, e:
+        print "graphics.createPlotItem: caught exception"
+        print repr( e)
+        raise ValueError( "graphics.createPlotItem, throwing exception")
+
+    #print "mpl_graphics.createPlotItem, autorange", scan.autorangeX, scan.autorangeY
+
+    #
+    # log scale
+    #
+    if scan.xLog: 
+        scan.plotItem.set_xscale( "log")
+    if scan.yLog: 
+        scan.plotItem.set_yscale( "log")
+
+    #
+    # autoscale
+    #
+    arX = scan.autorangeX
+    arY = scan.autorangeY
+
+    if scan.yMin is None or scan.yMax is None:
+        arY = True
+
+    scan.plotItem.set_autoscalex_on( arX)
+    scan.plotItem.set_autoscaley_on( arY)
+
+    if not arX:
+        scan.plotItem.set_xlim( [scan.xMin, scan.xMax])
+    if not arY:
+        scan.plotItem.set_ylim( [scan.yMin, scan.yMax])
+
+    if scan.showGridX or scan.showGridY:
+        scan.plotItem.grid( True)
+    else:
+        scan.plotItem.grid( False)
+    
+    _setTitle( scan, nameList)
+
+    if _GQE.getNumberOfScansToBeDisplayed( nameList) < _defs.MANY_SCANS:
+        if hasattr( scan, 'xLabel'):
+            scan.plotItem.set_xlabel( scan.xLabel)
+        if hasattr( scan, 'yLabel'):
+            scan.plotItem.set_ylabel( scan.yLabel)
+
+    _addTexts( scan)
+
+    return
+
 def display( nameList = None):
     '''
     display one or more or all scans
@@ -350,7 +400,7 @@ def display( nameList = None):
     #
     # don't want to check for nameList is None below
     #
-    print "mpl_graphics.display, nameList", nameList
+    #print "mpl_graphics.display, nameList", nameList
     if nameList is None:
         nameList = []
 
@@ -396,12 +446,7 @@ def display( nameList = None):
     #     non-overlaid scans
     #
     for scan in scanList:
-        #print "graphics.display", scan.name, "currentIndex", scan.currentIndex, "LastIndex", scan.lastIndex
-        #
-        # check, if theren is something to display
-        #
-        #if scan.lastIndex == scan.currentIndex:
-        #    continue
+        print "graphics.display", scan.name
         #
         # overlay? - don't create a plot for this scan. Plot it
         # in the second pass. But it is displayed, if it is the only 
@@ -426,7 +471,7 @@ def display( nameList = None):
         if scan.plotItem is None:
             try:
                 #print "graphics.display: creating plot for", scan.name, nrow, ncol, nplot
-                _createPlotItem( scan)
+                _createPlotItem( scan, nameList)
             except ValueError, e:
                 print "graphics.display: exception from createPlotItem"
                 print "graphics.display: consider a 'cls'"
@@ -491,11 +536,12 @@ def display( nameList = None):
 
             scan.plotItem.set_xlim( scan.x[0], scan.x[scan.currentIndex])
             scan.plotItem.set_ylim( _np.min( scan.y[:(scan.currentIndex + 1)]), 
-                                _np.max( scan.y[:(scan.currentIndex + 1)]))
+                                    _np.max( scan.y[:(scan.currentIndex + 1)]))
         #
         # keep track of what has already been displayed
         #
         scan.lastIndex = scan.currentIndex
+
     #
     # --- second pass: display overlaid scans
     #
@@ -538,7 +584,7 @@ def display( nameList = None):
                                                  color = scan.color)
 
         scan.plotItem.relim()
-        scan.plotItem.autoscale_view( True, False, True)
+        scan.plotItem.autoscale_view( True, True, True)
 
         scan.lastIndex = scan.currentIndex
         #if scan.yMin is None:

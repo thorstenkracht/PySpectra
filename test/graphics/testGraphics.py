@@ -191,7 +191,7 @@ class testGraphics( unittest.TestCase):
             s = PySpectra.Scan( name = 't%d' % i, xMin = 0., 
                                 xMax = 6.0, nPts = 101, dType = np.float64,
                                 xLabel = 'rad', yLabel = 'Signal', 
-                                at = (2,2,3), color = 'red', style = 'solidLine',
+                                at = (2,2,i), color = 'red', style = 'solidLine',
                                 width = 2.)
             s.y = np.tan( s.y)
 
@@ -210,7 +210,7 @@ class testGraphics( unittest.TestCase):
             s = PySpectra.Scan( name = 't%d' % i, xMin = 0., 
                                 xMax = 6.0, nPts = 101, dType = np.float64,
                                 xLabel = 'rad', yLabel = 'Signal', 
-                                at = (2,2,3), color = 'red', style = 'solidLine',
+                                at = (5,4,i), color = 'red', style = 'solidLine',
                                 width = 2.)
             s.y = np.tan( s.y)
 

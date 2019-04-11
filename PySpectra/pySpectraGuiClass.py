@@ -11,6 +11,7 @@ import HasyUtils
 import __builtin__
 
 import PySpectra as pysp
+import PySpectra.definitions as defs
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
@@ -103,7 +104,7 @@ class ScanAttributes( QtGui.QMainWindow):
             raise ValueError( "pyspFio.ScanAttributes: name not specified")
         self.name = name
         self.scan = pysp.getScan( self.name)
-        pysp.show( self.name)
+        #pysp.show( self.name)
         self.setWindowTitle( "ScanAttributes")
         #geo = QtGui.QDesktopWidget().screenGeometry(-1)
         # size
@@ -138,54 +139,166 @@ class ScanAttributes( QtGui.QMainWindow):
         # name
         #
         hBox = QtGui.QHBoxLayout()
-        hBox.addWidget( QtGui.QLabel( "Name"))
-        hBox.addWidget( QtGui.QLabel( self.name))
+        self.nameLabel = QtGui.QLabel( "Name:")
+        hBox.addWidget( self.nameLabel)
+        self.nameValue = QtGui.QLabel( self.name)
+        hBox.addWidget( self.nameValue)
         self.layout_v.addLayout( hBox)
         #
         # length
         #
         hBox = QtGui.QHBoxLayout()
-        hBox.addWidget( QtGui.QLabel( "Length"))
-        hBox.addWidget( QtGui.QLabel( "%d" % len(self.scan.x)))
+        self.lengthLabel = QtGui.QLabel( "Length:")
+        hBox.addWidget( self.lengthLabel)
+        self.lengthValue = QtGui.QLabel( "%d" % len(self.scan.x))
+        hBox.addWidget( self.lengthValue)
+        self.layout_v.addLayout( hBox)
+        #
+        # xMin
+        #
+        hBox = QtGui.QHBoxLayout()
+        self.xMinLabel = QtGui.QLabel( "xMin:")
+        hBox.addWidget( self.xMinLabel)
+        self.xMinValue = QtGui.QLabel( "%g" % (self.scan.xMin))
+        hBox.addWidget( self.xMinValue)
+        hBox.addStretch()            
+        self.xMinLineEdit = QtGui.QLineEdit()
+        hBox.addWidget( self.xMinLineEdit)
+        self.layout_v.addLayout( hBox)
+        #
+        # xMax
+        #
+        hBox = QtGui.QHBoxLayout()
+        self.xMaxLabel = QtGui.QLabel( "xMax:")
+        hBox.addWidget( self.xMaxLabel)
+        self.xMaxValue = QtGui.QLabel( "%g" % (self.scan.xMax))
+        hBox.addWidget( self.xMaxValue)
+        hBox.addStretch()            
+        self.xMaxLineEdit = QtGui.QLineEdit()
+        hBox.addWidget( self.xMaxLineEdit)
+        self.layout_v.addLayout( hBox)
+        #
+        # yMin
+        #
+        hBox = QtGui.QHBoxLayout()
+        self.yMinLabel = QtGui.QLabel( "yMin:")
+        hBox.addWidget( self.yMinLabel)
+        if self.scan.yMin is None:
+            self.yMinValue = QtGui.QLabel( "None")
+        else:
+            self.yMinValue = QtGui.QLabel( "%g" % (self.scan.yMin))
+        hBox.addWidget( self.yMinValue)
+        hBox.addStretch()            
+        self.yMinLineEdit = QtGui.QLineEdit()
+        hBox.addWidget( self.yMinLineEdit)
+        self.layout_v.addLayout( hBox)
+        #
+        # yMax
+        #
+        hBox = QtGui.QHBoxLayout()
+        self.yMaxLabel = QtGui.QLabel( "yMax:")
+        hBox.addWidget( self.yMaxLabel)
+        if self.scan.yMax is None:
+            self.yMaxValue = QtGui.QLabel( "None")
+        else:
+            self.yMaxValue = QtGui.QLabel( "%g" % (self.scan.yMax))
+        hBox.addWidget( self.yMaxValue)
+        hBox.addStretch()            
+        self.yMaxLineEdit = QtGui.QLineEdit()
+        hBox.addWidget( self.yMaxLineEdit)
+        self.layout_v.addLayout( hBox)
+        #
+        # autorangeX
+        #
+        hBox = QtGui.QHBoxLayout()
+        self.autorangeXLabel = QtGui.QLabel( "autorangeX:")
+        hBox.addWidget( self.autorangeXLabel)
+        self.autorangeXCheckBox = QtGui.QCheckBox()
+        self.autorangeXCheckBox.setChecked( self.scan.autorangeX)
+        hBox.addWidget( self.autorangeXCheckBox)
+        hBox.addStretch()            
+        self.autorangeXCheckBox.stateChanged.connect( self.cb_autorangeXChanged)
+        self.layout_v.addLayout( hBox)
+        #
+        # autorangeY
+        #
+        hBox = QtGui.QHBoxLayout()
+        self.autorangeYLabel = QtGui.QLabel( "autorangeY:")
+        hBox.addWidget( self.autorangeYLabel)
+        self.autorangeYCheckBox = QtGui.QCheckBox()
+        self.autorangeYCheckBox.setChecked( self.scan.autorangeY)
+        hBox.addWidget( self.autorangeYCheckBox)
+        hBox.addStretch()            
+        self.autorangeYCheckBox.stateChanged.connect( self.cb_autorangeYChanged)
+        self.layout_v.addLayout( hBox)
+        #
+        # xLog
+        #
+        hBox = QtGui.QHBoxLayout()
+        self.xLogLabel = QtGui.QLabel( "xLog:")
+        hBox.addWidget( self.xLogLabel)
+        self.xLogCheckBox = QtGui.QCheckBox()
+        self.xLogCheckBox.setChecked( self.scan.xLog)
+        hBox.addWidget( self.xLogCheckBox)
+        hBox.addStretch()            
+        self.xLogCheckBox.stateChanged.connect( self.cb_xLogChanged)
+        self.layout_v.addLayout( hBox)
+        #
+        # yLog
+        #
+        hBox = QtGui.QHBoxLayout()
+        self.yLogLabel = QtGui.QLabel( "yLog:")
+        hBox.addWidget( self.yLogLabel)
+        self.yLogCheckBox = QtGui.QCheckBox()
+        self.yLogCheckBox.setChecked( self.scan.yLog)
+        hBox.addWidget( self.yLogCheckBox)
+        hBox.addStretch()            
+        self.yLogCheckBox.stateChanged.connect( self.cb_yLogChanged)
         self.layout_v.addLayout( hBox)
         #
         # doty
         #
         hBox = QtGui.QHBoxLayout()
-        hBox.addWidget( QtGui.QLabel( "DOTY"))
+        self.dotyLabel = QtGui.QLabel( "DOTY")
+        hBox.addWidget( self.dotyLabel)
         self.w_dotyCheckBox = QtGui.QCheckBox()
         self.w_dotyCheckBox.setChecked( self.scan.doty)
         self.w_dotyCheckBox.setToolTip( "x-axis is day-of-the-year")
         hBox.addWidget( self.w_dotyCheckBox) 
+        hBox.addStretch()            
         self.layout_v.addLayout( hBox)
         self.w_dotyCheckBox.stateChanged.connect( self.cb_dotyChanged)
         #
         # GridX
         #
         hBox = QtGui.QHBoxLayout()
-        hBox.addWidget( QtGui.QLabel( "GridX"))
+        self.gridXLabel = QtGui.QLabel( "GridX")
+        hBox.addWidget( self.gridXLabel)
         self.w_gridXCheckBox = QtGui.QCheckBox()
         self.w_gridXCheckBox.setChecked( self.scan.showGridX)
-        self.w_gridXCheckBox.setToolTip( "Grid-X")
         hBox.addWidget( self.w_gridXCheckBox) 
-        self.layout_v.addLayout( hBox)
         self.w_gridXCheckBox.stateChanged.connect( self.cb_gridXChanged)
+        hBox.addStretch()            
+        self.layout_v.addLayout( hBox)
         #
         # GridY
         #
         hBox = QtGui.QHBoxLayout()
-        hBox.addWidget( QtGui.QLabel( "GridY"))
+        self.gridYLabel = QtGui.QLabel( "GridY")
+        hBox.addWidget( self.gridYLabel)
         self.w_gridYCheckBox = QtGui.QCheckBox()
         self.w_gridYCheckBox.setChecked( self.scan.showGridY)
-        self.w_gridYCheckBox.setToolTip( "Grid-Y")
         hBox.addWidget( self.w_gridYCheckBox) 
-        self.layout_v.addLayout( hBox)
         self.w_gridYCheckBox.stateChanged.connect( self.cb_gridYChanged)
+        hBox.addStretch()            
+        self.layout_v.addLayout( hBox)
         #
         # color
         #
         hBox = QtGui.QHBoxLayout()
-        hBox.addWidget( QtGui.QLabel( "Color"))
+        self.colorLabel = QtGui.QLabel( "Color")
+        hBox.addWidget( self.colorLabel)
+        hBox.addStretch()            
         self.w_colorComboBox = QtGui.QComboBox()
         for color in pysp.colorArr:
             self.w_colorComboBox.addItem( color)
@@ -197,8 +310,9 @@ class ScanAttributes( QtGui.QMainWindow):
         # style
         #
         hBox = QtGui.QHBoxLayout()
-        hBox.addWidget( QtGui.QLabel( "Style"))
-
+        self.styleLabel = QtGui.QLabel( "Style")
+        hBox.addWidget( self.styleLabel)
+        hBox.addStretch()            
         self.w_styleComboBox = QtGui.QComboBox()
         for style in pysp.styleArr:
             self.w_styleComboBox.addItem( style)
@@ -210,8 +324,9 @@ class ScanAttributes( QtGui.QMainWindow):
         # width
         #
         hBox = QtGui.QHBoxLayout()
-        hBox.addWidget( QtGui.QLabel( "Width"))
-
+        self.widthLabel = QtGui.QLabel( "Width")
+        hBox.addWidget( self.widthLabel)
+        hBox.addStretch()            
         self.w_widthComboBox = QtGui.QComboBox()
         if str( self.scan.width) not in pysp.widthDct.keys():
             self.scan.width = 1.0
@@ -225,7 +340,9 @@ class ScanAttributes( QtGui.QMainWindow):
         # overlay
         #
         hBox = QtGui.QHBoxLayout()
-        hBox.addWidget( QtGui.QLabel( "Overlay"))
+        self.overlayLabel = QtGui.QLabel( "Overlay")
+        hBox.addWidget( self.overlayLabel)
+        hBox.addStretch()            
         self.w_overlayComboBox = QtGui.QComboBox()
         self.w_overlayComboBox.addItem( "None")
         count = 1 
@@ -238,7 +355,6 @@ class ScanAttributes( QtGui.QMainWindow):
             self.w_overlayComboBox.addItem( scan.name)
             count += 1
         if countTemp > 0: 
-            print "countTemp", countTemp
             self.w_overlayComboBox.setCurrentIndex( countTemp)
         self.w_overlayComboBox.currentIndexChanged.connect( self.cb_overlay)
         hBox.addWidget( self.w_overlayComboBox) 
@@ -283,10 +399,62 @@ class ScanAttributes( QtGui.QMainWindow):
         self.display.clicked.connect( self.cb_display)
         self.display.setShortcut( "Alt+d")
 
+        self.apply = QtGui.QPushButton(self.tr("&Apply")) 
+        self.statusBar.addPermanentWidget( self.apply) # 'permanent' to shift it right
+        self.apply.clicked.connect( self.cb_apply)
+        self.apply.setShortcut( "Alt+a")
+
         self.exit = QtGui.QPushButton(self.tr("&Exit")) 
         self.statusBar.addPermanentWidget( self.exit) # 'permanent' to shift it right
         self.exit.clicked.connect( self.close)
         self.exit.setShortcut( "Alt+x")
+
+    def cb_autorangeXChanged( self): 
+        self.scan.autorangeX = self.autorangeXCheckBox.isChecked()
+        pysp.cls()
+        pysp.display( [self.scan.name])
+
+    def cb_autorangeYChanged( self): 
+        self.scan.autorangeY = self.autorangeYCheckBox.isChecked()
+        pysp.cls()
+        pysp.display( [self.scan.name])
+
+    def cb_xLogChanged( self): 
+        self.scan.xLog = self.xLogCheckBox.isChecked()
+        pysp.cls()
+        pysp.display( [self.scan.name])
+
+    def cb_yLogChanged( self): 
+        self.scan.yLog = self.yLogCheckBox.isChecked()
+        pysp.cls()
+        pysp.display( [self.scan.name])
+
+    def cb_apply( self):
+        line = str(self.xMinLineEdit.text())
+        if len(line.strip()) > 0: 
+            self.scan.xMin = float( line.strip())
+            self.xMinValue.setText( "%g" % self.scan.xMin)
+            self.xMinLineEdit.clear()
+
+        line = str(self.xMaxLineEdit.text())
+        if len(line.strip()) > 0: 
+            self.scan.xMax = float( line.strip())
+            self.xMaxValue.setText( "%g" % self.scan.xMax)
+            self.xMaxLineEdit.clear()
+
+        line = str(self.yMinLineEdit.text())
+        if len(line.strip()) > 0: 
+            self.scan.yMin = float( line.strip())
+            self.yMinValue.setText( "%g" % self.scan.yMin)
+            self.yMinLineEdit.clear()
+
+        line = str(self.yMaxLineEdit.text())
+        if len(line.strip()) > 0: 
+            self.scan.yMax = float( line.strip())
+            self.yMaxValue.setText( "%g" % self.scan.yMax)
+            self.yMaxLineEdit.clear()
+        pysp.cls()
+        pysp.display( [self.scan.name])
         
     def cb_color( self): 
         temp = self.w_colorComboBox.currentText()
@@ -329,9 +497,8 @@ class ScanAttributes( QtGui.QMainWindow):
         self.activity.setTitle( ACTIVITY_SYMBOLS[ self.activityIndex])
         self.updateTimer.stop()
 
-        self.w_gridXCheckBox.setCheckState( self.scan.showGridX) 
-        self.w_gridYCheckBox.setCheckState( self.scan.showGridY) 
-
+        #self.w_gridXCheckBox.setCheckState( self.scan.showGridX) 
+        #self.w_gridYCheckBox.setCheckState( self.scan.showGridY) 
         self.updateTimer.start( int( updateTime*1000))
 
     def cb_display( self): 
@@ -376,14 +543,8 @@ class MplWidget( QtGui.QMainWindow):
         self.parent = parent
         self.logWidget = logWidget
         self.setWindowTitle( "Matplotlib Widget")
-        #geo = QtGui.QDesktopWidget().screenGeometry(-1)
-        # size
-        #self.setGeometry( geo.width() - 680, 30, 650, 500)
-        self.prepareWidgets()
 
-        #self.menuBar = QtGui.QMenuBar()
-        #self.setMenuBar( self.menuBar)
-        #self.prepareMenuBar()
+        self.prepareWidgets()
 
         #
         # Status Bar
@@ -391,8 +552,7 @@ class MplWidget( QtGui.QMainWindow):
         self.statusBar = QtGui.QStatusBar()
         self.setStatusBar( self.statusBar)
         self.prepareStatusBar()
-        pysp.cls()
-        pysp.mpl_graphics.display()
+        pysp.mpl_graphics.cls()
 
     def prepareWidgets( self):
         w = QtGui.QWidget()
@@ -404,7 +564,6 @@ class MplWidget( QtGui.QMainWindow):
         self.setCentralWidget( w)
 
         self.figure = Figure( figsize=(29.7/2.54, 21.0/2.54))
-        #self.figure = Figure( figsize=(21./2.54, 14.85/2.54))
 
         self.canvas = FigureCanvas( self.figure)
         
@@ -498,6 +657,7 @@ class pySpectraGui( QtGui.QMainWindow):
 
         self.calledFromMonitorApp = calledFromMonitorApp
 
+        
         self.setWindowTitle( "PySpectraGui")
 
         # used by cb_postscript
@@ -515,8 +675,8 @@ class pySpectraGui( QtGui.QMainWindow):
         self.files = None
         if files is not None and len( files) > 0:
             self.files = self.getMatchingFiles( files)
-            if len( self.files) > 0:
-                pysp.read( [self.files[0]])
+            for f in self.files:
+                pysp.read( f)
             pysp.display()
 
         self.prepareCentralWidgets()
@@ -709,13 +869,12 @@ class pySpectraGui( QtGui.QMainWindow):
         #
         # the lineEdit line
         #
-        hBox = QtGui.QHBoxLayout()
-        self.lineEdit = QtGui.QLineEdit()
-        hBox.addWidget( self.lineEdit)
-        self.layout_frame_v.addLayout( hBox)
-
-        QtCore.QObject.connect( self.lineEdit, 
-                                QtCore.SIGNAL("returnPressed()"),self.cb_lineEdit)
+        #hBox = QtGui.QHBoxLayout()
+        #self.lineEdit = QtGui.QLineEdit()
+        #hBox.addWidget( self.lineEdit)
+        #self.layout_frame_v.addLayout( hBox)
+        #QtCore.QObject.connect( self.lineEdit, 
+        #                        QtCore.SIGNAL("returnPressed()"),self.cb_lineEdit)
         #
         # prev, all, checked, next
         #
@@ -746,25 +905,6 @@ class pySpectraGui( QtGui.QMainWindow):
 
         hBox.addStretch()            
         self.layout_frame_v.addLayout( hBox)
-        #
-        # cls, delete
-        #
-        hBox = QtGui.QHBoxLayout()
-        hBox.addStretch()            
-
-        self.clsBtn = QtGui.QPushButton(self.tr("&Cls")) 
-        hBox.addWidget( self.clsBtn) 
-        self.clsBtn.clicked.connect( self.cb_cls)
-        self.clsBtn.setShortcut( "Alt+c")
-
-        self.deleteBtn = QtGui.QPushButton(self.tr("&Delete")) 
-        hBox.addWidget( self.deleteBtn) 
-        self.deleteBtn.clicked.connect( self.cb_delete)
-        self.deleteBtn.setToolTip( "Delete checked scans")
-        self.deleteBtn.setShortcut( "Alt+d")
-        hBox.addStretch()            
-        self.layout_frame_v.addLayout( hBox)
-
 
     def cb_abort( self): 
         '''
@@ -808,6 +948,7 @@ class pySpectraGui( QtGui.QMainWindow):
         '''
         can be called with a dir name or a file name
         '''
+        pathNameTokens = pathName.split( '.')
         #
         # pathName is a directory: update filesList
         #
@@ -819,11 +960,11 @@ class pySpectraGui( QtGui.QMainWindow):
         #
         # pathName is a file: update scansList
         #
-        elif pathName.endswith( ".fio") or pathName.endswith( ".dat"):
+        elif pathNameTokens[-1] in defs.dataFormats:
             pysp.cls()
             pysp.delete()
             try: 
-                pysp.read( [pathName])
+                pysp.read( pathName)
             except Exception, e:
                 print "pySpectraGui.newPathSelected: trouble reading", pathName
                 print repr( e)
@@ -915,8 +1056,6 @@ class pySpectraGui( QtGui.QMainWindow):
         '''
         file the file list in the scrolling area
         '''
-        #print "updateFilesList, count", self.filesListWidget.count()
-
         if self.filesListWidget.count() > 0:
             self.filesListWidget.clear()
 
@@ -934,7 +1073,8 @@ class pySpectraGui( QtGui.QMainWindow):
             lst = self.files
         
         for file in lst:
-            if file.endswith( ".fio") or file.endswith( ".dat"):
+            fileNameTokens = file.split( '.')
+            if fileNameTokens[-1] in defs.dataFormats:
                 self.filesListWidget.addItem( file)
             elif file.startswith( "."):
                 continue
@@ -949,7 +1089,8 @@ class pySpectraGui( QtGui.QMainWindow):
         '''
         argout = []
         for file in os.listdir( "."):
-            if file.upper().endswith( ".DAT") or file.upper().endswith( ".FIO"):
+            fileNameTokens = file.split( '.')
+            if fileNameTokens[-1] in defs.dataFormats:
                 for pat in patternList:
                     if HasyUtils.match( file, pat): 
                         argout.append( file)
@@ -996,6 +1137,12 @@ class pySpectraGui( QtGui.QMainWindow):
             self.matplotlibAction.triggered.connect( self.cb_matplotlib)
             self.fileMenu.addAction( self.matplotlibAction)
 
+        self.miscMenu = self.menuBar.addMenu('&Misc')
+
+        self.editAction = QtGui.QAction('Edit', self)        
+        self.editAction.triggered.connect( self.cb_edit)
+        self.miscMenu.addAction( self.editAction)
+
         self.utilsMenu = self.menuBar.addMenu('&Utils')
 
         self.derivativeAction = QtGui.QAction('Derivative', self)        
@@ -1040,7 +1187,7 @@ class pySpectraGui( QtGui.QMainWindow):
         #
         # scan lists
         #
-        self.scanListsMenu = self.menuBar.addMenu('&ScanLists')
+        self.scanListsMenu = self.menuBar.addMenu('&TestData')
 
         self.sl1Action = QtGui.QAction('1 Scan', self)        
         self.sl1Action.triggered.connect( scanList1)
@@ -1058,9 +1205,17 @@ class pySpectraGui( QtGui.QMainWindow):
         self.sl4Action.triggered.connect( scanList4)
         self.scanListsMenu.addAction( self.sl4Action)
 
-        self.sl5Action = QtGui.QAction('Gauss Scan', self)        
+        self.sl5Action = QtGui.QAction('22 Scans', self)        
         self.sl5Action.triggered.connect( scanList5)
         self.scanListsMenu.addAction( self.sl5Action)
+
+        self.sl6Action = QtGui.QAction('56 Scans', self)        
+        self.sl6Action.triggered.connect( scanList6)
+        self.scanListsMenu.addAction( self.sl6Action)
+
+        self.sl7Action = QtGui.QAction('Gauss Scan', self)        
+        self.sl7Action.triggered.connect( scanList7)
+        self.scanListsMenu.addAction( self.sl7Action)
 
         self.exitAction = QtGui.QAction('E&xit', self)        
         self.exitAction.setStatusTip('Exit application')
@@ -1086,6 +1241,20 @@ class pySpectraGui( QtGui.QMainWindow):
     # the status bar
     #
     def prepareStatusBar( self): 
+
+        #
+        # cls, delete
+        #
+        self.clsBtn = QtGui.QPushButton(self.tr("&Cls")) 
+        self.statusBar.addWidget( self.clsBtn) 
+        self.clsBtn.clicked.connect( self.cb_cls)
+        self.clsBtn.setShortcut( "Alt+c")
+
+        self.deleteBtn = QtGui.QPushButton(self.tr("&Delete")) 
+        self.statusBar.addWidget( self.deleteBtn) 
+        self.deleteBtn.clicked.connect( self.cb_delete)
+        self.deleteBtn.setToolTip( "Delete checked scans")
+        self.deleteBtn.setShortcut( "Alt+d")
 
         if __builtin__.__dict__[ 'graphicsLib'] == 'matplotlib':
             self.pdfBtn = QtGui.QPushButton(self.tr("&PDF")) 
@@ -1119,7 +1288,7 @@ class pySpectraGui( QtGui.QMainWindow):
         for row in range( self.scansListWidget.count()):
             item = self.scansListWidget.item( row)
             if item.checkState() == QtCore.Qt.Checked:
-                nameList.append( item.text())
+                nameList.append( str( item.text()))
         return nameList
 
     def cb_delete( self): 
@@ -1169,6 +1338,17 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.cls()
         pysp.display()
 
+    def cb_edit( self):
+        item = self.filesListWidget.currentItem()
+        if item is None:
+            self.logWidget.append( "cb_edit: select a file name")
+            return 
+        fName = os.getcwd() + "/" + item.text()
+        editor = os.getenv( "EDITOR")
+        if editor is None: 
+            editor = 'emacs'
+        os.system( "%s %s&" % (editor, fName))
+        
     def cb_derivative( self):
         displayList = pysp.getDisplayList()
         if len( displayList) != 1:
@@ -1208,15 +1388,13 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.cls()
         pysp.display( [scan.name])
 
-
     def cb_writeFile( self):
         pysp.write()
 
     def cb_matplotlib( self):
         self.mplWidget = MplWidget( self.logWidget)
         self.mplWidget.show()
-        print "pySpectraGuiClass: hello"
-        pysp.mpl_graphics.display()
+        pysp.mpl_graphics.display( self.getCheckedNameList())
 
     def cb_helpWidget(self):
         QtGui.QMessageBox.about(self, self.tr("Help Widget"), self.tr(
@@ -1226,9 +1404,6 @@ class pySpectraGui( QtGui.QMainWindow):
                 "<li> some remarks</li>"
                 "</ul>"
                 ))
-
-
-
 def scanList1( self):
     pysp.cls()
     pysp.delete()
@@ -1278,6 +1453,26 @@ def scanList4( self):
     pysp.display()
 
 def scanList5( self):
+    pysp.cls()
+    pysp.delete()
+    pysp.setTitle( "22 Scans")
+    #pysp.setComment( "Ein Kommentar")
+    for i in range( 22): 
+        t = pysp.Scan( name = "t%d" % i, color = 'blue', yLabel = 'rand')
+        t.y = np.random.random_sample( (len( t.x), ))
+    pysp.display()
+
+def scanList6( self):
+    pysp.cls()
+    pysp.delete()
+    pysp.setTitle( "56 Scans")
+    #pysp.setComment( "Ein Kommentar")
+    for i in range( 56): 
+        t = pysp.Scan( name = "t%d" % i, color = 'blue', yLabel = 'rand')
+        t.y = np.random.random_sample( (len( t.x), ))
+    pysp.display()
+
+def scanList7( self):
     '''
     gauss scan
     '''

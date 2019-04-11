@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 
+from PyQt4 import QtCore as _QtCore
+from PyQt4 import QtGui as _QtGui
+
 #from pyqtgraph.Qt import QtCore as _QtCore
 #from pyqtgraph.Qt import QtGui as _QtGui
-from taurus.external.qt import QtGui as _QtGui
-from taurus.external.qt import QtCore as _QtCore
-from taurus.qt.qtgui.application import TaurusApplication 
+#from taurus.external.qt import QtGui as _QtGui
+#from taurus.external.qt import QtCore as _QtCore
+#from taurus.qt.qtgui.application import TaurusApplication 
 
 import pyqtgraph as _pg
 import time as _time
@@ -32,8 +35,8 @@ def initGraphic():
 
     _QApp = _QtGui.QApplication.instance()
     if _QApp is None:
-        #_QApp = _QtGui.QApplication([])
-        _QApp = TaurusApplication( [])
+        _QApp = _QtGui.QApplication([])
+        #_QApp = TaurusApplication( [])
 
     screen_resolution = _QApp.desktop().screenGeometry()
     width, height = screen_resolution.width(), screen_resolution.height()
@@ -41,6 +44,9 @@ def initGraphic():
     if _win is None:
         _pg.setConfigOption( 'background', 'w')
         _pg.setConfigOption( 'foreground', 'k')
+        #
+        # <class 'pyqtgraph.graphicsWindows.GraphicsWindow'>
+        #
         _win = _pg.GraphicsWindow( title="PySpectra Application")
         _win.setGeometry( 30, 30, 793, int( 793./1.414))
 
@@ -52,7 +58,8 @@ def _setSizeGraphicsWindow( nScan):
         return 
 
     if nScan > 10:
-        factor = 0.625
+        #factor = 0.625
+        factor = 0.7
     elif nScan > 4: 
         factor = 0.5
     else: 
@@ -115,11 +122,10 @@ def cls():
     '''
     clear screen: allow for a new plot
     '''
-    #print "graphics.cls"
-    if _QApp is None:
-        return 
-    if _win is None:
-        return
+    #print "pqt_graphics.cls"
+
+    if _QApp is None: 
+        initGraphic()
     #
     # the clear() statement cuts down this list:_win.items() to 
     # one element, <class 'pyqtgraph.graphicsItems.GraphicsLayout.GraphicsLayout'>
@@ -246,10 +252,10 @@ def _make_cb_mouseMoved( scan):
     return a callback function for the moveMouse signal
     '''
     def mouseMoved(evt):
-        #print "+++ mouseMoved, evt[0]", scan.name, repr( evt[0])
+        #print " mouseMoved, evt[0]", scan.name, repr( evt[0])
         m = [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         mousePoint = scan.plotItem.vb.mapSceneToView(evt[0])
-        #print "+++ scene", repr( evt[0]), "view", repr( mousePoint)
+        #print " scene", repr( evt[0]), "view", repr( mousePoint)
         if scan.doty:
             now = _datetime.datetime.now()
             year = now.year
@@ -321,9 +327,10 @@ def _isCellTaken( row, col):
             if item.getItem( row, col) is not None:
                 for elm in item.items:
                     if type( elm) == _pg.graphicsItems.LabelItem.LabelItem:
-                        print "graphics.isCellTaken (%d, %d) %s" % (row, col, elm.text)
+                        #print "pqt_graphics.isCellTaken (%d, %d) %s" % (row, col, elm.text)
+                        pass
                     else: 
-                        #print "graphics.isCellTaken (%d, %d) %s " % (row, col, repr( elm))
+                        #print "pqt_graphics.isCellTaken (%d, %d) %s " % (row, col, repr( elm))
                         pass
                 argout = True
                 break
@@ -338,23 +345,23 @@ def _displayTitleComment():
     - title is over comment
     - colspan is infinity
     '''
-    print "graphics.displayTitleComment"
     title = _GQE.getTitle()
     if title is not None:
         if not _textIsOnDisplay( title):
             _win.addLabel( title, row = 0, col = 0, colspan = 10)
 
-    _isCellTaken( 0, 0)
-    
     comment = _GQE.getComment()
     if comment is not None:
         if not _textIsOnDisplay( comment):
             _win.addLabel( comment, row = 1, col = 0, colspan = 10)
 
-    _isCellTaken( 1, 0)
-    print "graphics.displayTitleComment DONE"
+def _addTexts( scan, nameList): 
 
-def _addTexts( scan): 
+    if _GQE.getNumberOfScansToBeDisplayed( nameList) <= _defs.MANY_SCANS:
+        fontSize = _defs.FONT_SIZE_NORMAL
+    else: 
+        fontSize = _defs.FONT_SIZE_SMALL
+    
     for elm in scan.textList:
         if elm.hAlign == 'left':
             anchorX = 0
@@ -370,9 +377,13 @@ def _addTexts( scan):
             anchorY = 0.5
         #txt = _pg.TextItem( elm.text, color=elm.color, anchor = ( anchorX, anchorY))
         if elm.color.lower() in _defs.colorCode:
-            txt = _pg.TextItem( elm.text, color=_defs.colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
+            #txt = _pg.TextItem( elm.text, color=_defs.colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
+            txt = _pg.TextItem( color=_defs.colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
+            txt.setHtml( '<div style="font-size:%dpx;">%s</div>' % (fontSize, elm.text))
         else:
-            txt = _pg.TextItem( elm.text, color='k', anchor = ( anchorX, anchorY))
+            #txt = _pg.TextItem( elm.text, color='k', anchor = ( anchorX, anchorY))
+            txt = _pg.TextItem( color='k', anchor = ( anchorX, anchorY))
+            txt.setHtml( '<div style="font-size:%dpx;">%s</div>' % ( fontSize, elm.text))
 
         if scan.textOnly:
             x = elm.x
@@ -385,7 +396,11 @@ def _addTexts( scan):
         txt.setPos( x, y)
         txt.show()
 
-def _setTitle( scan): 
+def _setTitle( scan, nameList): 
+    if _GQE.getNumberOfScansToBeDisplayed( nameList) <= _defs.MANY_SCANS:
+        fontSize = _defs.FONT_SIZE_NORMAL
+    else: 
+        fontSize = _defs.FONT_SIZE_SMALL
     #
     # the length of the title has to be limited. Otherwise pg 
     # screws up. The plots will no longer fit into the workstation viewport
@@ -401,24 +416,64 @@ def _setTitle( scan):
     else: 
         tempName = scan.name
 
-    if len( _GQE._scanList) < _defs.MANY_SCANS:
-        scan.plotItem.setTitle( title = tempName)
+    if _GQE.getNumberOfScansToBeDisplayed( nameList) <= _defs.MANY_SCANS:
+        scan.plotItem.setTitle( title = tempName, size = '%dpx' % fontSize)
     else:
         vb = scan.plotItem.getViewBox()
-        print "graphics.setTitle: %s, viewRange %s" % (scan.name, str( vb.viewRange()))
-        txt = _pg.TextItem( tempName, color='k', anchor = ( 0.5, 0.5))
-        x = (scan.xMax - scan.xMin)*0.5 + scan.xMin
+        #txt = _pg.TextItem( tempName, color='k', anchor = ( 1.0, 0.5))
+        txt = _pg.TextItem( color='k', anchor = ( 1.0, 0.5))
+        txt.setHtml( '<div style="font-size:%dpx;">%s</div>' % (fontSize, tempName))
+        x = (scan.xMax - scan.xMin)*0.95 + scan.xMin
         if scan.autorangeY: 
-            y = ( _np.max( scan.y) - _np.min( scan.y))*0.90 + _np.min( scan.y)
+            y = ( _np.max( scan.y) - _np.min( scan.y))*0.85 + _np.min( scan.y)
         else: 
-            y = ( scan.yMax - scan.yMin)*0.90 + scan.yMin
+            if scan.yMax is None: 
+                scan.yMax = _np.max( scan.y)
+            if scan.yMin is None: 
+                scan.yMin = _np.min( scan.y)
+            y = ( scan.yMax - scan.yMin)*0.85 + scan.yMin
             
         txt.setPos( x, y)
-        print "graphics.setTitle: %s at %g %g" % ( tempName, x, y)
         vb.addItem( txt)
-        #scan.plotItem.addItem( txt)
 
-def _createPlotItem( scan):            
+def _extractData( scan): 
+    '''
+    the arrays scan.xExtract and scan.yExtract are produced.
+    they contain those data which are between yMin and yMax.
+    this way be bypass the pyqtgraph issue: limits are not respected
+    for logarithmic plots.
+    '''
+
+    if scan.yLog is False:
+        scan.xExtract = scan.x[:(scan.currentIndex + 1)]
+        scan.yExtract = scan.y[:(scan.currentIndex + 1)]
+        return 
+
+    condition = _np.copy( scan.y[:(scan.currentIndex + 1)])
+
+    if scan.yMin is None or scan.yMax is None:
+        for i in range( scan.currentIndex + 1): 
+            if scan.y[i] > 0.:
+                condition[i] = True
+            else:
+                condition[i] = False
+        scan.xExtract = _np.extract( condition, scan.x[:(scan.currentIndex + 1)])
+        scan.yExtract = _np.extract( condition, scan.y[:(scan.currentIndex + 1)])
+        return 
+
+
+    for i in range( scan.currentIndex + 1): 
+        if scan.y[i] >= scan.yMin and scan.y[i] <= scan.yMax and scan.y[i] > 0.:
+            condition[i] = True
+        else:
+            condition[i] = False
+
+    scan.xExtract = _np.extract( condition, scan.x[:(scan.currentIndex + 1)])
+    scan.yExtract = _np.extract( condition, scan.y[:(scan.currentIndex + 1)])
+
+    return 
+
+def _createPlotItem( scan, nameList):            
     '''
     create a plotItem, aka viewport (?) with title, axis descriptions and texts
     '''
@@ -445,76 +500,90 @@ def _createPlotItem( scan):
     
     if _isCellTaken( row, col):
         raise ValueError( "graphics.createPlotItem: cell (%d, %d) is already taken" % ( row, col))
+    #
+    # the textContainer
+    #
+    if scan.textOnly:
+        plotItem = _win.addViewBox( row, col)
+        plotItem.setRange( xRange = ( 0, 1), yRange = ( 0., 1.))
+        scan.plotItem = plotItem
+        _addTexts( scan, nameList)
+        return plotItem
 
     try:
-        if scan.textOnly:
-            plotItem = _win.addViewBox( row, col)
-            plotItem.setRange( xRange = ( 0, 1), yRange = ( 0., 1.))
-            scan.plotItem = plotItem
-            _addTexts( scan)
-            return plotItem
-
+        if scan.doty: 
+            plotItem = _win.addPlot( axisItems = { 'bottom': _CAxisTime( orientation='bottom')}, 
+                                     row = row, col = col, colspan = scan.colSpan) 
         else:
-            if scan.doty: 
-                plotItem = _win.addPlot( axisItems = { 'bottom': _CAxisTime( orientation='bottom')}, 
-                                         row = row, col = col, colspan = scan.colSpan) 
-                scan.plotItem = plotItem
-            else:
-                plotItem = _win.addPlot( row = row, col = col, colspan = scan.colSpan)
-                scan.plotItem = plotItem
+            #
+            # <class 'pyqtgraph.graphicsItems.PlotItem.PlotItem.PlotItem'>
+            #
+            plotItem = _win.addPlot( row = row, col = col, colspan = scan.colSpan)
+            
     except Exception, e:
         print "graphics.createPlotItem: caught exception, row", row, "col", col, "colspan", scan.colSpan
         print repr( e)
         raise ValueError( "graphics.createPlotItem, throwing exception")
 
+
+    plotItem.showAxis('top')
+    plotItem.getAxis('top').setTicks( [])
+    plotItem.showAxis('right')
+    #plotItem.getAxis('right').setTicks( [])
+    plotItem.getAxis( 'right').showValues = False
+    
+    scan.plotItem = plotItem 
+
     scan.plotItem.showGrid( x = scan.showGridX, y = scan.showGridY)
     
-    _setTitle( scan)
+    _setTitle( scan, nameList)
 
-    if len( _GQE._scanList) < _defs.MANY_SCANS:
+    if _GQE.getNumberOfScansToBeDisplayed( nameList) <= _defs.MANY_SCANS:
         if hasattr( scan, 'xLabel'):
             scan.plotItem.setLabel( 'bottom', text=scan.xLabel)
         if hasattr( scan, 'yLabel'):
             scan.plotItem.setLabel( 'left', text=scan.yLabel)
+    else: 
+        font=_QtGui.QFont()
+        font.setPixelSize( _defs.FONT_SIZE_SMALL)
 
+        plotItem.getAxis("bottom").tickFont = font
+        plotItem.getAxis("left").tickFont = font
+    #
+    # autoscale
+    #
     arX = scan.autorangeX
     arY = scan.autorangeY
 
-    if scan.yMin is None:
+    if scan.yMin is None or scan.yMax is None:
         arY = True
-    else:
-        if not scan.autorangeY: 
-            arY = False
 
-    #print "graphics.createPlotItem", scan.name, "autorange x, y", arX, arY
-    
     #
     # problem: autorange needs padding != 0
     #
     scan.plotItem.enableAutoRange( x = arX, y = arY)
 
     if not arY: 
-        scan.plotItem.setYRange( scan.yMin, scan.yMax, padding = 0)
+        scan.plotItem.setYRange( scan.yMin, scan.yMax)
+
+    if not arX: 
+        scan.plotItem.setXRange( scan.xMin, scan.xMax)
+
+
+    #
+    # log scale
+    #
+    plotItem.setLogMode( x = scan.xLog, y = scan.yLog)
+
     #
     # idea: control the zoom in such a way the y-axis 
     # is re-scaled when we zoom in.
     #
     scan.plotItem.setMouseEnabled( x = True, y = True)
 
-    if not arX: 
-        scan.plotItem.setXRange( scan.xMin, scan.xMax, padding=0)
-
-    _addTexts( scan)
+    _addTexts( scan, nameList)
 
     return scan.plotItem
-
-#def _allocateViewBox(): 
-#    vb = _win.addViewBox( 2, 0)
-#    vb.setRange( xRange = ( 0, 1), yRange = ( 0., 1.))
-#    t1 = _pg.TextItem( text = "this is a text", anchor = ( 0., 0.5), color = 'k')
-#    t1.setPos( 0., 0.9)
-#    vb.addItem( t1)
-#    return 
 
 def display( nameList = None):
     '''
@@ -538,16 +607,13 @@ def display( nameList = None):
     '''
     #print "pqt_graphics.display", repr( nameList)
     #
-    # don't want to check for nameList is None below
+    # don't want to check for nameListis None below
     #
     if nameList is None:
         nameList = []
 
-    #print "graphics.displaY, nameList", repr( nameList)
-
     if _QApp is None: 
         initGraphic()
-
     #
     # Do not put a cls() here because it takes a lot of time, especially when
     # fast displays are done. 
@@ -602,7 +668,8 @@ def display( nameList = None):
     #     non-overlaid scans
     #
     for scan in scanList:
-        #print "graphics.display.firstPass,", scan.name, scan.lastIndex, scan.currentIndex
+        print "graphics.display.firstPass,", scan.name
+
         #
         # overlay? - don't create a plot for this scan. Plot it
         # in the second pass. But it is displayed, if it is the only 
@@ -626,7 +693,7 @@ def display( nameList = None):
         #
         if scan.plotItem is None:
             try:
-                scan.plotItem = _createPlotItem( scan)
+                scan.plotItem = _createPlotItem( scan, nameList)
             except ValueError, e:
                 print "graphics.display", repr( e)
                 print "graphics.display: exception from createPlotItem"
@@ -643,8 +710,15 @@ def display( nameList = None):
             continue
 
         #print "graphics.display, plotting %s currentIndex %d len: %d" % (scan.name, scan.currentIndex, len( scan.x)) 
-        scan.plotDataItem.setData( scan.x[:(scan.currentIndex + 1)], 
-                                   scan.y[:(scan.currentIndex + 1)])
+        #
+        # pyqtgraph cannot respect limits for log-scales
+        #
+        if scan.yLog:
+            _extractData( scan)
+            scan.plotDataItem.setData( scan.xExtract, scan.yExtract)
+        else:
+            scan.plotDataItem.setData( scan.x[:(scan.currentIndex + 1)], 
+                                       scan.y[:(scan.currentIndex + 1)])
         #
         # keep track of what has already been displayed
         #
@@ -656,6 +730,9 @@ def display( nameList = None):
     # --- second pass: display overlaid scans
     #
     for scan in scanList:
+        print "graphics.display.secondPass,", scan.name
+        if scan.name == "hasfpgm1_pl":
+            print "secondPass", scan.name, scan.x, scan.y
         #
         # if only one scan is displayed, there is no overlay
         #
@@ -682,31 +759,20 @@ def display( nameList = None):
 
         scan.plotItem = target.plotItem
 
-        target.plotItem.plot( scan.x[:(scan.currentIndex + 1)], 
-                              scan.y[:(scan.currentIndex + 1)], 
-                              pen = _getPen( scan))
-        scan.lastIndex = scan.currentIndex
-        #if scan.yMin is None:
-        #    scan.plotItem.enableAutoRange( x = False, y = True)
-        #else:
-        #    scan.plotItem.setYRange( scan.yMin, scan.yMax)
-        #scan.plotItem.setXRange( scan.xMin, scan.xMax)
+        if scan.yLog:
+            print "+++pqt_graphics.display, yLog", scan.name
+            _extractData( scan)
+            scan.plotDataItem.setData( scan.xExtract, scan.yExtract)
+            target.plotItem.plot( scan.xExtract,
+                                  scan.yExtract,
+                                  pen = _getPen( scan))
+        else:
+            target.plotItem.plot( scan.x[:(scan.currentIndex + 1)], 
+                                  scan.y[:(scan.currentIndex + 1)], 
+                                  pen = _getPen( scan))
 
-    #_QApp.processEvents()
-    #
-    # except for the first display command in a session, 
-    # all graphics plots, which have been displayed before
-    # appear in the upper left corner of the graphics screen
-    #
-    #_time.sleep(0.1)
-    #
-    # /usr/lib/python2.7/dist-packages/pyqtgraph/graphicsItems/AxisItem.py L.818
-    # crashed because len( textRects) == 0
-    #
-    try: 
-        _QApp.processEvents()
-    except Exception, e:
-        print "pyqt_graphics.display: caught exception"
-        print repr( e)
+        scan.lastIndex = scan.currentIndex
+
+    processEvents()
 
     return

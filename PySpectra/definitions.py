@@ -2,6 +2,11 @@
 
 from taurus.external.qt import QtCore as _QtCore
 
+FONT_SIZE_NORMAL = 14
+FONT_SIZE_SMALL = 12    # number of scans > MANY_SCANS
+
+dataFormats = [ 'fio', 'dat', 'iint']
+
 _BLUE_MOVING = "#a0b0ff"
 _RED_ALARM = "#ff8080"
 _GREEN_OK = "#70ff70"
@@ -75,6 +80,7 @@ style = { 'SOLID': _QtCore.Qt.SolidLine,
 }
 
 #
-#
+# if there are more scans than MANY_SCANS the x- and y-labels
+# are suppressed and the title is moved into the plot
 #
 MANY_SCANS = 20

@@ -7,6 +7,7 @@ GQE - contains the Scan() class and functions to handle scans:
 
 import numpy as _np
 import PySpectra as _PySpectra
+import PySpectra.definitions as _defs
 import HasyUtils as _HasyUtils
 from taurus.external.qt import QtGui as _QtGui
 from taurus.external.qt import QtCore as _QtCore
@@ -25,7 +26,7 @@ _wsViewportFixed = False
 ScanAttrs = [ 'at', 'autorangeX', 'autorangeY', 'colSpan', 'color', 'currentIndex', 
               'dType', 'doty', 'fileName', 'lastIndex', 
               'nPts', 'name', 'ncol', 'nplot', 'nrow', 'overlay', 'showGridX', 
-              'showGridY', 'style', 'textList', 'width', 'xLabel', 'xMax', 'xMin',
+              'showGridY', 'style', 'textList', 'width', 'xMax', 'xMin',
               'xLabel', 'yLabel', 'yMin', 'yMax'] 
 
 class Text(): 
@@ -108,20 +109,23 @@ class Scan():
             self.textOnly = True
             del kwargs[ 'textOnly']
             pass
+        #
+        # if 'x' and 'y' are supplied the scan is created using data
+        # Note: a file name may be supplied, e.g. if the scan comes from a file.
+        #
+        elif 'x' in kwargs and isArrayLike( kwargs[ 'x']) and \
+             'y' in kwargs and isArrayLike( kwargs[ 'y']):
+            self._createScanFromData( kwargs)
         #    
         # 'fileName': data are read from a file
         #    
         elif 'fileName' in kwargs: 
             if 'x' not in kwargs or 'y' not in kwargs:
-                raise ValueError( "GQE.Scan.__init__: 'fileName' but no 'x' and 'y', %s" % kwargs[ 'fileName'])
+                raise ValueError( "GQE.Scan.__init__: 'fileName' but no 'x' and no 'y', %s" % kwargs[ 'fileName'])
+
             fioCol = read( kwargs[ 'fileName'], kwargs[ 'x'], kwargs[ 'y'])
             kwargs[ 'x']= fioCol.x
             kwargs[ 'y']= fioCol.y
-            self._createScanFromData( kwargs)
-        #
-        # if 'x' and 'y' are supplied the scan is created using data
-        #
-        elif 'x' in kwargs:
             self._createScanFromData( kwargs)
         #
         # otherwise we use limits and the limits have defaults
@@ -241,7 +245,6 @@ class Scan():
         del kwargs[ 'x']
         self.y = _np.copy( kwargs[ 'y'])
         del kwargs[ 'y']
-
         if len( self.x) != len( self.y):
             raise ValueError( "GQE.Scan._createScanFromData: 'x' and 'y' differ in length %d (x) %d (y)" % (len( self.x), len( self.y)))
 
@@ -251,6 +254,8 @@ class Scan():
         self.xMax = _np.max( self.x)
         self.yMin = _np.min( self.y)
         self.yMax = _np.max( self.y)
+
+        self.dType = type( self.x[0])
 
         self.nPts = len( self.x)
         self.lastIndex = 0
@@ -294,7 +299,6 @@ class Scan():
         else:
             self.dType = kwargs[ 'dType']
             del kwargs[ 'dType']
-
         #
         # the 1.8 version of linspace does not allow to specify the dType
         # 
@@ -327,6 +331,8 @@ class Scan():
         colSpan: def.: 1
         doty:    def. False
         fileName 
+        xLog, yLog: bool
+                 def. False
         overlay: string 
                  the name of the scan occupying the target viewport 
         showGridX, 
@@ -347,11 +353,14 @@ class Scan():
 
         self.at = None
         self.autorangeX = False
-        self.autorangeY = True
+        self.autorangeY = False
         self.color = 'red'
         self.colSpan = 1
         self.doty = False            # x-axis is date-of-the year
         self.fileName = None
+        self.nrow = None
+        self.ncol = None
+        self.nplot = None
         self.plotItem = None
         self.showGridX = False
         self.showGridY = False
@@ -360,6 +369,8 @@ class Scan():
         self.xLabel = 'position'
         self.yLabel = 'signal'
         self.overlay = None
+        self.xLog = False
+        self.yLog = False
         #
         # the attributes plot and mouseLabel are created by graphics.display(). 
         # However, it is initialized here to help cls()
@@ -369,6 +380,7 @@ class Scan():
         self.mouseProxy = None
 
         for attr in [ 'autorangeX', 'autorangeY', 'color', 'colSpan', 'doty', 'fileName',  
+                      'xLog', 'yLog', 
                       'ncol', 'nrow', 'nplot', 'overlay', 'showGridX', 'showGridY', 
                       'style', 'symbol', 'xLabel', 'yLabel', 'yMin', 'yMax']:
             if attr in kwargs:
@@ -377,11 +389,12 @@ class Scan():
 
         attr = 'width'
         if attr in kwargs:
-            if str(kwargs[ attr]) in pysp.widthArr:
+            if str(kwargs[ attr]) in _defs.widthArr:
                 setattr( self, attr, float( kwargs[ attr]))
             else: 
                 setattr( self, attr, 1.0)
             del kwargs[ attr]
+
         #
         # if at is None, graphics.display() makes a guess
         #
@@ -633,7 +646,7 @@ def show( scanName = None):
 
     _PySpectra.listGraphicsItems()
 
-    print " %s scans" % count
+    print "\n--- %s scans" % len( _scanList)
 
     if _title: 
         print "Title:  ", _title
@@ -642,11 +655,51 @@ def show( scanName = None):
 
 def _showScan( scan): 
     '''
+    
     '''
+    #
+    # create a local copy of ScanAttrs to delete elements which
+    # are already shown
+    #
+    scanAttrsPrinted = []
     print "--- \n", scan.name
+    scanAttrsPrinted.append( 'name')
+    print "  currentIndex: %d, lastIndex: %d, Pts: %d" % (scan.currentIndex, scan.lastIndex, scan.nPts)
+    scanAttrsPrinted.append( 'currentIndex')
+    scanAttrsPrinted.append( 'lastIndex')
+    scanAttrsPrinted.append( 'nPts')
+    print "  nrow: %s, ncol: %s, nplot: %s" % ( str(scan.nrow), str(scan.ncol), str(scan.nplot))
+    scanAttrsPrinted.append( 'nrow')
+    scanAttrsPrinted.append( 'ncol')
+    scanAttrsPrinted.append( 'nplot')
+    print "  showGridX: %s, showGridY: %s" % ( str(scan.showGridX), str(scan.showGridY))
+    scanAttrsPrinted.append( 'showGridX')
+    scanAttrsPrinted.append( 'showGridY')
+    print "  xMin: %s, xMax: %s" % ( str(scan.xMin), str(scan.xMax))
+    scanAttrsPrinted.append( 'xMin')
+    scanAttrsPrinted.append( 'xMax')
+    print "  yMin: %s, yMax: %s" % ( str(scan.yMin), str(scan.yMax))
+    scanAttrsPrinted.append( 'yMin')
+    scanAttrsPrinted.append( 'yMax')
+    print "  xLabel: %s, yLabel: %s" % ( str(scan.xLabel), str(scan.yLabel))
+    scanAttrsPrinted.append( 'xLabel')
+    scanAttrsPrinted.append( 'yLabel')
+    print "  autorangeX: %s, autorangeY: %s" % ( str(scan.autorangeX), str(scan.autorangeY))
+    scanAttrsPrinted.append( 'autorangeX')
+    scanAttrsPrinted.append( 'autorangeY')
+    print "  at: %s, colSpan: %s" % ( str(scan.at), str(scan.colSpan))
+    scanAttrsPrinted.append( 'at')
+    scanAttrsPrinted.append( 'colSpan')
+    print "  color: %s, width: %s, style: %s" % ( str(scan.color), str(scan.width), str( scan.style))
+    scanAttrsPrinted.append( 'color')
+    scanAttrsPrinted.append( 'width')
+    scanAttrsPrinted.append( 'style')
+
     for attr in ScanAttrs:
+        if attr in scanAttrsPrinted: 
+            continue
         try:
-            print "%s -> %s" % ( attr, repr( getattr( scan, attr)))
+            print "  %s: %s" % ( attr, repr( getattr( scan, attr)))
         except Exception, e:
             print "GQE._showScan: trouble with", scan.name
             print repr( e)
@@ -708,18 +761,23 @@ def read( fileName, x = 1, y = None, flagMCA = False):
       return None
     otherwise: 
       return a fioColumn object
+    
+     'x' and 'y' correspond to the column numbers in the .fio files
+     assume that a file contains 25 columns, the first column contains
+     the x-values and len( fioObj.columns) == 24. A scan containing data 
+     from the last column is then specified by Scan( ..., x = 1, y = 25)
 
-    Supported extensions: .fio, .dat
+    Supported extensions: .fio, .dat, iint
 
     if flagMCA, the input file contains MCA data, no x-axis
     '''
-
+    #print "+++GQE.read: %s, x %s, y %s, flagMCA %s" % ( fileName, repr( x), repr( y), repr( flagMCA))
     fioObj = _HasyUtils.fioReader( fileName, flagMCA)
 
     if y is not None:
-        if y > len( fioObj.columns): 
-            raise ValueError( "GQE.read: %s, y %d > len( columns) %d" % ( fileName, y, len( fioObj.columns)))
-        return fioObj.columns[ y - 1]
+        if y > (len( fioObj.columns) + 1): 
+            raise ValueError( "GQE.read: %s, y: %d > (len( columns) + 1): %d" % ( fileName, y, len( fioObj.columns)))
+        return fioObj.columns[ y - 2]
 
     for elm in fioObj.columns:
         scn =  Scan( name = elm.name, x = elm.x, y = elm.y, fileName = fileName)
@@ -776,7 +834,7 @@ def getNumberOfScansToBeDisplayed( nameList):
     #print "graphics.getNoOfScansToBeDisplayed: nScan %d" %(nScan)
     return nScan
 
-def getNoOverlaid( nameList = None):
+def getNumberOfOverlaid( nameList = None):
     '''
     returns the number of scans which are overlaid to another, 
     used by e.g. graphics.display()
@@ -804,3 +862,13 @@ def setWsViewportFixed( flag):
     
 def getWsViewportFixed():
     return _wsViewportFixed 
+
+def isArrayLike( x): 
+    '''    
+    returns True, if y is a list or a numpy array
+    '''
+    if type(x) is list or type(x) is _np.ndarray:
+        return True
+    else:
+        return False
+

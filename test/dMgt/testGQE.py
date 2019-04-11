@@ -67,7 +67,7 @@ class testGQE( unittest.TestCase):
 
         PySpectra.cls()
         PySpectra.delete()
-        PySpectra.read( ["%s/test/data/tst_09153_mca_s1.fio" % pySpectraPath, "-mca"])
+        PySpectra.read( "%s/test/data/tst_09153_mca_s1.fio" % pySpectraPath, flagMCA = True)
         lst = PySpectra.getScanList()
         self.assertEqual( len( lst), 1)
         self.assertEqual( lst[0].name, "d1_mca01")
@@ -82,7 +82,7 @@ class testGQE( unittest.TestCase):
 
         PySpectra.cls()
         PySpectra.delete()
-        PySpectra.read( ["%s/test/data/tst_09154_mca_s1.fio" % pySpectraPath, "-mca"])
+        PySpectra.read( "%s/test/data/tst_09154_mca_s1.fio" % pySpectraPath, flagMCA = True)
         lst = PySpectra.getScanList()
         self.assertEqual( len( lst), 2)
         self.assertEqual( lst[0].name, "d1_mca01")
@@ -99,7 +99,7 @@ class testGQE( unittest.TestCase):
 
         PySpectra.cls()
         PySpectra.delete()
-        PySpectra.read( ["%s/test/data/ti_au_tio2_sio2_kat55a_0001.fio" % pySpectraPath])
+        PySpectra.read( "%s/test/data/ti_au_tio2_sio2_kat55a_0001.fio" % pySpectraPath)
         lst = PySpectra.getScanList()
         self.assertEqual( len( lst), 24)
         self.assertEqual( lst[0].name, "TI_AU_TIO2_SIO2_KAT55A_0001")
@@ -113,7 +113,7 @@ class testGQE( unittest.TestCase):
         PySpectra.cls()
         PySpectra.delete()
         print "reading splitter"
-        PySpectra.read( ["%s/test/data/SPLITTER_PXE_BL_22_2.dat" % pySpectraPath])
+        PySpectra.read( "%s/test/data/SPLITTER_PXE_BL_22_2.dat" % pySpectraPath)
         print "reading splitter DONE"
         lst = PySpectra.getScanList()
         print "scanList", repr( lst)

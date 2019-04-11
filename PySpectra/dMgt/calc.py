@@ -58,7 +58,6 @@ def antiderivative(name = None, nameNew = None):
         temp = nameNew
 
     argout = _GQE.Scan( name = temp, x = scan.x, y = scan.y)
-
     #
     #  tested the 3 lines below using sin/cosine
     #
@@ -66,6 +65,9 @@ def antiderivative(name = None, nameNew = None):
         temp = _integrate.trapz( scan.y[:i], scan.x[:i])
         argout.setY( i - 1, temp)
 
+    argout.yMin = _np.min( argout.y)
+    argout.yMax = _np.max( argout.y)
+        
     return argout
 
 def yToMinusY(name = None, nameNew = None):
