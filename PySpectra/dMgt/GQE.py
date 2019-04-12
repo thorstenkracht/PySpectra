@@ -9,8 +9,10 @@ import numpy as _np
 import PySpectra as _PySpectra
 import PySpectra.definitions as _defs
 import HasyUtils as _HasyUtils
-from taurus.external.qt import QtGui as _QtGui
-from taurus.external.qt import QtCore as _QtCore
+
+from PyQt4 import QtCore as _QtCore
+from PyQt4 import QtGui as _QtGui
+
 import PyTango as _PyTango
 
 _scanList = []
@@ -362,6 +364,8 @@ class Scan():
         self.ncol = None
         self.nplot = None
         self.plotItem = None
+        self.scene = None
+        self.viewBox = None
         self.showGridX = False
         self.showGridY = False
         self.width = 1.

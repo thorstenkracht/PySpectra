@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-from taurus.external.qt import QtCore as _QtCore
+from PyQt4 import QtCore as _QtCore
+from PyQt4 import QtGui as _QtGui
 
 FONT_SIZE_NORMAL = 14
 FONT_SIZE_SMALL = 12    # number of scans > MANY_SCANS

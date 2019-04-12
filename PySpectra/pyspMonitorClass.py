@@ -16,10 +16,10 @@ import PySpectra as pysp
 import HasyUtils 
 
 import Queue, argparse, sys, os
-from taurus.external.qt import QtGui 
-from taurus.external.qt import QtCore
-from taurus.qt.qtgui.application import TaurusApplication 
-import taurus
+
+from PyQt4 import QtCore 
+from PyQt4 import QtGui 
+
 import PyTango as _PyTango
 
 updateTime = 0.1

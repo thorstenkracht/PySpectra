@@ -3,12 +3,6 @@
 from PyQt4 import QtCore as _QtCore
 from PyQt4 import QtGui as _QtGui
 
-#from pyqtgraph.Qt import QtCore as _QtCore
-#from pyqtgraph.Qt import QtGui as _QtGui
-#from taurus.external.qt import QtGui as _QtGui
-#from taurus.external.qt import QtCore as _QtCore
-#from taurus.qt.qtgui.application import TaurusApplication 
-
 import pyqtgraph as _pg
 import time as _time
 import os as _os
@@ -19,9 +13,12 @@ import PySpectra.utils as _utils
 import PySpectra.definitions as _defs
 import HasyUtils as _HasyUtils
 import datetime as _datetime
+import types
 
 _QApp = None
 _win = None
+
+clsFunctions = []
 
 def initGraphic():
     '''
@@ -36,11 +33,10 @@ def initGraphic():
     _QApp = _QtGui.QApplication.instance()
     if _QApp is None:
         _QApp = _QtGui.QApplication([])
-        #_QApp = TaurusApplication( [])
 
     screen_resolution = _QApp.desktop().screenGeometry()
     width, height = screen_resolution.width(), screen_resolution.height()
-    #+++mw = _QtGui.QMainWindow()
+    #mw = _QtGui.QMainWindow()
     if _win is None:
         _pg.setConfigOption( 'background', 'w')
         _pg.setConfigOption( 'foreground', 'k')
@@ -122,15 +118,25 @@ def cls():
     '''
     clear screen: allow for a new plot
     '''
+    global clsFunctions
     #print "pqt_graphics.cls"
 
     if _QApp is None: 
         initGraphic()
     #
+    # since _win.clear() does not clear all, we have to 
+    # run through the prepared cls-functions
+    #
+    for f in clsFunctions: 
+        f()
+    clsFunctions = []
+
+    #
     # the clear() statement cuts down this list:_win.items() to 
     # one element, <class 'pyqtgraph.graphicsItems.GraphicsLayout.GraphicsLayout'>
     #
     _win.clear()
+
     #
     # remove all items from the layout
     #
@@ -156,13 +162,38 @@ def cls():
                 del scanList[i].mouseProxy
                 scanList[i].mouseProxy = None
 
+        if scanList[i].plotItem is not None and \
+           scanList[i].plotItem.scene() is not None: 
+            for item in scanList[i].plotItem.scene().items():
+                scanList[i].plotItem.scene().removeItem( item)
+        scanList[i].viewBox = None
         scanList[i].plotItem = None
         scanList[i].plotDataItem = None
         scanList[i].lastIndex = 0
 
     _QApp.processEvents()
 
-
+itemLevel = 0
+def printItems( o): 
+    global itemLevel
+    itemLevel += 1
+    print "---%s: level %d, type %s" % (' ' * itemLevel, itemLevel, type( o))
+    if type( o.items) is types.BuiltinFunctionType:
+        for item in o.items():
+            print " %s%d: Func, %s" % ( ' ' * itemLevel, itemLevel, repr( item))
+            if hasattr( item, "items"):
+                printItems( item)
+    elif type( o.items) is types.DictType: 
+        for k in o.items.keys(): 
+            print " %s%d:Dict, %s, %s" % (' ' * itemLevel, itemLevel, repr( k), repr( o.items[ k]))
+    elif type( o.items) is types.ListType: 
+        for elm in o.items: 
+            print " %s%d:List, %s" % (' ' * itemLevel, itemLevel, repr( elm))
+    else: 
+        print "failed to identify type", type( o.items)
+    itemLevel -= 1
+    return 
+        
 def procEventsLoop():
     print "\nPress <return> to continue ",
     while True:
@@ -473,6 +504,62 @@ def _extractData( scan):
 
     return 
 
+
+def _make_updateViews( target, scan): 
+    def _func():
+        scan.viewBox.setGeometry(target.plotItem.vb.sceneBoundingRect())
+        ## need to re-update linked axes since this was called
+        ## incorrectly while views had different shapes.
+        ## (probably this should be handled in ViewBox.resizeEvent)
+        scan.viewBox.linkedViewChanged( target.plotItem.vb, scan.viewBox.XAxis)
+        return 
+    return _func
+
+def _updateViews( target, scan): 
+    scan.viewBox.setGeometry(target.plotItem.vb.sceneBoundingRect())
+    
+    ## need to re-update linked axes since this was called
+    ## incorrectly while views had different shapes.
+    ## (probably this should be handled in ViewBox.resizeEvent)
+    scan.viewBox.linkedViewChanged( target.plotItem.vb, scan.viewBox.XAxis)
+    return 
+
+def _makeClsSceneFunc( scene, vb): 
+    def func(): 
+        scene.removeItem( vb)
+        return 
+    return func
+
+
+def _setAutorangeForOverlaid( scan, target):
+    if scan.autorangeY is False:
+        if scan.yMin is None or scan.yMax is None: 
+            if target.yMin is not None and target.yMax is not None: 
+                target.viewBox.setYRange( target.yMin, target.yMax)
+            else:
+                aY = True
+                #raise ValueError( "pqt_graphics.display: not autorangeY and (yMin is None or yMax is None)")
+        else:
+            scan.viewBox.setYRange( scan.yMin, scan.yMax)
+            aY = False
+    else:
+        aY = True
+
+    if scan.autorangeX is False:
+        if scan.xMin is None or scan.xMax is None: 
+            if target.xMin is not None and target.xMax is not None: 
+                target.viewBox.setXRange( target.xMin, target.xMax)
+            else:
+                aX = True
+                #raise ValueError( "pqt_graphics.display: not autorangeX and (xMin is None or xMax is None)")
+        else:
+            scan.viewBox.setXRange( scan.xMin, scan.xMax)
+            aX = False
+    else:
+        aX = True
+    scan.viewBox.enableAutoRange( x = aX, y = aY)
+    return 
+
 def _createPlotItem( scan, nameList):            
     '''
     create a plotItem, aka viewport (?) with title, axis descriptions and texts
@@ -529,8 +616,12 @@ def _createPlotItem( scan, nameList):
     plotItem.showAxis('top')
     plotItem.getAxis('top').setTicks( [])
     plotItem.showAxis('right')
-    #plotItem.getAxis('right').setTicks( [])
-    plotItem.getAxis( 'right').showValues = False
+    plotItem.getAxis('right').setTicks( [])
+    #
+    # showValues = False should suppress the tick mark texts
+    # - not working so far
+    #
+    #plotItem.getAxis( 'right').showValues = False
     
     scan.plotItem = plotItem 
 
@@ -584,7 +675,7 @@ def _createPlotItem( scan, nameList):
     _addTexts( scan, nameList)
 
     return scan.plotItem
-
+    
 def display( nameList = None):
     '''
     display one or more or all scans
@@ -609,6 +700,8 @@ def display( nameList = None):
     #
     # don't want to check for nameListis None below
     #
+    global clsFunctions
+
     if nameList is None:
         nameList = []
 
@@ -668,7 +761,7 @@ def display( nameList = None):
     #     non-overlaid scans
     #
     for scan in scanList:
-        print "graphics.display.firstPass,", scan.name
+        #print "graphics.display.firstPass,", scan.name
 
         #
         # overlay? - don't create a plot for this scan. Plot it
@@ -730,7 +823,7 @@ def display( nameList = None):
     # --- second pass: display overlaid scans
     #
     for scan in scanList:
-        print "graphics.display.secondPass,", scan.name
+        #print "graphics.display.secondPass,", scan.name
         if scan.name == "hasfpgm1_pl":
             print "secondPass", scan.name, scan.x, scan.y
         #
@@ -759,18 +852,43 @@ def display( nameList = None):
 
         scan.plotItem = target.plotItem
 
-        if scan.yLog:
-            print "+++pqt_graphics.display, yLog", scan.name
-            _extractData( scan)
-            scan.plotDataItem.setData( scan.xExtract, scan.yExtract)
-            target.plotItem.plot( scan.xExtract,
-                                  scan.yExtract,
-                                  pen = _getPen( scan))
-        else:
-            target.plotItem.plot( scan.x[:(scan.currentIndex + 1)], 
-                                  scan.y[:(scan.currentIndex + 1)], 
-                                  pen = _getPen( scan))
+        #
+        # there is an pyqtgraph issue with log scales
+        # therefore we extract the data between yMin and yMax
+        #
+        _extractData( scan)
 
+        scan.viewBox = _pg.ViewBox()
+        _setAutorangeForOverlaid( scan, target)
+
+        #target.plotItem.showAxis('right')
+        target.scene = target.plotItem.scene()
+        target.scene.addItem( scan.viewBox)
+
+        if scan.yLog or scan.xLog:
+            raise ValueError( "pqt_graphic.display: no log-scale for the overlaid scan")
+
+        #if scan.yLog:
+        #    target.plotItem.getAxis('right').setLogMode( True)
+
+        target.plotItem.getAxis('right').linkToView( scan.viewBox)
+        #
+        # _win.clear() doesn't really work. Therefore we have to 
+        # prepare a function to be called by cls()
+        #
+        clsFunctions.append( _makeClsSceneFunc( target.scene, scan.viewBox))
+        _updateViews( target, scan)
+        #
+        # link the views x-axis to another view
+        #
+        scan.viewBox.setXLink( target.plotItem)
+
+        target.plotItem.vb.sigResized.connect( _make_updateViews( target, scan))
+        curveItem = _pg.PlotCurveItem( x = scan.xExtract, 
+                                       y = scan.yExtract,
+                                       pen = _getPen( scan))
+        scan.viewBox.addItem( curveItem )
+        
         scan.lastIndex = scan.currentIndex
 
     processEvents()

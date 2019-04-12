@@ -3,8 +3,10 @@
 import matplotlib 
 matplotlib.use( 'TkAgg')
 import matplotlib.pyplot as plt
-from taurus.external.qt import QtGui as _QtGui
-from taurus.external.qt import QtCore as _QtCore
+
+from PyQt4 import QtCore as _QtCore
+from PyQt4 import QtGui as _QtGui
+
 import time as _time
 import os as _os
 import math as _math

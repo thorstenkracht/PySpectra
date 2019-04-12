@@ -15,13 +15,14 @@ import __builtin__
 import HasyUtils
 import Queue, argparse, sys, os
 
-from PyQt4 import QtCore as _QtCore
-from PyQt4 import QtGui as _QtGui
+from PyQt4 import QtCore
+from PyQt4 import QtGui
 
-#from taurus.external.qt import QtGui 
-#from taurus.external.qt import QtCore
-#from taurus.qt.qtgui.application import TaurusApplication 
-#import taurus
+# needed, because of
+#   door = taurus.Device( HasyUtils.getLocalDoorNames()[0])
+# otherwise no data records are received
+#
+import taurus
 
 def parseCLI():
     parser = argparse.ArgumentParser( 
@@ -44,8 +45,7 @@ def main():
 
     app = QtGui.QApplication.instance()
     if app is None:
-        #app = QtGui.QApplication(sys.argv)
-        app = TaurusApplication( sys.argv)
+        app = QtGui.QApplication(sys.argv)
 
     o = pyspMonitorClass.pyspMonitor()
     o.show()
@@ -71,7 +71,7 @@ if __name__ == "__main__":
         __builtin__.__dict__[ 'graphicsLib'] = 'matplotlib'
     else: 
         __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
-    import pySpectraGui
+    import pySpectraGuiClass
     import PySpectra as pysp
     import pyspMonitorClass
 

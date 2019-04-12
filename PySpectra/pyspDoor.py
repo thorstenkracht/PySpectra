@@ -1193,7 +1193,6 @@ class spectraDoor( sms.BaseDoor):
 # 
 import taurus
 factory = taurus.Factory()
-
 factory.registerDeviceClass( 'Door',  spectraDoor)
 #
 # returns a spectraDoor

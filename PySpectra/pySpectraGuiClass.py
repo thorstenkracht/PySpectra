@@ -849,11 +849,11 @@ class pySpectraGui( QtGui.QMainWindow):
         for i in range( self.nMotor): 
             self.motPosLabels[ i].setText( "%g" % self.motProxies[i].position) 
             if self.motProxies[i].state() == PyTango.DevState.MOVING:
-                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % _BLUE_MOVING)
+                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % defs._BLUE_MOVING)
             elif self.motProxies[i].state() == PyTango.DevState.ON:
-                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % _GREEN_OK)
+                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % defs._GREEN_OK)
             else:
-                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % _RED_ALARM)
+                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % defs._RED_ALARM)
 
 
     def addScanFrame( self): 
@@ -1217,6 +1217,14 @@ class pySpectraGui( QtGui.QMainWindow):
         self.sl7Action.triggered.connect( scanList7)
         self.scanListsMenu.addAction( self.sl7Action)
 
+        self.sl8Action = QtGui.QAction('Overlay', self)        
+        self.sl8Action.triggered.connect( scanList8)
+        self.scanListsMenu.addAction( self.sl8Action)
+
+        self.sl9Action = QtGui.QAction('Overlay, log', self)        
+        self.sl9Action.triggered.connect( scanList9)
+        self.scanListsMenu.addAction( self.sl9Action)
+
         self.exitAction = QtGui.QAction('E&xit', self)        
         self.exitAction.setStatusTip('Exit application')
         self.exitAction.triggered.connect( sys.exit)
@@ -1485,4 +1493,42 @@ def scanList7( self):
     sigma = 1.
     g.y = 1/(sigma * np.sqrt(2 * np.pi)) * \
           np.exp( - (g.y - mu)**2 / (2 * sigma**2))
+    pysp.display()
+
+def scanList8( self):
+    '''
+    overlay
+    '''
+    pysp.cls()
+    pysp.delete()
+    pysp.setTitle( "2 Overlay Scans")
+    g = pysp.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, color = 'red')
+    mu = 0.
+    sigma = 1.
+    g.y = 1/(sigma * np.sqrt(2 * np.pi)) * \
+          np.exp( - (g.y - mu)**2 / (2 * sigma**2))
+    t1 = pysp.Scan( name = "sinus", color = 'blue', xMin = -5, xMax = 5., 
+                    yMin = -1.5, yMax = 1.5, yLabel = 'sin')
+    t1.y = np.sin( t1.x)
+    pysp.overlay( "sinus", "gauss")
+    pysp.display()
+
+def scanList9( self):
+    '''
+    overlay with log
+    '''
+    pysp.cls()
+    pysp.delete()
+    pysp.setTitle( "2 Overlay Scans")
+    g1 = pysp.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, color = 'red')
+    mu = 0.
+    sigma = 1.
+    g1.y = 1/(sigma * np.sqrt(2 * np.pi)) * \
+          np.exp( - (g1.y - mu)**2 / (2 * sigma**2))
+    g2 = pysp.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0, yMax = 1, nPts = 101, color = 'green')
+    mu = 0.5
+    sigma = 1.5
+    g2.y = 1/(sigma * np.sqrt(2 * np.pi)) * \
+          np.exp( - (g2.y - mu)**2 / (2 * sigma**2))
+    pysp.overlay( "gauss2", "gauss")
     pysp.display()
