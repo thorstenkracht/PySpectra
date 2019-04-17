@@ -448,7 +448,6 @@ def display( nameList = None):
     #     non-overlaid scans
     #
     for scan in scanList:
-        print "graphics.display", scan.name
         #
         # overlay? - don't create a plot for this scan. Plot it
         # in the second pass. But it is displayed, if it is the only 

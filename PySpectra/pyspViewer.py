@@ -7,7 +7,7 @@ import __builtin__
 #__builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
 #import PySpectra as pysp
 #import pySpectraGui
-
+ 
 import argparse, sys, os
 from PyQt4 import QtGui, QtCore
 
@@ -34,7 +34,7 @@ def main():
 
     app = QtGui.QApplication(sys.argv)
 
-    o = pySpectraGuiClass.pySpectraGui( args.files)
+    o = PySpectra.pySpectraGuiClass.pySpectraGui( args.files)
     o.show()
 
     try:
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     else: 
         __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
     import PySpectra as pysp
-    import pySpectraGuiClass
+    import PySpectra.pySpectraGuiClass
     main()
 
      

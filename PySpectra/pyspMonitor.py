@@ -47,10 +47,10 @@ def main():
     if app is None:
         app = QtGui.QApplication(sys.argv)
 
-    o = pyspMonitorClass.pyspMonitor()
+    o = pysp.pyspMonitorClass.pyspMonitor()
     o.show()
 
-    import pyspDoor
+    import PySpectra.pyspDoor
 
     try:
         door = taurus.Device( HasyUtils.getLocalDoorNames()[0])
@@ -71,8 +71,8 @@ if __name__ == "__main__":
         __builtin__.__dict__[ 'graphicsLib'] = 'matplotlib'
     else: 
         __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
-    import pySpectraGuiClass
+    import PySpectra.pySpectraGuiClass
     import PySpectra as pysp
-    import pyspMonitorClass
+    import PySpectra.pyspMonitorClass
 
     main()

@@ -40,7 +40,6 @@ class QListWidgetTK( QtGui.QListWidget):
         self.connect( self, QtCore.SIGNAL("itemDoubleClicked (QListWidgetItem *)"),self.cb_doubleClicked)
 
     def keyPressEvent (self, eventQKeyEvent):
-        print "keyPress"
         key = eventQKeyEvent.key()
         if key == QtCore.Qt.Key_Left:
             if self.parent.filesListWidget.count() > 0:
@@ -412,22 +411,22 @@ class ScanAttributes( QtGui.QMainWindow):
     def cb_autorangeXChanged( self): 
         self.scan.autorangeX = self.autorangeXCheckBox.isChecked()
         pysp.cls()
-        pysp.display( [self.scan.name])
+        pysp.display()
 
     def cb_autorangeYChanged( self): 
         self.scan.autorangeY = self.autorangeYCheckBox.isChecked()
         pysp.cls()
-        pysp.display( [self.scan.name])
+        pysp.display()
 
     def cb_xLogChanged( self): 
         self.scan.xLog = self.xLogCheckBox.isChecked()
         pysp.cls()
-        pysp.display( [self.scan.name])
+        pysp.display()
 
     def cb_yLogChanged( self): 
         self.scan.yLog = self.yLogCheckBox.isChecked()
         pysp.cls()
-        pysp.display( [self.scan.name])
+        pysp.display()
 
     def cb_apply( self):
         line = str(self.xMinLineEdit.text())
@@ -454,7 +453,7 @@ class ScanAttributes( QtGui.QMainWindow):
             self.yMaxValue.setText( "%g" % self.scan.yMax)
             self.yMaxLineEdit.clear()
         pysp.cls()
-        pysp.display( [self.scan.name])
+        pysp.display()
         
     def cb_color( self): 
         temp = self.w_colorComboBox.currentText()
@@ -503,7 +502,7 @@ class ScanAttributes( QtGui.QMainWindow):
 
     def cb_display( self): 
         pysp.cls()
-        pysp.display( [self.scan.name])
+        pysp.display()
 
     def cb_helpWidget(self):
         QtGui.QMessageBox.about(self, self.tr("Help Widget"), self.tr(
@@ -748,7 +747,7 @@ class pySpectraGui( QtGui.QMainWindow):
         # the scans ListWidget
         #
         vBox = QtGui.QVBoxLayout()
-        self.fileNameLabel = QtGui.QLabel( "fileName")
+        self.fileNameLabel = QtGui.QLabel( "ScanName")
         vBox.addWidget( self.fileNameLabel)
         self.scrollAreaScans = QtGui.QScrollArea()
         vBox.addWidget( self.scrollAreaScans)
@@ -1520,15 +1519,18 @@ def scanList9( self):
     pysp.cls()
     pysp.delete()
     pysp.setTitle( "2 Overlay Scans")
-    g1 = pysp.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, color = 'red')
+    g1 = pysp.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = True, nPts = 101, color = 'red')
     mu = 0.
     sigma = 1.
     g1.y = 1/(sigma * np.sqrt(2 * np.pi)) * \
           np.exp( - (g1.y - mu)**2 / (2 * sigma**2))
-    g2 = pysp.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0, yMax = 1, nPts = 101, color = 'green')
+    g2 = pysp.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0, 
+                    yMax = 1, nPts = 101, color = 'green')
     mu = 0.5
-    sigma = 1.5
+    sigma = 1.2
     g2.y = 1/(sigma * np.sqrt(2 * np.pi)) * \
           np.exp( - (g2.y - mu)**2 / (2 * sigma**2))
+
     pysp.overlay( "gauss2", "gauss")
     pysp.display()
+ 
