@@ -6,7 +6,7 @@ GQE - contains the Scan() class and functions to handle scans:
 # 1.8.2
 
 import numpy as _np
-import PySpectra as _PySpectra
+import PySpectra as _pysp
 import PySpectra.definitions as _defs
 import HasyUtils as _HasyUtils
 
@@ -25,13 +25,15 @@ _comment = None
 #
 _wsViewportFixed = False
 
-ScanAttrs = [ 'at', 'autorangeX', 'autorangeY', 'colSpan', 'color', 'currentIndex', 
+_ScanAttrs = [ 'at', 'autorangeX', 'autorangeY', 'colSpan', 'currentIndex', 
               'dType', 'doty', 'fileName', 'lastIndex', 
-              'nPts', 'name', 'ncol', 'nplot', 'nrow', 'overlay', 'showGridX', 
-              'showGridY', 'style', 'textList', 'width', 'xMax', 'xMin',
+              'nPts', 'name', 'ncol', 'nplot', 'nrow', 'overlay', 'showGridX', 'showGridY', 
+               'lineColor', 'lineStyle', 'lineWidth', 
+               'symbol', 'symbolColor', 'symbolSize', 
+               'textList', 'lineWidth', 'xMax', 'xMin',
               'xLabel', 'yLabel', 'yMin', 'yMax'] 
 
-class Text(): 
+class _Text(): 
     '''
     Texts live on the viewport of a scan. Therefore: x [0., 1.], y [0., 1.]
     hAlign: 'left', 'right', 'center'
@@ -115,8 +117,8 @@ class Scan():
         # if 'x' and 'y' are supplied the scan is created using data
         # Note: a file name may be supplied, e.g. if the scan comes from a file.
         #
-        elif 'x' in kwargs and isArrayLike( kwargs[ 'x']) and \
-             'y' in kwargs and isArrayLike( kwargs[ 'y']):
+        elif 'x' in kwargs and _isArrayLike( kwargs[ 'x']) and \
+             'y' in kwargs and _isArrayLike( kwargs[ 'y']):
             self._createScanFromData( kwargs)
         #    
         # 'fileName': data are read from a file
@@ -139,7 +141,7 @@ class Scan():
         # if we store the scan also in the module name space, we 
         # can access it via e.g.: pysp.t1
         #
-        _PySpectra.__dict__[ name] = self
+        _pysp.__dict__[ name] = self
         
         self.setAttr( kwargs)
 
@@ -329,7 +331,6 @@ class Scan():
                  The name of the scan
         autorangeX, autorangeY
                  if you know the x-range beforehand, set autorangeY to False
-        color:   'red', 'green', 'blue', 'yellow', 'cyan', 'magenta', 'black'
         colSpan: def.: 1
         doty:    def. False
         fileName 
@@ -339,10 +340,14 @@ class Scan():
                  the name of the scan occupying the target viewport 
         showGridX, 
         showGridY: True/False
-        style:   'SOLID', 'DASHED', 'DOTTED', 'DASHDOTTED', 'DASHDOTDOTTED'
-        symbol:  o, s, t, d, +,
-        width:   float: 1.0, 1.2, 1.4, 1.6, 1.8, 2.0
+        lineColor:   'red', 'green', 'blue', 'yellow', 'cyan', 'magenta', 'black', 'NONE'
+        lineStyle:   'None', 'SOLID', 'DASHED', 'DOTTED', 'DASHDOTTED', 'DASHDOTDOTTED'
+        lineWidth:   float: 1.0, 1.2, 1.4, 1.6, 1.8, 2.0
                  line width, def.: 1
+        symbol:  o, s, t, d, +,
+                 o - o, s - square, t - triangle, d - diamond, + - +
+        symbolColor: def.: NONE
+        symbolSize: 5
         xLabel:  string
                  the description of the x-axis, def. 'position'
         yLabel:  string
@@ -356,23 +361,26 @@ class Scan():
         self.at = None
         self.autorangeX = False
         self.autorangeY = False
-        self.color = 'red'
         self.colSpan = 1
         self.doty = False            # x-axis is date-of-the year
         self.fileName = None
         self.nrow = None
         self.ncol = None
         self.nplot = None
+        self.overlay = None
         self.plotItem = None
         self.scene = None
         self.viewBox = None
         self.showGridX = False
         self.showGridY = False
-        self.width = 1.
-        self.style = 'SOLID'
+        self.lineColor = 'red'
+        self.lineStyle = 'SOLID'
+        self.lineWidth = 1.
+        self.symbol = 'o'
+        self.symbolColor = 'NONE'
+        self.symbolSize = 10
         self.xLabel = 'position'
         self.yLabel = 'signal'
-        self.overlay = None
         self.xLog = False
         self.yLog = False
         #
@@ -383,17 +391,19 @@ class Scan():
         self.mouseLabel = None
         self.mouseProxy = None
 
-        for attr in [ 'autorangeX', 'autorangeY', 'color', 'colSpan', 'doty', 'fileName',  
+        for attr in [ 'autorangeX', 'autorangeY', 'colSpan', 'doty', 'fileName',  
                       'xLog', 'yLog', 
                       'ncol', 'nrow', 'nplot', 'overlay', 'showGridX', 'showGridY', 
-                      'style', 'symbol', 'xLabel', 'yLabel', 'yMin', 'yMax']:
+                      'lineColor', 'lineStyle', 
+                      'symbol', 'symbolColor', 'symbolSize', 
+                      'xLabel', 'yLabel', 'yMin', 'yMax']:
             if attr in kwargs:
                 setattr( self, attr, kwargs[ attr])
                 del kwargs[ attr]
 
-        attr = 'width'
+        attr = 'lineWidth'
         if attr in kwargs:
-            if str(kwargs[ attr]) in _defs.widthArr:
+            if str(kwargs[ attr]) in _defs._lineWidthArr:
                 setattr( self, attr, float( kwargs[ attr]))
             else: 
                 setattr( self, attr, 1.0)
@@ -444,7 +454,7 @@ class Scan():
         vAlign: 'top', 'center', 'bottom'
         color:  'red', 'green', ...
         '''
-        txt = Text( text, x, y, hAlign, vAlign, color)
+        txt = _Text( text, x, y, hAlign, vAlign, color)
         self.textList.append( txt)
 
     def setY( self, index, yValue):
@@ -516,7 +526,7 @@ def getScanList():
     '''
     return _scanList
 
-def getDisplayList(): 
+def _getDisplayList(): 
     '''
     returns a list of scans which are currently displayed
     '''
@@ -546,6 +556,11 @@ def setTitle( text = None):
     delete() also clears the title
     '''
     global _title 
+    if text is None:
+        _title = None
+        return 
+    text = text.replace( "'", "")
+    text = text.replace( '"', '')
     _title = text
     return 
 
@@ -560,6 +575,11 @@ def setComment( text = None):
     delete() also clears the comment
     '''
     global _comment 
+    if text is None:
+        _comment = None
+        return 
+    text = text.replace( "'", "")
+    text = text.replace( '"', '')
     _comment = text
     return 
 
@@ -588,7 +608,7 @@ def delete( nameLst = None):
             tmp = _scanList.pop()
             if tmp.plotItem is not None:
                 tmp.plotItem.clear()
-            del _PySpectra.__dict__[ tmp.name]
+            del _pysp.__dict__[ tmp.name]
             _scanIndex = None
         setTitle( None)
         setComment( None)
@@ -602,7 +622,7 @@ def delete( nameLst = None):
                 #
                 if _scanList[i].plotItem is not None:
                     _scanList[i].plotItem.clear()
-                del _PySpectra.__dict__[ _scanList[i].name]
+                del _pysp.__dict__[ _scanList[i].name]
                 del _scanList[i]
                 break
         else:
@@ -632,7 +652,8 @@ def overlay( src, trgt):
     
 def show( scanName = None):
     '''
-    if no scan is supplied, prints the contents of scanList
+    prints some information about scans.
+    if no scanName is supplied, the contents of the scanList is printed
     '''
 
     if scanName is not None:
@@ -640,17 +661,13 @@ def show( scanName = None):
         _showScan( scan)
         return 
 
-    if not _scanList:
-        print "GQE.show: scanList is empty"
-        return 
-
-    print "The List of Scans:"
-    for scan in _scanList:
-        _showScan( scan)
-
-    _PySpectra.listGraphicsItems()
-
-    print "\n--- %s scans" % len( _scanList)
+    if _scanList:
+        print "The List of Scans:"
+        for scan in _scanList:
+            _showScan( scan)
+        print "\n--- %s scans" % len( _scanList)
+    else: 
+        print "scan list is empty"
 
     if _title: 
         print "Title:  ", _title
@@ -694,12 +711,16 @@ def _showScan( scan):
     print "  at: %s, colSpan: %s" % ( str(scan.at), str(scan.colSpan))
     scanAttrsPrinted.append( 'at')
     scanAttrsPrinted.append( 'colSpan')
-    print "  color: %s, width: %s, style: %s" % ( str(scan.color), str(scan.width), str( scan.style))
-    scanAttrsPrinted.append( 'color')
-    scanAttrsPrinted.append( 'width')
-    scanAttrsPrinted.append( 'style')
+    print "  lineColor: %s, lineWidth: %s, lineStyle: %s" % ( str(scan.lineColor), str(scan.lineWidth), str( scan.lineStyle))
+    scanAttrsPrinted.append( 'lineColor')
+    scanAttrsPrinted.append( 'lineWidth')
+    scanAttrsPrinted.append( 'lineStyle')
+    print "  symbolColor: %s, symbolWidth: %s, symbol: %s" % ( str(scan.symbolColor), str(scan.symbolSize), str( scan.symbol))
+    scanAttrsPrinted.append( 'symbolColor')
+    scanAttrsPrinted.append( 'symbolSize')
+    scanAttrsPrinted.append( 'symbol')
 
-    for attr in ScanAttrs:
+    for attr in _ScanAttrs:
         if attr in scanAttrsPrinted: 
             continue
         try:
@@ -708,14 +729,14 @@ def _showScan( scan):
             print "GQE._showScan: trouble with", scan.name
             print repr( e)
 
-def nextScan():
+def _nextScan():
     '''
     nextScan/prevScan return the next/previous scan objec
     '''
     global _scanIndex
 
     if len( _scanList) == 0:
-        raise ValueError( "GQE.nextScan: scan list empty")
+        raise ValueError( "GQE._nextScan: scan list empty")
 
     if _scanIndex is None:
         _scanIndex = 0
@@ -727,14 +748,14 @@ def nextScan():
 
     return _scanList[ _scanIndex]
 
-def prevScan():
+def _prevScan():
     '''
     nextScan/prevScan return the next/previous scan objec
     '''
     global _scanIndex
 
     if len( _scanList) == 0:
-        raise ValueError( "GQE.prevScan: scan list empty")
+        raise ValueError( "GQE._prevScan: scan list empty")
 
     if _scanIndex is None:
         _scanIndex = 0
@@ -749,13 +770,17 @@ def prevScan():
 
     return _scanList[ _scanIndex]
 
-def getIndex( name): 
+def _getIndex( name): 
+    '''
+    returns the position of a scan in the scanList, 
+    the first index is 0.
+    '''
     index = 0
     for scan in _scanList:
         if scan.name == name:
             return index
         index += 1
-    raise ValueError( "GQE.getIndex: not found %s" % name)
+    raise ValueError( "GQE._getIndex: not found %s" % name)
     
 def read( fileName, x = 1, y = None, flagMCA = False):
     '''    
@@ -790,7 +815,14 @@ def read( fileName, x = 1, y = None, flagMCA = False):
     
 def write( lst = None): 
     '''
-    write the specified scans of all scans
+    write the specified scans or all scans to a .fio file. 
+    the prefix is pysp
+
+    PySpectra.write()
+      write all scans
+
+    PySpectra.write( [ 's1', 's2'])
+      write selected scans
     '''
     if len(_scanList) == 0: 
         raise ValueError( "GQE.write: scan list is empty")
@@ -814,10 +846,13 @@ def write( lst = None):
     fileName = obj.write()
     print "created", fileName
     
-def getNumberOfScansToBeDisplayed( nameList): 
+def _getNumberOfScansToBeDisplayed( nameList): 
     '''
+
     return the number of scans to be displayed.
     Scans that are overlaid do not require extra space
+    and are therefore not counted.
+
     '''
     if len( nameList) == 0:
         nOverlay = 0
@@ -838,7 +873,7 @@ def getNumberOfScansToBeDisplayed( nameList):
     #print "graphics.getNoOfScansToBeDisplayed: nScan %d" %(nScan)
     return nScan
 
-def getNumberOfOverlaid( nameList = None):
+def _getNumberOfOverlaid( nameList = None):
     '''
     returns the number of scans which are overlaid to another, 
     used by e.g. graphics.display()
@@ -853,7 +888,7 @@ def getNumberOfOverlaid( nameList = None):
 
     return count
     
-def setWsViewportFixed( flag):
+def _setWsViewportFixed( flag):
     '''
     flag: True or False
     
@@ -864,10 +899,10 @@ def setWsViewportFixed( flag):
     _wsViewportFixed = flag
     return 
     
-def getWsViewportFixed():
+def _getWsViewportFixed():
     return _wsViewportFixed 
 
-def isArrayLike( x): 
+def _isArrayLike( x): 
     '''    
     returns True, if y is a list or a numpy array
     '''
@@ -875,4 +910,141 @@ def isArrayLike( x):
         return True
     else:
         return False
+#
+# some test scans
+#
+def testCreate1( self):
+    '''
+    create 1 scans
+    '''
+    _pysp.cls()
+    delete()
+    setTitle( "Ein Titel")
+    setComment( "Ein Kommentar")
+    t1 = Scan( name = "t1", lineColor = 'blue', yLabel = 'sin')
+    t1.y = _np.sin( t1.x)
+    _pysp.display()
 
+def testCreate2():
+    '''
+    create 2 scans
+    '''
+    _pysp.cls()
+    delete()
+    setTitle( "Ein Titel")
+    setComment( "Ein Kommentar")
+    t1 = Scan( name = "t1", lineColor = 'blue', yLabel = 'sin')
+    t1.y = _np.sin( t1.x)
+    t2 = Scan( "t2", yLabel = 'cos', symbol = 'o', symbolColor = 'red', symbolSize = 5)
+    t2.y = _np.cos( t2.x)
+    _pysp.display()
+
+def testCreate5():
+    '''
+    create 5 scans, different colors, demonstrate overly feature
+    '''
+    _pysp.cls()
+    delete()
+    setTitle( "Ein Titel")
+    setComment( "Ein Kommentar")
+    t1 = Scan( name = "t1", lineColor = 'blue', yLabel = 'sin')
+    t1.y = _np.sin( t1.x)
+    t2 = Scan( "t2", yLabel = 'cos', symbol = '+')
+    t2.y = _np.cos( t2.x)
+    t3 = Scan( name = "t3", lineColor = 'green', yLabel = 'tan')
+    t3.y = _np.tan( t3.x)
+    t4 = Scan( name = "t4", lineColor = 'NONE', yLabel = 'random', symbol = '+', symbolColor = 'CYAN')
+    t4.y = _np.random.random_sample( (len( t4.y), ))
+    t5 = Scan( name = "t5", lineColor = 'magenta', yLabel = 'x**2')
+    t5.y = t5.x * t5.x
+    overlay( 't5', 't3')
+    _pysp.display()
+
+def testCreate10():
+    '''
+    create 10 scans
+    '''
+    _pysp.cls()
+    delete()
+    setTitle( "Ein Titel")
+    setComment( "Ein Kommentar")
+    for i in range( 10): 
+        t = Scan( name = "t%d" % i, lineColor = 'blue', yLabel = 'rand')
+        t.y = _np.random.random_sample( (len( t.x), ))
+    _pysp.display()
+
+def testCreate22():
+    '''
+    create 2 scans
+    '''
+    _pysp.cls()
+    delete()
+    setTitle( "22 Scans")
+    #setComment( "Ein Kommentar")
+    for i in range( 22): 
+        t = Scan( name = "t%d" % i, lineColor = 'blue', yLabel = 'rand')
+        t.y = _np.random.random_sample( (len( t.x), ))
+    _pysp.display()
+
+def testCreate56():
+    '''
+    create 56 scans
+    '''
+    _pysp.cls()
+    delete()
+    setTitle( "56 Scans")
+    for i in range( 56): 
+        t = Scan( name = "t%d" % i, lineColor = 'blue', yLabel = 'rand')
+        t.y = _np.random.random_sample( (len( t.x), ))
+    _pysp.display()
+
+def testCreateOverlaid( self):
+    '''
+    overlay 2 scans
+    '''
+    _pysp.cls()
+    delete()
+    setTitle( "2 Overlay Scans")
+    g = Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, lineColor = 'red')
+    mu = 0.
+    sigma = 1.
+    g.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g.y-mu)**2/(2.*sigma**2))
+    t1 = Scan( name = "sinus", lineColor = 'blue', xMin = -5, xMax = 5., 
+                    yMin = -1.5, yMax = 1.5, yLabel = 'sin')
+    t1.y = _np.sin( t1.x)
+    overlay( "sinus", "gauss")
+    _pysp.display()
+
+def testCreateOverlaidWithLog():
+    '''
+    create 2 Gauss, overlay the second to the first, log scale for first
+    '''
+    _pysp.cls()
+    delete()
+    setTitle( "2 Overlay Scans, with log scale")
+    g1 = Scan( name = "gauss", xMin = -5., xMax = 5., yLog = True, nPts = 101, lineColor = 'red')
+    mu = 0.
+    sigma = 1.
+    g1.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g1.y-mu)**2/(2.*sigma**2))
+    g2 = Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0, 
+                    yMax = 1, nPts = 101, lineColor = 'green')
+    mu = 0.5
+    sigma = 1.2
+    g2.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g2.y-mu)**2/(2.*sigma**2))
+
+    overlay( "gauss2", "gauss")
+    _pysp.display()
+
+def testCreateGauss():
+    '''
+    gauss scan
+    '''
+    _pysp.cls()
+    delete()
+    setTitle( "This is the position of the title")
+    setComment( "Here would be the comment")
+    g = Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
+    mu = 0.
+    sigma = 1.
+    g.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g.y-mu)**2/(2*sigma**2))
+    _pysp.display()

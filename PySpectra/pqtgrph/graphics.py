@@ -13,14 +13,14 @@ import PySpectra.utils as _utils
 import PySpectra.definitions as _defs
 import HasyUtils as _HasyUtils
 import datetime as _datetime
-import types
+import types as _types
 
 _QApp = None
 _win = None
 
-clsFunctions = []
+_clsFunctions = []
 
-def initGraphic():
+def _initGraphic():
     '''
     haso107d1: 1920 x 1200
     spectra: 640 x 450 def., A4:  680 x 471 
@@ -48,9 +48,18 @@ def initGraphic():
 
     return (_QApp, _win)
 
+def close(): 
+    global _win
+    if _win is None: 
+        return
+
+    _win.destroy()
+    _win = None
+    return 
+
 def _setSizeGraphicsWindow( nScan):
 
-    if _GQE.getWsViewportFixed(): 
+    if _GQE._getWsViewportFixed(): 
         return 
 
     if nScan > 10:
@@ -110,7 +119,7 @@ def setWsViewport( size = None):
     #print "graphics.setWsViewport", wPixel, hPixel
     _win.setGeometry( 30, 30, int(wPixel), int(hPixel))
     _QApp.processEvents()
-    _GQE.setWsViewportFixed( True)
+    _GQE._setWsViewportFixed( True)
 
     return 
 
@@ -118,18 +127,18 @@ def cls():
     '''
     clear screen: allow for a new plot
     '''
-    global clsFunctions
+    global _clsFunctions
     #print "pqt_graphics.cls"
 
     if _QApp is None: 
-        initGraphic()
+        _initGraphic()
     #
     # since _win.clear() does not clear all, we have to 
     # run through the prepared cls-functions
     #
-    for f in clsFunctions: 
+    for f in _clsFunctions: 
         f()
-    clsFunctions = []
+    _clsFunctions = []
 
     #
     # the clear() statement cuts down this list:_win.items() to 
@@ -162,10 +171,15 @@ def cls():
                 del scanList[i].mouseProxy
                 scanList[i].mouseProxy = None
 
-        if scanList[i].plotItem is not None and \
-           scanList[i].plotItem.scene() is not None: 
-            for item in scanList[i].plotItem.scene().items():
-                scanList[i].plotItem.scene().removeItem( item)
+        try: 
+            if scanList[i].plotItem is not None and \
+               scanList[i].plotItem.scene() is not None: 
+                for item in scanList[i].plotItem.scene().items():
+                    scanList[i].plotItem.scene().removeItem( item)
+        except Exception, e: 
+            print "pqt_graphic.cls: exception caught"
+            print repr( e)
+            continue
         scanList[i].viewBox = None
         scanList[i].plotItem = None
         scanList[i].plotDataItem = None
@@ -173,25 +187,25 @@ def cls():
 
     _QApp.processEvents()
 
-itemLevel = 0
-def printItems( o): 
-    global itemLevel
-    itemLevel += 1
-    print "---%s: level %d, type %s" % (' ' * itemLevel, itemLevel, type( o))
-    if type( o.items) is types.BuiltinFunctionType:
+_itemLevel = 0
+def _printItems( o): 
+    global _itemLevel
+    _itemLevel += 1
+    print "---%s: level %d, type %s" % (' ' * _itemLevel, _itemLevel, type( o))
+    if type( o.items) is _types.BuiltinFunctionType:
         for item in o.items():
-            print " %s%d: Func, %s" % ( ' ' * itemLevel, itemLevel, repr( item))
+            print " %s%d: Func, %s" % ( ' ' * _itemLevel, _itemLevel, repr( item))
             if hasattr( item, "items"):
-                printItems( item)
-    elif type( o.items) is types.DictType: 
+                _printItems( item)
+    elif type( o.items) is _types.DictType: 
         for k in o.items.keys(): 
-            print " %s%d:Dict, %s, %s" % (' ' * itemLevel, itemLevel, repr( k), repr( o.items[ k]))
-    elif type( o.items) is types.ListType: 
+            print " %s%d:Dict, %s, %s" % (' ' * _itemLevel, _itemLevel, repr( k), repr( o.items[ k]))
+    elif type( o.items) is _types.ListType: 
         for elm in o.items: 
-            print " %s%d:List, %s" % (' ' * itemLevel, itemLevel, repr( elm))
+            print " %s%d:List, %s" % (' ' * _itemLevel, _itemLevel, repr( elm))
     else: 
         print "failed to identify type", type( o.items)
-    itemLevel -= 1
+    _itemLevel -= 1
     return 
 
 def _getLayout( o): 
@@ -200,6 +214,9 @@ def _getLayout( o):
             return item
 
 def procEventsLoop():
+    '''
+    loops over QApp.processEvents until a <return> is entered
+    '''
     print "\nPress <return> to continue ",
     while True:
         _time.sleep(0.01)
@@ -210,17 +227,14 @@ def procEventsLoop():
     print ""
 
 def processEvents(): 
+    '''
+    we call processEvents 2 times because after it is called
+    the first time, all plots are displayed in the upper left
+    corner. We don't want the mainLoop() to execute the 
+    second call to processEvents
+    '''
     _QApp.processEvents()
-
-def listGraphicsItems(): 
-    '''
-    debugging tool
-    '''
-    return 
-    for item in _win.items():
-        print "item:", type( item)
-        #if type( item) == _QtGui.QGraphicsTextItem:
-        #    print "text", dir( item)
+    _QApp.processEvents()
 
 def _doty2datetime(doty, year = None):
     """
@@ -270,18 +284,20 @@ class _CAxisTime( _pg.AxisItem):
 
 def _getPen( scan):
 
-    if scan.color.lower() in _defs.colorCode: 
-        clr = _defs.colorCode[ scan.color.lower()]
+    if scan.lineColor.upper() == 'NONE': 
+        return None
+
+    if scan.lineColor.lower() in _defs._colorCode: 
+        clr = _defs._colorCode[ scan.lineColor.lower()]
     else:
         clr = 'k'
 
-    if scan.style in _defs.style:
-        stl = _defs.style[ scan.style]
+    if scan.lineStyle in _defs._lineStyle:
+        stl = _defs._lineStyle[ scan.lineStyle]
     else:
         stl = _QtCore.Qt.DashLine
 
-    return _pg.mkPen( color = clr, width = scan.width, style = stl)
-
+    return _pg.mkPen( color = clr, width = scan.lineWidth, style = stl)
 
 def _make_cb_mouseMoved( scan):
     '''
@@ -397,10 +413,10 @@ def _displayTitleComment():
 
 def _addTexts( scan, nameList): 
 
-    if _GQE.getNumberOfScansToBeDisplayed( nameList) <= _defs.MANY_SCANS:
-        fontSize = _defs.FONT_SIZE_NORMAL
+    if _GQE._getNumberOfScansToBeDisplayed( nameList) <= _defs._MANY_SCANS:
+        fontSize = _defs._FONT_SIZE_NORMAL
     else: 
-        fontSize = _defs.FONT_SIZE_SMALL
+        fontSize = _defs._FONT_SIZE_SMALL
     
     for elm in scan.textList:
         if elm.hAlign == 'left':
@@ -416,9 +432,9 @@ def _addTexts( scan, nameList):
         elif elm.vAlign == 'center':
             anchorY = 0.5
         #txt = _pg.TextItem( elm.text, color=elm.color, anchor = ( anchorX, anchorY))
-        if elm.color.lower() in _defs.colorCode:
-            #txt = _pg.TextItem( elm.text, color=_defs.colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
-            txt = _pg.TextItem( color=_defs.colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
+        if elm.color.lower() in _defs._colorCode:
+            #txt = _pg.TextItem( elm.text, color=_defs._colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
+            txt = _pg.TextItem( color=_defs._colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
             txt.setHtml( '<div style="font-size:%dpx;">%s</div>' % (fontSize, elm.text))
         else:
             #txt = _pg.TextItem( elm.text, color='k', anchor = ( anchorX, anchorY))
@@ -437,10 +453,10 @@ def _addTexts( scan, nameList):
         txt.show()
 
 def _setTitle( scan, nameList): 
-    if _GQE.getNumberOfScansToBeDisplayed( nameList) <= _defs.MANY_SCANS:
-        fontSize = _defs.FONT_SIZE_NORMAL
+    if _GQE._getNumberOfScansToBeDisplayed( nameList) <= _defs._MANY_SCANS:
+        fontSize = _defs._FONT_SIZE_NORMAL
     else: 
-        fontSize = _defs.FONT_SIZE_SMALL
+        fontSize = _defs._FONT_SIZE_SMALL
     #
     # the length of the title has to be limited. Otherwise pg 
     # screws up. The plots will no longer fit into the workstation viewport
@@ -454,7 +470,7 @@ def _setTitle( scan, nameList):
     else: 
         tempName = scan.name
 
-    if _GQE.getNumberOfScansToBeDisplayed( nameList) <= _defs.MANY_SCANS:
+    if _GQE._getNumberOfScansToBeDisplayed( nameList) <= _defs._MANY_SCANS:
         scan.plotItem.setTitle( title = tempName, size = '%dpx' % fontSize)
     else:
         vb = scan.plotItem.getViewBox()
@@ -634,14 +650,14 @@ def _createPlotItem( scan, nameList):
     
     _setTitle( scan, nameList)
 
-    if _GQE.getNumberOfScansToBeDisplayed( nameList) <= _defs.MANY_SCANS:
+    if _GQE._getNumberOfScansToBeDisplayed( nameList) <= _defs._MANY_SCANS:
         if hasattr( scan, 'xLabel'):
             scan.plotItem.setLabel( 'bottom', text=scan.xLabel)
         if hasattr( scan, 'yLabel'):
             scan.plotItem.setLabel( 'left', text=scan.yLabel)
     else: 
         font=_QtGui.QFont()
-        font.setPixelSize( _defs.FONT_SIZE_SMALL)
+        font.setPixelSize( _defs._FONT_SIZE_SMALL)
 
         plotItem.getAxis("bottom").tickFont = font
         plotItem.getAxis("left").tickFont = font
@@ -711,13 +727,13 @@ def display( nameList = None):
     #
     # don't want to check for nameListis None below
     #
-    global clsFunctions
+    global _clsFunctions
     
     if nameList is None:
         nameList = []
 
     if _QApp is None: 
-        initGraphic()
+        _initGraphic()
     #
     # Do not put a cls() here because it takes a lot of time, especially when
     # fast displays are done. 
@@ -750,7 +766,7 @@ def display( nameList = None):
     #
     # adjust the graphics window to the number of displayed scans
     #
-    nDisplay = _GQE.getNumberOfScansToBeDisplayed( nameList)
+    nDisplay = _GQE._getNumberOfScansToBeDisplayed( nameList)
     _setSizeGraphicsWindow( nDisplay)
     _adjustFigure( nDisplay)
 
@@ -791,6 +807,9 @@ def display( nameList = None):
         if len( nameList) > 0: 
             if scan.name not in nameList:
                 continue
+
+        if scan.xLog:
+            raise ValueError( "pqt_graphic.display: no log-scale for the x-axis")
         #
         # if we re-use the  plotItem ( aka viewport ?),
         # we can use setData(), see below. That makes things much faster.
@@ -803,7 +822,14 @@ def display( nameList = None):
                 print "graphics.display: exception from createPlotItem"
                 return 
             if not scan.textOnly:
-                scan.plotDataItem = scan.plotItem.plot(pen = _getPen( scan))
+                if scan.symbolColor.upper() == 'NONE':
+                    scan.plotDataItem = scan.plotItem.plot(pen = _getPen( scan))
+                else:
+                    scan.plotDataItem = scan.plotItem.plot(pen = _getPen( scan), 
+                                                           symbol = scan.symbol, 
+                                                           symbolPen = _defs._colorCode[ scan.symbolColor.lower()], 
+                                                           symbolBrush = _defs._colorCode[ scan.symbolColor.lower()], 
+                                                           symbolSize = scan.symbolSize)
 
         if scan.textOnly:
             continue
@@ -853,7 +879,7 @@ def display( nameList = None):
         if len( nameList) > 0 and scan.name not in nameList:
             continue
         target = _GQE.getScan( scan.overlay)
-        if target is None:
+        if target is None or target.plotItem is None:
             raise ValueError( "pqt_graphics.display: %s tries to overlay to %s" %
                               (scan.name, scan.overlay))
 
@@ -862,7 +888,12 @@ def display( nameList = None):
         scan.viewBox = _pg.ViewBox()
         _setAutorangeForOverlaid( scan, target)
 
-        target.plotItem.showAxis('right') # +++
+        target.plotItem.showAxis('right') 
+        #
+        # the overlaid scan cannot have a log-scale. however, if
+        # we don't set the log mode to false, the overlaid scan 
+        # receive the log mode from the target scan
+        #
         target.plotItem.getAxis('right').setLogMode( False)
         target.scene = target.plotItem.scene()
         target.scene.addItem( scan.viewBox)
@@ -875,7 +906,7 @@ def display( nameList = None):
         # _win.clear() doesn't really work. Therefore we have to 
         # prepare a function to be called by cls()
         #
-        clsFunctions.append( _makeClsSceneFunc( target.scene, scan.viewBox))
+        _clsFunctions.append( _makeClsSceneFunc( target.scene, scan.viewBox))
         _updateViews( target, scan)
         #
         # link the views x-axis to another view
@@ -883,7 +914,14 @@ def display( nameList = None):
         scan.viewBox.setXLink( target.plotItem)
 
         target.plotItem.vb.sigResized.connect( _make_updateViews( target, scan))
-        curveItem = _pg.PlotCurveItem( x = scan.x, y = scan.y, pen = _getPen( scan))
+        if scan.symbolColor.upper()  == 'NONE':
+            curveItem = _pg.PlotCurveItem( x = scan.x, y = scan.y, pen = _getPen( scan))
+        else:
+            curveItem = _pg.ScatterPlotItem( x = scan.x, y = scan.y,
+                                             symbol = scan.symbol, 
+                                             pen = _defs._colorCode[ scan.symbolColor.lower()], 
+                                             brush = _defs._colorCode[ scan.symbolColor.lower()], 
+                                             size = scan.symbolSize)
         scan.viewBox.addItem( curveItem )
         
         scan.lastIndex = scan.currentIndex
@@ -896,7 +934,6 @@ def display( nameList = None):
         #_win.ci.layout.setContentsMargins( 20, 20, 1, 1)
         _win.ci.layout.setHorizontalSpacing( -40)
         _win.ci.layout.setVerticalSpacing( -15)
-
 
     processEvents()
 

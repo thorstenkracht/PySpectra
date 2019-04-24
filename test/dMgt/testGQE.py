@@ -11,6 +11,7 @@ pySpectraPath = "/home/kracht/Misc/pySpectra"
 sys.path.append( pySpectraPath)
 
 import PySpectra
+import PySpectra.dMgt.GQE as gqe
 import numpy as np
 import unittest
 import time, sys
@@ -137,12 +138,12 @@ class testGQE( unittest.TestCase):
 
         scan1 = PySpectra.Scan( name = "notdotyscan", xMin = 10., xMax = 30.0, 
                                nPts = 101, dType = np.float64,
-                               color = 'red', style = 'solidLine')
+                               lineColor = 'red', lineStyle = 'solidLine')
         self.assertEqual( scan1.doty, False)
 
         scan2 = PySpectra.Scan( name = "dotyscan", xMin = 10., xMax = 30.0, 
                                nPts = 101, dType = np.float64,
-                               doty = True,color = 'red', style = 'solidLine')
+                               doty = True,lineColor = 'red', lineStyle = 'solidLine')
 
         self.assertEqual( scan2.doty, True)
 
@@ -157,7 +158,7 @@ class testGQE( unittest.TestCase):
 
         scan = PySpectra.Scan( name = "test1", xMin = 0., xMax = 1.0, 
                                nPts = 101, dType = np.float64,
-                               at = (2,2,3), color = 'red', style = 'solidLine')
+                               at = (2,2,3), lineColor = 'red', lineStyle = 'solidLine')
         self.assertEqual( scan.xMin, 0.)
         self.assertEqual( scan.xMax, 1.)
         self.assertEqual( scan.nPts, 101)
@@ -167,7 +168,7 @@ class testGQE( unittest.TestCase):
         self.assertEqual( len( scan.y), 101)
         self.assertEqual( scan.y.dtype, np.float64)
 
-        self.assertEqual( scan.color, 'red')
+        self.assertEqual( scan.lineColor, 'red')
 
     def test_createScanByData( self):
 
@@ -227,21 +228,21 @@ class testGQE( unittest.TestCase):
         PySpectra.Scan( name = 't2')
         PySpectra.Scan( name = 't3')
         PySpectra.Scan( name = 't4')
-        self.assertEqual( PySpectra.nextScan().name, 't1')
-        self.assertEqual( PySpectra.nextScan().name, 't2')
-        self.assertEqual( PySpectra.nextScan().name, 't3')
-        self.assertEqual( PySpectra.nextScan().name, 't4')
-        self.assertEqual( PySpectra.nextScan().name, 't1')
+        self.assertEqual( gqe._nextScan().name, 't1')
+        self.assertEqual( gqe._nextScan().name, 't2')
+        self.assertEqual( gqe._nextScan().name, 't3')
+        self.assertEqual( gqe._nextScan().name, 't4')
+        self.assertEqual( gqe._nextScan().name, 't1')
         PySpectra.delete()
         PySpectra.Scan( name = 't1')
         PySpectra.Scan( name = 't2')
         PySpectra.Scan( name = 't3')
         PySpectra.Scan( name = 't4')
-        self.assertEqual( PySpectra.prevScan().name, 't1')
-        self.assertEqual( PySpectra.prevScan().name, 't4')
-        self.assertEqual( PySpectra.prevScan().name, 't3')
-        self.assertEqual( PySpectra.prevScan().name, 't2')
-        self.assertEqual( PySpectra.prevScan().name, 't1')
+        self.assertEqual( gqe._prevScan().name, 't1')
+        self.assertEqual( gqe._prevScan().name, 't4')
+        self.assertEqual( gqe._prevScan().name, 't3')
+        self.assertEqual( gqe._prevScan().name, 't2')
+        self.assertEqual( gqe._prevScan().name, 't1')
 
     def testFillData( self):
         PySpectra.cls()

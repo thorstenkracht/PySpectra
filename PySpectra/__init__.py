@@ -1,52 +1,70 @@
 #!/usr/bin/env python
 '''
 PySpectra displays 1D data
+--------------------------
 
-PySpectra.Scan()
-  a class returnint a scan object
+The module PySpectra is usually imported by 
+  import PySpectra as pysp
 
-  scan = PySpectra.Scan( name = 't1')
+It exports one class and several functions: 
+Scan()              a class returning a scan object
+antiderivative()    calculate the Stammfunktion
+cls()               clear the screen graphics window
+createPDF()         create a PDF file
+delete()            delete all or selected scans
+derivative()        calculate the derivative
+display()           display all or selected scans
+getComment()        return the comment
+getScan()           return a scan object
+getScanList()       return the list of the scans
+getTitle()          return the title
+launchGui()         launches the Gui
+overlay( src, trgt) plot src in the viewport of trgt
+procEventsLoop()    loop over QApp.processEvents until a <return> is entered
+processEvents()     call QApp.processEvents()
+read()              read .fio or .dat files
+setComment()        set the comment 
+setTitle()          set the title
+setWsViewPort()     set the size of the graphics window
+show()              print the scans
+ssa()               simple scan analysis
+write()             create a .fio file
+yToMinusY()         change the sign of the y-values
 
-PySpectra.cls()
-  clear the screen screen
+*** Applications based on PySpectra: 
+$ pyspViewer.py
+  successor of the FioViewer
+$ pyspMonitor.py
+  successor of the SardanaMonitor
 
-PySpectra.delete()
-  delete all or selected scans
-  
-  PySpectra.delete()
-    delete all scans
-
-  PySpectra.delete( ['t1', 't2')
-    delete selected scans
-
-PySpectra.display()
-  display all or selected scans
-  
-  PySpectra.display()
-    display all scans
-
-  PySpectra.display( ['t1', 't2'])
-    display selected scans
-
-PySpectra.overlay( src, trgt)
-  plot src in the viewport of trgt
+*** To use PySpectra in ipython, start with 
+  $ ipython --profile=PySpectra
+then edit
+  ~/.ipython/profile_PySpectra/startup/00-start.py
+to look like 
+  #!/usr/bin/env python
+  import PySpectra as pysp
+  # to define some PySpectra macros uncomment the following line
+  #import PySpectra.ipython.startup 
+then again
+$ ipython --profile=PySpectra
+In [1]: pysp.testCreate10()
 
 '''
 from dMgt.GQE import *
 from dMgt.calc import *
 
 import __builtin__
-import mtpltlb.graphics as mpl_graphics # to create postscript
 try:
     if __builtin__.__dict__[ 'graphicsLib'] == 'matplotlib':
-        #print "PySpectra.__init__, importing matplotlib"
         from mtpltlb.graphics import *
     else: 
-        #print "PySpectra.__init__, importing pyqtgraph"
         from pqtgrph.graphics import *
 except: 
-    #print "PySpectra.__init__, importing pyqtgraph"
+    __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
     from pqtgrph.graphics import *
+
+from mtpltlb.graphics import createPDF
 
 from utils import *
 from definitions import *

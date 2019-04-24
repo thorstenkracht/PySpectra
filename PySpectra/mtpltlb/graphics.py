@@ -22,7 +22,7 @@ Fig = None
 Canvas = None
 _QApp = None
 
-def initGraphic( figureIn = None, canvasIn = None):
+def _initGraphic( figureIn = None, canvasIn = None):
     '''
     haso107d1: 1920 x 1200
     spectra: 640 x 450 def., A4:  680 x 471 
@@ -38,7 +38,7 @@ def initGraphic( figureIn = None, canvasIn = None):
         return 
 
     plt.ion()
-    #print "graphics.initGraphic"
+    #print "graphics._initGraphic"
 
     if not plt.get_fignums():
         Fig = plt.figure(1, figsize=(21./2.54, 14.85/2.54))
@@ -49,16 +49,19 @@ def initGraphic( figureIn = None, canvasIn = None):
 
 def createPDF( fileName = None): 
     '''
+    create a PDF file, the default name is pyspOutput.pdf
+    a version of the last output file is created
     '''
-    #flag = False
-    #if Fig is None:
-    #    _pqt_graphics.close()
-    #    initGraphic()
-    #    display()
-    #    flag = True
+    flag = False
+    if Fig is None:
+        #_pqt_graphics.close()
+        _initGraphic()
+        display()
+        flag = True
 
     if fileName is None:
         fileName = "pyspOutput.pdf"
+
     if _os.system( "/usr/local/bin/vrsn -s -nolog %s" % fileName):
         print "graphics.createPDF: failed to save the current version of %s" % fileName
     
@@ -69,16 +72,18 @@ def createPDF( fileName = None):
         print repr( e)
         return None
 
-    #if flag:
-    #    close()
-    #    _pqt_graphics.initGraphic()
+    print "mpl_graphics.createPDF: created", fileName
+
+    if flag:
+        close()
+        #_pqt_graphics._initGraphic()
         
     return fileName
     
 def _setSizeGraphicsWindow( nScan):
     '''
     '''
-    if _GQE.getWsViewportFixed(): 
+    if _GQE._getWsViewportFixed(): 
         return 
 
     if nScan > 9:
@@ -127,7 +132,7 @@ def setWsViewport( size = None):
 
     fig = matplotlib.pyplot.gcf()
     fig.set_size_inches( w/2.54, h/2.54, forward = True)
-    _GQE.setWsViewportFixed( True)
+    _GQE._setWsViewportFixed( True)
 
     return 
 
@@ -138,7 +143,7 @@ def cls():
     #print "mpl_graphics.cls"
 
     if Fig is None: 
-        initGraphic()
+        _initGraphic()
 
     Fig.clear()
     plt.draw()
@@ -153,7 +158,18 @@ def cls():
         scanList[i].lastIndex = 0
 
 
+def close(): 
+    '''
+    close the Figure, used by createPDF
+    '''
+    plt.close( 'all')
+    Fig = None
+    return 
+
 def procEventsLoop():
+    '''
+    loops over QApp.processEvents until a <return> is entered
+    '''
     print "\nPress <return> to continue ",
     while True:
         _time.sleep(0.01)
@@ -166,7 +182,7 @@ def procEventsLoop():
 def processEvents(): 
 
     if Fig is None: 
-        initGraphic()
+        _initGraphic()
 
     plt.draw()
     if Canvas is not None:
@@ -217,7 +233,7 @@ def _setTitle( scan, nameList):
     else: 
         tempName = scan.name
 
-    if _GQE.getNumberOfScansToBeDisplayed( nameList) < _defs.MANY_SCANS:
+    if _GQE._getNumberOfScansToBeDisplayed( nameList) < _defs._MANY_SCANS:
         scan.plotItem.set_title( tempName)
     else:
         scan.plotItem.text( 0.95, 0.8, tempName, transform = scan.plotItem.transAxes, va = 'center', ha = 'right')
@@ -314,6 +330,34 @@ def _addTexts( scan):
         #print "mpl_graphics.addTexts: %s, x %g, y %g" % (elm.text, elm.x, elm.y)
         scan.plotItem.text( elm.x, elm.y, elm.text, transform = scan.plotItem.transAxes, va = elm.vAlign, ha = elm.hAlign)
 
+def _preparePlotParams( scan):
+    '''
+    this function prepares the parameters for a function call in display()
+    '''
+    hsh = {}
+    if scan.symbolColor.upper() == "NONE":
+        hsh[ 'linestyle'] = scan.lineStyle.lower()
+        hsh[ 'linewidth'] = scan.lineWidth
+        hsh[ 'color'] = scan.lineColor
+    else: 
+        if scan.lineColor.upper() == 'NONE': 
+            hsh[ 'marker'] = scan.symbol
+            hsh[ 'linewidth'] = 0.
+            hsh[ 'markersize'] = scan.symbolSize
+            hsh[ 'markeredgecolor'] = scan.symbolColor
+            hsh[ 'markerfacecolor'] = scan.symbolColor
+        else:
+            hsh[ 'marker'] = scan.symbol
+            hsh[ 'markersize'] = scan.symbolSize
+            hsh[ 'markeredgecolor'] = scan.symbolColor
+            hsh[ 'markerfacecolor'] = scan.symbolColor
+            hsh[ 'color'] = scan.lineColor
+
+    if scan.doty:
+        hsh[ 'xdate'] = True
+
+    return hsh
+
 def _createPlotItem( scan, nameList):            
     '''
     create a plotItem, aka viewport (?) with title, axis descriptions and texts
@@ -369,7 +413,7 @@ def _createPlotItem( scan, nameList):
     
     _setTitle( scan, nameList)
 
-    if _GQE.getNumberOfScansToBeDisplayed( nameList) < _defs.MANY_SCANS:
+    if _GQE._getNumberOfScansToBeDisplayed( nameList) < _defs._MANY_SCANS:
         if hasattr( scan, 'xLabel'):
             scan.plotItem.set_xlabel( scan.xLabel)
         if hasattr( scan, 'yLabel'):
@@ -407,7 +451,7 @@ def display( nameList = None):
         nameList = []
 
     if Fig is None: 
-        initGraphic()
+        _initGraphic()
 
     #
     # Do not put a cls() here because it takes a lot of time, especially when
@@ -432,7 +476,7 @@ def display( nameList = None):
     #
     # adjust the graphics window to the number of displayed scans
     #
-    nDisplay = _GQE.getNumberOfScansToBeDisplayed( nameList)
+    nDisplay = _GQE._getNumberOfScansToBeDisplayed( nameList)
     _setSizeGraphicsWindow( nDisplay)
 
     _adjustFigure( nDisplay)
@@ -487,24 +531,19 @@ def display( nameList = None):
                 for x in scan.x[:(scan.currentIndex + 1)]:
                     xDate.append( _doty2datetime( x))
                 xDateMpl = matplotlib.dates.date2num( xDate)
+                hsh = _preparePlotParams( scan)
                 scan.plotDataItem, = scan.plotItem.plot_date( xDateMpl, 
                                                               scan.y[:(scan.currentIndex + 1)], 
-                                                              xdate = True,
-                                                              linestyle=scan.style.lower(), 
-                                                              linewidth = scan.width, 
-                                                              marker='None')
-                plt.draw()
-                if Canvas is not None:
-                    Canvas.draw()
-                scan.lastIndex = scan.currentIndex
-
+                                                              **hsh)
+            #
+            # not doty
+            #
             else:
+                hsh = _preparePlotParams( scan)
                 scan.plotDataItem, = scan.plotItem.plot( scan.x[:(scan.currentIndex + 1)], 
                                                          scan.y[:(scan.currentIndex + 1)], 
-                                                         linestyle = scan.style.lower(), 
-                                                         linewidth = scan.width, 
-                                                         color = scan.color)
-                scan.lastIndex = scan.currentIndex
+                                                         **hsh) 
+            scan.lastIndex = scan.currentIndex
 
         if scan.textOnly: 
             continue
@@ -525,13 +564,8 @@ def display( nameList = None):
             for x in scan.x[:(scan.currentIndex + 1)]:
                 xDate.append( _doty2datetime( x))
             xDateMpl = matplotlib.dates.date2num( xDate)
-            scan.plotItem.plot_date( xDateMpl, scan.y, xdate = True, 
-                                     linestyle=scan.style.lower(), 
-                                     linewidth = scan.width, 
-                                     marker='None')
+            scan.plotItem.plot_date( xDateMpl, scan.y)
         else:
-            #print "graphics.display: plotting %s %d of %d" % \
-            #    (scan.name, scan.currentIndex + 1, len( scan.x))
             scan.plotDataItem.set_data( scan.x[:(scan.currentIndex + 1)], 
                                         scan.y[:(scan.currentIndex + 1)])
 
@@ -552,9 +586,7 @@ def display( nameList = None):
         #
         if len( nameList) == 1:
             break
-        #
-        # 'scan' is a copy
-        #
+
         if scan.overlay is None:
             continue
         #
@@ -566,23 +598,21 @@ def display( nameList = None):
         if len( nameList) > 0 and scan.name not in nameList:
             continue
         target = _GQE.getScan( scan.overlay)
+        if target is None or target.plotItem is None:
+            raise ValueError( "mpl_graphics.display: %s tries to overlay to %s" %
+                              (scan.name, scan.overlay))
         #
         # instantiate a second axes that shares the same x-axis 
         #
         scan.plotItem = target.plotItem.twinx()
         
-        if len( _GQE._scanList) >= _defs.MANY_SCANS:
+        if len( _GQE._scanList) >= _defs._MANY_SCANS:
             plt.setp( scan.plotItem.get_yticklabels(), visible=False)
 
-        #scan.plotItem = target.plotItem
-
-        #print "display: overlaying %s to %s" % (scan.name, target.name)
-
+        hsh = _preparePlotParams( scan)
         scan.plotDataItem, = scan.plotItem.plot( scan.x[:(scan.currentIndex + 1)], 
                                                  scan.y[:(scan.currentIndex + 1)], 
-                                                 linestyle = scan.style.lower(), 
-                                                 linewidth = scan.width, 
-                                                 color = scan.color)
+                                                 **hsh)
 
         scan.plotItem.relim()
         scan.plotItem.autoscale_view( True, True, True)

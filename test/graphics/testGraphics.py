@@ -26,11 +26,11 @@ class testGraphics( unittest.TestCase):
         PySpectra.setTitle( "check grids")
 
         sinus = PySpectra.Scan( name = 'sinus', 
-                                xMin = 0., showGridX = True, xMax = 6.0, nPts = 101, color = 'red')
+                                xMin = 0., showGridX = True, xMax = 6.0, nPts = 101, lineColor = 'red')
         cos = PySpectra.Scan( name = 'cos', 
-                                xMin = 0., showGridY = True, xMax = 6.0, nPts = 101, color = 'red')
+                                xMin = 0., showGridY = True, xMax = 6.0, nPts = 101, lineColor = 'red')
         tan = PySpectra.Scan( name = 'tan', 
-                                xMin = 0., showGridY = True, showGridX = True, xMax = 6.0, nPts = 101, color = 'red')
+                                xMin = 0., showGridY = True, showGridX = True, xMax = 6.0, nPts = 101, lineColor = 'red')
         sinus.y = np.sin( sinus.y)
         cos.y = np.cos( cos.y)
         tan.y = np.tan( tan.y)
@@ -46,7 +46,7 @@ class testGraphics( unittest.TestCase):
         PySpectra.cls()
         PySpectra.delete()
 
-        sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, color = 'red')
+        sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red')
         for i in range( sinus.nPts): 
             sinus.setX( i, i/10.)
             sinus.setY( i, math.sin( i/10.))
@@ -60,7 +60,7 @@ class testGraphics( unittest.TestCase):
         PySpectra.cls()
         PySpectra.delete() 
         cosinus = PySpectra.Scan( name = 'cosinus', xMin = 0., 
-                                xMax = 6.0, nPts = 101, color = 'blue')
+                                xMax = 6.0, nPts = 101, lineColor = 'blue')
         for i in range( cosinus.nPts): 
             cosinus.setY( i, math.cos( cosinus.x[i]))
             PySpectra.display( ['cosinus'])
@@ -73,8 +73,8 @@ class testGraphics( unittest.TestCase):
         PySpectra.cls()
         PySpectra.delete()
 
-        sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, color = 'red')
-        cosinus = PySpectra.Scan( name = 'cosinus', xMin = 0., xMax = 6.0, nPts = 101, color = 'blue')
+        sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red')
+        cosinus = PySpectra.Scan( name = 'cosinus', xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'blue')
         for i in range( sinus.nPts): 
             sinus.setX( i, i/10.)
             sinus.setY( i, math.sin( i/10.))
@@ -90,7 +90,7 @@ class testGraphics( unittest.TestCase):
         PySpectra.cls()
         PySpectra.delete()
 
-        sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 100.0, nPts = 101, color = 'red',
+        sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 100.0, nPts = 101, lineColor = 'red',
                                 autorangeX = True)
         for i in range( sinus.nPts): 
             sinus.setX( i, i/10.)
@@ -105,7 +105,21 @@ class testGraphics( unittest.TestCase):
 
         sinus = PySpectra.Scan( name = 'sinus', xMin = 0., 
                                 xMax = 6.0, nPts = 101, dType = np.float64,
-                                at = (2,2,3), color = 'red', style = 'solidLine')
+                                at = (2,2,3), lineColor = 'red', lineStyle = 'solidLine')
+
+        sinus.y = np.sin( sinus.y)
+        PySpectra.display( ['sinus'])
+        PySpectra.show()
+        PySpectra.procEventsLoop()
+
+    def testDisplaySymbol( self): 
+
+        PySpectra.cls()
+        PySpectra.delete()
+
+        sinus = PySpectra.Scan( name = 'sinus', xMin = 0., 
+                                xMax = 6.0, nPts = 101, dType = np.float64,
+                                at = (2,2,3), symbolColor = 'red', symbol = 'o', symbolSize = 10)
 
         sinus.y = np.sin( sinus.y)
         PySpectra.display( ['sinus'])
@@ -119,15 +133,15 @@ class testGraphics( unittest.TestCase):
 
         sinus = PySpectra.Scan( name = 'sinus', xMin = 0., 
                                 xMax = 6.0, nPts = 101, dType = np.float64,
-                                width = 5., 
-                                color = 'red', style = 'dashLine')
+                                lineWidth = 5., 
+                                lineColor = 'red', lineStyle = 'dashLine')
         sinus.y = np.sin( sinus.y)
 
         cosinus = PySpectra.Scan( name = "cosinus", xMin = 0., 
                                   xMax = 6.0, nPts = 101, dType = np.float64,
-                                  width = 3., 
-                                  color = 'blue', 
-                                  style = 'dotLine')
+                                  lineWidth = 3., 
+                                  lineColor = 'blue', 
+                                  lineStyle = 'dotLine')
         cosinus.y = np.cos( cosinus.y)
 
         PySpectra.display()
@@ -142,24 +156,24 @@ class testGraphics( unittest.TestCase):
 
         sinus = PySpectra.Scan( name = 'sinus', xMin = 0., 
                                 xMax = 6.0, nPts = 101, dType = np.float64,
-                                width = 5., 
-                                color = 'red', style = 'dashLine')
+                                lineWidth = 5., 
+                                lineColor = 'red', lineStyle = 'dashLine')
         sinus.y = np.sin( sinus.y)
 
         tan = PySpectra.Scan( name = 'tangens', xMin = 0., 
                               xMax = 6.0, nPts = 101, dType = np.float64,
-                              width = 2., 
-                              color = 'green', style = 'dashLine')
+                              lineWidth = 2., 
+                              lineColor = 'green', lineStyle = 'dashLine')
         tan.y = np.tan( tan.y)
         #
         # cosinus has to be plotted in the same viewport as sinus
         #
         cosinus = PySpectra.Scan( name = "cosinus", xMin = 0., 
                                   xMax = 6.0, nPts = 101, dType = np.float64,
-                                  width = 3., 
-                                  color = 'blue', 
+                                  lineWidth = 3., 
+                                  lineColor = 'blue', 
                                   overlay = "sinus", 
-                                  style = 'dotLine')
+                                  lineStyle = 'dotLine')
         self.assertEqual( cosinus.overlay, 'sinus')
 
         cosinus.y = np.cos( cosinus.y)
@@ -169,10 +183,10 @@ class testGraphics( unittest.TestCase):
         cossquare = PySpectra.Scan( name = "cossquare", xMin = 0., 
                                     xMax = 6.0, nPts = 101, dType = np.float64,
                                     yMin = -5, yMax = 5., 
-                                    width = 1., 
+                                    lineWidth = 1., 
                                     overlay = 'tangens', 
-                                    color = 'blue', 
-                                    style = 'dotLine')
+                                    lineColor = 'blue', 
+                                    lineStyle = 'dotLine')
         self.assertEqual( cossquare.overlay, 'tangens')
 
         cossquare.y = np.cos( tan.x) * np.cos( tan.x)
@@ -191,8 +205,8 @@ class testGraphics( unittest.TestCase):
             s = PySpectra.Scan( name = 't%d' % i, xMin = 0., 
                                 xMax = 6.0, nPts = 101, dType = np.float64,
                                 xLabel = 'rad', yLabel = 'Signal', 
-                                at = (2,2,i), color = 'red', style = 'solidLine',
-                                width = 2.)
+                                at = (2,2,i), lineColor = 'red', lineStyle = 'solidLine',
+                                lineWidth = 2.)
             s.y = np.tan( s.y)
 
         PySpectra.display()
@@ -210,8 +224,8 @@ class testGraphics( unittest.TestCase):
             s = PySpectra.Scan( name = 't%d' % i, xMin = 0., 
                                 xMax = 6.0, nPts = 101, dType = np.float64,
                                 xLabel = 'rad', yLabel = 'Signal', 
-                                at = (5,4,i), color = 'red', style = 'solidLine',
-                                width = 2.)
+                                at = (5,4,i), lineColor = 'red', lineStyle = 'solidLine',
+                                lineWidth = 2.)
             s.y = np.tan( s.y)
 
         PySpectra.display()

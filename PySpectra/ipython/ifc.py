@@ -5,6 +5,7 @@ and by pyspViewer.py
 '''
 import PySpectra as pysp
 import itertools
+import PySpectra.mtpltlb.graphics as _mpl_graphics # to create postscript
 
 def command( line):
     '''
@@ -22,7 +23,7 @@ def command( line):
         lineRest = " ".join( lst[1:])
     else:
         lineRest = None
-                             
+                    
     if lst[0] == 'antiderivative':
         return antiderivative( lineRest)
     elif lst[0] == 'cls':
@@ -60,17 +61,33 @@ def command( line):
 
 def antiderivative( line):
     '''
-    antiderivative t1
-    antiderivative t1 t1_d
+    antiderivative src [target] 
+      the default target name is <src>_antiderivative
+      
+    calculates the Stammfunktion 
+
+      Examples: 
+        antiderivative t1
+        antiderivative t1 t1_d
+
     '''
     lst = None
     if line is not None:
         if len( line) > 0:
             lst = line.split( ' ')
+
         
-    pysp.antiderivative( lst)
+    if len( lst) == 1: 
+        pysp.antiderivative( lst[0])
+    elif len( lst) == 2: 
+        pysp.antiderivative( lst[0], lst[1])
+    else:
+        raise ValueError( "ifc.antiderivative: wrong syntax %s" % line)
 
 def cls( line):
+    '''
+    clears the graphics screen
+    '''
     pysp.cls()
 
 def create( line):
@@ -110,25 +127,37 @@ def create( line):
     pysp.Scan( **hsh)
 
 def createPDF( line):
+    '''
+    create a PDF 
+    '''
     fileName = None
     if line is not None:
         l = line.split( ' ')
         if l is not None and len(l) > 0:
             fileName = l[0]
 
-    pysp.mpl_graphics.createPDF( fileName)
+    _mpl_graphics.createPDF( fileName)
 
 def derivative( line):
     '''
-    derivative t1
-    derivative t1 t1_d
+    derivative src [target] 
+      the default target name is <src>_derivative
+      
+      Examples: 
+        derivative t1
+        derivative t1 t1_d
     '''
     lst = None
     if line is not None:
         if len( line) > 0:
             lst = line.split( ' ')
         
-    pysp.derivative( lst)
+    if len( lst) == 1: 
+        pysp.derivative( lst[0])
+    elif len( lst) == 2: 
+        pysp.derivative( lst[0], lst[1])
+    else:
+        raise ValueError( "ifc.derivative: wrong syntax %s" % line)
 
 def display( line):
 
@@ -164,30 +193,10 @@ def read( line):
     pysp.read( lst)
 
 def setComment( line):
-    lst = None
-    if line:
-        lst = line.split( ' ')
-    if len( lst) > 1:
-        raise ValueError( "ifc.setComment: expecting zero or one arguments")
-        return 
-
-    if len( lst) == 0:
-        pysp.setComment( None)
-    else:
-        pysp.setComment( lst[0])
+    pysp.setComment( line)
 
 def setTitle( line):
-    lst = None
-    if line:
-        lst = line.split( ' ')
-    if len( lst) > 1:
-        raise ValueError( "ifc.setTitle: expecting zero or one arguments")
-        return 
-
-    if len( lst) == 0:
-        pysp.setTitle( None)
-    else:
-        pysp.setTitle( lst[0])
+    pysp.setTitle( line)
 
 def setWsViewport( line):
     lst = None

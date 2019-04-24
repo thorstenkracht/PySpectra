@@ -12,6 +12,8 @@ import __builtin__
 
 import PySpectra as pysp
 import PySpectra.definitions as defs
+import PySpectra.dMgt.GQE as gqe
+import mtpltlb.graphics as mpl_graphics # to create postscript
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
@@ -131,217 +133,226 @@ class ScanAttributes( QtGui.QMainWindow):
         #
         # start with a vertical layout
         #
-        self.layout_v = QtGui.QVBoxLayout()
-        w.setLayout( self.layout_v)
+        self.layout_grid = QtGui.QGridLayout()
+        w.setLayout( self.layout_grid)
         self.setCentralWidget( w)
         #
         # name
         #
-        hBox = QtGui.QHBoxLayout()
+        row = 0
         self.nameLabel = QtGui.QLabel( "Name:")
-        hBox.addWidget( self.nameLabel)
+        self.layout_grid.addWidget( self.nameLabel, row, 0)
         self.nameValue = QtGui.QLabel( self.name)
-        hBox.addWidget( self.nameValue)
-        self.layout_v.addLayout( hBox)
+        self.layout_grid.addWidget( self.nameValue, row, 1)
         #
         # length
         #
-        hBox = QtGui.QHBoxLayout()
+        row += 1
         self.lengthLabel = QtGui.QLabel( "Length:")
-        hBox.addWidget( self.lengthLabel)
+        self.layout_grid.addWidget( self.lengthLabel, row, 0)
         self.lengthValue = QtGui.QLabel( "%d" % len(self.scan.x))
-        hBox.addWidget( self.lengthValue)
-        self.layout_v.addLayout( hBox)
+        self.layout_grid.addWidget( self.lengthValue, row, 1)
         #
         # xMin
         #
-        hBox = QtGui.QHBoxLayout()
+        row += 1
         self.xMinLabel = QtGui.QLabel( "xMin:")
-        hBox.addWidget( self.xMinLabel)
+        self.layout_grid.addWidget( self.xMinLabel, row, 0)
         self.xMinValue = QtGui.QLabel( "%g" % (self.scan.xMin))
-        hBox.addWidget( self.xMinValue)
-        hBox.addStretch()            
+        self.layout_grid.addWidget( self.xMinValue, row, 1)
         self.xMinLineEdit = QtGui.QLineEdit()
-        hBox.addWidget( self.xMinLineEdit)
-        self.layout_v.addLayout( hBox)
+        self.xMinLineEdit.setMaximumWidth( 70)
+        self.layout_grid.addWidget( self.xMinLineEdit, row, 2)
         #
         # xMax
         #
-        hBox = QtGui.QHBoxLayout()
         self.xMaxLabel = QtGui.QLabel( "xMax:")
-        hBox.addWidget( self.xMaxLabel)
+        self.layout_grid.addWidget( self.xMaxLabel, row, 3)
         self.xMaxValue = QtGui.QLabel( "%g" % (self.scan.xMax))
-        hBox.addWidget( self.xMaxValue)
-        hBox.addStretch()            
+        self.layout_grid.addWidget( self.xMaxValue, row, 4)
         self.xMaxLineEdit = QtGui.QLineEdit()
-        hBox.addWidget( self.xMaxLineEdit)
-        self.layout_v.addLayout( hBox)
+        self.xMaxLineEdit.setMaximumWidth( 70)
+        self.layout_grid.addWidget( self.xMaxLineEdit, row, 5)
         #
         # yMin
         #
-        hBox = QtGui.QHBoxLayout()
+        row += 1
         self.yMinLabel = QtGui.QLabel( "yMin:")
-        hBox.addWidget( self.yMinLabel)
+        self.layout_grid.addWidget( self.yMinLabel, row, 0)
         if self.scan.yMin is None:
             self.yMinValue = QtGui.QLabel( "None")
         else:
             self.yMinValue = QtGui.QLabel( "%g" % (self.scan.yMin))
-        hBox.addWidget( self.yMinValue)
-        hBox.addStretch()            
+        self.layout_grid.addWidget( self.yMinValue, row, 1)
         self.yMinLineEdit = QtGui.QLineEdit()
-        hBox.addWidget( self.yMinLineEdit)
-        self.layout_v.addLayout( hBox)
+        self.yMinLineEdit.setMaximumWidth( 70)
+        self.layout_grid.addWidget( self.yMinLineEdit, row, 2)
         #
         # yMax
         #
-        hBox = QtGui.QHBoxLayout()
         self.yMaxLabel = QtGui.QLabel( "yMax:")
-        hBox.addWidget( self.yMaxLabel)
+        self.layout_grid.addWidget( self.yMaxLabel, row, 3)
         if self.scan.yMax is None:
             self.yMaxValue = QtGui.QLabel( "None")
         else:
             self.yMaxValue = QtGui.QLabel( "%g" % (self.scan.yMax))
-        hBox.addWidget( self.yMaxValue)
-        hBox.addStretch()            
+        self.layout_grid.addWidget( self.yMaxValue, row, 4)
         self.yMaxLineEdit = QtGui.QLineEdit()
-        hBox.addWidget( self.yMaxLineEdit)
-        self.layout_v.addLayout( hBox)
+        self.yMaxLineEdit.setMaximumWidth( 70)
+        self.layout_grid.addWidget( self.yMaxLineEdit, row, 5)
         #
         # autorangeX
         #
-        hBox = QtGui.QHBoxLayout()
+        row += 1
         self.autorangeXLabel = QtGui.QLabel( "autorangeX:")
-        hBox.addWidget( self.autorangeXLabel)
+        self.layout_grid.addWidget( self.autorangeXLabel, row, 0)
         self.autorangeXCheckBox = QtGui.QCheckBox()
         self.autorangeXCheckBox.setChecked( self.scan.autorangeX)
-        hBox.addWidget( self.autorangeXCheckBox)
-        hBox.addStretch()            
+        self.layout_grid.addWidget( self.autorangeXCheckBox, row, 1)
         self.autorangeXCheckBox.stateChanged.connect( self.cb_autorangeXChanged)
-        self.layout_v.addLayout( hBox)
         #
         # autorangeY
         #
-        hBox = QtGui.QHBoxLayout()
         self.autorangeYLabel = QtGui.QLabel( "autorangeY:")
-        hBox.addWidget( self.autorangeYLabel)
+        self.layout_grid.addWidget( self.autorangeYLabel, row, 3)
         self.autorangeYCheckBox = QtGui.QCheckBox()
         self.autorangeYCheckBox.setChecked( self.scan.autorangeY)
-        hBox.addWidget( self.autorangeYCheckBox)
-        hBox.addStretch()            
+        self.layout_grid.addWidget( self.autorangeYCheckBox, row, 4)
         self.autorangeYCheckBox.stateChanged.connect( self.cb_autorangeYChanged)
-        self.layout_v.addLayout( hBox)
         #
         # xLog
         #
-        hBox = QtGui.QHBoxLayout()
+        row += 1
         self.xLogLabel = QtGui.QLabel( "xLog:")
-        hBox.addWidget( self.xLogLabel)
+        self.layout_grid.addWidget( self.xLogLabel, row, 0)
         self.xLogCheckBox = QtGui.QCheckBox()
         self.xLogCheckBox.setChecked( self.scan.xLog)
-        hBox.addWidget( self.xLogCheckBox)
-        hBox.addStretch()            
+        self.layout_grid.addWidget( self.xLogCheckBox, row, 1)
         self.xLogCheckBox.stateChanged.connect( self.cb_xLogChanged)
-        self.layout_v.addLayout( hBox)
         #
         # yLog
         #
-        hBox = QtGui.QHBoxLayout()
         self.yLogLabel = QtGui.QLabel( "yLog:")
-        hBox.addWidget( self.yLogLabel)
+        self.layout_grid.addWidget( self.yLogLabel, row, 3)
         self.yLogCheckBox = QtGui.QCheckBox()
         self.yLogCheckBox.setChecked( self.scan.yLog)
-        hBox.addWidget( self.yLogCheckBox)
-        hBox.addStretch()            
+        self.layout_grid.addWidget( self.yLogCheckBox, row, 4)
         self.yLogCheckBox.stateChanged.connect( self.cb_yLogChanged)
-        self.layout_v.addLayout( hBox)
         #
         # doty
         #
-        hBox = QtGui.QHBoxLayout()
+        row += 1
         self.dotyLabel = QtGui.QLabel( "DOTY")
-        hBox.addWidget( self.dotyLabel)
+        self.layout_grid.addWidget( self.dotyLabel, row, 0)
         self.w_dotyCheckBox = QtGui.QCheckBox()
         self.w_dotyCheckBox.setChecked( self.scan.doty)
         self.w_dotyCheckBox.setToolTip( "x-axis is day-of-the-year")
-        hBox.addWidget( self.w_dotyCheckBox) 
-        hBox.addStretch()            
-        self.layout_v.addLayout( hBox)
+        self.layout_grid.addWidget( self.w_dotyCheckBox, row, 1) 
         self.w_dotyCheckBox.stateChanged.connect( self.cb_dotyChanged)
         #
         # GridX
         #
-        hBox = QtGui.QHBoxLayout()
+        row += 1
         self.gridXLabel = QtGui.QLabel( "GridX")
-        hBox.addWidget( self.gridXLabel)
+        self.layout_grid.addWidget( self.gridXLabel, row, 0)
         self.w_gridXCheckBox = QtGui.QCheckBox()
         self.w_gridXCheckBox.setChecked( self.scan.showGridX)
-        hBox.addWidget( self.w_gridXCheckBox) 
+        self.layout_grid.addWidget( self.w_gridXCheckBox, row, 1) 
         self.w_gridXCheckBox.stateChanged.connect( self.cb_gridXChanged)
-        hBox.addStretch()            
-        self.layout_v.addLayout( hBox)
         #
         # GridY
         #
-        hBox = QtGui.QHBoxLayout()
         self.gridYLabel = QtGui.QLabel( "GridY")
-        hBox.addWidget( self.gridYLabel)
+        self.layout_grid.addWidget( self.gridYLabel, row, 3)
         self.w_gridYCheckBox = QtGui.QCheckBox()
         self.w_gridYCheckBox.setChecked( self.scan.showGridY)
-        hBox.addWidget( self.w_gridYCheckBox) 
+        self.layout_grid.addWidget( self.w_gridYCheckBox, row, 4) 
         self.w_gridYCheckBox.stateChanged.connect( self.cb_gridYChanged)
-        hBox.addStretch()            
-        self.layout_v.addLayout( hBox)
         #
-        # color
+        # lineColor
         #
-        hBox = QtGui.QHBoxLayout()
-        self.colorLabel = QtGui.QLabel( "Color")
-        hBox.addWidget( self.colorLabel)
-        hBox.addStretch()            
-        self.w_colorComboBox = QtGui.QComboBox()
-        for color in pysp.colorArr:
-            self.w_colorComboBox.addItem( color)
-        self.w_colorComboBox.currentIndexChanged.connect( self.cb_color)
-        self.w_colorComboBox.setCurrentIndex( pysp.colorDct[ self.scan.color.upper()])
-        hBox.addWidget( self.w_colorComboBox) 
-        self.layout_v.addLayout( hBox)
+        row += 1
+        self.lineColorLabel = QtGui.QLabel( "LineColor")
+        self.layout_grid.addWidget( self.lineColorLabel, row, 0)
+        self.w_lineColorComboBox = QtGui.QComboBox()
+        for lineColor in defs._lineColorArr:
+            self.w_lineColorComboBox.addItem( lineColor)
+        self.w_lineColorComboBox.setCurrentIndex( defs._lineColorDct[ self.scan.lineColor.upper()])
+        self.w_lineColorComboBox.currentIndexChanged.connect( self.cb_lineColor)
+        self.layout_grid.addWidget( self.w_lineColorComboBox, row, 1) 
         #
-        # style
+        # lineStyle
         #
-        hBox = QtGui.QHBoxLayout()
-        self.styleLabel = QtGui.QLabel( "Style")
-        hBox.addWidget( self.styleLabel)
-        hBox.addStretch()            
-        self.w_styleComboBox = QtGui.QComboBox()
-        for style in pysp.styleArr:
-            self.w_styleComboBox.addItem( style)
-        self.w_styleComboBox.currentIndexChanged.connect( self.cb_style)
-        self.w_styleComboBox.setCurrentIndex( pysp.styleDct[ self.scan.style.upper()])
-        hBox.addWidget( self.w_styleComboBox) 
-        self.layout_v.addLayout( hBox)
+        self.lineStyleLabel = QtGui.QLabel( "LineStyle")
+        self.layout_grid.addWidget( self.lineStyleLabel, row, 2)
+        self.w_lineStyleComboBox = QtGui.QComboBox()
+        for lineStyle in defs._lineStyleArr:
+            self.w_lineStyleComboBox.addItem( lineStyle)
+        self.w_lineStyleComboBox.setCurrentIndex( defs._lineStyleDct[ self.scan.lineStyle.upper()])
+        self.w_lineStyleComboBox.currentIndexChanged.connect( self.cb_lineStyle)
+        self.layout_grid.addWidget( self.w_lineStyleComboBox, row, 3) 
         #
-        # width
+        # lineWidth
         #
-        hBox = QtGui.QHBoxLayout()
-        self.widthLabel = QtGui.QLabel( "Width")
-        hBox.addWidget( self.widthLabel)
-        hBox.addStretch()            
-        self.w_widthComboBox = QtGui.QComboBox()
-        if str( self.scan.width) not in pysp.widthDct.keys():
-            self.scan.width = 1.0
-        for width in pysp.widthArr:
-            self.w_widthComboBox.addItem( width)
-        self.w_widthComboBox.currentIndexChanged.connect( self.cb_width)
-        self.w_widthComboBox.setCurrentIndex( pysp.widthDct[ str( self.scan.width)])
-        hBox.addWidget( self.w_widthComboBox) 
-        self.layout_v.addLayout( hBox)
+        self.lineWidthLabel = QtGui.QLabel( "LineWidth")
+        self.layout_grid.addWidget( self.lineWidthLabel, row, 4)
+        self.w_lineWidthComboBox = QtGui.QComboBox()
+        if str( self.scan.lineWidth) not in defs._lineWidthDct.keys():
+            self.scan.lineWidth = 1.0
+        for lineWidth in defs._lineWidthArr:
+            self.w_lineWidthComboBox.addItem( lineWidth)
+        self.w_lineWidthComboBox.setCurrentIndex( defs._lineWidthDct[ str( self.scan.lineWidth)])
+        self.w_lineWidthComboBox.currentIndexChanged.connect( self.cb_lineWidth)
+        self.layout_grid.addWidget( self.w_lineWidthComboBox, row, 5) 
+
+        #
+        # symbolColor
+        #
+        row += 1
+        self.symbolColorLabel = QtGui.QLabel( "SymbolColor")
+        self.layout_grid.addWidget( self.symbolColorLabel, row, 0)
+        self.w_symbolColorComboBox = QtGui.QComboBox()
+        if str( self.scan.symbolColor).upper() not in defs._lineColorDct.keys():
+            self.scan.symbolColor = 'black'
+        for symbolColor in defs._lineColorArr:
+            self.w_symbolColorComboBox.addItem( symbolColor)
+        self.w_symbolColorComboBox.setCurrentIndex( 
+            defs._lineColorDct[ str( self.scan.symbolColor).upper()])
+        self.w_symbolColorComboBox.currentIndexChanged.connect( self.cb_symbolColor)
+        self.layout_grid.addWidget( self.w_symbolColorComboBox, row, 1) 
+        #
+        # symbol
+        #
+        self.symbolLabel = QtGui.QLabel( "Symbol")
+        self.layout_grid.addWidget( self.symbolLabel, row, 2)
+        self.w_symbolComboBox = QtGui.QComboBox()
+        if str( self.scan.symbol) not in defs._symbolArr:
+            self.scan.symbol = 'o'
+        for symbol in defs._symbolArr:
+            self.w_symbolComboBox.addItem( defs._symbolDctFullName[ str( symbol)])
+        self.w_symbolComboBox.setCurrentIndex( defs._symbolDct[ str( self.scan.symbol)])
+        self.w_symbolComboBox.currentIndexChanged.connect( self.cb_symbol)
+        self.layout_grid.addWidget( self.w_symbolComboBox, row, 3) 
+        #
+        # symbolSize
+        #
+        self.symbolSizeLabel = QtGui.QLabel( "SymbolSize")
+        self.layout_grid.addWidget( self.symbolSizeLabel, row, 4)
+        self.w_symbolSizeComboBox = QtGui.QComboBox()
+        if str( self.scan.symbolSize) not in defs._symbolSizeDct.keys():
+            self.scan.symbolSize = 5
+        for symbolSize in defs._symbolSizeArr:
+            self.w_symbolSizeComboBox.addItem( symbolSize)
+        self.w_symbolSizeComboBox.setCurrentIndex( 
+            defs._symbolSizeDct[ str( self.scan.symbolSize)])
+        self.w_symbolSizeComboBox.currentIndexChanged.connect( self.cb_symbolSize)
+        self.layout_grid.addWidget( self.w_symbolSizeComboBox, row, 5) 
         #
         # overlay
         #
-        hBox = QtGui.QHBoxLayout()
+        row += 1
         self.overlayLabel = QtGui.QLabel( "Overlay")
-        hBox.addWidget( self.overlayLabel)
-        hBox.addStretch()            
+        self.layout_grid.addWidget( self.overlayLabel, row, 0)
         self.w_overlayComboBox = QtGui.QComboBox()
         self.w_overlayComboBox.addItem( "None")
         count = 1 
@@ -356,9 +367,7 @@ class ScanAttributes( QtGui.QMainWindow):
         if countTemp > 0: 
             self.w_overlayComboBox.setCurrentIndex( countTemp)
         self.w_overlayComboBox.currentIndexChanged.connect( self.cb_overlay)
-        hBox.addWidget( self.w_overlayComboBox) 
-        self.layout_v.addLayout( hBox)
-
+        self.layout_grid.addWidget( self.w_overlayComboBox, row, 1) 
 
     #
     # the menu bar
@@ -369,7 +378,8 @@ class ScanAttributes( QtGui.QMainWindow):
 
         self.exitAction = QtGui.QAction('E&xit', self)        
         self.exitAction.setStatusTip('Exit application')
-        self.exitAction.triggered.connect( sys.exit)
+        #self.exitAction.triggered.connect( sys.exit)
+        self.exitAction.triggered.connect( self.close)
         self.fileMenu.addAction( self.exitAction)
 
         #
@@ -441,37 +451,71 @@ class ScanAttributes( QtGui.QMainWindow):
             self.xMaxValue.setText( "%g" % self.scan.xMax)
             self.xMaxLineEdit.clear()
 
-        line = str(self.yMinLineEdit.text())
-        if len(line.strip()) > 0: 
-            self.scan.yMin = float( line.strip())
-            self.yMinValue.setText( "%g" % self.scan.yMin)
+        line = str(self.yMinLineEdit.text()).strip()
+        if len(line) > 0: 
+            if line.upper() == 'NONE':
+                self.scan.yMin = None
+                self.yMinValue.setText( "None")
+            else:
+                self.scan.yMin = float( line.strip())
+                self.yMinValue.setText( "%g" % self.scan.yMin)
             self.yMinLineEdit.clear()
 
-        line = str(self.yMaxLineEdit.text())
-        if len(line.strip()) > 0: 
-            self.scan.yMax = float( line.strip())
-            self.yMaxValue.setText( "%g" % self.scan.yMax)
+        line = str(self.yMaxLineEdit.text()).strip()
+        if len(line) > 0: 
+            if line.upper() == 'NONE':
+                self.scan.yMax = None
+                self.yMaxValue.setText( "None")
+            else:
+                self.scan.yMax = float( line.strip())
+                self.yMaxValue.setText( "%g" % self.scan.yMax)
             self.yMaxLineEdit.clear()
         pysp.cls()
         pysp.display()
         
-    def cb_color( self): 
-        temp = self.w_colorComboBox.currentText()
-        self.scan.color = str( temp)
+    def cb_lineColor( self): 
+        temp = self.w_lineColorComboBox.currentText()
+        self.scan.lineColor = str( temp)
         pysp.cls()
         pysp.display()
         return
 
-    def cb_style( self): 
-        temp = self.w_styleComboBox.currentText()
-        self.scan.style = str( temp)
+    def cb_lineStyle( self): 
+        temp = self.w_lineStyleComboBox.currentText()
+        self.scan.lineStyle = str( temp)
+        if self.scan.lineStyle == 'None': 
+            self.scan.lineStyle = None
         pysp.cls()
         pysp.display()
         return
 
-    def cb_width( self): 
-        temp = self.w_widthComboBox.currentText()
-        self.scan.width = float( temp)
+    def cb_lineWidth( self): 
+        temp = self.w_lineWidthComboBox.currentText()
+        self.scan.lineWidth = float( temp)
+        pysp.cls()
+        pysp.display()
+        return
+
+    def cb_symbolSize( self): 
+        temp = self.w_symbolSizeComboBox.currentText()
+        self.scan.symbolSize = int( temp)
+        pysp.cls()
+        pysp.display()
+        return
+
+    def cb_symbolColor( self): 
+        temp = self.w_symbolColorComboBox.currentText()
+        self.scan.symbolColor = str( temp)
+        pysp.cls()
+        pysp.display()
+        return
+
+    def cb_symbol( self): 
+        temp = self.w_symbolComboBox.currentText()
+        for k, v in defs._symbolDctFullName.items():
+            if v == temp:
+                temp = k
+        self.scan.symbol = str( temp)
         pysp.cls()
         pysp.display()
         return
@@ -551,7 +595,7 @@ class MplWidget( QtGui.QMainWindow):
         self.statusBar = QtGui.QStatusBar()
         self.setStatusBar( self.statusBar)
         self.prepareStatusBar()
-        pysp.mpl_graphics.cls()
+        mpl_graphics.cls()
 
     def prepareWidgets( self):
         w = QtGui.QWidget()
@@ -566,7 +610,7 @@ class MplWidget( QtGui.QMainWindow):
 
         self.canvas = FigureCanvas( self.figure)
         
-        pysp.mpl_graphics.initGraphic( self.figure, self.canvas)
+        mpl_graphics._initGraphic( self.figure, self.canvas)
 
         self.toolbarMpl = NavigationToolbar(self.canvas, self)
         self.layout_v.addWidget(self.toolbarMpl)
@@ -580,7 +624,7 @@ class MplWidget( QtGui.QMainWindow):
 
         self.exitAction = QtGui.QAction('E&xit', self)        
         self.exitAction.setStatusTip('Exit application')
-        self.exitAction.triggered.connect( sys.exit)
+        self.exitAction.triggered.connect( self.close)
         self.fileMenu.addAction( self.exitAction)
 
 
@@ -629,11 +673,11 @@ class MplWidget( QtGui.QMainWindow):
 
     def cb_display( self): 
         pysp.cls()
-        pysp.mpl_graphics.cls()
-        pysp.mpl_graphics.display()
+        mpl_graphics.cls()
+        mpl_graphics.display()
 
     def cb_pdf( self): 
-        fileName = pysp.mpl_graphics.createPDF()
+        fileName = mpl_graphics.createPDF()
         if fileName:
             self.logWidget.append( "created %s" % fileName)
             os.system( "evince %s &" % fileName)
@@ -959,7 +1003,7 @@ class pySpectraGui( QtGui.QMainWindow):
         #
         # pathName is a file: update scansList
         #
-        elif pathNameTokens[-1] in defs.dataFormats:
+        elif pathNameTokens[-1] in defs._dataFormats:
             pysp.cls()
             pysp.delete()
             try: 
@@ -1073,7 +1117,7 @@ class pySpectraGui( QtGui.QMainWindow):
         
         for file in lst:
             fileNameTokens = file.split( '.')
-            if fileNameTokens[-1] in defs.dataFormats:
+            if fileNameTokens[-1] in defs._dataFormats:
                 self.filesListWidget.addItem( file)
             elif file.startswith( "."):
                 continue
@@ -1089,7 +1133,7 @@ class pySpectraGui( QtGui.QMainWindow):
         argout = []
         for file in os.listdir( "."):
             fileNameTokens = file.split( '.')
-            if fileNameTokens[-1] in defs.dataFormats:
+            if fileNameTokens[-1] in defs._dataFormats:
                 for pat in patternList:
                     if HasyUtils.match( file, pat): 
                         argout.append( file)
@@ -1100,15 +1144,15 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.display()
 
     def cb_prev( self): 
-        scan = pysp.prevScan()
-        index = pysp.getIndex( scan.name)
+        scan = gqe._prevScan()
+        index = gqe._getIndex( scan.name)
         pysp.cls()
         pysp.display( [ scan.name])
         self.scansListWidget.setCurrentRow( index)
 
     def cb_next( self): 
-        scan = pysp.nextScan()
-        index = pysp.getIndex( scan.name)
+        scan = gqe._nextScan()
+        index = gqe._getIndex( scan.name)
         pysp.cls()
         pysp.display( [ scan.name])
         self.scansListWidget.setCurrentRow( index)
@@ -1189,44 +1233,44 @@ class pySpectraGui( QtGui.QMainWindow):
         self.scanListsMenu = self.menuBar.addMenu('&TestData')
 
         self.sl1Action = QtGui.QAction('1 Scan', self)        
-        self.sl1Action.triggered.connect( scanList1)
+        self.sl1Action.triggered.connect( pysp.testCreate1)
         self.scanListsMenu.addAction( self.sl1Action)
 
         self.sl2Action = QtGui.QAction('2 Scans', self)        
-        self.sl2Action.triggered.connect( scanList2)
+        self.sl2Action.triggered.connect( pysp.testCreate2)
         self.scanListsMenu.addAction( self.sl2Action)
 
         self.sl3Action = QtGui.QAction('5 Scans', self)        
-        self.sl3Action.triggered.connect( scanList3)
+        self.sl3Action.triggered.connect( pysp.testCreate5)
         self.scanListsMenu.addAction( self.sl3Action)
 
         self.sl4Action = QtGui.QAction('10 Scans', self)        
-        self.sl4Action.triggered.connect( scanList4)
+        self.sl4Action.triggered.connect( pysp.testCreate10)
         self.scanListsMenu.addAction( self.sl4Action)
 
         self.sl5Action = QtGui.QAction('22 Scans', self)        
-        self.sl5Action.triggered.connect( scanList5)
+        self.sl5Action.triggered.connect( pysp.testCreate22)
         self.scanListsMenu.addAction( self.sl5Action)
 
         self.sl6Action = QtGui.QAction('56 Scans', self)        
-        self.sl6Action.triggered.connect( scanList6)
+        self.sl6Action.triggered.connect( pysp.testCreate56)
         self.scanListsMenu.addAction( self.sl6Action)
 
         self.sl7Action = QtGui.QAction('Gauss Scan', self)        
-        self.sl7Action.triggered.connect( scanList7)
+        self.sl7Action.triggered.connect( pysp.testCreateGauss)
         self.scanListsMenu.addAction( self.sl7Action)
 
         self.sl8Action = QtGui.QAction('Overlay', self)        
-        self.sl8Action.triggered.connect( scanList8)
+        self.sl8Action.triggered.connect( pysp.testCreateOverlaid)
         self.scanListsMenu.addAction( self.sl8Action)
 
         self.sl9Action = QtGui.QAction('Overlay, log', self)        
-        self.sl9Action.triggered.connect( scanList9)
+        self.sl9Action.triggered.connect( pysp.testCreateOverlaidWithLog)
         self.scanListsMenu.addAction( self.sl9Action)
 
         self.exitAction = QtGui.QAction('E&xit', self)        
         self.exitAction.setStatusTip('Exit application')
-        self.exitAction.triggered.connect( sys.exit)
+        self.exitAction.triggered.connect( self.cb_close)
         self.fileMenu.addAction( self.exitAction)
 
         #
@@ -1278,8 +1322,12 @@ class pySpectraGui( QtGui.QMainWindow):
 
         self.exit = QtGui.QPushButton(self.tr("&Exit")) 
         self.statusBar.addPermanentWidget( self.exit) # 'permanent' to shift it right
-        self.exit.clicked.connect( sys.exit)
+        self.exit.clicked.connect( self.cb_close)
         self.exit.setShortcut( "Alt+x")
+
+    def cb_close( self): 
+        pysp.close()
+        self.close()
 
     def cb_clearLog( self): 
         self.logWidget.clear()
@@ -1314,7 +1362,7 @@ class pySpectraGui( QtGui.QMainWindow):
         return 
 
     def cb_pdf( self): 
-        fileName = pysp.mpl_graphics.createPDF()
+        fileName = mpl_graphics.createPDF()
         if fileName:
             self.logWidget.append( "created %s" % fileName)
             os.system( "evince %s &" % fileName)
@@ -1357,28 +1405,28 @@ class pySpectraGui( QtGui.QMainWindow):
         os.system( "%s %s&" % (editor, fName))
         
     def cb_derivative( self):
-        displayList = pysp.getDisplayList()
+        displayList = gqe._getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append(  "cb_derivative: expecting 1 displayed scan")
             return 
         pysp.derivative( displayList[0].name)
 
     def cb_antiderivative( self):
-        displayList = pysp.getDisplayList()
+        displayList = gqe._getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append(  "cb_antiderivative: expecting 1 displayed scan")
             return 
         pysp.antiderivative( displayList[0].name)
 
     def cb_y2my( self):
-        displayList = pysp.getDisplayList()
+        displayList = gqe._getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append(  "cb_y2my: expecting 1 displayed scan")
             return 
         pysp.yToMinusY( displayList[0].name)
 
     def cb_ssa( self):
-        displayList = pysp.getDisplayList()
+        displayList = gqe._getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append( "cb_ssa: expecting 1 displayed scan")
             return 
@@ -1401,7 +1449,7 @@ class pySpectraGui( QtGui.QMainWindow):
     def cb_matplotlib( self):
         self.mplWidget = MplWidget( self.logWidget)
         self.mplWidget.show()
-        pysp.mpl_graphics.display( self.getCheckedNameList())
+        mpl_graphics.display( self.getCheckedNameList())
 
     def cb_helpWidget(self):
         QtGui.QMessageBox.about(self, self.tr("Help Widget"), self.tr(
@@ -1411,126 +1459,4 @@ class pySpectraGui( QtGui.QMainWindow):
                 "<li> some remarks</li>"
                 "</ul>"
                 ))
-def scanList1( self):
-    pysp.cls()
-    pysp.delete()
-    pysp.setTitle( "Ein Titel")
-    pysp.setComment( "Ein Kommentar")
-    t1 = pysp.Scan( name = "t1", color = 'blue', yLabel = 'sin')
-    t1.y = np.sin( t1.x)
-    pysp.display()
-
-def scanList2( self):
-    pysp.cls()
-    pysp.delete()
-    pysp.setTitle( "Ein Titel")
-    pysp.setComment( "Ein Kommentar")
-    t1 = pysp.Scan( name = "t1", color = 'blue', yLabel = 'sin')
-    t1.y = np.sin( t1.x)
-    t2 = pysp.Scan( "t2", yLabel = 'cos')
-    t2.y = np.cos( t2.x)
-    pysp.display()
-
-def scanList3( self):
-    pysp.cls()
-    pysp.delete()
-    pysp.setTitle( "Ein Titel")
-    pysp.setComment( "Ein Kommentar")
-    t1 = pysp.Scan( name = "t1", color = 'blue', yLabel = 'sin')
-    t1.y = np.sin( t1.x)
-    t2 = pysp.Scan( "t2", yLabel = 'cos')
-    t2.y = np.cos( t2.x)
-    t3 = pysp.Scan( name = "t3", color = 'green', yLabel = 'tan')
-    t3.y = np.tan( t3.x)
-    t4 = pysp.Scan( name = "t4", color = 'cyan', yLabel = 'random')
-    t4.y = np.random.random_sample( (len( t4.y), ))
-    t5 = pysp.Scan( name = "t5", color = 'magenta', yLabel = 'x**2')
-    t5.y = t5.x * t5.x
-    pysp.overlay( 't5', 't3')
-    pysp.display()
-
-def scanList4( self):
-    pysp.cls()
-    pysp.delete()
-    pysp.setTitle( "Ein Titel")
-    pysp.setComment( "Ein Kommentar")
-    for i in range( 10): 
-        t = pysp.Scan( name = "t%d" % i, color = 'blue', yLabel = 'rand')
-        t.y = np.random.random_sample( (len( t.x), ))
-    pysp.display()
-
-def scanList5( self):
-    pysp.cls()
-    pysp.delete()
-    pysp.setTitle( "22 Scans")
-    #pysp.setComment( "Ein Kommentar")
-    for i in range( 22): 
-        t = pysp.Scan( name = "t%d" % i, color = 'blue', yLabel = 'rand')
-        t.y = np.random.random_sample( (len( t.x), ))
-    pysp.display()
-
-def scanList6( self):
-    pysp.cls()
-    pysp.delete()
-    pysp.setTitle( "56 Scans")
-    #pysp.setComment( "Ein Kommentar")
-    for i in range( 56): 
-        t = pysp.Scan( name = "t%d" % i, color = 'blue', yLabel = 'rand')
-        t.y = np.random.random_sample( (len( t.x), ))
-    pysp.display()
-
-def scanList7( self):
-    '''
-    gauss scan
-    '''
-    pysp.cls()
-    pysp.delete()
-    pysp.setTitle( "Ein Titel")
-    pysp.setComment( "Ein Kommentar")
-    g = pysp.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
-    mu = 0.
-    sigma = 1.
-    g.y = 1/(sigma * np.sqrt(2 * np.pi)) * \
-          np.exp( - (g.y - mu)**2 / (2 * sigma**2))
-    pysp.display()
-
-def scanList8( self):
-    '''
-    overlay
-    '''
-    pysp.cls()
-    pysp.delete()
-    pysp.setTitle( "2 Overlay Scans")
-    g = pysp.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, color = 'red')
-    mu = 0.
-    sigma = 1.
-    g.y = 1/(sigma * np.sqrt(2 * np.pi)) * \
-          np.exp( - (g.y - mu)**2 / (2 * sigma**2))
-    t1 = pysp.Scan( name = "sinus", color = 'blue', xMin = -5, xMax = 5., 
-                    yMin = -1.5, yMax = 1.5, yLabel = 'sin')
-    t1.y = np.sin( t1.x)
-    pysp.overlay( "sinus", "gauss")
-    pysp.display()
-
-def scanList9( self):
-    '''
-    overlay with log
-    '''
-    pysp.cls()
-    pysp.delete()
-    pysp.setTitle( "2 Overlay Scans")
-    g1 = pysp.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = True, nPts = 101, color = 'red')
-    mu = 0.
-    sigma = 1.
-    g1.y = 1/(sigma * np.sqrt(2 * np.pi)) * \
-          np.exp( - (g1.y - mu)**2 / (2 * sigma**2))
-    g2 = pysp.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0, 
-                    yMax = 1, nPts = 101, color = 'green')
-    mu = 0.5
-    sigma = 1.2
-    g2.y = 1/(sigma * np.sqrt(2 * np.pi)) * \
-          np.exp( - (g2.y - mu)**2 / (2 * sigma**2))
-
-    pysp.overlay( "gauss2", "gauss")
-    pysp.display()
  

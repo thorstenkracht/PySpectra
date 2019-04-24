@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 '''
-simple scan analysis function """
- 
-code also in 
-  /home/kracht/Misc/Sardana/hasyutils/HasyUtils/ssa.py
-
+ssa() - simple scan analysis function 
+        code also in 
+        /home/kracht/Misc/Sardana/hasyutils/HasyUtils/ssa.py
 '''
 import numpy as _np
 import PySpectra.dMgt.GQE as _GQE
 import math as _math
 import PySpectra as _pysp
 import PySpectra.definitions as _defs
+import sys as _sys
 
 def ssa( xIn, yIn, flagNbs = False, stbr = 3):
     '''
@@ -235,7 +234,7 @@ def _setScanVPs( nameList, flagDisplaySingle):
         #
         # the number of used viewports is (len( scanList) - numberOfOverlaid) 
         #
-        usedVPs = len( scanList) - _GQE.getNumberOfOverlaid()
+        usedVPs = len( scanList) - _GQE._getNumberOfOverlaid()
         if usedVPs != _lenPlotted and _lenPlotted != -1: 
             _pysp.cls()
         _lenPlotted = usedVPs
@@ -249,7 +248,7 @@ def _setScanVPs( nameList, flagDisplaySingle):
             nrow = 2
         else:
             ncol = int( _math.floor( _math.sqrt( usedVPs)))
-            if usedVPs > _defs.MANY_SCANS: 
+            if usedVPs > _defs._MANY_SCANS: 
                 ncol -= 1
             nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
         nplot = 1 
@@ -264,7 +263,7 @@ def _setScanVPs( nameList, flagDisplaySingle):
         #
         # the number of used viewports is (len( nameList) - numberOfOverlaid( nameList)) 
         #
-        usedVPs = len( nameList) - _GQE.getNumberOfOverlaid( nameList)
+        usedVPs = len( nameList) - _GQE._getNumberOfOverlaid( nameList)
         if usedVPs != _lenPlotted and _lenPlotted != -1: 
             _pysp.cls()
         _lenPlotted = usedVPs
@@ -278,7 +277,7 @@ def _setScanVPs( nameList, flagDisplaySingle):
             nrow = 2
         else:
             ncol = int( _math.floor( _math.sqrt( usedVPs)))
-            if usedVPs > _defs.MANY_SCANS: 
+            if usedVPs > _defs._MANY_SCANS: 
                 ncol -= 1
             nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
         nplot = 1 
@@ -314,3 +313,25 @@ def _setScanVPs( nameList, flagDisplaySingle):
             if scan.nrow*scan.ncol < scan.nplot:
                 raise ValueError( "utils.setScanVPs: nrow %d * ncol %d < nplot %d" % (scan.nrow, scan.ncol, scan.nplot))
             nplot += 1
+
+def launchGui(): 
+    '''
+    launches the Gui
+    '''
+    from PyQt4 import QtGui as _QtGui
+    from PyQt4 import QtCore as _QtCore
+    #import __builtin__
+    ##__builtin__.__dict__[ 'graphicsLib'] = 'matplotlib'
+    #__builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
+
+    import PySpectra.pySpectraGuiClass as _gui
+
+    app = _QtGui.QApplication.instance()
+    if app is None:
+        app = _QtGui.QApplication([])
+
+    gui = _gui.pySpectraGui()
+    gui.show()
+    app.exec_()
+
+    #_sys.exit( app.exec_())

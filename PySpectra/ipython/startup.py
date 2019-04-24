@@ -242,6 +242,19 @@ def sl3(line):
         t = pysp.Scan( name = "t%d" % i, color = 'blue')
         t.y = np.random.random_sample( (len( t.y), ))
 
+@register_line_magic
+def sl4(line):
+    '''
+    gauss
+    '''
+    pysp.cls()
+    pysp.delete()
+    g = pysp.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
+    mu = 0.
+    sigma = 1.
+    g.y = 1/(sigma * np.sqrt(2 * np.pi)) * \
+          np.exp( - (g.y - mu)**2 / (2 * sigma**2))
+
 pysp_help("")        
 
 # We delete these to avoid name conflicts for automagic to work
@@ -266,4 +279,5 @@ del y2my
 del sl1
 del sl2
 del sl3
+del sl4
 

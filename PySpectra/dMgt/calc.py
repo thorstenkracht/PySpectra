@@ -2,7 +2,7 @@
 
 import GQE as _GQE
 
-from numpy import diff
+from numpy import diff as _diff
 from scipy import integrate as _integrate
 import numpy as _np
 
@@ -24,7 +24,7 @@ def derivative( name = None, nameNew = None):
     # 
     # the length of diff(a) less than the length of the inputs, by 1
     # 
-    dydx = diff( scan.y)/diff(scan.x)
+    dydx = _diff( scan.y)/_diff(scan.x)
     if nameNew is None:
         temp = "%s_derivative" % scan.name
     else:

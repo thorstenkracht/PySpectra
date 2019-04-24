@@ -1,48 +1,52 @@
-# PySpectra
+PySpectra displays 1D data
+--------------------------
 
-A program to display 1-dimensional data using pyqtgraph or matplotlib.
+The module PySpectra is usually imported by 
+  import PySpectra as pysp
 
-Interfaces:
+It exports one class and several functions: 
+Scan()              a class returning a scan object
+antiderivative()    calculate the Stammfunktion
+cls()               clear the screen graphics window
+createPDF()         create a PDF file
+delete()            delete all or selected scans
+derivative()        calculate the derivative
+display()           display all or selected scans
+getComment()        return the comment
+getScan()           return a scan object
+getScanList()       return the list of the scans
+getTitle()          return the title
+launchGui()         launches the Gui
+overlay( src, trgt) plot src in the viewport of trgt
+procEventsLoop()    loop over QApp.processEvents until a <return> is entered
+processEvents()     call QApp.processEvents()
+read()              read .fio or .dat files
+setComment()        set the comment 
+setTitle()          set the title
+setWsViewPort()     set the size of the graphics window
+show()              print the scans
+ssa()               simple scan analysis
+write()             create a .fio file
+yToMinusY()         change the sign of the y-values
 
-* Monitor pyspMonitor.py (uses pyspDoor.py) 
+*** Applications based on PySpectra: 
+$ pyspViewer.py
+  successor of the FioViewer
+$ pyspMonitor.py
+  successor of the SardanaMonitor
 
-* GUI: pyspViewer.py
-    
-* ipython:
+*** To use PySpectra in ipython, start with 
+  $ ipython --profile=PySpectra
+then edit
+  ~/.ipython/profile_PySpectra/startup/00-start.py
+to look like 
+  #!/usr/bin/env python
+  import PySpectra as pysp
+  # to define some PySpectra macros uncomment the following line
+  #import PySpectra.ipython.startup 
+then again
+$ ipython --profile=PySpectra
+In [1]: pysp.testCreate10()
 
-    alias PySpectra='ipython --profile=PySpectra'
-
-    /home/<user>/.ipython/profile_PySpectra/startup/00-start.py
-
-    ```
-    #!/usr/bin/env python
-    import __builtin__
-    #__builtin__.__dict__[ 'graphicsLib'] = 'matplotlib'
-    __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
-    import PySpectra as pysp
-    import numpy as np
-    import PySpectra.ipython.startup
-    ```
-
-    ```
-    create t1
-    pysp.t1.y = np.sin( pysp.t1.x)
-    display
-    delete
-    cls
-    ```
-
-* Python API
-    ```
-    #!/usr/bin/env python
-    import __builtin__
-    #__builtin__.__dict__[ 'graphicsLib'] = 'matplotlib'
-    __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
-    pysp.create( "t1")
-    pysp.create( "t2")
-    pysp.display()
-    pysp.delete()
-    pysp.cls()
-    ```
 
 
