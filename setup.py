@@ -65,6 +65,7 @@ setup( name="python-pyspectra",
                    ],
        packages = ['PySpectra', 
                    'PySpectra/dMgt', 
+                   'PySpectra/examples', 
                    'PySpectra/ipython', 
                    'PySpectra/mtpltlb', 
                    'PySpectra/pqtgrph']

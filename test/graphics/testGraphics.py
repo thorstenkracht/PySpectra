@@ -17,6 +17,22 @@ import math
 
 class testGraphics( unittest.TestCase):
 
+    def testDoty( self): 
+        '''
+        using showGridX, showGridY
+        '''
+        PySpectra.cls()
+        PySpectra.delete()
+        PySpectra.setTitle( "check x-axis doty")
+
+        sinus = PySpectra.Scan( name = 'sinus', 
+                                xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red', doty = True)
+        sinus.y = np.sin( sinus.y)
+
+        PySpectra.display()
+        PySpectra.show()
+        PySpectra.procEventsLoop()
+
     def testGrid( self): 
         '''
         using showGridX, showGridY
@@ -51,7 +67,7 @@ class testGraphics( unittest.TestCase):
             sinus.setX( i, i/10.)
             sinus.setY( i, math.sin( i/10.))
             PySpectra.display( ['sinus'])
-            time.sleep( 0.05)
+            time.sleep( 0.01)
 
     def testDisplayScan_v2( self): 
         '''
@@ -64,7 +80,7 @@ class testGraphics( unittest.TestCase):
         for i in range( cosinus.nPts): 
             cosinus.setY( i, math.cos( cosinus.x[i]))
             PySpectra.display( ['cosinus'])
-            time.sleep( 0.05)
+            time.sleep( 0.01)
 
     def testDisplayScan_v3( self): 
         '''
@@ -81,7 +97,7 @@ class testGraphics( unittest.TestCase):
             cosinus.setX( i, i/10.)
             cosinus.setY( i, math.cos( i/10.))
             PySpectra.display( ['sinus', 'cosinus'])
-            time.sleep( 0.05)
+            time.sleep( 0.01)
 
     def testDisplayScan_v4( self): 
         '''
@@ -96,7 +112,7 @@ class testGraphics( unittest.TestCase):
             sinus.setX( i, i/10.)
             sinus.setY( i, math.sin( i/10.))
             PySpectra.display( ['sinus'])
-            time.sleep( 0.05)
+            time.sleep( 0.01)
 
     def testDisplaySingle( self): 
 
@@ -245,7 +261,7 @@ class testGraphics( unittest.TestCase):
 
         PySpectra.display()
 
-        data = np.random.normal(size=(10,1000))
+        data = np.random.normal(size=(10,100))
         x  = np.linspace( 0., 10., 1000)
         ptr = 0
 

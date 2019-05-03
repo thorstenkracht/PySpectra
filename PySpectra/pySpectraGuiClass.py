@@ -1328,53 +1328,20 @@ class pySpectraGui( QtGui.QMainWindow):
         self.dina6Action.triggered.connect( lambda : pysp.setWsViewport( 'dina6'))
         self.optionsMenu.addAction( self.dina6Action)
         #
-        # scan lists
+        # examples
         #
-        self.scanListsMenu = self.menuBar.addMenu('&TestData')
+        self.examplesMenu = self.menuBar.addMenu('&Examples')
 
-        self.sl1Action = QtGui.QAction('1 Scan with texts', self)        
-        self.sl1Action.triggered.connect( pysp.testCreate1)
-        self.scanListsMenu.addAction( self.sl1Action)
+        for funcName in dir( pysp.examples.exampleCode):
+            if funcName.find( 'example') != 0: 
+                continue
+            action = QtGui.QAction( funcName[7:], self)        
+            action.triggered.connect( self.make_example( funcName))
+            self.examplesMenu.addAction( action)
 
-        self.sl10Action = QtGui.QAction('2 overlaid Scans, Doty', self)        
-        self.sl10Action.triggered.connect( pysp.testCreate2OverlayDoty)
-        self.scanListsMenu.addAction( self.sl10Action)
-
-        self.sl11Action = QtGui.QAction('2 overlaid Scans', self)        
-        self.sl11Action.triggered.connect( pysp.testCreate2Overlay)
-        self.scanListsMenu.addAction( self.sl11Action)
-
-        self.sl2Action = QtGui.QAction('3 Scans, with textbox', self)        
-        self.sl2Action.triggered.connect( pysp.testCreate3)
-        self.scanListsMenu.addAction( self.sl2Action)
-
-        self.sl3Action = QtGui.QAction('5 Scans', self)        
-        self.sl3Action.triggered.connect( pysp.testCreate5)
-        self.scanListsMenu.addAction( self.sl3Action)
-
-        self.sl4Action = QtGui.QAction('10 Scans', self)        
-        self.sl4Action.triggered.connect( pysp.testCreate10)
-        self.scanListsMenu.addAction( self.sl4Action)
-
-        self.sl5Action = QtGui.QAction('22 Scans', self)        
-        self.sl5Action.triggered.connect( pysp.testCreate22)
-        self.scanListsMenu.addAction( self.sl5Action)
-
-        self.sl6Action = QtGui.QAction('56 Scans', self)        
-        self.sl6Action.triggered.connect( pysp.testCreate56)
-        self.scanListsMenu.addAction( self.sl6Action)
-
-        self.sl7Action = QtGui.QAction('Gauss Scan', self)        
-        self.sl7Action.triggered.connect( pysp.testCreateGauss)
-        self.scanListsMenu.addAction( self.sl7Action)
-
-        self.sl8Action = QtGui.QAction('Overlay', self)        
-        self.sl8Action.triggered.connect( pysp.testCreateOverlaid)
-        self.scanListsMenu.addAction( self.sl8Action)
-
-        self.sl9Action = QtGui.QAction('Overlay, log', self)        
-        self.sl9Action.triggered.connect( pysp.testCreateOverlaidWithLog)
-        self.scanListsMenu.addAction( self.sl9Action)
+        action = QtGui.QAction( "View code", self)        
+        action.triggered.connect( self.cb_displayExampleCode)
+        self.examplesMenu.addAction( action)
 
         self.exitAction = QtGui.QAction('E&xit', self)        
         self.exitAction.setStatusTip('Exit application')
@@ -1453,6 +1420,32 @@ class pySpectraGui( QtGui.QMainWindow):
         self.exit.clicked.connect( self.cb_close)
         self.exit.setShortcut( "Alt+x")
 
+    def make_example( self, funcName): 
+        hsh = {
+            "example1ScanWithTexts": pysp.example1ScanWithTexts, 
+            "example22Scans": pysp.example22Scans, 
+            "example2GaussOverlaidWithLog": pysp.example2GaussOverlaidWithLog, 
+            "example2OverlaidDoty": pysp.example2OverlaidDoty, 
+            "example3WithTextContainer": pysp.example3WithTextContainer, 
+            "example56Scans": pysp.example56Scans, 
+            "example5Scans": pysp.example5Scans, 
+            "exampleGauss": pysp.exampleGauss, 
+            "exampleGaussAndSinusOverlaid": pysp.exampleGaussAndSinusOverlaid, 
+            "exampleScanning": pysp.exampleScanning, 
+            }
+
+        if hsh.has_key( funcName):
+            return hsh[ funcName]
+        else: 
+            raise ValueError( "make_example: failed to find %s" % funcName)
+
+    def cb_displayExampleCode( self): 
+        fName = pysp.examples.exampleCode.__file__
+        editor = os.getenv( "EDITOR")
+        if editor is None: 
+            editor = 'emacs'
+        os.system( "%s %s&" % (editor, fName))
+        
     def cb_createPDF( self): 
         fName = pysp.createPDF()
         print "Created %s" % fName

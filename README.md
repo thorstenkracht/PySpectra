@@ -6,6 +6,7 @@ The module PySpectra is usually imported by
 
 It exports one class and several functions: 
 Scan()              a class returning a scan object
+Text()              a class returning a text object, called from Scan()
 antiderivative()    calculate the Stammfunktion
 cls()               clear the screen graphics window
 createPDF()         create a PDF file
@@ -34,6 +35,19 @@ $ pyspViewer.py
   successor of the FioViewer
 $ pyspMonitor.py
   successor of the SardanaMonitor
+
+*** To use PySpectra from Python:
+
+Look at some examples using pyspViewer->Examples then
+view the code pyspViewer->Examples->View Code
+
+In addition, start ipython and
+
+  import PySpectra as pysp
+  In [1]: import PySpectra as pysp
+  In [2]: pysp?
+  In [3]: dir( pysp) 
+  In [4]: pysp.Scan?
 
 *** To use PySpectra in ipython, start with 
   $ ipython --profile=PySpectra

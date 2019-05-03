@@ -529,6 +529,8 @@ def _setTitle( scan, nameList):
         if not scan.xLog:
             x = (scan.xMax - scan.xMin)*1.0 + scan.xMin
         else:
+            if scan.xMax <= 0. or scan.xMin <= 0.:
+                raise ValueError( "pqt_graphics.setTitle: xLog && (xMin <= 0: %g or xMax <= 0: %g" %( scan.xMin, scan.xMax))
             x = (_math.log10( scan.xMax) - _math.log10( scan.xMin))*1.0 + _math.log10( scan.xMin)
         if scan.autorangeY: 
             y = ( _np.max( scan.y) - _np.min( scan.y))*0.85 + _np.min( scan.y)
@@ -540,6 +542,8 @@ def _setTitle( scan, nameList):
             if not scan.yLog:
                 y = ( scan.yMax - scan.yMin)*0.85 + scan.yMin
             else:
+                if scan.yMax <= 0. or scan.yMin <= 0.:
+                    raise ValueError( "pqt_graphics.setTitle: yLog && (yMin <= 0: %g or yMax <= 0: %g" % (scan.yMin, scan.yMax))
                 y = ( _math.log10( scan.yMax) - _math.log10( scan.yMin))*0.85 + \
                     _math.log10( scan.yMin)
         txt.setPos( x, y)
@@ -741,12 +745,16 @@ def _createPlotItem( scan, nameList):
             #
             # if yLog, the limits have to be supplied as logs
             #
+            if scan.yMax <= 0. or scan.yMin <= 0.:
+                raise ValueError( "pqt_graphics.createPlotItem: yLog && (yMin <= 0: %g or yMax <= 0: %g" % (scan.yMin, scan.yMax))
             scan.plotItem.setYRange( _math.log10( scan.yMin), _math.log10(scan.yMax))
         else:
             scan.plotItem.setYRange( scan.yMin, scan.yMax)
 
     if not arX: 
         if scan.xLog:
+            if scan.xMax <= 0. or scan.xMin <= 0.:
+                raise ValueError( "pqt_graphics.createPlotItem: xLog && (xMin <= 0: %g or xMax <= 0: %g" % (scan.xMin, scan.xMax))
             scan.plotItem.setXRange( _math.log10( scan.xMin), _math.log10(scan.xMax))
         else:
             scan.plotItem.setXRange( scan.xMin, scan.xMax)

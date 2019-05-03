@@ -54,6 +54,7 @@ In [1]: pysp.testCreate10()
 
 from dMgt.GQE import *
 from dMgt.calc import *
+from examples.exampleCode import *
 
 import __builtin__
 try:
