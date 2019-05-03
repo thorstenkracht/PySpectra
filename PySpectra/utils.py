@@ -318,6 +318,7 @@ def launchGui():
     '''
     launches the Gui
     '''
+
     from PyQt4 import QtGui as _QtGui
     from PyQt4 import QtCore as _QtCore
     #import __builtin__

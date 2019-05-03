@@ -227,6 +227,3 @@ def y2my( line):
         hsh[ 'nameNew'] = lst[1]
     pysp.yToMinusY( **hsh)
     
-
-        
-        

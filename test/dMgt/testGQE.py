@@ -192,7 +192,7 @@ class testGQE( unittest.TestCase):
         self.assertEqual( scan.xMin, 0.)
         self.assertEqual( scan.xMax, 4.)
         self.assertEqual( scan.yMin, 10.)
-        self.assertEqual( scan.yMax, 14.)
+        self.assertAlmostEqual( scan.yMax, 14.2)
 
         self.assertEqual( scan.nPts, 5)
         

@@ -14,6 +14,7 @@ import PySpectra.definitions as _defs
 import HasyUtils as _HasyUtils
 import datetime as _datetime
 import types as _types
+import psutil as _psutil
 
 _QApp = None
 _win = None
@@ -44,6 +45,7 @@ def _initGraphic():
         # <class 'pyqtgraph.graphicsWindows.GraphicsWindow'>
         #
         _win = _pg.GraphicsWindow( title="PySpectra Application")
+        _win.name_TK = "graphicsWindow"
         _win.setGeometry( 30, 30, 793, int( 793./1.414))
 
     return (_QApp, _win)
@@ -145,64 +147,100 @@ def cls():
     # one element, <class 'pyqtgraph.graphicsItems.GraphicsLayout.GraphicsLayout'>
     #
     _win.clear()
-
-    #
-    # remove all items from the layout
-    #
-    ##_win.items()[0].clear()
-    #
-    # Bug in pyqtgraph? have to set currentRow and currentCol
-    # explicitly to 0.
-    #
-    ##_win.items()[0].currentRow = 0
-    ##_win.items()[0].currentCol = 0
+    #_itemCrawler( _win, "after _win.clear()")
 
     #
     # clear the plotItems
     #
     scanList = _GQE.getScanList()
-    for i in range( len( scanList)):
-        if hasattr( scanList[i], "mouseLabel"):
-            if scanList[i].mouseLabel is not None:
-                del scanList[i].mouseLabel
-                scanList[i].mouseLabel = None
-        if hasattr( scanList[i], "mouseProxy"):
-            if scanList[i].mouseProxy is not None:
-                del scanList[i].mouseProxy
-                scanList[i].mouseProxy = None
-
-        try: 
-            if scanList[i].plotItem is not None and \
-               scanList[i].plotItem.scene() is not None: 
-                for item in scanList[i].plotItem.scene().items():
-                    scanList[i].plotItem.scene().removeItem( item)
-        except Exception, e: 
-            print "pqt_graphic.cls: exception caught"
-            print repr( e)
-            continue
-        scanList[i].viewBox = None
-        scanList[i].plotItem = None
-        scanList[i].plotDataItem = None
-        scanList[i].lastIndex = 0
+    for scan in scanList:
+        if scan.mouseProxy is not None: 
+            scan.mouseProxy.disconnect()
+        if scan.mouseClick is not None: 
+            scan.mouseClick.disconnect()
+        scan.viewBox = None
+        scan.plotItem = None
+        scan.plotDataItem = None
+        scan.lastIndex = 0
 
     _QApp.processEvents()
+    return 
+    # 
+    #
+    # clear the plotItems
+    #
+    scanList = _GQE.getScanList()
+    for scan in scanList:
+        if hasattr( scan, "mouseLabel"):
+            if scan.mouseLabel is not None:
+                del scan.mouseLabel
+                scan.mouseLabel = None
+        if hasattr( scan, "mouseProxy"):
+            if scan.mouseProxy is not None:
+                del scan.mouseProxy
+                scan.mouseProxy = None
+        try: 
+            #
+            # avoid this error: 'NoneType' object has no attribute 'removeItem'
+            #
+            if type( scan.plotItem) is _pg.graphicsItems.ViewBox.ViewBox and \
+               scan.plotItem.scene() is None: 
+                pass
+            else:
+                #
+                # close() always throws an error
+                #
+                if scan.plotItem is not None: 
+                    scan.plotItem.clear()
+        except Exception, e: 
+            print "pqt_graphic.cls: exception caught calling clear()"
+            print repr( e)
+            continue
+
+        scan.viewBox = None
+        scan.plotItem = None
+        scan.plotDataItem = None
+        scan.lastIndex = 0
+
+    #_itemCrawler( _win, "after cls()")
+    _QApp.processEvents()
+    return 
 
 _itemLevel = 0
-def _printItems( o): 
+def _itemCrawler( o, msg = None): 
+    '''
+    recursively crals though the items of an object
+    '''
     global _itemLevel
+
+    if msg is not None: 
+        print ">>> ", msg
     _itemLevel += 1
-    print "---%s: level %d, type %s" % (' ' * _itemLevel, _itemLevel, type( o))
+    print " %s%d: --- type %s" % ('  ' * _itemLevel, _itemLevel, type( o))
     if type( o.items) is _types.BuiltinFunctionType:
         for item in o.items():
-            print " %s%d: Func, %s" % ( ' ' * _itemLevel, _itemLevel, repr( item))
+            if hasattr( item, "nameTK"):
+                print " %s%d: Func, *** %s" % ( '  ' * _itemLevel, _itemLevel, item.nameTK)
+            else:
+                print " %s%d: Func, %s" % ( '  ' * _itemLevel, _itemLevel, repr( item))
             if hasattr( item, "items"):
-                _printItems( item)
+                _itemCrawler( item)
     elif type( o.items) is _types.DictType: 
-        for k in o.items.keys(): 
-            print " %s%d:Dict, %s, %s" % (' ' * _itemLevel, _itemLevel, repr( k), repr( o.items[ k]))
+        for item in o.items.keys(): 
+            if hasattr( o.items[ item], "nameTK"):
+                print " %s%d: Dict, %s, *** %s" % ('  ' * _itemLevel, _itemLevel, repr( item), o.items[ item].nameTK)
+            else:
+                print " %s%d: Dict, %s, %s" % ('  ' * _itemLevel, _itemLevel, repr( item), repr( o.items[ item]))
+            if hasattr( item, "items"):
+                _itemCrawler( item)
     elif type( o.items) is _types.ListType: 
-        for elm in o.items: 
-            print " %s%d:List, %s" % (' ' * _itemLevel, _itemLevel, repr( elm))
+        for item in o.items: 
+            if hasattr( item, "nameTK"):
+                print " %s%d: List, *** %s" % ('  ' * _itemLevel, _itemLevel, item.nameTK)
+            else:
+                print " %s%d: List, %s" % ('  ' * _itemLevel, _itemLevel, repr( item))
+            if hasattr( item, "items"):
+                _itemCrawler( item)
     else: 
         print "failed to identify type", type( o.items)
     _itemLevel -= 1
@@ -328,9 +366,15 @@ def _make_cb_mouseMoved( scan):
             scan.mouseLabel.setText( "x %s, y %g" % (xStr, mousePoint.y()), color = 'k')
         else:
             if not scan.yLog:
-                scan.mouseLabel.setText( "x %g, y %g" % (mousePoint.x(), mousePoint.y()), color = 'k')
+                mY = mousePoint.y()
             else:
-                scan.mouseLabel.setText( "x %g, y %g" % (mousePoint.x(), _math.pow( 10., mousePoint.y())), color = 'k')
+                mY = _math.pow( 10., mousePoint.y())
+            if not scan.xLog:
+                mX = mousePoint.x()
+            else:
+                mX = _math.pow( 10., mousePoint.x())
+
+            scan.mouseLabel.setText( "x %g, y %g" % (mX, mY), color = 'k')
                 
         scan.mouseLabel.setPos( mousePoint.x(), mousePoint.y())
         scan.mouseLabel.show()
@@ -351,10 +395,10 @@ def _prepareMouse( scan):
     scan.mouseClick = _pg.SignalProxy( scan.plotItem.scene().sigMouseClicked, 
                                        rateLimit=60, slot=_make_cb_mouseClicked( scan))
     scan.mouseLabel = _pg.TextItem( "cursor", color='b', anchor = (0, 1.0))
+    scan.mouseLabel.nameTK = "mouseLabel"
     scan.plotItem.addItem( scan.mouseLabel)
     scan.mouseLabel.hide()
     return 
-
 
 def _textIsOnDisplay( textStr):
     '''
@@ -413,12 +457,15 @@ def _displayTitleComment():
 
 def _addTexts( scan, nameList): 
 
-    if _GQE._getNumberOfScansToBeDisplayed( nameList) <= _defs._MANY_SCANS:
-        fontSize = _defs._FONT_SIZE_NORMAL
-    else: 
-        fontSize = _defs._FONT_SIZE_SMALL
+    fontSize = _GQE._getFontSize( nameList)
     
     for elm in scan.textList:
+
+        if elm.fontSize is None:
+            sz = fontSize
+        else:
+            sz = elm.fontSize
+
         if elm.hAlign == 'left':
             anchorX = 0
         elif elm.hAlign == 'right':
@@ -435,11 +482,11 @@ def _addTexts( scan, nameList):
         if elm.color.lower() in _defs._colorCode:
             #txt = _pg.TextItem( elm.text, color=_defs._colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
             txt = _pg.TextItem( color=_defs._colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
-            txt.setHtml( '<div style="font-size:%dpx;">%s</div>' % (fontSize, elm.text))
+            txt.setHtml( '<div style="font-size:%dpx;">%s</div>' % (sz, elm.text))
         else:
             #txt = _pg.TextItem( elm.text, color='k', anchor = ( anchorX, anchorY))
             txt = _pg.TextItem( color='k', anchor = ( anchorX, anchorY))
-            txt.setHtml( '<div style="font-size:%dpx;">%s</div>' % ( fontSize, elm.text))
+            txt.setHtml( '<div style="font-size:%dpx;">%s</div>' % ( sz, elm.text))
 
         if scan.textOnly:
             x = elm.x
@@ -448,15 +495,15 @@ def _addTexts( scan, nameList):
             x = (scan.xMax - scan.xMin)*elm.x + scan.xMin
             y = ( _np.max( scan.y) - _np.min( scan.y))*elm.y + _np.min( scan.y)
             
+        txt.nameTK = "text_%s" % txt
         scan.plotItem.addItem( txt)
         txt.setPos( x, y)
         txt.show()
 
 def _setTitle( scan, nameList): 
-    if _GQE._getNumberOfScansToBeDisplayed( nameList) <= _defs._MANY_SCANS:
-        fontSize = _defs._FONT_SIZE_NORMAL
-    else: 
-        fontSize = _defs._FONT_SIZE_SMALL
+
+    fontSize = _GQE._getFontSize( nameList)
+
     #
     # the length of the title has to be limited. Otherwise pg 
     # screws up. The plots will no longer fit into the workstation viewport
@@ -470,7 +517,7 @@ def _setTitle( scan, nameList):
     else: 
         tempName = scan.name
 
-    if _GQE._getNumberOfScansToBeDisplayed( nameList) <= _defs._MANY_SCANS:
+    if _GQE._getNumberOfScansToBeDisplayed( nameList) < _defs._MANY_SCANS:
         scan.plotItem.setTitle( title = tempName, size = '%dpx' % fontSize)
     else:
         vb = scan.plotItem.getViewBox()
@@ -479,7 +526,10 @@ def _setTitle( scan, nameList):
         #
         txt = _pg.TextItem( color='k', anchor = ( 1.0, 0.5))
         txt.setHtml( '<div style="font-size:%dpx;">%s</div>' % (fontSize, tempName))
-        x = (scan.xMax - scan.xMin)*1.0 + scan.xMin
+        if not scan.xLog:
+            x = (scan.xMax - scan.xMin)*1.0 + scan.xMin
+        else:
+            x = (_math.log10( scan.xMax) - _math.log10( scan.xMin))*1.0 + _math.log10( scan.xMin)
         if scan.autorangeY: 
             y = ( _np.max( scan.y) - _np.min( scan.y))*0.85 + _np.min( scan.y)
         else: 
@@ -493,6 +543,7 @@ def _setTitle( scan, nameList):
                 y = ( _math.log10( scan.yMax) - _math.log10( scan.yMin))*0.85 + \
                     _math.log10( scan.yMin)
         txt.setPos( x, y)
+        txt.nameTK = "text_%s" % tempName
         vb.addItem( txt)
 
 def _make_updateViews( target, scan): 
@@ -595,11 +646,14 @@ def _createPlotItem( scan, nameList):
     # the textContainer
     #
     if scan.textOnly:
-        plotItem = _win.addViewBox( row, col)
-        plotItem.setRange( xRange = ( 0, 1), yRange = ( 0., 1.))
-        scan.plotItem = plotItem
+        #
+        # pyqtgraph.graphicsItems.ViewBox.ViewBox.ViewBox
+        #
+        scan.plotItem = _win.addViewBox( row, col)
+        scan.plotItem.nameTK = "viewBox_text_%s" % scan.name
+        scan.plotItem.setRange( xRange = ( 0, 1), yRange = ( 0., 1.))
         _addTexts( scan, nameList)
-        return plotItem
+        return 
 
     try:
         if scan.doty: 
@@ -610,6 +664,7 @@ def _createPlotItem( scan, nameList):
             # <class 'pyqtgraph.graphicsItems.PlotItem.PlotItem.PlotItem'>
             #
             plotItem = _win.addPlot( row = row, col = col, colspan = scan.colSpan)
+        plotItem.nameTK = "plot_%s" % scan.name
 
             
     except Exception, e:
@@ -651,9 +706,9 @@ def _createPlotItem( scan, nameList):
     _setTitle( scan, nameList)
 
     if _GQE._getNumberOfScansToBeDisplayed( nameList) <= _defs._MANY_SCANS:
-        if hasattr( scan, 'xLabel'):
+        if hasattr( scan, 'xLabel') and scan.xLabel is not None:
             scan.plotItem.setLabel( 'bottom', text=scan.xLabel)
-        if hasattr( scan, 'yLabel'):
+        if hasattr( scan, 'yLabel')  and scan.yLabel is not None:
             scan.plotItem.setLabel( 'left', text=scan.yLabel)
     else: 
         font=_QtGui.QFont()
@@ -691,7 +746,10 @@ def _createPlotItem( scan, nameList):
             scan.plotItem.setYRange( scan.yMin, scan.yMax)
 
     if not arX: 
-        scan.plotItem.setXRange( scan.xMin, scan.xMax)
+        if scan.xLog:
+            scan.plotItem.setXRange( _math.log10( scan.xMin), _math.log10(scan.xMax))
+        else:
+            scan.plotItem.setXRange( scan.xMin, scan.xMax)
 
     #
     # idea: control the zoom in such a way the y-axis 
@@ -701,7 +759,7 @@ def _createPlotItem( scan, nameList):
 
     _addTexts( scan, nameList)
 
-    return scan.plotItem
+    return
     
 def display( nameList = None):
     '''
@@ -728,7 +786,9 @@ def display( nameList = None):
     # don't want to check for nameListis None below
     #
     global _clsFunctions
-    
+
+    startTime = _time.time()
+
     if nameList is None:
         nameList = []
 
@@ -750,10 +810,10 @@ def display( nameList = None):
     #
     # clear the mouse things in the scan
     #
-    for i in range( len( scanList)):
-        if scanList[i].mouseProxy is not None:
-            scanList[i].mouseProxy = None
-            scanList[i].mouseLabel = None
+    for scan in scanList:
+        if scan.mouseProxy is not None:
+            scan.mouseProxy = None
+            scan.mouseLabel = None
 
     #
     # find out whether only one scan will be displayed 
@@ -762,7 +822,6 @@ def display( nameList = None):
     flagDisplaySingle = False
     if len( nameList) == 1 or len( scanList) == 1:
         flagDisplaySingle = True
-
     #
     # adjust the graphics window to the number of displayed scans
     #
@@ -808,15 +867,15 @@ def display( nameList = None):
             if scan.name not in nameList:
                 continue
 
-        if scan.xLog:
-            raise ValueError( "pqt_graphic.display: no log-scale for the x-axis")
+        #if scan.xLog:
+        #    raise ValueError( "pqt_graphic.display: no log-scale for the x-axis")
         #
         # if we re-use the  plotItem ( aka viewport ?),
         # we can use setData(), see below. That makes things much faster.
         #
         if scan.plotItem is None:
             try:
-                scan.plotItem = _createPlotItem( scan, nameList)
+                _createPlotItem( scan, nameList)
             except ValueError, e:
                 print "graphics.display", repr( e)
                 print "graphics.display: exception from createPlotItem"
@@ -896,6 +955,7 @@ def display( nameList = None):
         #
         target.plotItem.getAxis('right').setLogMode( False)
         target.scene = target.plotItem.scene()
+        scan.viewBox.nameTK = "viewBox_%s" % target.name
         target.scene.addItem( scan.viewBox)
 
         if scan.yLog or scan.xLog:
@@ -922,6 +982,8 @@ def display( nameList = None):
                                              pen = _defs._colorCode[ scan.symbolColor.lower()], 
                                              brush = _defs._colorCode[ scan.symbolColor.lower()], 
                                              size = scan.symbolSize)
+
+        curveItem.nameTK = "curve_%s" % target.name
         scan.viewBox.addItem( curveItem )
         
         scan.lastIndex = scan.currentIndex
@@ -936,5 +998,11 @@ def display( nameList = None):
         _win.ci.layout.setVerticalSpacing( -15)
 
     processEvents()
+
+    p = _psutil.Process()
+
+    #print "pqt_graphics.display: time  %g" % ( _time.time() - startTime)
+    #print "pqt_graphics.display: memory consumption percent %g" % p.memory_percent()
+    #_itemCrawler( _win, "after display()")
 
     return

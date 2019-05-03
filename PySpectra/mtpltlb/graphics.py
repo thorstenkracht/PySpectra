@@ -47,15 +47,18 @@ def _initGraphic( figureIn = None, canvasIn = None):
         Fig.clear()
     return
 
-def createPDF( fileName = None): 
+def createPDF( fileName = None, flagPrint = False): 
     '''
-    create a PDF file, the default name is pyspOutput.pdf
-    a version of the last output file is created
+    - create a PDF file, the default name is pyspOutput.pdf
+    - a version of the last output file is created
+    - if flagPrint is True, the file is sent to the PRINTER 
     '''
+
     flag = False
     if Fig is None:
         #_pqt_graphics.close()
         _initGraphic()
+        cls()
         display()
         flag = True
 
@@ -72,11 +75,18 @@ def createPDF( fileName = None):
         print repr( e)
         return None
 
-    print "mpl_graphics.createPDF: created", fileName
-
     if flag:
         close()
         #_pqt_graphics._initGraphic()
+
+    if flagPrint: 
+        printer = _os.getenv( "PRINTER")
+        if printer is None: 
+            raise ValueError( "mpl_graphics.createPDF: environment variable PRINTER not defined")
+        if _os.system( "/usr/bin/lpr -P %s %s" % (printer, fileName)):
+            print "mpl_graphics.createPDF: failed to print %s on %s" % (fileName, printer)
+        else:
+            print "createPDF: printed %s on %s" % (fileName, printer)
         
     return fileName
     
@@ -147,21 +157,27 @@ def cls():
 
     Fig.clear()
     plt.draw()
+    if Canvas is not None:
+        try:
+            Canvas.draw()
+        except Exception, e:
+            print "mpl_graphics.cls: caught exception from Canvas.draw"
+            print repr( e)
     #
     # clear the plotItems
     #
     scanList = _GQE.getScanList()
-    for i in range( len( scanList)):
-        #print "graphics.cls, clearing %s" % (scanList[i].name)
-        scanList[i].plotItem = None
-        scanList[i].plotDataItem = None
-        scanList[i].lastIndex = 0
 
+    for scan in scanList:
+        scan.plotItem = None
+        scan.plotDataItem = None
+        scan.lastIndex = 0
 
 def close(): 
     '''
     close the Figure, used by createPDF
     '''
+    global Fig
     plt.close( 'all')
     Fig = None
     return 
@@ -211,6 +227,11 @@ def _doty2datetime(doty, year = None):
     dotySeconds = doty*24.*60.*60
     boy = _datetime.datetime(year, 1, 1)
     tmp = boy + _datetime.timedelta(seconds=dotySeconds)
+    #
+    # doty2datatime doty -5.0 to datetime.datetime(2018, 12, 27, 0, 0)
+    # doty2datatime doty 4.8 to datetime.datetime(2019, 1, 5, 19, 12)
+    # doty2datatime doty 5.0 to datetime.datetime(2019, 1, 6, 0, 0)
+    #
     #print "doty2datatime doty", doty, "to", repr( tmp)
     return tmp
 
@@ -233,10 +254,15 @@ def _setTitle( scan, nameList):
     else: 
         tempName = scan.name
 
+    fontSize = _GQE._getFontSize( nameList)
+
     if _GQE._getNumberOfScansToBeDisplayed( nameList) < _defs._MANY_SCANS:
-        scan.plotItem.set_title( tempName)
+        scan.plotItem.set_title( tempName, fontsize = fontSize)
     else:
-        scan.plotItem.text( 0.95, 0.8, tempName, transform = scan.plotItem.transAxes, va = 'center', ha = 'right')
+        scan.plotItem.text( 0.95, 0.8, tempName, 
+                            transform = scan.plotItem.transAxes, 
+                            va = 'center', ha = 'right', 
+                            fontsize = fontSize)
 
 def _textIsOnDisplay( textStr):
     '''
@@ -301,22 +327,25 @@ def _adjustFigure( nDisplay):
 
     return 
 
-def _displayTitleComment():     
+def _displayTitleComment( nameList):     
     '''
     '''
-    sz = 14
+
+
+    fontSize = _GQE._getFontSize( nameList)
+
     title = _GQE.getTitle()
     if title is not None:
         if not _textIsOnDisplay( title):
             t = Fig.text( 0.5, 0.95, title, va='center', ha='center')
-            t.set_fontsize( sz)
+            t.set_fontsize( fontSize)
     
     comment = _GQE.getComment()
     if comment is not None:
         if title is not None:
             if not _textIsOnDisplay( comment):
                 t = Fig.text( 0.5, 0.90, comment, va='center', ha='center')
-                t.set_fontsize( sz)
+                t.set_fontsize( fontSize)
         else:
             if not _textIsOnDisplay( comment):
                 t = Fig.text( 0.5, 0.95, comment, va='center', ha='center')
@@ -324,11 +353,24 @@ def _displayTitleComment():
     return
 
 
-def _addTexts( scan):
+def _addTexts( scan, nameList):
     #print "mpl_graphics.addTexts"
+
+    fontSize = _GQE._getFontSize( nameList)
+
     for elm in scan.textList:
-        #print "mpl_graphics.addTexts: %s, x %g, y %g" % (elm.text, elm.x, elm.y)
-        scan.plotItem.text( elm.x, elm.y, elm.text, transform = scan.plotItem.transAxes, va = elm.vAlign, ha = elm.hAlign)
+
+        if elm.fontSize is None:
+            sz = fontSize
+        else:
+            sz = elm.fontSize
+
+        scan.plotItem.text( elm.x, elm.y, elm.text, 
+                            transform = scan.plotItem.transAxes, 
+                            va = elm.vAlign, ha = elm.hAlign, 
+                            fontsize = sz, 
+                            color = elm.color
+                        )
 
 def _preparePlotParams( scan):
     '''
@@ -339,6 +381,7 @@ def _preparePlotParams( scan):
         hsh[ 'linestyle'] = scan.lineStyle.lower()
         hsh[ 'linewidth'] = scan.lineWidth
         hsh[ 'color'] = scan.lineColor
+        hsh[ 'marker'] = None
     else: 
         if scan.lineColor.upper() == 'NONE': 
             hsh[ 'marker'] = scan.symbol
@@ -353,8 +396,8 @@ def _preparePlotParams( scan):
             hsh[ 'markerfacecolor'] = scan.symbolColor
             hsh[ 'color'] = scan.lineColor
 
-    if scan.doty:
-        hsh[ 'xdate'] = True
+    #if scan.doty:
+    #    hsh[ 'xdate'] = True
 
     return hsh
 
@@ -369,15 +412,23 @@ def _createPlotItem( scan, nameList):
         scan.plotItem = Fig.add_subplot( scan.nrow, scan.ncol, scan.nplot)
         if scan.textOnly: 
             scan.plotItem.axis( 'off')
-            scan.plotItem.set_xlim( [0., 1.])
-            scan.plotItem.set_ylim( [0., 1.])
-            _addTexts( scan)
+            #+++scan.plotItem.set_xlim( [0., 1.])
+            #+++scan.plotItem.set_ylim( [0., 1.])
+            _addTexts( scan, nameList)
             return 
-            
     except Exception, e:
         print "graphics.createPlotItem: caught exception"
         print repr( e)
         raise ValueError( "graphics.createPlotItem, throwing exception")
+    #
+    # set the font size of the tick mark labels
+    #
+    fontSize = _GQE._getFontSize( nameList)
+
+    for tick in scan.plotItem.xaxis.get_major_ticks():
+                tick.label.set_fontsize(fontSize) 
+    for tick in scan.plotItem.yaxis.get_major_ticks():
+                tick.label.set_fontsize(fontSize) 
 
     #print "mpl_graphics.createPlotItem, autorange", scan.autorangeX, scan.autorangeY
 
@@ -398,28 +449,38 @@ def _createPlotItem( scan, nameList):
     if scan.yMin is None or scan.yMax is None:
         arY = True
 
-    scan.plotItem.set_autoscalex_on( arX)
-    scan.plotItem.set_autoscaley_on( arY)
+    if scan.doty: 
+        scan.plotItem.set_autoscalex_on( True)
 
     if not arX:
-        scan.plotItem.set_xlim( [scan.xMin, scan.xMax])
+        if not scan.doty: 
+            scan.plotItem.set_xlim( [scan.xMin, scan.xMax])
+    else: 
+        scan.plotItem.set_autoscalex_on( arX)
+
     if not arY:
-        scan.plotItem.set_ylim( [scan.yMin, scan.yMax])
+        if scan.yMin == scan.yMax:
+            scan.plotItem.set_ylim( [scan.yMin - 1., scan.yMax + 1])
+        else:
+            scan.plotItem.set_ylim( [scan.yMin, scan.yMax])
+    else:
+        scan.plotItem.set_autoscaley_on( arY)
 
     if scan.showGridX or scan.showGridY:
         scan.plotItem.grid( True)
     else:
         scan.plotItem.grid( False)
     
+
     _setTitle( scan, nameList)
 
     if _GQE._getNumberOfScansToBeDisplayed( nameList) < _defs._MANY_SCANS:
-        if hasattr( scan, 'xLabel'):
+        if hasattr( scan, 'xLabel') and scan.xLabel is not None:
             scan.plotItem.set_xlabel( scan.xLabel)
-        if hasattr( scan, 'yLabel'):
+        if hasattr( scan, 'yLabel') and scan.yLabel is not None:
             scan.plotItem.set_ylabel( scan.yLabel)
 
-    _addTexts( scan)
+    _addTexts( scan, nameList)
 
     return
 
@@ -486,7 +547,7 @@ def display( nameList = None):
     #
     _utils._setScanVPs( nameList, flagDisplaySingle)
 
-    _displayTitleComment()
+    _displayTitleComment( nameList)
     #
     # --- first pass: run through the scans in scanList and display 
     #     non-overlaid scans
@@ -528,9 +589,17 @@ def display( nameList = None):
 
             if scan.doty:
                 xDate = []
+                #
+                # [  0.01 ,   1.009,   2.008,   3.007,   4.006,   5.005,   6.004,
+                #    7.003,   8.002,   9.001,  10.   ]
+                # -> 
+                #  [ 737060.01 ,  737061.009,  737062.008,  737063.007,  737064.006,
+                # 737065.005,  737066.004,  737067.003,  737068.002,  737069.001, 737070.]
+                #
                 for x in scan.x[:(scan.currentIndex + 1)]:
                     xDate.append( _doty2datetime( x))
                 xDateMpl = matplotlib.dates.date2num( xDate)
+                scan.xDateMpl = xDateMpl[:]
                 hsh = _preparePlotParams( scan)
                 scan.plotDataItem, = scan.plotItem.plot_date( xDateMpl, 
                                                               scan.y[:(scan.currentIndex + 1)], 
@@ -560,11 +629,12 @@ def display( nameList = None):
             continue
 
         if scan.doty:
-            xDate = []
-            for x in scan.x[:(scan.currentIndex + 1)]:
-                xDate.append( _doty2datetime( x))
-            xDateMpl = matplotlib.dates.date2num( xDate)
-            scan.plotItem.plot_date( xDateMpl, scan.y)
+            pass
+            #xDate = []
+            #for x in scan.x[:(scan.currentIndex + 1)]:
+            #    xDate.append( _doty2datetime( x))
+            #xDateMpl = matplotlib.dates.date2num( xDate)
+            #scan.plotItem.plot_date( xDateMpl, scan.y)
         else:
             scan.plotDataItem.set_data( scan.x[:(scan.currentIndex + 1)], 
                                         scan.y[:(scan.currentIndex + 1)])
@@ -610,21 +680,42 @@ def display( nameList = None):
             plt.setp( scan.plotItem.get_yticklabels(), visible=False)
 
         hsh = _preparePlotParams( scan)
-        scan.plotDataItem, = scan.plotItem.plot( scan.x[:(scan.currentIndex + 1)], 
-                                                 scan.y[:(scan.currentIndex + 1)], 
-                                                 **hsh)
 
-        scan.plotItem.relim()
-        scan.plotItem.autoscale_view( True, True, True)
+        #
+        # follow the target scan as far as the axes are concerned
+        #
+        if target.doty:
+            scan.plotItem.plot_date( target.xDateMpl, scan.y, **hsh)
+        else:
+            scan.plotItem.plot( scan.x[:(scan.currentIndex + 1)], 
+                                scan.y[:(scan.currentIndex + 1)], 
+                                **hsh)
+        #
+        # Recompute the data limits based on current artists. 
+        # If you want to exclude invisible artists from the calculation, 
+        # set visible_only=True
+        #
+        #scan.plotItem.relim()
+        #
+        # Axes.autoscale_view(tight=None, scalex=True, scaley=True)
+        # Autoscale the view limits using the data limits
+        #
+        #scan.plotItem.autoscale_view( True, True, True)
 
         scan.lastIndex = scan.currentIndex
-        #if scan.yMin is None:
-        #    scan.plotItem.set_autoscale_on( True)
-        #else:
-        #    scan.plotItem.set_ylim( scan.yMin, scan.yMax)
-        scan.plotItem.set_xlim( scan.xMin, scan.xMax)
+        if scan.yMin is None:
+            scan.plotItem.set_autoscale_on( True)
+        else:
+            scan.plotItem.set_ylim( scan.yMin, scan.yMax)
+
+        if not scan.doty:
+            scan.plotItem.set_xlim( scan.xMin, scan.xMax)
 
     plt.draw()
     if Canvas is not None:
-        Canvas.draw()
+        try:
+            Canvas.draw()
+        except Exception, e:
+            print "mpl_graphics.display: caught exception from Canvas.draw"
+            print repr( e)
     return

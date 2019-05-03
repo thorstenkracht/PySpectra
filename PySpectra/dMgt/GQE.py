@@ -33,14 +33,20 @@ _ScanAttrs = [ 'at', 'autorangeX', 'autorangeY', 'colSpan', 'currentIndex',
                'textList', 'lineWidth', 'xMax', 'xMin',
               'xLabel', 'yLabel', 'yMin', 'yMax'] 
 
-class _Text(): 
+class Text(): 
     '''
-    Texts live on the viewport of a scan. Therefore: x [0., 1.], y [0., 1.]
+    Texts belong to a Scan, created by Scan.addText(), they are stored in Scan.textList.
+    text: 'someString'
+    x: [0., 1.]
+    y: [0., 1.]
     hAlign: 'left', 'right', 'center'
     vAlign: 'top', 'bottom', 'center'
+    color: 'red', 'green', 'blue', 'yellow', 'cyan', 'magenta', 'black'
+    fontSize: e.g. 12 or None
+      if None, the fontsize is chosen automatically depending on the number of plots
     '''
     def __init__( self, text = 'Empty', x = 0.5, y = 0.5, 
-                  hAlign = 'left', vAlign = 'top', color = 'black'): 
+                  hAlign = 'left', vAlign = 'top', color = 'black', fontSize = None): 
 
         self.text = text
         self.x = x
@@ -48,6 +54,7 @@ class _Text():
         self.hAlign = hAlign
         self.vAlign = vAlign
         self.color = color
+        self.fontSize = fontSize
 '''
 A value of (0,0) sets the upper-left corner
                      of the text box to be at the position specified by setPos(), while a value of (1,1)
@@ -55,14 +62,43 @@ A value of (0,0) sets the upper-left corner
 '''
 class Scan():
     '''
-    create a scan
-      - a scan contains 2 arrays, x and y, and graphics attributes
+    A Scan contains 2 arrays, x and y, and graphics attributes
 
     PySpectra.Scan( name = 'name', filename = 'test.fio', x = 1, y = 2)
     PySpectra.Scan( name = 'name', x = xArr, y = yArr)
     PySpectra.Scan( name = 'name', xMin = 0., xMax = 10., nPts = 101)
     PySpectra.Scan( name = 'name')
       the same as PySpectra.Scan( name = 'name', xMin = 0., xMax = 10., nPts = 101)
+
+    The attributes: 
+        autorangeX, autorangeY
+                    if you know the x-range beforehand, set autorangeY to False
+        colSpan:    def.: 1
+        doty:       bool
+                    if True, the x-axis tick mark labels are dates, def. False
+        fileName:   string
+        xLog, 
+        yLog:       bool
+                    def. False
+        overlay:    string 
+                    the name of the scan occupying the target viewport 
+        showGridX, 
+        showGridY:  True/False
+        lineColor:  'red', 'green', 'blue', 'yellow', 'cyan', 'magenta', 'black', 'NONE'
+        lineStyle:  'None', 'SOLID', 'DASHED', 'DOTTED', 'DASHDOTTED', 'DASHDOTDOTTED'
+                    if None, the line is not plotted
+        lineWidth:  float: 1.0, 1.2, 1.4, 1.6, 1.8, 2.0
+                    line width, def.: 1
+        symbol:     string
+                    o - circle, s - square, t - triangle, d - diamond, + - plus
+        symbolColor: 
+                    def.: NONE
+        symbolSize: float
+                    def.: 5
+        xLabel:     string
+                    the description of the x-axis, def. 'position'
+        yLabel:     string
+                    the description of the y-axis, def. 'signal'
     '''
     #
     # this class variable stores the Gui, needed to configure the motorsWidget, 
@@ -107,7 +143,7 @@ class Scan():
            'x' not in kwargs and 'y' in kwargs:
             raise ValueError( "GQE.Scan.__init__: if 'x' or 'y' then both have to be supplied")
         #
-        # noData means no texts
+        # textOnly scans have no data, consist of Texts( in textList) only
         #
         if 'textOnly' in kwargs:
             self.textOnly = True
@@ -258,6 +294,7 @@ class Scan():
         self.xMax = _np.max( self.x)
         self.yMin = _np.min( self.y)
         self.yMax = _np.max( self.y)
+        self.yMax += (self.yMax - self.yMin)*0.05
 
         self.dType = type( self.x[0])
 
@@ -323,42 +360,12 @@ class Scan():
 
     def setAttr( self, kwargs):
         '''
-        set the graphics attributes of a scan
+        set the graphics attributes of a scan, see docu in Scan()
 
-        Parameters
-        ----------
-        name:    string
-                 The name of the scan
-        autorangeX, autorangeY
-                 if you know the x-range beforehand, set autorangeY to False
-        colSpan: def.: 1
-        doty:    def. False
-        fileName 
-        xLog, yLog: bool
-                 def. False
-        overlay: string 
-                 the name of the scan occupying the target viewport 
-        showGridX, 
-        showGridY: True/False
-        lineColor:   'red', 'green', 'blue', 'yellow', 'cyan', 'magenta', 'black', 'NONE'
-        lineStyle:   'None', 'SOLID', 'DASHED', 'DOTTED', 'DASHDOTTED', 'DASHDOTDOTTED'
-        lineWidth:   float: 1.0, 1.2, 1.4, 1.6, 1.8, 2.0
-                 line width, def.: 1
-        symbol:  o, s, t, d, +,
-                 o - o, s - square, t - triangle, d - diamond, + - +
-        symbolColor: def.: NONE
-        symbolSize: 5
-        xLabel:  string
-                 the description of the x-axis, def. 'position'
-        yLabel:  string
-                 the description of the y-axis, def. 'signal'
-
-        Returns
-        -------
-        None
+        Returns None
         '''
 
-        self.at = None
+        # self.at = None
         self.autorangeX = False
         self.autorangeY = False
         self.colSpan = 1
@@ -376,6 +383,8 @@ class Scan():
         self.lineColor = 'red'
         self.lineStyle = 'SOLID'
         self.lineWidth = 1.
+        self.mouseProxy = None
+        self.mouseClick = None
         self.symbol = 'o'
         self.symbolColor = 'NONE'
         self.symbolSize = 10
@@ -440,21 +449,11 @@ class Scan():
                                       (scan.name, str( self.at), self.name))
         return 
 
-    def addText( self, text = 'Empty', x = 0.5, y = 0.5, hAlign = 'left', vAlign = 'top', color = 'black'):
+    def addText( self, text = 'Empty', x = 0.5, y = 0.5, hAlign = 'left', vAlign = 'top', color = 'black', fontSize = None):
         '''
-        Creates a text 
-
-        The object is appended to the textList of the scan.
-
-        Parameters: 
-        -----------
-        x, y: float
-          the coordinates w.r.t the viewbox [0., 1.0]
-        hAlign: 'left', 'center', 'right'
-        vAlign: 'top', 'center', 'bottom'
-        color:  'red', 'green', ...
+        Docu can found in Text()
         '''
-        txt = _Text( text, x, y, hAlign, vAlign, color)
+        txt = Text( text, x, y, hAlign, vAlign, color, fontSize)
         self.textList.append( txt)
 
     def setY( self, index, yValue):
@@ -674,10 +673,22 @@ def show( scanName = None):
     if _comment: 
         print "Comment:", _comment
 
+def _displayTextList( scan): 
+    for text in scan.textList:
+        print "  text:", text.text
+        print "    x: %g, y: %g" % (text.x, text.y)
+        print "    hAlign: %s, vAlign: %s" % ( str(text.hAlign), str(text.vAlign))
+        print "    color: %s" % str( text.color)
+    return 
+
 def _showScan( scan): 
     '''
     
     '''
+    if scan.textOnly: 
+        print "--- \n", scan.name, "(textOnly)"
+        _displayTextList( scan)
+        return 
     #
     # create a local copy of ScanAttrs to delete elements which
     # are already shown
@@ -728,6 +739,11 @@ def _showScan( scan):
         except Exception, e:
             print "GQE._showScan: trouble with", scan.name
             print repr( e)
+
+    if len( scan.textList) > 0:
+        _displayTextList( scan)
+
+    return 
 
 def _nextScan():
     '''
@@ -801,6 +817,10 @@ def read( fileName, x = 1, y = None, flagMCA = False):
     if flagMCA, the input file contains MCA data, no x-axis
     '''
     #print "+++GQE.read: %s, x %s, y %s, flagMCA %s" % ( fileName, repr( x), repr( y), repr( flagMCA))
+    #
+    # fioReader may throw an exception, e.g. if the file does not exist.
+    # Do not catch it here, leave it to the application
+    #
     fioObj = _HasyUtils.fioReader( fileName, flagMCA)
 
     if y is not None:
@@ -830,15 +850,26 @@ def write( lst = None):
     #
     # check if all scans have the same length
     #
-    lngth = len( _scanList[0].x)
-    obj = _HasyUtils.fioObj( namePrefix = "pysp")
+    length = None
     for scan in _scanList:
+        if scan.textOnly: 
+            continue
         if lst is not None:
             if scan.name not in lst:
                 continue
-        if lngth != len( scan.x): 
-            raise ValueError( "GQE.display: wrong length %s" % scan.name)
+        if length is None:
+            length = len( scan.x)
+            continue
+        if length != len( scan.x):
+            raise ValueError( "GQE.write: wrong length %s" % scan.name)
     
+    obj = _HasyUtils.fioObj( namePrefix = "pysp")
+    for scan in _scanList:
+        if scan.textOnly: 
+            continue
+        if lst is not None:
+            if scan.name not in lst:
+                continue
         col = _HasyUtils.fioColumn( scan.name)
         col.x = scan.x
         col.y = scan.y
@@ -910,33 +941,90 @@ def _isArrayLike( x):
         return True
     else:
         return False
+
+def _getFontSize( nameList): 
+    '''
+    depending on how many scans are displayed the font size is adjusted
+    '''
+    if _getNumberOfScansToBeDisplayed( nameList) < _defs._MANY_SCANS:
+        fontSize = _defs._FONT_SIZE_NORMAL
+    elif _getNumberOfScansToBeDisplayed( nameList) <= _defs._VERY_MANY_SCANS:
+        fontSize = _defs._FONT_SIZE_SMALL
+    else: 
+        fontSize = _defs._FONT_SIZE_VERY_SMALL
+
+    return fontSize
+
 #
 # some test scans
 #
 def testCreate1( self):
     '''
-    create 1 scans
+    create 1 scan with several texts
     '''
     _pysp.cls()
     delete()
     setTitle( "Ein Titel")
-    setComment( "Ein Kommentar")
-    t1 = Scan( name = "t1", lineColor = 'blue', yLabel = 'sin')
-    t1.y = _np.sin( t1.x)
+    setComment( "Sinus(), nach oben verschoben")
+    t1 = Scan( name = "t1", xMin = 0.01, xMax = 10., nPts = 101, lineColor = 'blue', yLabel = 'sin')
+    t1.addText( text = "a left/center aligned text", x = 0.05, y = 0.8, hAlign = 'left', vAlign = 'center')
+    t1.addText( text = "a right/centeraligned text", x = 0.95, y = 0.8, hAlign = 'right', vAlign = 'center')
+    t1.addText( text = "a center/top aligned text, red, fontSize: 10", x = 0.5, y = 0.5, hAlign = 'center', 
+                vAlign = 'top', fontSize=10, color = 'red')
+    t1.addText( text = "a center/center aligned text", x = 0.5, y = 0.5, hAlign = 'center', vAlign = 'center')
+    t1.addText( text = "a center/bottom aligned text", x = 0.5, y = 0.5, hAlign = 'center', vAlign = 'bottom')
+    t1.y = _np.sin( t1.x) + 1.001
     _pysp.display()
 
-def testCreate2():
+def testCreate2OverlayDoty():
     '''
-    create 2 scans
+    create 2 overlaid scans
+    '''
+    _pysp.cls()
+    delete()
+    setTitle( "2 Overlaid Scans")
+    t1 = Scan( name = "t1", xMin = 0, xMax = 10, nPts = 101, lineColor = 'blue', 
+               yLabel = 'sin', doty = True)
+    t1.y = _np.sin( t1.x)
+    t2 = Scan( "t2", yLabel = 'cos', xMin = 0, xMax = 10, nPts = 101, lineColor = 'green', doty = True)
+    t2.y = _np.cos( t2.x)
+    t2.overlay = "t1"
+    _pysp.display()
+
+def testCreate2Overlay():
+    '''
+    create 2 overlaid scans
+    '''
+    _pysp.cls()
+    delete()
+    setTitle( "2 Overlaid Scans")
+    t1 = Scan( name = "t1", xMin = 0, xMax = 10, nPts = 101, lineColor = 'blue', 
+               yLabel = 'sin')
+    t1.y = _np.sin( t1.x)
+    t2 = Scan( "t2", yLabel = 'cos', xMin = 0, xMax = 10, nPts = 101, lineColor = 'red')
+    t2.y = _np.cos( t2.x)
+    overlay( 't2', 't1')
+    _pysp.display()
+
+def testCreate3():
+    '''
+    create 3 scans
     '''
     _pysp.cls()
     delete()
     setTitle( "Ein Titel")
     setComment( "Ein Kommentar")
+    textScan = Scan( name = "textContainer", textOnly = True)
+    textScan.addText( text = "some information", 
+                      x = 0., y = 0.95, color = 'blue')
+    textScan.addText( text = "and more infos", 
+                      x = 0., y = 0.85, color = 'blue')
     t1 = Scan( name = "t1", lineColor = 'blue', yLabel = 'sin')
     t1.y = _np.sin( t1.x)
     t2 = Scan( "t2", yLabel = 'cos', symbol = 'o', symbolColor = 'red', symbolSize = 5)
     t2.y = _np.cos( t2.x)
+    t3 = Scan( "t3", yLabel = 'tan', symbol = '+', lineColor = 'cyan', symbolColor = 'green', symbolSize = 5)
+    t3.y = _np.tan( t3.x)
     _pysp.display()
 
 def testCreate5():
@@ -1048,3 +1136,4 @@ def testCreateGauss():
     sigma = 1.
     g.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g.y-mu)**2/(2*sigma**2))
     _pysp.display()
+

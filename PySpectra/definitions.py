@@ -3,8 +3,16 @@
 from PyQt4 import QtCore as _QtCore
 from PyQt4 import QtGui as _QtGui
 
+#
+# if there are more scans than MANY_SCANS the x- and y-labels
+# are suppressed and the title is moved into the plot
+#
+_MANY_SCANS = 20
+_VERY_MANY_SCANS = 30
+
 _FONT_SIZE_NORMAL = 14
-_FONT_SIZE_SMALL = 12    # number of scans > MANY_SCANS
+_FONT_SIZE_SMALL = 12         # number of scans > MANY_SCANS
+_FONT_SIZE_VERY_SMALL = 10    # number of scans > VERY_MANY_SCANS
 
 _dataFormats = [ 'fio', 'dat', 'iint']
 
@@ -169,8 +177,3 @@ _lineStyle = {
     'DASHDOTDOTTED': _QtCore.Qt.DashDotDotLine,
 }
 
-#
-# if there are more scans than MANY_SCANS the x- and y-labels
-# are suppressed and the title is moved into the plot
-#
-_MANY_SCANS = 20

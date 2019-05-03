@@ -4,6 +4,7 @@
 This is the main PySpectra Gui class. It is used by pyspMonitor, pyspViewer. 
 Both applications select the graphics library in their first code lines. 
 '''
+
 import sys, os, argparse, math, PyTango, time
 from PyQt4 import QtGui, QtCore
 import numpy as np
@@ -23,6 +24,8 @@ win = None
 ACTIVITY_SYMBOLS = ['|', '/', '-', '\\', '|', '/', '-', '\\'] 
 updateTime = 0.5
 
+HISTORY_MAX = 100
+
 class HLineTK( QtGui.QFrame):
     def __init__( self):
         QtGui.QFrame.__init__(self)
@@ -34,11 +37,12 @@ class QListWidgetTK( QtGui.QListWidget):
     newItemSelected is called, if a new item is selected, 
     can be a file, a directory or a scan
     '''
-    def __init__( self, parent, newItemSelected, name): 
+    def __init__( self, parent, newItemSelected, name, logWidget): 
         QtGui.QListWidget.__init__(self)
         self.parent = parent
         self.newItemSelected = newItemSelected
         self.name = name
+        self.logWidget = logWidget
         self.connect( self, QtCore.SIGNAL("itemDoubleClicked (QListWidgetItem *)"),self.cb_doubleClicked)
 
     def keyPressEvent (self, eventQKeyEvent):
@@ -90,9 +94,68 @@ class QListWidgetTK( QtGui.QListWidget):
                 self.parent.displayChecked()
         if event.button() == QtCore.Qt.RightButton:
             item = self.currentItem()
+            scan = pysp.getScan( item.text())
+            if scan.textOnly: 
+                self.logWidget.append( "%s is textOnly" % item.text())
+                return 
             self.scanAttributes = ScanAttributes( self.parent, item.text())
         return 
 
+class QLineEditTK( QtGui.QLineEdit): 
+    '''
+    '''
+    def __init__( self, parent): 
+        QtGui.QListWidget.__init__(self)
+        self.parent = parent
+        self.history = []
+        self.historyIndex = 0
+
+    def storeHistory( self, text): 
+        if len( self.history) >= HISTORY_MAX: 
+            self.history = self.history[1:]
+        self.history.append( str(text))
+        self.historyIndex = len( self.history) - 1
+        #print "store", self.historyIndex, repr( self.history)
+        return 
+
+    def getPrevious( self): 
+        if self.historyIndex < 0:
+            return ""
+        self.historyIndex -= 1
+        return self.history[ self.historyIndex + 1] 
+        
+    def getNext( self): 
+        if len( self.history) == 0:
+            return ""
+        self.historyIndex += 1
+
+        if self.historyIndex < len( self.history): 
+            return self.history[ self.historyIndex] 
+
+        self.historyIndex -= 1
+        return ""
+
+    def keyPressEvent (self, eventQKeyEvent):
+        key = eventQKeyEvent.key()
+
+        if key == QtCore.Qt.Key_Down:
+            text = self.getNext()
+            self.clear()
+            self.insert( text)
+            #print "key down", key
+        elif key == QtCore.Qt.Key_Up:
+            text = self.getPrevious()
+            self.clear()
+            self.insert( text)
+            #print "key up", key
+        elif key == QtCore.Qt.Key_Return:
+            self.storeHistory( self.text())
+            #print "key return", key
+        else: 
+            #print "else: key", key
+            pass
+
+        return QtGui.QLineEdit.keyPressEvent(self, eventQKeyEvent)
 #
 #
 #
@@ -550,10 +613,12 @@ class ScanAttributes( QtGui.QMainWindow):
 
     def cb_helpWidget(self):
         QtGui.QMessageBox.about(self, self.tr("Help Widget"), self.tr(
-                "<h3> ScanAttributes</h3>"
-                "The attributes of a scan"
+                "<h3> ScanAttributes Widget </h3>"
                 "<ul>"
-                "<li> some remarks</li>"
+                "<li> Lines/markers are disabled by selecting the color NONE</li>"
+                "<li> yMin/yMax are reset to None by entering 'None' into the LineEdit widgets.</li>"
+                "<li> 'DOTY' is day-of-the-year, the x-axis ticks are date/time</li>"
+                "<li> 'Overlay' selects the target scan, meaning that the current scan is displayed in the viewport of the target scan.</li>"
                 "</ul>"
                 ))
 
@@ -627,13 +692,11 @@ class MplWidget( QtGui.QMainWindow):
         self.exitAction.triggered.connect( self.close)
         self.fileMenu.addAction( self.exitAction)
 
-
         #
         # the activity menubar: help and activity
         #
         self.menuBarHelp = QtGui.QMenuBar( self.menuBar)
         self.menuBar.setCornerWidget( self.menuBarHelp, QtCore.Qt.TopRightCorner)
-
 
         #
         # Help menu (bottom part)
@@ -683,6 +746,7 @@ class MplWidget( QtGui.QMainWindow):
             os.system( "evince %s &" % fileName)
         else:
             self.logWidget.append( "failed to create PDF file")
+
         
     def cb_dotyChanged( self):
         self.scan.doty = self.w_dotyCheckBox.isChecked()
@@ -694,12 +758,19 @@ class MplWidget( QtGui.QMainWindow):
 class pySpectraGui( QtGui.QMainWindow):
     '''
     '''
-    def __init__( self, files = None, parent = None, calledFromMonitorApp = False):
+    def __init__( self, files = None, parent = None, 
+                  calledFromSardanaMonitor = False, 
+                  flagExitOnClose = False):
         #print "pySpectraGui.__init__"
         super( pySpectraGui, self).__init__( parent)
-
-        self.calledFromMonitorApp = calledFromMonitorApp
-
+        #
+        # called from SardanaMonitor? If so, do not show motor list
+        #
+        self.calledFromSardanaMonitor = calledFromSardanaMonitor
+        #
+        # exitOnClose: there are applications that want to exit, if the Gui is closed
+        #
+        self.flagExitOnClose = flagExitOnClose
         
         self.setWindowTitle( "PySpectraGui")
 
@@ -745,6 +816,7 @@ class pySpectraGui( QtGui.QMainWindow):
         #
         # compromise: start with a big widget (DINA4) in QtGui
         #
+        self.mplWidget = None
         if __builtin__.__dict__[ 'graphicsLib'] == 'matplotlib':
             self.mplWidget = MplWidget( self.logWidget)        
             self.mplWidget.show()
@@ -775,6 +847,10 @@ class pySpectraGui( QtGui.QMainWindow):
         # scroll areas: left: file view, right: scans
         #
         hBox = QtGui.QHBoxLayout()
+        #
+        # create the logWidget here because it is need a few lines below
+        #
+        self.logWidget = QtGui.QTextEdit()
 
         #
         # the files ListWidget
@@ -784,7 +860,7 @@ class pySpectraGui( QtGui.QMainWindow):
         vBox.addWidget( self.dirNameLabel)
         self.scrollAreaFiles = QtGui.QScrollArea()
         vBox.addWidget( self.scrollAreaFiles)
-        self.filesListWidget = QListWidgetTK( self, self.newPathSelected, "filesListWidget")
+        self.filesListWidget = QListWidgetTK( self, self.newPathSelected, "filesListWidget", self.logWidget)
         self.scrollAreaFiles.setWidget( self.filesListWidget)
         hBox.addLayout( vBox)
         #
@@ -795,22 +871,28 @@ class pySpectraGui( QtGui.QMainWindow):
         vBox.addWidget( self.fileNameLabel)
         self.scrollAreaScans = QtGui.QScrollArea()
         vBox.addWidget( self.scrollAreaScans)
-        self.scansListWidget = QListWidgetTK( self, self.newScanSelected, "scansListWidget")
+        self.scansListWidget = QListWidgetTK( self, self.newScanSelected, "scansListWidget", self.logWidget)
         self.scrollAreaScans.setWidget( self.scansListWidget)
         hBox.addLayout( vBox)
 
         self.layout_v.addLayout( hBox)
         #
-        # the log widget
+        # the log widget, has been created a few lines up
         #
-        self.logWidget = QtGui.QTextEdit()
+        #self.logWidget = QtGui.QTextEdit()
         self.logWidget.setMaximumHeight( 100)
         self.logWidget.setReadOnly( 1)
         self.layout_v.addWidget( self.logWidget)
         #
+        #
+        #
+        #self.a = {'text': ''}
+        #self.console = EmbedIPython(testing=123, a=self.a)
+        #self.layout_v.addWidget( self.console)
+        #
         # motors and Macroserver
         #
-        if self.calledFromMonitorApp: 
+        if self.calledFromSardanaMonitor: 
             self.addHardwareFrame()
 
         self.addScanFrame()
@@ -912,12 +994,14 @@ class pySpectraGui( QtGui.QMainWindow):
         #
         # the lineEdit line
         #
-        #hBox = QtGui.QHBoxLayout()
-        #self.lineEdit = QtGui.QLineEdit()
-        #hBox.addWidget( self.lineEdit)
-        #self.layout_frame_v.addLayout( hBox)
-        #QtCore.QObject.connect( self.lineEdit, 
-        #                        QtCore.SIGNAL("returnPressed()"),self.cb_lineEdit)
+        hBox = QtGui.QHBoxLayout()
+
+        self.lineEdit = QLineEditTK( self)
+        hBox.addWidget( self.lineEdit)
+        self.layout_frame_v.addLayout( hBox)
+        QtCore.QObject.connect( self.lineEdit, 
+                                QtCore.SIGNAL("returnPressed()"),self.cb_lineEdit)
+        self.lineEdit.hide()
         #
         # prev, all, checked, next
         #
@@ -1158,7 +1242,13 @@ class pySpectraGui( QtGui.QMainWindow):
         self.scansListWidget.setCurrentRow( index)
 
     def cb_lineEdit( self): 
-        pysp.ipython.ifc.command( str(self.lineEdit.text()))
+        #+++pysp.ipython.ifc.command( str(self.lineEdit.text()))
+        try: 
+            exec str( self.lineEdit.text())
+        except Exception, e:
+            self.logWidget.append( "command: %s" % str( self.lineEdit.text()))
+            self.logWidget.append( "caused the exception\n %s" % repr( e))
+            
         self.lineEdit.clear()
     #
     # the menu bar
@@ -1174,13 +1264,23 @@ class pySpectraGui( QtGui.QMainWindow):
         self.writeFileAction.triggered.connect( self.cb_writeFile)
         self.fileMenu.addAction( self.writeFileAction)
 
+        self.createPDFAction = QtGui.QAction('Create PDF', self)        
+        self.createPDFAction.setStatusTip('Create a PDF file')
+        self.createPDFAction.triggered.connect( self.cb_createPDF)
+        self.fileMenu.addAction( self.createPDFAction)
+
+        self.createPDFPrintAction = QtGui.QAction('Create PDF and print', self)        
+        self.createPDFPrintAction.setStatusTip('Create a PDF file and send it to PRINTER')
+        self.createPDFPrintAction.triggered.connect( self.cb_createPDFPrint)
+        self.fileMenu.addAction( self.createPDFPrintAction)
+
         if __builtin__.__dict__[ 'graphicsLib'] != 'matplotlib':
             self.matplotlibAction = QtGui.QAction('matplotlib', self)        
             self.matplotlibAction.setStatusTip('Launch matplotlib to create ps or pdf output')
             self.matplotlibAction.triggered.connect( self.cb_matplotlib)
             self.fileMenu.addAction( self.matplotlibAction)
 
-        self.miscMenu = self.menuBar.addMenu('&Misc')
+        self.miscMenu = self.menuBar.addMenu('Misc')
 
         self.editAction = QtGui.QAction('Edit', self)        
         self.editAction.triggered.connect( self.cb_edit)
@@ -1232,12 +1332,20 @@ class pySpectraGui( QtGui.QMainWindow):
         #
         self.scanListsMenu = self.menuBar.addMenu('&TestData')
 
-        self.sl1Action = QtGui.QAction('1 Scan', self)        
+        self.sl1Action = QtGui.QAction('1 Scan with texts', self)        
         self.sl1Action.triggered.connect( pysp.testCreate1)
         self.scanListsMenu.addAction( self.sl1Action)
 
-        self.sl2Action = QtGui.QAction('2 Scans', self)        
-        self.sl2Action.triggered.connect( pysp.testCreate2)
+        self.sl10Action = QtGui.QAction('2 overlaid Scans, Doty', self)        
+        self.sl10Action.triggered.connect( pysp.testCreate2OverlayDoty)
+        self.scanListsMenu.addAction( self.sl10Action)
+
+        self.sl11Action = QtGui.QAction('2 overlaid Scans', self)        
+        self.sl11Action.triggered.connect( pysp.testCreate2Overlay)
+        self.scanListsMenu.addAction( self.sl11Action)
+
+        self.sl2Action = QtGui.QAction('3 Scans, with textbox', self)        
+        self.sl2Action.triggered.connect( pysp.testCreate3)
         self.scanListsMenu.addAction( self.sl2Action)
 
         self.sl3Action = QtGui.QAction('5 Scans', self)        
@@ -1273,6 +1381,13 @@ class pySpectraGui( QtGui.QMainWindow):
         self.exitAction.triggered.connect( self.cb_close)
         self.fileMenu.addAction( self.exitAction)
 
+
+        self.debugMenu = self.menuBar.addMenu('&Debug')
+
+        self.execAction = QtGui.QAction('Python command line', self)        
+        self.execAction.triggered.connect( self.cb_exec)
+        self.debugMenu.addAction( self.execAction)
+
         #
         # the activity menubar: help and activity
         #
@@ -1307,12 +1422,25 @@ class pySpectraGui( QtGui.QMainWindow):
         self.deleteBtn.setToolTip( "Delete checked scans")
         self.deleteBtn.setShortcut( "Alt+d")
 
-        if __builtin__.__dict__[ 'graphicsLib'] == 'matplotlib':
-            self.pdfBtn = QtGui.QPushButton(self.tr("&PDF")) 
-            self.statusBar.addWidget( self.pdfBtn) 
-            self.pdfBtn.clicked.connect( self.cb_pdf)
-            self.pdfBtn.setShortcut( "Alt+p")
-            self.pdfBtn.setToolTip( "Create PDF file")
+        self.showBtn = QtGui.QPushButton(self.tr("&Show")) 
+        self.statusBar.addWidget( self.showBtn) 
+        self.showBtn.clicked.connect( self.cb_show)
+        self.showBtn.setToolTip( "Print info about the scans")
+        self.showBtn.setShortcut( "Alt+s")
+
+        if __builtin__.__dict__[ 'graphicsLib'] != 'matplotlib':
+            self.matplotlibBtn = QtGui.QPushButton(self.tr("&Matplotlib")) 
+            self.statusBar.addWidget( self.matplotlibBtn) 
+            self.matplotlibBtn.clicked.connect( self.cb_matplotlib)
+            self.matplotlibBtn.setToolTip( "Print info about the scans")
+            self.matplotlibBtn.setShortcut( "Alt+m")
+
+        #if __builtin__.__dict__[ 'graphicsLib'] == 'matplotlib':
+        #    self.pdfBtn = QtGui.QPushButton(self.tr("&PDF")) 
+        #    self.statusBar.addWidget( self.pdfBtn) 
+        #    self.pdfBtn.clicked.connect( self.cb_pdf)
+        #    self.pdfBtn.setShortcut( "Alt+p")
+        #    self.pdfBtn.setToolTip( "Create PDF file")
 
         self.clearLog = QtGui.QPushButton(self.tr("&ClearLog")) 
         self.statusBar.addPermanentWidget( self.clearLog) # 'permanent' to shift it right
@@ -1325,9 +1453,21 @@ class pySpectraGui( QtGui.QMainWindow):
         self.exit.clicked.connect( self.cb_close)
         self.exit.setShortcut( "Alt+x")
 
+    def cb_createPDF( self): 
+        fName = pysp.createPDF()
+        print "Created %s" % fName
+
+    def cb_createPDFPrint( self): 
+        pysp.createPDF( flagPrint = True)
+
     def cb_close( self): 
         pysp.close()
+        if self.mplWidget is not None:
+            self.mplWidget.close()
+            self.mplWidget = None
         self.close()
+        if self.flagExitOnClose:
+            sys.exit( 0)
 
     def cb_clearLog( self): 
         self.logWidget.clear()
@@ -1360,6 +1500,9 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.cls()
         pysp.display()
         return 
+
+    def cb_show( self): 
+        pysp.show()
 
     def cb_pdf( self): 
         fileName = mpl_graphics.createPDF()
@@ -1404,6 +1547,13 @@ class pySpectraGui( QtGui.QMainWindow):
             editor = 'emacs'
         os.system( "%s %s&" % (editor, fName))
         
+    def cb_exec( self): 
+        if self.lineEdit.isHidden(): 
+            self.lineEdit.show()
+        else:
+            self.lineEdit.hide()
+            
+
     def cb_derivative( self):
         displayList = gqe._getDisplayList()
         if len( displayList) != 1:

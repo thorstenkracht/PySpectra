@@ -3,12 +3,9 @@
 the main programs that imports pySpectraGui
 '''
 import __builtin__
-#__builtin__.__dict__[ 'graphicsLib'] = 'matplotlib'
-#__builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
-#import PySpectra as pysp
-#import pySpectraGui
  
 import argparse, sys, os
+
 from PyQt4 import QtGui, QtCore
 
 def parseCLI():
