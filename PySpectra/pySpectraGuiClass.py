@@ -5,10 +5,10 @@ This is the main PySpectra Gui class. It is used by pyspMonitor, pyspViewer.
 Both applications select the graphics library in their first code lines. 
 '''
 
-import sys, os, argparse, math, PyTango, time
+import sys, os, argparse, math, time
 from PyQt4 import QtGui, QtCore
 import numpy as np
-import HasyUtils
+#import HasyUtils
 import __builtin__
 
 import PySpectra as pysp
@@ -967,7 +967,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.layout_frame_v.addLayout( hBox)
 
     def updateMotorWidgets( self): 
-        
+        import PyTango
         if self.nMotor == 0: 
             return 
 
@@ -1037,6 +1037,8 @@ class pySpectraGui( QtGui.QMainWindow):
         '''
         execute AbortMacro on Door
         '''
+        import HasyUtils
+        import PyTango
         if self.proxyDoor is None:
             try:
                 self.proxyDoor = PyTango.DeviceProxy( HasyUtils.getDoorNames()[0])
@@ -1050,6 +1052,8 @@ class pySpectraGui( QtGui.QMainWindow):
         '''
         execute StopMacro on Door
         '''
+        import HasyUtils
+        import PyTango
         if self.proxyDoor is None:
             try:
                 self.proxyDoor = PyTango.DeviceProxy( HasyUtils.getDoorNames()[0])
@@ -1060,9 +1064,11 @@ class pySpectraGui( QtGui.QMainWindow):
             self.proxyDoor.StopMacro()
 
     def cb_stopAllMoves( self): 
+        import HasyUtils
         HasyUtils.stopAllMoves()
 
     def cb_requestStop( self): 
+        import HasyUtils
         HasyUtils.setEnv( "RequestStop", True)
         self.logWidget.append( "RequestStop == True")
         
@@ -1215,6 +1221,7 @@ class pySpectraGui( QtGui.QMainWindow):
         patternList is specified on the command line
         '''
         argout = []
+        import HasyUtils
         for file in os.listdir( "."):
             fileNameTokens = file.split( '.')
             if fileNameTokens[-1] in defs._dataFormats:

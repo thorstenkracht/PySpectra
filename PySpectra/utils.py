@@ -314,6 +314,74 @@ def _setScanVPs( nameList, flagDisplaySingle):
                 raise ValueError( "utils.setScanVPs: nrow %d * ncol %d < nplot %d" % (scan.nrow, scan.ncol, scan.nplot))
             nplot += 1
 
+_initInkey = False
+_initInkeyOldTermAttr = None
+
+def _inkeyExitHandler(): 
+    global _initInkey
+    global _initInkeyOldTermAttr
+    import termios as _termios
+
+    if not _initInkey:
+        return
+    _initInkey = False
+    _termios.tcsetattr( _sys.stdin.fileno(), _termios.TCSADRAIN, _initInkeyOldTermAttr)
+    return
+
+def inkey( resetTerminal = None):
+    '''
+    Return the pressed key, nonblocking. Returns -1, if no key was pressed.
+
+    while 1:
+        ....
+        if HasyUtils.inkey() ==  32:  # space bar
+            break
+
+    Use
+      HasyUtils.inkey( True) 
+    to reset the terminal characteristic explicitly. This has to be
+    done in particular, if you use sys.exitfunc = yourExitHandler
+    which overrides the inkey() exit handler
+    '''
+    global _initInkey
+    global _initInkeyOldTermAttr
+    import atexit as _atexit
+    import termios as _termios
+
+    if resetTerminal and _initInkey:
+        _initInkey = False
+        _termios.tcsetattr( _sys.stdin.fileno(), _termios.TCSADRAIN, _initInkeyOldTermAttr)
+        return -1
+
+    #
+    # changing the terminal attributes takes quite some time,
+    # therefore we cannot change them for every inkey() call
+    #
+    if not _initInkey:
+        _initInkey = True
+        _initInkeyOldTermAttr = _termios.tcgetattr( _sys.stdin.fileno())
+        new = _termios.tcgetattr( _sys.stdin.fileno())
+        new[3] = new[3] & ~_termios.ICANON & ~_termios.ECHO
+        #
+        # VMIN specifies the minimum number of characters to be read
+        #
+        new[6] [_termios.VMIN] = 0
+        #
+        # VTIME specifies how long the driver waits for VMIN characters.
+        # the unit of VTIME is 0.1 s. 
+        #
+        new[6] [_termios.VTIME] = 1
+        _termios.tcsetattr( _sys.stdin.fileno(), _termios.TCSADRAIN, new)
+        _atexit.register( _inkeyExitHandler)
+	    
+    key = _sys.stdin.read(1)
+    if( len( key) == 0):
+        key = -1
+    else:
+        key = ord( key)
+
+    return key
+
 def launchGui(): 
     '''
     launches the Gui
@@ -336,3 +404,4 @@ def launchGui():
     app.exec_()
 
     #_sys.exit( app.exec_())
+

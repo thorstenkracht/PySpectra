@@ -11,7 +11,6 @@ import numpy as _np
 import PySpectra.dMgt.GQE as _GQE
 import PySpectra.utils as _utils
 import PySpectra.definitions as _defs
-import HasyUtils as _HasyUtils
 import datetime as _datetime
 import types as _types
 import psutil as _psutil
@@ -259,7 +258,7 @@ def procEventsLoop():
     while True:
         _time.sleep(0.01)
         _QApp.processEvents()
-        key = _HasyUtils.inkey()        
+        key = _utils.inkey()        
         if key == 10:
             break
     print ""

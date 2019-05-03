@@ -8,12 +8,10 @@ GQE - contains the Scan() class and functions to handle scans:
 import numpy as _np
 import PySpectra as _pysp
 import PySpectra.definitions as _defs
-import HasyUtils as _HasyUtils
 
 from PyQt4 import QtCore as _QtCore
 from PyQt4 import QtGui as _QtGui
 
-import PyTango as _PyTango
 
 _scanList = []
 _scanIndex = None  # used by next/back
@@ -190,6 +188,7 @@ class Scan():
 
     @staticmethod
     def move( target): 
+        import PyTango as _PyTango
         #print "GQE.Scan.move: to", target, "using", Scan.monitorGui.scanInfo
         if Scan.monitorGui is None or Scan.monitorGui.scanInfo is None: 
             return
@@ -821,6 +820,7 @@ def read( fileName, x = 1, y = None, flagMCA = False):
     # fioReader may throw an exception, e.g. if the file does not exist.
     # Do not catch it here, leave it to the application
     #
+    import HasyUtils as _HasyUtils
     fioObj = _HasyUtils.fioReader( fileName, flagMCA)
 
     if y is not None:
