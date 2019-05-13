@@ -1175,7 +1175,9 @@ class pySpectraGui( QtGui.QMainWindow):
         if len( self.scanList) == 0:
             return 
             
-
+        #
+        # fill the scansListWidget
+        #
         if len( self.scanList) > 0:
             if self.scanList[0].fileName is not None:
                 self.fileNameLabel.setText( self.scanList[0].fileName)

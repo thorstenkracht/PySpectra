@@ -33,7 +33,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
     The queue is filled from pyspDoor.
     '''
     def __init__( self, parent = None):
-        super( pyspMonitor, self).__init__( parent, calledFromMonitorApp = True)
+        super( pyspMonitor, self).__init__( parent, calledFromSardanaMonitor = True)
 
         self.queue = Queue.Queue()
         __builtin__.__dict__[ 'queue'] = self.queue

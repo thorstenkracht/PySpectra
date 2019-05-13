@@ -191,7 +191,7 @@ class spectraDoor( sms.BaseDoor):
             #
             self.sendHsh( { 'Scan': { 'name': self.mcaAliases[n],
                                       'reUse': True, 
-                                      'color': 'blue', 
+                                      'lineColor': 'blue', 
                                       'x': x, 
                                       'y': y}}) 
             
@@ -862,7 +862,7 @@ class spectraDoor( sms.BaseDoor):
             self.sendHsh( { 'Scan': { 'name': elm,
                                       'xMin': self.start,
                                       'xMax': self.stop,
-                                      'color': 'red',
+                                      'lineColor': 'red',
                                       'nPts': npTemp,
                                       'autorangeX': False}})
             
