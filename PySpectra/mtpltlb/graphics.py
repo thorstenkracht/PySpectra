@@ -13,7 +13,7 @@ import math as _math
 import numpy as _np
 import PySpectra.dMgt.GQE as _GQE
 import PySpectra.utils as _utils
-import PySpectra.definitions as _defs
+import PySpectra as _pysp
 import PySpectra.pqtgrph.graphics as _pqt_graphics
 import datetime as _datetime
 
@@ -255,7 +255,7 @@ def _setTitle( scan, nameList):
 
     fontSize = _GQE._getFontSize( nameList)
 
-    if _GQE._getNumberOfScansToBeDisplayed( nameList) < _defs._MANY_SCANS:
+    if _GQE._getNumberOfScansToBeDisplayed( nameList) < _pysp._MANY_SCANS:
         scan.plotItem.set_title( tempName, fontsize = fontSize)
     else:
         scan.plotItem.text( 0.95, 0.8, tempName, 
@@ -473,7 +473,7 @@ def _createPlotItem( scan, nameList):
 
     _setTitle( scan, nameList)
 
-    if _GQE._getNumberOfScansToBeDisplayed( nameList) < _defs._MANY_SCANS:
+    if _GQE._getNumberOfScansToBeDisplayed( nameList) < _pysp._MANY_SCANS:
         if hasattr( scan, 'xLabel') and scan.xLabel is not None:
             scan.plotItem.set_xlabel( scan.xLabel)
         if hasattr( scan, 'yLabel') and scan.yLabel is not None:
@@ -675,7 +675,7 @@ def display( nameList = None):
         #
         scan.plotItem = target.plotItem.twinx()
         
-        if len( _GQE._scanList) >= _defs._MANY_SCANS:
+        if len( _GQE._scanList) >= _pysp._MANY_SCANS:
             plt.setp( scan.plotItem.get_yticklabels(), visible=False)
 
         hsh = _preparePlotParams( scan)

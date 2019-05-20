@@ -12,8 +12,6 @@ import numpy as np
 import __builtin__
 
 import PySpectra as pysp
-import PySpectra.definitions as defs
-import PySpectra.dMgt.GQE as gqe
 import mtpltlb.graphics as mpl_graphics # to create postscript
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
@@ -61,7 +59,14 @@ class QListWidgetTK( QtGui.QListWidget):
             pass
         elif key == QtCore.Qt.Key_Return or key == 32:
             item = self.currentItem()
+            if item.checkState() == QtCore.Qt.Checked:
+                print "+++ to unchecked"
+                item.setCheckState(QtCore.Qt.Unchecked)       
+            else:
+                print "+++ to checked"
+                item.setCheckState(QtCore.Qt.Checked)       
             self.newItemSelected( str(item.text()))
+            return 
         else: 
             print "key", key
 
@@ -71,7 +76,6 @@ class QListWidgetTK( QtGui.QListWidget):
         '''
         double click: reads a file
         '''
-        print "doubleClicket", item.text()
 
         if self.name == "filesListWidget":
             self.newItemSelected( str( item.text()))
@@ -156,6 +160,207 @@ class QLineEditTK( QtGui.QLineEdit):
             pass
 
         return QtGui.QLineEdit.keyPressEvent(self, eventQKeyEvent)
+#
+#
+#
+class PyQtConfig( QtGui.QMainWindow):
+    def __init__( self, parent = None):
+        super( PyQtConfig, self).__init__( parent)
+        self.parent = parent
+
+        self.setWindowTitle( "PyQtConfig")
+        #geo = QtGui.QDesktopWidget().screenGeometry(-1)
+        # size
+        #self.setGeometry( geo.width() - 680, 30, 650, 500)
+        self.prepareWidgets()
+
+        self.menuBar = QtGui.QMenuBar()
+        self.setMenuBar( self.menuBar)
+        self.prepareMenuBar()
+
+        #
+        # Status Bar
+        #
+        self.statusBar = QtGui.QStatusBar()
+        self.setStatusBar( self.statusBar)
+        self.prepareStatusBar()
+
+        self.updateTimer = QtCore.QTimer(self)
+        self.updateTimer.timeout.connect( self.cb_refreshAttr)
+        self.updateTimer.start( int( updateTime*1000))
+        self.show()
+        
+    def prepareWidgets( self):
+        w = QtGui.QWidget()
+        #
+        # start with a vertical layout
+        #
+        self.layout_grid = QtGui.QGridLayout()
+        w.setLayout( self.layout_grid)
+        self.setCentralWidget( w)
+
+        #
+        # name
+        #
+        row = 0
+        self.layout_grid.addWidget( QtGui.QLabel( "Margins:"), row, 0)
+        row += 1
+        self.layout_grid.addWidget( QtGui.QLabel( "Left:"), row, 1)
+        self.marginLeft = QtGui.QLabel( "%g" % pysp.marginLeft)
+        self.layout_grid.addWidget( self.marginLeft, row, 2)
+        self.marginLeftLineEdit = QtGui.QLineEdit()
+        self.marginLeftLineEdit.setMaximumWidth( 50)
+        self.layout_grid.addWidget( self.marginLeftLineEdit, row, 3)
+        row += 1
+        self.layout_grid.addWidget( QtGui.QLabel( "Top:"), row, 1)
+        self.marginTop = QtGui.QLabel( "%g" % pysp.marginTop)
+        self.layout_grid.addWidget( self.marginTop, row, 2)
+        self.marginTopLineEdit = QtGui.QLineEdit()
+        self.marginTopLineEdit.setMaximumWidth( 50)
+        self.layout_grid.addWidget( self.marginTopLineEdit, row, 3)
+        row += 1
+        self.layout_grid.addWidget( QtGui.QLabel( "Right:"), row, 1)
+        self.marginRight = QtGui.QLabel( "%g" % pysp.marginRight)
+        self.layout_grid.addWidget( self.marginRight, row, 2)
+        self.marginRightLineEdit = QtGui.QLineEdit()
+        self.marginRightLineEdit.setMaximumWidth( 50)
+        self.layout_grid.addWidget( self.marginRightLineEdit, row, 3)
+        row += 1
+        self.layout_grid.addWidget( QtGui.QLabel( "Bottom:"), row, 1)
+        self.marginBottom = QtGui.QLabel( "%g" % pysp.marginBottom)
+        self.layout_grid.addWidget( self.marginBottom, row, 2)
+        self.marginBottomLineEdit = QtGui.QLineEdit()
+        self.marginBottomLineEdit.setMaximumWidth( 50)
+        self.layout_grid.addWidget( self.marginBottomLineEdit, row, 3)
+        row += 1
+        self.layout_grid.addWidget( QtGui.QLabel( "Spacing:"), row, 0)
+        row += 1
+        self.layout_grid.addWidget( QtGui.QLabel( "Horizontal:"), row, 1)
+        self.spacingHorizontal = QtGui.QLabel( "%g" % pysp.spacingHorizontal)
+        self.layout_grid.addWidget( self.spacingHorizontal, row, 2)
+        self.spacingHorizontalLineEdit = QtGui.QLineEdit()
+        self.spacingHorizontalLineEdit.setMaximumWidth( 50)
+        self.layout_grid.addWidget( self.spacingHorizontalLineEdit, row, 3)
+        row += 1
+        self.layout_grid.addWidget( QtGui.QLabel( "Vertical:"), row, 1)
+        self.spacingVertical = QtGui.QLabel( "%g" % pysp.spacingVertical)
+        self.layout_grid.addWidget( self.spacingVertical, row, 2)
+        self.spacingVerticalLineEdit = QtGui.QLineEdit()
+        self.spacingVerticalLineEdit.setMaximumWidth( 50)
+        self.layout_grid.addWidget( self.spacingVerticalLineEdit, row, 3)
+
+    #
+    # the menu bar
+    #
+    def prepareMenuBar( self): 
+
+        self.fileMenu = self.menuBar.addMenu('&File')
+
+        self.exitAction = QtGui.QAction('E&xit', self)        
+        self.exitAction.setStatusTip('Exit application')
+        #self.exitAction.triggered.connect( sys.exit)
+        self.exitAction.triggered.connect( self.close)
+        self.fileMenu.addAction( self.exitAction)
+
+        #
+        # the activity menubar: help and activity
+        #
+        self.menuBarActivity = QtGui.QMenuBar( self.menuBar)
+        self.menuBar.setCornerWidget( self.menuBarActivity, QtCore.Qt.TopRightCorner)
+
+        #
+        # Help menu (bottom part)
+        #
+        self.helpMenu = self.menuBarActivity.addMenu('Help')
+        self.widgetAction = self.helpMenu.addAction(self.tr("Widget"))
+        self.widgetAction.triggered.connect( self.cb_helpWidget)
+
+        self.activityIndex = 0
+        self.activity = self.menuBarActivity.addMenu( "|")
+
+    #
+    # the status bar
+    #
+    def prepareStatusBar( self): 
+
+        self.display = QtGui.QPushButton(self.tr("&Display")) 
+        self.statusBar.addPermanentWidget( self.display) # 'permanent' to shift it right
+        self.display.clicked.connect( self.cb_display)
+        self.display.setShortcut( "Alt+d")
+
+        self.apply = QtGui.QPushButton(self.tr("&Apply")) 
+        self.statusBar.addPermanentWidget( self.apply) # 'permanent' to shift it right
+        self.apply.clicked.connect( self.cb_apply)
+        self.apply.setShortcut( "Alt+a")
+
+        self.exit = QtGui.QPushButton(self.tr("&Exit")) 
+        self.statusBar.addPermanentWidget( self.exit) # 'permanent' to shift it right
+        self.exit.clicked.connect( self.close)
+        self.exit.setShortcut( "Alt+x")
+
+    def cb_apply( self):
+        line = str(self.marginLeftLineEdit.text())
+        if len(line.strip()) > 0: 
+            pysp.marginLeft = float( line.strip())
+            self.marginLeft.setText( "%g" % pysp.marginLeft)
+            self.marginLeftLineEdit.clear()
+        line = str(self.marginTopLineEdit.text())
+        if len(line.strip()) > 0: 
+            pysp.marginTop = float( line.strip())
+            self.marginTop.setText( "%g" % pysp.marginTop)
+            self.marginTopLineEdit.clear()
+        line = str(self.marginRightLineEdit.text())
+        if len(line.strip()) > 0: 
+            pysp.marginRight = float( line.strip())
+            self.marginRight.setText( "%g" % pysp.marginRight)
+            self.marginRightLineEdit.clear()
+        line = str(self.marginBottomLineEdit.text())
+        if len(line.strip()) > 0: 
+            pysp.marginBottom = float( line.strip())
+            self.marginBottom.setText( "%g" % pysp.marginBottom)
+            self.marginBottomLineEdit.clear()
+
+        line = str(self.spacingHorizontalLineEdit.text())
+        if len(line.strip()) > 0: 
+            pysp.spacingHorizontal = float( line.strip())
+            self.spacingHorizontal.setText( "%g" % pysp.spacingHorizontal)
+            self.spacingHorizontalLineEdit.clear()
+        line = str(self.spacingVerticalLineEdit.text())
+        if len(line.strip()) > 0: 
+            pysp.spacingVertical = float( line.strip())
+            self.spacingVertical.setText( "%g" % pysp.spacingVertical)
+            self.spacingVerticalLineEdit.clear()
+
+        pysp.cls()
+        pysp.display()
+        
+    def cb_refreshAttr( self):
+
+        if self.isMinimized(): 
+            return
+        
+        self.activityIndex += 1
+        if self.activityIndex > (len( ACTIVITY_SYMBOLS) - 1):
+            self.activityIndex = 0
+        self.activity.setTitle( ACTIVITY_SYMBOLS[ self.activityIndex])
+        self.updateTimer.stop()
+
+        #self.w_gridXCheckBox.setCheckState( self.scan.showGridX) 
+        #self.w_gridYCheckBox.setCheckState( self.scan.showGridY) 
+        self.updateTimer.start( int( updateTime*1000))
+
+    def cb_display( self): 
+        pysp.cls()
+        pysp.display()
+
+    def cb_helpWidget(self):
+        QtGui.QMessageBox.about(self, self.tr("Help Widget"), self.tr(
+                "<h3> PyQt Configuration </h3>"
+                "<ul>"
+                "<li> Margins (left, top, etc.): the margins around the plots</li>"
+                "<li> Spacing (hor., vert.): the spacing between the plots </li>"
+                "</ul>"
+                ))
 #
 #
 #
@@ -338,9 +543,9 @@ class ScanAttributes( QtGui.QMainWindow):
         self.lineColorLabel = QtGui.QLabel( "LineColor")
         self.layout_grid.addWidget( self.lineColorLabel, row, 0)
         self.w_lineColorComboBox = QtGui.QComboBox()
-        for lineColor in defs._lineColorArr:
+        for lineColor in pysp._lineColorArr:
             self.w_lineColorComboBox.addItem( lineColor)
-        self.w_lineColorComboBox.setCurrentIndex( defs._lineColorDct[ self.scan.lineColor.upper()])
+        self.w_lineColorComboBox.setCurrentIndex( pysp._lineColorDct[ self.scan.lineColor.upper()])
         self.w_lineColorComboBox.currentIndexChanged.connect( self.cb_lineColor)
         self.layout_grid.addWidget( self.w_lineColorComboBox, row, 1) 
         #
@@ -349,9 +554,9 @@ class ScanAttributes( QtGui.QMainWindow):
         self.lineStyleLabel = QtGui.QLabel( "LineStyle")
         self.layout_grid.addWidget( self.lineStyleLabel, row, 2)
         self.w_lineStyleComboBox = QtGui.QComboBox()
-        for lineStyle in defs._lineStyleArr:
+        for lineStyle in pysp._lineStyleArr:
             self.w_lineStyleComboBox.addItem( lineStyle)
-        self.w_lineStyleComboBox.setCurrentIndex( defs._lineStyleDct[ self.scan.lineStyle.upper()])
+        self.w_lineStyleComboBox.setCurrentIndex( pysp._lineStyleDct[ self.scan.lineStyle.upper()])
         self.w_lineStyleComboBox.currentIndexChanged.connect( self.cb_lineStyle)
         self.layout_grid.addWidget( self.w_lineStyleComboBox, row, 3) 
         #
@@ -360,11 +565,11 @@ class ScanAttributes( QtGui.QMainWindow):
         self.lineWidthLabel = QtGui.QLabel( "LineWidth")
         self.layout_grid.addWidget( self.lineWidthLabel, row, 4)
         self.w_lineWidthComboBox = QtGui.QComboBox()
-        if str( self.scan.lineWidth) not in defs._lineWidthDct.keys():
+        if str( self.scan.lineWidth) not in pysp._lineWidthDct.keys():
             self.scan.lineWidth = 1.0
-        for lineWidth in defs._lineWidthArr:
+        for lineWidth in pysp._lineWidthArr:
             self.w_lineWidthComboBox.addItem( lineWidth)
-        self.w_lineWidthComboBox.setCurrentIndex( defs._lineWidthDct[ str( self.scan.lineWidth)])
+        self.w_lineWidthComboBox.setCurrentIndex( pysp._lineWidthDct[ str( self.scan.lineWidth)])
         self.w_lineWidthComboBox.currentIndexChanged.connect( self.cb_lineWidth)
         self.layout_grid.addWidget( self.w_lineWidthComboBox, row, 5) 
 
@@ -375,12 +580,12 @@ class ScanAttributes( QtGui.QMainWindow):
         self.symbolColorLabel = QtGui.QLabel( "SymbolColor")
         self.layout_grid.addWidget( self.symbolColorLabel, row, 0)
         self.w_symbolColorComboBox = QtGui.QComboBox()
-        if str( self.scan.symbolColor).upper() not in defs._lineColorDct.keys():
+        if str( self.scan.symbolColor).upper() not in pysp._lineColorDct.keys():
             self.scan.symbolColor = 'black'
-        for symbolColor in defs._lineColorArr:
+        for symbolColor in pysp._lineColorArr:
             self.w_symbolColorComboBox.addItem( symbolColor)
         self.w_symbolColorComboBox.setCurrentIndex( 
-            defs._lineColorDct[ str( self.scan.symbolColor).upper()])
+            pysp._lineColorDct[ str( self.scan.symbolColor).upper()])
         self.w_symbolColorComboBox.currentIndexChanged.connect( self.cb_symbolColor)
         self.layout_grid.addWidget( self.w_symbolColorComboBox, row, 1) 
         #
@@ -389,11 +594,11 @@ class ScanAttributes( QtGui.QMainWindow):
         self.symbolLabel = QtGui.QLabel( "Symbol")
         self.layout_grid.addWidget( self.symbolLabel, row, 2)
         self.w_symbolComboBox = QtGui.QComboBox()
-        if str( self.scan.symbol) not in defs._symbolArr:
+        if str( self.scan.symbol) not in pysp._symbolArr:
             self.scan.symbol = 'o'
-        for symbol in defs._symbolArr:
-            self.w_symbolComboBox.addItem( defs._symbolDctFullName[ str( symbol)])
-        self.w_symbolComboBox.setCurrentIndex( defs._symbolDct[ str( self.scan.symbol)])
+        for symbol in pysp._symbolArr:
+            self.w_symbolComboBox.addItem( pysp._symbolDctFullName[ str( symbol)])
+        self.w_symbolComboBox.setCurrentIndex( pysp._symbolDct[ str( self.scan.symbol)])
         self.w_symbolComboBox.currentIndexChanged.connect( self.cb_symbol)
         self.layout_grid.addWidget( self.w_symbolComboBox, row, 3) 
         #
@@ -402,12 +607,12 @@ class ScanAttributes( QtGui.QMainWindow):
         self.symbolSizeLabel = QtGui.QLabel( "SymbolSize")
         self.layout_grid.addWidget( self.symbolSizeLabel, row, 4)
         self.w_symbolSizeComboBox = QtGui.QComboBox()
-        if str( self.scan.symbolSize) not in defs._symbolSizeDct.keys():
+        if str( self.scan.symbolSize) not in pysp._symbolSizeDct.keys():
             self.scan.symbolSize = 5
-        for symbolSize in defs._symbolSizeArr:
+        for symbolSize in pysp._symbolSizeArr:
             self.w_symbolSizeComboBox.addItem( symbolSize)
         self.w_symbolSizeComboBox.setCurrentIndex( 
-            defs._symbolSizeDct[ str( self.scan.symbolSize)])
+            pysp._symbolSizeDct[ str( self.scan.symbolSize)])
         self.w_symbolSizeComboBox.currentIndexChanged.connect( self.cb_symbolSize)
         self.layout_grid.addWidget( self.w_symbolSizeComboBox, row, 5) 
         #
@@ -420,7 +625,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.w_overlayComboBox.addItem( "None")
         count = 1 
         countTemp = -1
-        for scan in pysp.getScanList(): 
+        for scan in pysp.dMgt.GQE.getScanList(): 
             if scan.name == self.name:
                 continue
             if self.scan.overlay is not None and self.scan.overlay == scan.name:
@@ -575,7 +780,7 @@ class ScanAttributes( QtGui.QMainWindow):
 
     def cb_symbol( self): 
         temp = self.w_symbolComboBox.currentText()
-        for k, v in defs._symbolDctFullName.items():
+        for k, v in pysp._symbolDctFullName.items():
             if v == temp:
                 temp = k
         self.scan.symbol = str( temp)
@@ -831,6 +1036,8 @@ class pySpectraGui( QtGui.QMainWindow):
         geoWin = self.geometry()
         self.setGeometry( geo.width() - 710, 30, geoWin.width(), geoWin.height())
 
+        self.pyQtConfigWidget = None
+
     #
     # the central widgets
     #
@@ -974,11 +1181,11 @@ class pySpectraGui( QtGui.QMainWindow):
         for i in range( self.nMotor): 
             self.motPosLabels[ i].setText( "%g" % self.motProxies[i].position) 
             if self.motProxies[i].state() == PyTango.DevState.MOVING:
-                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % defs._BLUE_MOVING)
+                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % pysp._BLUE_MOVING)
             elif self.motProxies[i].state() == PyTango.DevState.ON:
-                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % defs._GREEN_OK)
+                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % pysp._GREEN_OK)
             else:
-                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % defs._RED_ALARM)
+                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % pysp._RED_ALARM)
 
 
     def addScanFrame( self): 
@@ -1093,9 +1300,9 @@ class pySpectraGui( QtGui.QMainWindow):
         #
         # pathName is a file: update scansList
         #
-        elif pathNameTokens[-1] in defs._dataFormats:
+        elif pathNameTokens[-1] in pysp._dataFormats:
             pysp.cls()
-            pysp.delete()
+            pysp.dMgt.GQE.delete()
             try: 
                 pysp.read( pathName)
             except Exception, e:
@@ -1116,7 +1323,8 @@ class pySpectraGui( QtGui.QMainWindow):
         called with the name of a scan
         '''
         pysp.cls()
-        pysp.display( [scanName])
+        self.displayChecked()
+        #+++pysp.display( [scanName])
 
         return 
 
@@ -1147,7 +1355,7 @@ class pySpectraGui( QtGui.QMainWindow):
         #   - the current scanList and the displayed scanList are different
         #
 
-        scanList = pysp.getScanList()[:]
+        scanList = pysp.dMgt.GQE.getScanList()[:]
         
         flagUpdate = False
         if self.scanList is None:
@@ -1189,7 +1397,7 @@ class pySpectraGui( QtGui.QMainWindow):
 
     def updateFilesList( self):
         '''
-        file the file list in the scrolling area
+        the file list in the scrolling area
         '''
         if self.filesListWidget.count() > 0:
             self.filesListWidget.clear()
@@ -1209,7 +1417,7 @@ class pySpectraGui( QtGui.QMainWindow):
         
         for file in lst:
             fileNameTokens = file.split( '.')
-            if fileNameTokens[-1] in defs._dataFormats:
+            if fileNameTokens[-1] in pysp._dataFormats:
                 self.filesListWidget.addItem( file)
             elif file.startswith( "."):
                 continue
@@ -1226,7 +1434,7 @@ class pySpectraGui( QtGui.QMainWindow):
         import HasyUtils
         for file in os.listdir( "."):
             fileNameTokens = file.split( '.')
-            if fileNameTokens[-1] in defs._dataFormats:
+            if fileNameTokens[-1] in pysp._dataFormats:
                 for pat in patternList:
                     if HasyUtils.match( file, pat): 
                         argout.append( file)
@@ -1336,6 +1544,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.dina6Action = QtGui.QAction('DINA6', self)        
         self.dina6Action.triggered.connect( lambda : pysp.setWsViewport( 'dina6'))
         self.optionsMenu.addAction( self.dina6Action)
+
         #
         # examples
         #
@@ -1363,6 +1572,11 @@ class pySpectraGui( QtGui.QMainWindow):
         self.execAction = QtGui.QAction('Python command line', self)        
         self.execAction.triggered.connect( self.cb_exec)
         self.debugMenu.addAction( self.execAction)
+
+
+        self.pyqtConfigAction = QtGui.QAction('PyQtConfig', self)        
+        self.pyqtConfigAction.triggered.connect( self.cb_pyqtConfig)
+        self.debugMenu.addAction( self.pyqtConfigAction)
 
         #
         # the activity menubar: help and activity
@@ -1431,12 +1645,14 @@ class pySpectraGui( QtGui.QMainWindow):
 
     def make_example( self, funcName): 
         hsh = {
+            "example1LogScanWithText": pysp.example1LogScanWithText, 
             "example1ScanWithTexts": pysp.example1ScanWithTexts, 
             "example22Scans": pysp.example22Scans, 
             "example2GaussOverlaidWithLog": pysp.example2GaussOverlaidWithLog, 
             "example2OverlaidDoty": pysp.example2OverlaidDoty, 
             "example3WithTextContainer": pysp.example3WithTextContainer, 
             "example56Scans": pysp.example56Scans, 
+            "example56x3Scans": pysp.example56x3Scans, 
             "example5Scans": pysp.example5Scans, 
             "exampleGauss": pysp.exampleGauss, 
             "exampleGaussAndSinusOverlaid": pysp.exampleGaussAndSinusOverlaid, 
@@ -1447,7 +1663,11 @@ class pySpectraGui( QtGui.QMainWindow):
             return hsh[ funcName]
         else: 
             raise ValueError( "make_example: failed to find %s" % funcName)
-
+        
+    def cb_pyqtConfig( self):
+        self.pyQtConfigWidget = PyQtConfig()
+        self.pyQtConfigWidget.show()
+        
     def cb_displayExampleCode( self): 
         fName = pysp.examples.exampleCode.__file__
         editor = os.getenv( "EDITOR")
@@ -1467,6 +1687,9 @@ class pySpectraGui( QtGui.QMainWindow):
         if self.mplWidget is not None:
             self.mplWidget.close()
             self.mplWidget = None
+        if self.pyQtConfigWidget is not None:
+            self.pyQtConfigWidget.close()
+            self.pyQtConfigWidget = None
         self.close()
         if self.flagExitOnClose:
             sys.exit( 0)
@@ -1498,7 +1721,7 @@ class pySpectraGui( QtGui.QMainWindow):
             return 
         for name in lst: 
             self.logWidget.append(  "Deleting %s" % name)
-        pysp.delete( lst)
+        pysp.dMgt.GQE.delete( lst)
         pysp.cls()
         pysp.display()
         return 
@@ -1515,7 +1738,7 @@ class pySpectraGui( QtGui.QMainWindow):
             self.logWidget.append( "failed to create PDF file")
         
     def cb_doty( self):
-        lst = pysp.getScanList()
+        lst = pysp.dMgt.GQE.getScanList()
         if self.dotyAction.isChecked():
             for elm in lst:
                 elm.doty = True
@@ -1526,7 +1749,7 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.display()
 
     def cb_grid( self): 
-        lst = pysp.getScanList()
+        lst = pysp.dMgt.GQE.getScanList()
         if self.gridAction.isChecked():
             for scan in lst:
                 scan.showGridX = True

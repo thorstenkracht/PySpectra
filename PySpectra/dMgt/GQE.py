@@ -7,7 +7,6 @@ GQE - contains the Scan() class and functions to handle scans:
 
 import numpy as _np
 import PySpectra as _pysp
-import PySpectra.definitions as _defs
 
 from PyQt4 import QtCore as _QtCore
 from PyQt4 import QtGui as _QtGui
@@ -411,7 +410,7 @@ class Scan():
 
         attr = 'lineWidth'
         if attr in kwargs:
-            if str(kwargs[ attr]) in _defs._lineWidthArr:
+            if str(kwargs[ attr]) in _pysp._lineWidthArr:
                 setattr( self, attr, float( kwargs[ attr]))
             else: 
                 setattr( self, attr, 1.0)
@@ -877,13 +876,11 @@ def write( lst = None):
     fileName = obj.write()
     print "created", fileName
     
-def _getNumberOfScansToBeDisplayed( nameList): 
+def getNumberOfScansToBeDisplayed( nameList): 
     '''
-
     return the number of scans to be displayed.
     Scans that are overlaid do not require extra space
     and are therefore not counted.
-
     '''
     if len( nameList) == 0:
         nOverlay = 0
@@ -919,7 +916,7 @@ def _getNumberOfOverlaid( nameList = None):
 
     return count
     
-def _setWsViewportFixed( flag):
+def setWsViewportFixed( flag):
     '''
     flag: True or False
     
@@ -930,7 +927,7 @@ def _setWsViewportFixed( flag):
     _wsViewportFixed = flag
     return 
     
-def _getWsViewportFixed():
+def getWsViewportFixed():
     return _wsViewportFixed 
 
 def _isArrayLike( x): 
@@ -942,16 +939,16 @@ def _isArrayLike( x):
     else:
         return False
 
-def _getFontSize( nameList): 
+def getFontSize( nameList): 
     '''
     depending on how many scans are displayed the font size is adjusted
     '''
-    if _getNumberOfScansToBeDisplayed( nameList) < _defs._MANY_SCANS:
-        fontSize = _defs._FONT_SIZE_NORMAL
-    elif _getNumberOfScansToBeDisplayed( nameList) <= _defs._VERY_MANY_SCANS:
-        fontSize = _defs._FONT_SIZE_SMALL
+    if getNumberOfScansToBeDisplayed( nameList) < _pysp._MANY_SCANS:
+        fontSize = _pysp._FONT_SIZE_NORMAL
+    elif getNumberOfScansToBeDisplayed( nameList) <= _pysp._VERY_MANY_SCANS:
+        fontSize = _pysp._FONT_SIZE_SMALL
     else: 
-        fontSize = _defs._FONT_SIZE_VERY_SMALL
+        fontSize = _pysp._FONT_SIZE_VERY_SMALL
 
     return fontSize
 

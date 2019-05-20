@@ -5,11 +5,11 @@ ssa() - simple scan analysis function
         /home/kracht/Misc/Sardana/hasyutils/HasyUtils/ssa.py
 '''
 import numpy as _np
-import PySpectra.dMgt.GQE as _GQE
 import math as _math
 import PySpectra as _pysp
-import PySpectra.definitions as _defs
+import PySpectra.dMgt.GQE as _GQE
 import sys as _sys
+import time as _time
 
 def ssa( xIn, yIn, flagNbs = False, stbr = 3):
     '''
@@ -248,7 +248,7 @@ def _setScanVPs( nameList, flagDisplaySingle):
             nrow = 2
         else:
             ncol = int( _math.floor( _math.sqrt( usedVPs)))
-            if usedVPs > _defs._MANY_SCANS: 
+            if usedVPs > _pysp._MANY_SCANS: 
                 ncol -= 1
             nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
         nplot = 1 
@@ -277,7 +277,7 @@ def _setScanVPs( nameList, flagDisplaySingle):
             nrow = 2
         else:
             ncol = int( _math.floor( _math.sqrt( usedVPs)))
-            if usedVPs > _defs._MANY_SCANS: 
+            if usedVPs > _pysp._MANY_SCANS: 
                 ncol -= 1
             nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
         nplot = 1 
@@ -334,11 +334,11 @@ def inkey( resetTerminal = None):
 
     while 1:
         ....
-        if HasyUtils.inkey() ==  32:  # space bar
+        if inkey() ==  32:  # space bar
             break
 
     Use
-      HasyUtils.inkey( True) 
+      inkey( True) 
     to reset the terminal characteristic explicitly. This has to be
     done in particular, if you use sys.exitfunc = yourExitHandler
     which overrides the inkey() exit handler
@@ -405,3 +405,44 @@ def launchGui():
 
     #_sys.exit( app.exec_())
 
+
+def waitAndProcessEvents( waitTime): 
+    '''
+    Wait for waitTime seconds to expire. During the wait time 
+    the QApp events are processed. If 'p' is pressed, the function
+    waits until another 'p' is pressed. This feature has been 
+    implemented to suppress, e.g., new file reads. 
+
+    startTime = _time.time()
+    while (time.time() - startTime) < WAIT_TIME:
+        pysp.processEvents()
+        key = inkey()
+        if key == 32:
+            return 32
+        if key == 112: # 'p'
+            print "paused, press 'p' to resume"
+            while True:
+                pysp.processEvents()
+                if inkey() == 112:
+                    print "unpaused, press 'p' to pause"
+                    break
+                time.sleep(0.01)
+        time.sleep(0.01)
+    '''
+
+    startTime = _time.time()
+    while (_time.time() - startTime) < waitTime:
+        _pysp.processEvents()
+        key = inkey()
+        if key == 32:
+            return 32
+        if key == 112: # 'p'
+            print "paused, press 'p' to resume"
+            while True:
+                _pysp.processEvents()
+                if inkey() == 112:
+                    print "unpaused, press 'p' to pause"
+                    break
+                _time.sleep(0.01)
+        _time.sleep(0.01)
+    return True

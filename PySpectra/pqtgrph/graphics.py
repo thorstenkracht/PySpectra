@@ -8,9 +8,8 @@ import time as _time
 import os as _os
 import math as _math
 import numpy as _np
-import PySpectra.dMgt.GQE as _GQE
-import PySpectra.utils as _utils
-import PySpectra.definitions as _defs
+import PySpectra as _pysp
+
 import datetime as _datetime
 import types as _types
 import psutil as _psutil
@@ -60,7 +59,7 @@ def close():
 
 def _setSizeGraphicsWindow( nScan):
 
-    if _GQE._getWsViewportFixed(): 
+    if _pysp.getWsViewportFixed(): 
         return 
 
     if nScan > 10:
@@ -120,7 +119,7 @@ def setWsViewport( size = None):
     #print "graphics.setWsViewport", wPixel, hPixel
     _win.setGeometry( 30, 30, int(wPixel), int(hPixel))
     _QApp.processEvents()
-    _GQE._setWsViewportFixed( True)
+    _pysp._setWsViewportFixed( True)
 
     return 
 
@@ -151,7 +150,7 @@ def cls():
     #
     # clear the plotItems
     #
-    scanList = _GQE.getScanList()
+    scanList = _pysp.getScanList()
     for scan in scanList:
         if scan.mouseProxy is not None: 
             scan.mouseProxy.disconnect()
@@ -168,7 +167,7 @@ def cls():
     #
     # clear the plotItems
     #
-    scanList = _GQE.getScanList()
+    scanList = _pysp.getScanList()
     for scan in scanList:
         if hasattr( scan, "mouseLabel"):
             if scan.mouseLabel is not None:
@@ -258,7 +257,7 @@ def procEventsLoop():
     while True:
         _time.sleep(0.01)
         _QApp.processEvents()
-        key = _utils.inkey()        
+        key = _pysp.utils.inkey()        
         if key == 10:
             break
     print ""
@@ -324,13 +323,13 @@ def _getPen( scan):
     if scan.lineColor.upper() == 'NONE': 
         return None
 
-    if scan.lineColor.lower() in _defs._colorCode: 
-        clr = _defs._colorCode[ scan.lineColor.lower()]
+    if scan.lineColor.lower() in _pysp._colorCode: 
+        clr = _pysp._colorCode[ scan.lineColor.lower()]
     else:
         clr = 'k'
 
-    if scan.lineStyle in _defs._lineStyle:
-        stl = _defs._lineStyle[ scan.lineStyle]
+    if scan.lineStyle in _pysp._lineStyle:
+        stl = _pysp._lineStyle[ scan.lineStyle]
     else:
         stl = _QtCore.Qt.DashLine
 
@@ -444,19 +443,59 @@ def _displayTitleComment():
     - title is over comment
     - colspan is infinity
     '''
-    title = _GQE.getTitle()
+    title = _pysp.getTitle()
     if title is not None:
         if not _textIsOnDisplay( title):
             _win.addLabel( title, row = 0, col = 0, colspan = 10)
 
-    comment = _GQE.getComment()
+    comment = _pysp.getComment()
     if comment is not None:
         if not _textIsOnDisplay( comment):
             _win.addLabel( comment, row = 1, col = 0, colspan = 10)
 
+def _calcTextPosition( scan, xIn, yIn): 
+    '''
+    return the text position, taking into accout:
+      - autorange
+      - log scale
+    '''
+    
+    if not scan.xLog:
+            x = (scan.xMax - scan.xMin)*xIn + scan.xMin
+    else:
+        if scan.xMax <= 0. or scan.xMin <= 0.:
+            raise ValueError( "pqt_graphics.calcTextPosition: xLog && (xMin <= 0: %g or xMax <= 0: %g" % 
+                              (scan.xMin, scan.xMax))
+        x = (_math.log10( scan.xMax) - _math.log10( scan.xMin))*xIn + _math.log10( scan.xMin)
+
+    if scan.autorangeY: 
+        yMax = _np.max( scan.y)
+        yMin = _np.min( scan.y)
+        if not scan.yLog:
+            y = ( yMax - yMin)*yIn + yMin
+        else:
+            if yMax <= 0. or yMin <= 0.:
+                raise ValueError( "pqt_graphics.calcTextPosition: yLog && (yMin <= 0: %g or yMax <= 0: %g" % 
+                                  (yMin, yMax))
+            y = ( _math.log10( yMax) - _math.log10( yMin))*yIn + _math.log10( yMin)
+    else: 
+        if scan.yMax is None: 
+            scan.yMax = _np.max( scan.y)
+        if scan.yMin is None: 
+            scan.yMin = _np.min( scan.y)
+        if not scan.yLog:
+            y = ( scan.yMax - scan.yMin)*yIn + scan.yMin
+        else:
+            if scan.yMax <= 0. or scan.yMin <= 0.:
+                raise ValueError( "pqt_graphics.calcTextPosition: yLog && (yMin <= 0: %g or yMax <= 0: %g" % 
+                                  (scan.yMin, scan.yMax))
+            y = ( _math.log10( scan.yMax) - _math.log10( scan.yMin))*yIn + _math.log10( scan.yMin)
+
+    return( x, y)
+
 def _addTexts( scan, nameList): 
 
-    fontSize = _GQE._getFontSize( nameList)
+    fontSize = _pysp.getFontSize( nameList)
     
     for elm in scan.textList:
 
@@ -477,13 +516,10 @@ def _addTexts( scan, nameList):
             anchorY = 1
         elif elm.vAlign == 'center':
             anchorY = 0.5
-        #txt = _pg.TextItem( elm.text, color=elm.color, anchor = ( anchorX, anchorY))
-        if elm.color.lower() in _defs._colorCode:
-            #txt = _pg.TextItem( elm.text, color=_defs._colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
-            txt = _pg.TextItem( color=_defs._colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
+        if elm.color.lower() in _pysp._colorCode:
+            txt = _pg.TextItem( color=_pysp._colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
             txt.setHtml( '<div style="font-size:%dpx;">%s</div>' % (sz, elm.text))
         else:
-            #txt = _pg.TextItem( elm.text, color='k', anchor = ( anchorX, anchorY))
             txt = _pg.TextItem( color='k', anchor = ( anchorX, anchorY))
             txt.setHtml( '<div style="font-size:%dpx;">%s</div>' % ( sz, elm.text))
 
@@ -491,8 +527,7 @@ def _addTexts( scan, nameList):
             x = elm.x
             y = elm.y
         else:
-            x = (scan.xMax - scan.xMin)*elm.x + scan.xMin
-            y = ( _np.max( scan.y) - _np.min( scan.y))*elm.y + _np.min( scan.y)
+            (x, y) = _calcTextPosition( scan, elm.x, elm.y)
             
         txt.nameTK = "text_%s" % txt
         scan.plotItem.addItem( txt)
@@ -501,7 +536,7 @@ def _addTexts( scan, nameList):
 
 def _setTitle( scan, nameList): 
 
-    fontSize = _GQE._getFontSize( nameList)
+    fontSize = _pysp.getFontSize( nameList)
 
     #
     # the length of the title has to be limited. Otherwise pg 
@@ -516,7 +551,7 @@ def _setTitle( scan, nameList):
     else: 
         tempName = scan.name
 
-    if _GQE._getNumberOfScansToBeDisplayed( nameList) < _defs._MANY_SCANS:
+    if _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp._MANY_SCANS:
         scan.plotItem.setTitle( title = tempName, size = '%dpx' % fontSize)
     else:
         vb = scan.plotItem.getViewBox()
@@ -610,7 +645,7 @@ def _isNotOverlayTarget( scan):
     returns True, if scan is the target for the overlay 
     of another scan
     '''
-    scanList = _GQE.getScanList()
+    scanList = _pysp.getScanList()
     for elm in scanList: 
         if elm.overlay is None: 
             continue
@@ -706,16 +741,15 @@ def _createPlotItem( scan, nameList):
 
     scan.plotItem.showGrid( x = scan.showGridX, y = scan.showGridY)
     
-    _setTitle( scan, nameList)
 
-    if _GQE._getNumberOfScansToBeDisplayed( nameList) <= _defs._MANY_SCANS:
+    if _pysp.getNumberOfScansToBeDisplayed( nameList) <= _pysp._MANY_SCANS:
         if hasattr( scan, 'xLabel') and scan.xLabel is not None:
             scan.plotItem.setLabel( 'bottom', text=scan.xLabel)
         if hasattr( scan, 'yLabel')  and scan.yLabel is not None:
             scan.plotItem.setLabel( 'left', text=scan.yLabel)
     else: 
         font=_QtGui.QFont()
-        font.setPixelSize( _defs._FONT_SIZE_SMALL)
+        font.setPixelSize( _pysp._FONT_SIZE_SMALL)
 
         plotItem.getAxis("bottom").tickFont = font
         plotItem.getAxis("left").tickFont = font
@@ -764,6 +798,8 @@ def _createPlotItem( scan, nameList):
     #
     scan.plotItem.setMouseEnabled( x = True, y = True)
 
+    _setTitle( scan, nameList)
+
     _addTexts( scan, nameList)
 
     return
@@ -810,10 +846,10 @@ def display( nameList = None):
     # see if the members of nameList arr in the scanList
     #
     for nm in nameList:
-        if _GQE.getScan( nm) is None:
+        if _pysp.getScan( nm) is None:
             raise ValueError( "graphics.display: %s is not in the scanList" % nm)
 
-    scanList = _GQE.getScanList()
+    scanList = _pysp.getScanList()
     #
     # clear the mouse things in the scan
     #
@@ -832,14 +868,14 @@ def display( nameList = None):
     #
     # adjust the graphics window to the number of displayed scans
     #
-    nDisplay = _GQE._getNumberOfScansToBeDisplayed( nameList)
+    nDisplay = _pysp.getNumberOfScansToBeDisplayed( nameList)
     _setSizeGraphicsWindow( nDisplay)
     _adjustFigure( nDisplay)
 
     #
     # set scan.nrow, scan.ncol, scan.nplot
     #
-    _utils._setScanVPs( nameList, flagDisplaySingle)
+    _pysp.utils._setScanVPs( nameList, flagDisplaySingle)
 
     #
     # _displayTitleComment() uses (0,0) and (1, 0)
@@ -865,7 +901,7 @@ def display( nameList = None):
             #
             # maybe the scan.overlay has beed deleted
             #
-            if _GQE.getScan( scan.overlay) is None:
+            if _pysp.getScan( scan.overlay) is None:
                 scan.overlay = None
             else:
                 continue
@@ -893,8 +929,8 @@ def display( nameList = None):
                 else:
                     scan.plotDataItem = scan.plotItem.plot(pen = _getPen( scan), 
                                                            symbol = scan.symbol, 
-                                                           symbolPen = _defs._colorCode[ scan.symbolColor.lower()], 
-                                                           symbolBrush = _defs._colorCode[ scan.symbolColor.lower()], 
+                                                           symbolPen = _pysp._colorCode[ scan.symbolColor.lower()], 
+                                                           symbolBrush = _pysp._colorCode[ scan.symbolColor.lower()], 
                                                            symbolSize = scan.symbolSize)
 
         if scan.textOnly:
@@ -944,7 +980,7 @@ def display( nameList = None):
         
         if len( nameList) > 0 and scan.name not in nameList:
             continue
-        target = _GQE.getScan( scan.overlay)
+        target = _pysp.getScan( scan.overlay)
         if target is None or target.plotItem is None:
             raise ValueError( "pqt_graphics.display: %s tries to overlay to %s" %
                               (scan.name, scan.overlay))
@@ -953,8 +989,15 @@ def display( nameList = None):
 
         scan.viewBox = _pg.ViewBox()
         _setAutorangeForOverlaid( scan, target)
-
+        #
+        # for the overlaid scan show the right axis ...
+        #
         target.plotItem.showAxis('right') 
+        #
+        # ... but if there are too many to be displayed, remove the tick mark labels
+        #
+        if nDisplay > 10: 
+            target.plotItem.getAxis('right').style[ 'showValues'] = False #  not working on Debian-8, 0.9.8-3 
         #
         # the overlaid scan cannot have a log-scale. however, if
         # we don't set the log mode to false, the overlaid scan 
@@ -986,8 +1029,8 @@ def display( nameList = None):
         else:
             curveItem = _pg.ScatterPlotItem( x = scan.x, y = scan.y,
                                              symbol = scan.symbol, 
-                                             pen = _defs._colorCode[ scan.symbolColor.lower()], 
-                                             brush = _defs._colorCode[ scan.symbolColor.lower()], 
+                                             pen = _pysp._colorCode[ scan.symbolColor.lower()], 
+                                             brush = _pysp._colorCode[ scan.symbolColor.lower()], 
                                              size = scan.symbolSize)
 
         curveItem.nameTK = "curve_%s" % target.name
@@ -999,11 +1042,19 @@ def display( nameList = None):
     # left, top, right, bottom [pixels]
     #_win.ci.layout.setContentsMargins( 20, 0, 0, 0)
     #
-    if nDisplay >= 20:
-        #_win.ci.layout.setContentsMargins( 20, 20, 1, 1)
-        _win.ci.layout.setHorizontalSpacing( -40)
-        _win.ci.layout.setVerticalSpacing( -15)
-
+    #if nDisplay >= 30:
+    #    #_win.ci.layout.setContentsMargins( 20, 20, 1, 1)
+    #    _win.ci.layout.setHorizontalSpacing( -30)
+    #    _win.ci.layout.setVerticalSpacing( -12)
+    #    pass
+    #elif nDisplay >= 20:
+    #    #_win.ci.layout.setContentsMargins( 20, 20, 1, 1)
+    #    _win.ci.layout.setHorizontalSpacing( -40)
+    #    _win.ci.layout.setVerticalSpacing( -15)
+    #    pass
+    _win.ci.layout.setContentsMargins( _pysp.marginLeft, _pysp.marginTop, _pysp.marginRight, _pysp.marginBottom)
+    _win.ci.layout.setHorizontalSpacing( _pysp.spacingHorizontal)
+    _win.ci.layout.setVerticalSpacing( _pysp.spacingVertical)
     processEvents()
 
     p = _psutil.Process()
