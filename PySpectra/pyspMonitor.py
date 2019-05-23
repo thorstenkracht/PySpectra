@@ -10,7 +10,6 @@ Note: we cannot include the pyspMonitorClass here. It has to be
 imported at run-time since we have to make the selection 
 pyqtgraph/matplotlib in advance
 '''
-import __builtin__
 
 import HasyUtils
 import Queue, argparse, sys, os
@@ -67,10 +66,9 @@ def main():
 if __name__ == "__main__":
     args = parseCLI()
     if args.matplotlib is True: 
-        print "choosing matplotlib"
-        __builtin__.__dict__[ 'graphicsLib'] = 'matplotlib'
-    else: 
-        __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
+        os.environ["PYSP_USE_MATPLOTLIB"] = "True"
+    else:
+        os.environ["PYSP_USE_MATPLOTLIB"] = "False"
     import PySpectra.pySpectraGuiClass
     import PySpectra as pysp
     import PySpectra.pyspMonitorClass

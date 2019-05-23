@@ -82,7 +82,7 @@ def _setSizeGraphicsWindow( nScan):
     if widthNew > geo.width() or heightNew > geo.height():
         #print "set-geo, new", widthNew, heightNew, "curr", geo.width(), geo.height()
         _win.setGeometry( 30, 30, widthNew, heightNew)
-
+    return 
 def setWsViewport( size = None):
     '''
     size: DINA4, DINA4P, DINA3, DINA3P
@@ -544,10 +544,8 @@ def _setTitle( scan, nameList):
     # and the following display command, even with less scans, will 
     # also not fit into the graphics window
     #
-    lenMax = 20
-
-    if len( scan.name) > lenMax:
-        tempName = "X_" + scan.name[-lenMax:]
+    if len( scan.name) > _pysp._LEN_MAX_TITLE:
+        tempName = "X_" + scan.name[-_pysp._LEN_MAX_TITLE:]
     else: 
         tempName = scan.name
 
@@ -747,12 +745,12 @@ def _createPlotItem( scan, nameList):
             scan.plotItem.setLabel( 'bottom', text=scan.xLabel)
         if hasattr( scan, 'yLabel')  and scan.yLabel is not None:
             scan.plotItem.setLabel( 'left', text=scan.yLabel)
-    else: 
-        font=_QtGui.QFont()
-        font.setPixelSize( _pysp._FONT_SIZE_SMALL)
 
-        plotItem.getAxis("bottom").tickFont = font
-        plotItem.getAxis("left").tickFont = font
+    font=_QtGui.QFont()
+    font.setPixelSize( _pysp.getTickFontSize( nameList))
+
+    plotItem.getAxis("bottom").tickFont = font
+    plotItem.getAxis("left").tickFont = font
     #
     # autoscale
     #
@@ -865,6 +863,7 @@ def display( nameList = None):
     flagDisplaySingle = False
     if len( nameList) == 1 or len( scanList) == 1:
         flagDisplaySingle = True
+
     #
     # adjust the graphics window to the number of displayed scans
     #
@@ -875,7 +874,7 @@ def display( nameList = None):
     #
     # set scan.nrow, scan.ncol, scan.nplot
     #
-    _pysp.utils._setScanVPs( nameList, flagDisplaySingle)
+    _pysp.setScanVPs( nameList, flagDisplaySingle)
 
     #
     # _displayTitleComment() uses (0,0) and (1, 0)
@@ -1052,12 +1051,19 @@ def display( nameList = None):
     #    _win.ci.layout.setHorizontalSpacing( -40)
     #    _win.ci.layout.setVerticalSpacing( -15)
     #    pass
+
     _win.ci.layout.setContentsMargins( _pysp.marginLeft, _pysp.marginTop, _pysp.marginRight, _pysp.marginBottom)
     _win.ci.layout.setHorizontalSpacing( _pysp.spacingHorizontal)
     _win.ci.layout.setVerticalSpacing( _pysp.spacingVertical)
+    #
+    # debug scanning.py
+    #
+    #processEvents()
+    #print "+++pqt_graph: after process events "
+    #_pysp.prtc()
     processEvents()
-
-    p = _psutil.Process()
+    #print "+++pqt_graph: after process events, again "
+    #_pysp.prtc()
 
     #print "pqt_graphics.display: time  %g" % ( _time.time() - startTime)
     #print "pqt_graphics.display: memory consumption percent %g" % p.memory_percent()

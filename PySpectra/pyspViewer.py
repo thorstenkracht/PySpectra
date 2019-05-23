@@ -2,8 +2,6 @@
 '''
 the main programs that imports pySpectraGui
 '''
-import __builtin__
- 
 import argparse, sys, os
 
 from PyQt4 import QtGui, QtCore
@@ -43,9 +41,9 @@ def main():
 if __name__ == "__main__":
     args = parseCLI()
     if args.matplotlib is True: 
-        __builtin__.__dict__[ 'graphicsLib'] = 'matplotlib'
+        os.environ["PYSP_USE_MATPLOTLIB"] = "True"
     else: 
-        __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
+        os.environ["PYSP_USE_MATPLOTLIB"] = "False"
     import PySpectra as pysp
     import PySpectra.pySpectraGuiClass
     main()

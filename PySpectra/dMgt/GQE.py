@@ -22,13 +22,17 @@ _comment = None
 #
 _wsViewportFixed = False
 
-_ScanAttrs = [ 'at', 'autorangeX', 'autorangeY', 'colSpan', 'currentIndex', 
-              'dType', 'doty', 'fileName', 'lastIndex', 
-              'nPts', 'name', 'ncol', 'nplot', 'nrow', 'overlay', 'showGridX', 'showGridY', 
-               'lineColor', 'lineStyle', 'lineWidth', 
-               'symbol', 'symbolColor', 'symbolSize', 
-               'textList', 'lineWidth', 'xMax', 'xMin',
-              'xLabel', 'yLabel', 'yMin', 'yMax'] 
+_ScanAttrsPublic = [ 'at', 'autorangeX', 'autorangeY', 'colSpan', 'currentIndex', 
+                     'dType', 'doty', 'fileName', 'lastIndex', 
+                     'nPts', 'name', 'ncol', 'nplot', 'nrow', 'overlay', 'showGridX', 'showGridY', 
+                     'lineColor', 'lineStyle', 'lineWidth', 
+                     'symbol', 'symbolColor', 'symbolSize', 
+                     'textList', 'textOnly', 'viewBox', 
+                     'x', 'xLog', 'xMax', 'xMin',
+                     'xLabel', 'y', 'yLabel', 'yLog', 'yMin', 'yMax'] 
+
+_ScanAttrsPrivate = [ 'mouseClick', 'mouseLabel', 'mouseProxy', 
+                      'plotItem', 'plotDataItem', 'scene']
 
 class Text(): 
     '''
@@ -57,7 +61,7 @@ A value of (0,0) sets the upper-left corner
                      of the text box to be at the position specified by setPos(), while a value of (1,1)
                      sets the lower-right corner.        
 '''
-class Scan():
+class Scan( object):
     '''
     A Scan contains 2 arrays, x and y, and graphics attributes
 
@@ -93,9 +97,9 @@ class Scan():
         symbolSize: float
                     def.: 5
         xLabel:     string
-                    the description of the x-axis, def. 'position'
+                    the description of the x-axis
         yLabel:     string
-                    the description of the y-axis, def. 'signal'
+                    the description of the y-axis
     '''
     #
     # this class variable stores the Gui, needed to configure the motorsWidget, 
@@ -185,6 +189,22 @@ class Scan():
 
         _scanList.append( self)
 
+    def __setattr__( self, name, value): 
+        #print "GQE.Scan.__setattr__: name %s, value %s" % (name, value)
+        if name in _ScanAttrsPublic or \
+           name in _ScanAttrsPrivate: 
+            super(Scan, self).__setattr__(name, value)
+        else: 
+            raise ValueError( "GQE.Scan.__setattr__: Scan %s wrong attribute name %s" % ( self.name, name))
+
+    def __getattr__( self, name): 
+        raise ValueError( "GQE.Scan.__getattr__: %s wrong attribute %s" % ( self.name, name))
+        #if name in _ScanAttrsPublic or \
+        #   name in _ScanAttrsPrivate: 
+        #    return super(Scan, self).__getattr__(name)
+        #else: 
+        #    raise ValueError( "GQE.Scan.__getattr__: Scan %s wrong attribute name %s" % ( self.name, name))
+        
     @staticmethod
     def move( target): 
         import PyTango as _PyTango
@@ -386,8 +406,8 @@ class Scan():
         self.symbol = 'o'
         self.symbolColor = 'NONE'
         self.symbolSize = 10
-        self.xLabel = 'position'
-        self.yLabel = 'signal'
+        self.xLabel = None
+        self.yLabel = None
         self.xLog = False
         self.yLog = False
         #
@@ -407,6 +427,12 @@ class Scan():
             if attr in kwargs:
                 setattr( self, attr, kwargs[ attr])
                 del kwargs[ attr]
+        #
+        # be friendly: 'color' translates to 'lineColor'
+        #
+        if 'color' in kwargs: 
+            self.lineColor = kwargs[ 'color']
+            del kwargs[ 'color']
 
         attr = 'lineWidth'
         if attr in kwargs:
@@ -541,9 +567,9 @@ def getScan( name):
     otherwise return None
     '''
     for scan in _scanList:
-        if name == scan.name:
+        if str( name).upper() == scan.name.upper():
             return scan
-    return None
+    raise ValueError( "GQE.getScan: failed to find %s" % name)
 
 def setTitle( text = None): 
     '''
@@ -613,7 +639,7 @@ def delete( nameLst = None):
 
     for name in nameLst:
         for i in range( len( _scanList)):
-            if name == _scanList[i].name:
+            if name.upper() == _scanList[i].name.upper():
                 #
                 # we had many MCA spectra displayed on top of each other
                 #
@@ -729,7 +755,7 @@ def _showScan( scan):
     scanAttrsPrinted.append( 'symbolSize')
     scanAttrsPrinted.append( 'symbol')
 
-    for attr in _ScanAttrs:
+    for attr in _ScanAttrsPublic:
         if attr in scanAttrsPrinted: 
             continue
         try:
@@ -949,6 +975,19 @@ def getFontSize( nameList):
         fontSize = _pysp._FONT_SIZE_SMALL
     else: 
         fontSize = _pysp._FONT_SIZE_VERY_SMALL
+
+    return fontSize
+
+def getTickFontSize( nameList): 
+    '''
+    depending on how many scans are displayed the font size is adjusted
+    '''
+    if getNumberOfScansToBeDisplayed( nameList) < _pysp._MANY_SCANS:
+        fontSize = _pysp._TICK_FONT_SIZE_NORMAL
+    elif getNumberOfScansToBeDisplayed( nameList) <= _pysp._VERY_MANY_SCANS:
+        fontSize = _pysp._TICK_FONT_SIZE_SMALL
+    else: 
+        fontSize = _pysp._TICK_FONT_SIZE_VERY_SMALL
 
     return fontSize
 

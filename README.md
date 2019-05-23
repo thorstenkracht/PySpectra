@@ -1,3 +1,12 @@
+
+The toplevel help can be found by
+
+In [1]: import PySpectra as pysp
+
+In [2]: pysp?
+
+
+
 PySpectra displays 1D data
 --------------------------
 
@@ -29,6 +38,16 @@ show()              print the scans
 ssa()               simple scan analysis
 write()             create a .fio file
 yToMinusY()         change the sign of the y-values
+
+*** Default plot parameters for pyqtgraph
+Space around the plots
+  marginLeft
+  marginTop
+  marginRight
+  marginBottom
+Between the plots: 
+  spacingHorizontal 
+  spacingVertical 
 
 *** Applications based on PySpectra: 
 $ pyspViewer.py

@@ -31,6 +31,16 @@ ssa()               simple scan analysis
 write()             create a .fio file
 yToMinusY()         change the sign of the y-values
 
+*** Default plot parameters for pyqtgraph
+Space around the plots
+  marginLeft
+  marginTop
+  marginRight
+  marginBottom
+Between the plots: 
+  spacingHorizontal 
+  spacingVertical 
+
 *** Applications based on PySpectra: 
 $ pyspViewer.py
   successor of the FioViewer
@@ -59,15 +69,23 @@ from dMgt.GQE import *
 from dMgt.calc import *
 from examples.exampleCode import *
 
-import __builtin__
+import os as _os 
 try:
-    if __builtin__.__dict__[ 'graphicsLib'] == 'matplotlib':
+    if _os.environ["PYSP_USE_MATPLOTLIB"] == "True":
         from mtpltlb.graphics import *
-    else: 
+    else:
         from pqtgrph.graphics import *
 except: 
-    __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
     from pqtgrph.graphics import *
+
+#import __builtin__
+#try:
+#    if __builtin__.__dict__[ 'graphicsLib'] == 'matplotlib':
+#    else: 
+#        from pqtgrph.graphics import *
+#except: 
+#    __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
+#    from pqtgrph.graphics import *
 
 from mtpltlb.graphics import createPDF
 from utils import *
@@ -82,9 +100,14 @@ _MANY_SCANS = 20
 _VERY_MANY_SCANS = 30
 
 _FONT_SIZE_NORMAL = 14
-_FONT_SIZE_SMALL = 12         # number of scans > MANY_SCANS
+_FONT_SIZE_SMALL = 12       # number of scans > MANY_SCANS
 _FONT_SIZE_VERY_SMALL = 10    # number of scans > VERY_MANY_SCANS
 
+_TICK_FONT_SIZE_NORMAL = 12
+_TICK_FONT_SIZE_SMALL = 10        # number of scans > MANY_SCANS
+_TICK_FONT_SIZE_VERY_SMALL = 8    # number of scans > VERY_MANY_SCANS
+
+_LEN_MAX_TITLE = 25
 #
 # used by pqt_graphics
 #

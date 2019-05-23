@@ -216,7 +216,7 @@ def ssa( xIn, yIn, flagNbs = False, stbr = 3):
 
 _lenPlotted = -1
 
-def _setScanVPs( nameList, flagDisplaySingle):
+def setScanVPs( nameList, flagDisplaySingle):
     '''
     set the scan viewport, we use the at = (2,3,2) syntax
     which is (nrow, ncol, nplot)
@@ -389,9 +389,6 @@ def launchGui():
 
     from PyQt4 import QtGui as _QtGui
     from PyQt4 import QtCore as _QtCore
-    #import __builtin__
-    ##__builtin__.__dict__[ 'graphicsLib'] = 'matplotlib'
-    #__builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
 
     import PySpectra.pySpectraGuiClass as _gui
 
@@ -446,3 +443,9 @@ def waitAndProcessEvents( waitTime):
                 _time.sleep(0.01)
         _time.sleep(0.01)
     return True
+
+def prtc(): 
+    print "Prtc ",
+    _sys.stdin.readline()
+
+

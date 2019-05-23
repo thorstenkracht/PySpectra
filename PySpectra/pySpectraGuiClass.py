@@ -8,8 +8,6 @@ Both applications select the graphics library in their first code lines.
 import sys, os, argparse, math, time
 from PyQt4 import QtGui, QtCore
 import numpy as np
-#import HasyUtils
-import __builtin__
 
 import PySpectra as pysp
 import mtpltlb.graphics as mpl_graphics # to create postscript
@@ -60,10 +58,8 @@ class QListWidgetTK( QtGui.QListWidget):
         elif key == QtCore.Qt.Key_Return or key == 32:
             item = self.currentItem()
             if item.checkState() == QtCore.Qt.Checked:
-                print "+++ to unchecked"
                 item.setCheckState(QtCore.Qt.Unchecked)       
             else:
-                print "+++ to checked"
                 item.setCheckState(QtCore.Qt.Checked)       
             self.newItemSelected( str(item.text()))
             return 
@@ -636,6 +632,16 @@ class ScanAttributes( QtGui.QMainWindow):
             self.w_overlayComboBox.setCurrentIndex( countTemp)
         self.w_overlayComboBox.currentIndexChanged.connect( self.cb_overlay)
         self.layout_grid.addWidget( self.w_overlayComboBox, row, 1) 
+        #
+        # at
+        #
+        self.atLabel = QtGui.QLabel( "at:")
+        self.layout_grid.addWidget( self.atLabel, row, 2)
+        self.atValue = QtGui.QLabel( "%s" % (self.scan.at))
+        self.layout_grid.addWidget( self.atValue, row, 3)
+        self.atLineEdit = QtGui.QLineEdit()
+        self.atLineEdit.setMaximumWidth( 70)
+        self.layout_grid.addWidget( self.atLineEdit, row, 4)
 
     #
     # the menu bar
@@ -738,6 +744,20 @@ class ScanAttributes( QtGui.QMainWindow):
                 self.scan.yMax = float( line.strip())
                 self.yMaxValue.setText( "%g" % self.scan.yMax)
             self.yMaxLineEdit.clear()
+
+        line = str(self.atLineEdit.text())
+        if len(line.strip()) > 0: 
+            line = line.strip()
+            if line == 'None':
+                self.scan.at = None
+            else:
+                lstStr = line[1:-1].split( ',')
+                if len( lstStr) == 3:
+                    self.scan.at = [int( i) for i in lstStr]
+                else: 
+                    self.scan.at = [1, 1, 1]
+                    self.atValue.setText( "[%d, %d, %d]" % (self.scan.at[0], self.scan.at[1], self.scan.at[2]))
+        self.atLineEdit.clear()
         pysp.cls()
         pysp.display()
         
@@ -824,6 +844,7 @@ class ScanAttributes( QtGui.QMainWindow):
                 "<li> yMin/yMax are reset to None by entering 'None' into the LineEdit widgets.</li>"
                 "<li> 'DOTY' is day-of-the-year, the x-axis ticks are date/time</li>"
                 "<li> 'Overlay' selects the target scan, meaning that the current scan is displayed in the viewport of the target scan.</li>"
+                "<li> 'at' makes sense for matplotlib only.</li>"
                 "</ul>"
                 ))
 
@@ -947,7 +968,7 @@ class MplWidget( QtGui.QMainWindow):
     def cb_pdf( self): 
         fileName = mpl_graphics.createPDF()
         if fileName:
-            self.logWidget.append( "created %s" % fileName)
+            self.logWidget.append( "created %s/%s" % (os.getenv( "PWD"), fileName))
             os.system( "evince %s &" % fileName)
         else:
             self.logWidget.append( "failed to create PDF file")
@@ -986,6 +1007,13 @@ class pySpectraGui( QtGui.QMainWindow):
         self.scanAttributes = None
         self.proxyDoor = None
         self.nMotor = 0
+        
+        self.useMatplotlib = False
+        try:
+            if os.environ["PYSP_USE_MATPLOTLIB"] == "True":
+                self.useMatplotlib = True
+        except: 
+            pass
 
         #
         # 'files' come from the command line. If nothing is supplied
@@ -1022,7 +1050,7 @@ class pySpectraGui( QtGui.QMainWindow):
         # compromise: start with a big widget (DINA4) in QtGui
         #
         self.mplWidget = None
-        if __builtin__.__dict__[ 'graphicsLib'] == 'matplotlib':
+        if self.useMatplotlib: 
             self.mplWidget = MplWidget( self.logWidget)        
             self.mplWidget.show()
         #
@@ -1491,7 +1519,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.createPDFPrintAction.triggered.connect( self.cb_createPDFPrint)
         self.fileMenu.addAction( self.createPDFPrintAction)
 
-        if __builtin__.__dict__[ 'graphicsLib'] != 'matplotlib':
+        if self.useMatplotlib: 
             self.matplotlibAction = QtGui.QAction('matplotlib', self)        
             self.matplotlibAction.setStatusTip('Launch matplotlib to create ps or pdf output')
             self.matplotlibAction.triggered.connect( self.cb_matplotlib)
@@ -1618,19 +1646,12 @@ class pySpectraGui( QtGui.QMainWindow):
         self.showBtn.setToolTip( "Print info about the scans")
         self.showBtn.setShortcut( "Alt+s")
 
-        if __builtin__.__dict__[ 'graphicsLib'] != 'matplotlib':
+        if self.useMatplotlib:
             self.matplotlibBtn = QtGui.QPushButton(self.tr("&Matplotlib")) 
             self.statusBar.addWidget( self.matplotlibBtn) 
             self.matplotlibBtn.clicked.connect( self.cb_matplotlib)
             self.matplotlibBtn.setToolTip( "Print info about the scans")
             self.matplotlibBtn.setShortcut( "Alt+m")
-
-        #if __builtin__.__dict__[ 'graphicsLib'] == 'matplotlib':
-        #    self.pdfBtn = QtGui.QPushButton(self.tr("&PDF")) 
-        #    self.statusBar.addWidget( self.pdfBtn) 
-        #    self.pdfBtn.clicked.connect( self.cb_pdf)
-        #    self.pdfBtn.setShortcut( "Alt+p")
-        #    self.pdfBtn.setToolTip( "Create PDF file")
 
         self.clearLog = QtGui.QPushButton(self.tr("&ClearLog")) 
         self.statusBar.addPermanentWidget( self.clearLog) # 'permanent' to shift it right

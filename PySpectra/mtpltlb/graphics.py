@@ -11,8 +11,6 @@ import time as _time
 import os as _os
 import math as _math
 import numpy as _np
-import PySpectra.dMgt.GQE as _GQE
-import PySpectra.utils as _utils
 import PySpectra as _pysp
 import PySpectra.pqtgrph.graphics as _pqt_graphics
 import datetime as _datetime
@@ -92,7 +90,7 @@ def createPDF( fileName = None, flagPrint = False):
 def _setSizeGraphicsWindow( nScan):
     '''
     '''
-    if _GQE._getWsViewportFixed(): 
+    if _pysp.getWsViewportFixed(): 
         return 
 
     if nScan > 9:
@@ -141,7 +139,7 @@ def setWsViewport( size = None):
 
     fig = matplotlib.pyplot.gcf()
     fig.set_size_inches( w/2.54, h/2.54, forward = True)
-    _GQE._setWsViewportFixed( True)
+    _pysp.setWsViewportFixed( True)
 
     return 
 
@@ -165,7 +163,7 @@ def cls():
     #
     # clear the plotItems
     #
-    scanList = _GQE.getScanList()
+    scanList = _pysp.getScanList()
 
     for scan in scanList:
         scan.plotItem = None
@@ -189,7 +187,7 @@ def procEventsLoop():
     while True:
         _time.sleep(0.01)
         processEvents()
-        key = _utils.inkey()        
+        key = _pysp.inkey()        
         if key == 10:
             break
     print ""
@@ -244,18 +242,14 @@ def _setTitle( scan, nameList):
     # and the following display command, even with less scans, will 
     # also not fit into the graphics window
     #
-    lenMax = 20
-    if len( _GQE.getScanList()) > 15: 
-        lenMax = 17
-
-    if len( scan.name) > lenMax:
-        tempName = "X_" + scan.name[-lenMax:]
+    if len( scan.name) > _pysp._LEN_MAX_TITLE:
+        tempName = "X_" + scan.name[-_pysp._LEN_MAX_TITLE:]
     else: 
         tempName = scan.name
 
-    fontSize = _GQE._getFontSize( nameList)
+    fontSize = _pysp.getFontSize( nameList)
 
-    if _GQE._getNumberOfScansToBeDisplayed( nameList) < _pysp._MANY_SCANS:
+    if _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp._MANY_SCANS:
         scan.plotItem.set_title( tempName, fontsize = fontSize)
     else:
         scan.plotItem.text( 0.95, 0.8, tempName, 
@@ -292,9 +286,9 @@ def _adjustFigure( nDisplay):
     if nDisplay > 4: 
         nDisplay = 10
 
-    if _GQE.getTitle() is not None:
+    if _pysp.getTitle() is not None:
         top -= 0.05
-    if _GQE.getComment() is not None:
+    if _pysp.getComment() is not None:
         top -= 0.05
 
     hsh = { '1':  { 'top': top,
@@ -331,15 +325,15 @@ def _displayTitleComment( nameList):
     '''
 
 
-    fontSize = _GQE._getFontSize( nameList)
+    fontSize = _pysp.getFontSize( nameList)
 
-    title = _GQE.getTitle()
+    title = _pysp.getTitle()
     if title is not None:
         if not _textIsOnDisplay( title):
             t = Fig.text( 0.5, 0.95, title, va='center', ha='center')
             t.set_fontsize( fontSize)
     
-    comment = _GQE.getComment()
+    comment = _pysp.getComment()
     if comment is not None:
         if title is not None:
             if not _textIsOnDisplay( comment):
@@ -355,7 +349,7 @@ def _displayTitleComment( nameList):
 def _addTexts( scan, nameList):
     #print "mpl_graphics.addTexts"
 
-    fontSize = _GQE._getFontSize( nameList)
+    fontSize = _pysp.getFontSize( nameList)
 
     for elm in scan.textList:
 
@@ -422,7 +416,7 @@ def _createPlotItem( scan, nameList):
     #
     # set the font size of the tick mark labels
     #
-    fontSize = _GQE._getFontSize( nameList)
+    fontSize = _pysp.getTickFontSize( nameList)
 
     for tick in scan.plotItem.xaxis.get_major_ticks():
                 tick.label.set_fontsize(fontSize) 
@@ -473,7 +467,7 @@ def _createPlotItem( scan, nameList):
 
     _setTitle( scan, nameList)
 
-    if _GQE._getNumberOfScansToBeDisplayed( nameList) < _pysp._MANY_SCANS:
+    if _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp._MANY_SCANS:
         if hasattr( scan, 'xLabel') and scan.xLabel is not None:
             scan.plotItem.set_xlabel( scan.xLabel)
         if hasattr( scan, 'yLabel') and scan.yLabel is not None:
@@ -522,10 +516,10 @@ def display( nameList = None):
     # see if the members of nameList arr in the scanList
     #
     for nm in nameList:
-        if _GQE.getScan( nm) is None:
+        if _pysp.getScan( nm) is None:
             raise ValueError( "graphics.display: %s is not in the scanList" % nm)
 
-    scanList = _GQE.getScanList()
+    scanList = _pysp.getScanList()
     #
     # if there is only one scan to be displayed, there is no overlay
     #
@@ -536,7 +530,7 @@ def display( nameList = None):
     #
     # adjust the graphics window to the number of displayed scans
     #
-    nDisplay = _GQE._getNumberOfScansToBeDisplayed( nameList)
+    nDisplay = _pysp.getNumberOfScansToBeDisplayed( nameList)
     _setSizeGraphicsWindow( nDisplay)
 
     _adjustFigure( nDisplay)
@@ -544,7 +538,7 @@ def display( nameList = None):
     #
     # set scan.nrow, scan.ncol, scan.nplot
     #
-    _utils._setScanVPs( nameList, flagDisplaySingle)
+    _pysp.setScanVPs( nameList, flagDisplaySingle)
 
     _displayTitleComment( nameList)
     #
@@ -561,7 +555,7 @@ def display( nameList = None):
             #
             # maybe the scan.overlay has beed deleted
             #
-            if _GQE.getScan( scan.overlay) is None:
+            if _pysp.getScan( scan.overlay) is None:
                 scan.overlay = None
             else:
                 continue
@@ -666,7 +660,7 @@ def display( nameList = None):
         
         if len( nameList) > 0 and scan.name not in nameList:
             continue
-        target = _GQE.getScan( scan.overlay)
+        target = _pysp.getScan( scan.overlay)
         if target is None or target.plotItem is None:
             raise ValueError( "mpl_graphics.display: %s tries to overlay to %s" %
                               (scan.name, scan.overlay))
@@ -675,7 +669,7 @@ def display( nameList = None):
         #
         scan.plotItem = target.plotItem.twinx()
         
-        if len( _GQE._scanList) >= _pysp._MANY_SCANS:
+        if len( _pysp.getScanList()) >= _pysp._MANY_SCANS:
             plt.setp( scan.plotItem.get_yticklabels(), visible=False)
 
         hsh = _preparePlotParams( scan)
