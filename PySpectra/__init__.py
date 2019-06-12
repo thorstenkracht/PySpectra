@@ -60,6 +60,24 @@ then again
 $ ipython --profile=PySpectra
 In [1]: pysp.testCreate10()
 
+*** To use PySpectra from Python:
+
+Look at some examples using pyspViewer->Examples then
+view the code pyspViewer->Examples->View Code
+
+In addition, start ipython and
+
+  import PySpectra as pysp
+  In [1]: import PySpectra as pysp
+  In [2]: pysp?
+  In [3]: dir( pysp) 
+  In [4]: pysp.Scan?
+
+Select the graphics library by before importing PySpectra
+  import os
+  os.environ["PYSP_USE_MATPLOTLIB"] = "True"
+  import PySpectra as pysp
+
 '''
 
 from PyQt4 import QtCore as _QtCore
@@ -99,13 +117,13 @@ import ipython.ifc
 _MANY_SCANS = 20
 _VERY_MANY_SCANS = 30
 
-_FONT_SIZE_NORMAL = 14
-_FONT_SIZE_SMALL = 12       # number of scans > MANY_SCANS
-_FONT_SIZE_VERY_SMALL = 10    # number of scans > VERY_MANY_SCANS
+FONT_SIZE_NORMAL = 14
+FONT_SIZE_SMALL = 12       # number of scans > MANY_SCANS
+FONT_SIZE_VERY_SMALL = 10    # number of scans > VERY_MANY_SCANS
 
-_TICK_FONT_SIZE_NORMAL = 12
-_TICK_FONT_SIZE_SMALL = 10        # number of scans > MANY_SCANS
-_TICK_FONT_SIZE_VERY_SMALL = 8    # number of scans > VERY_MANY_SCANS
+TICK_FONT_SIZE_NORMAL = 12
+TICK_FONT_SIZE_SMALL = 10        # number of scans > MANY_SCANS
+TICK_FONT_SIZE_VERY_SMALL = 8    # number of scans > VERY_MANY_SCANS
 
 _LEN_MAX_TITLE = 25
 #

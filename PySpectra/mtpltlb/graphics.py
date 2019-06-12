@@ -114,6 +114,7 @@ def setWsViewport( size = None):
     '''
     size: DINA4, DINA4P, DINA3, DINA3P
     '''
+    print "mpl_graphics.setWsViewport:", size
     if size is None:
         return 
     if size.upper() == "DINA4" or size.upper() == "DINA4L": 
@@ -122,7 +123,7 @@ def setWsViewport( size = None):
     elif size.upper() == "DINA4P": 
         w = 21
         h = 29.7
-    elif size.upper() == "DINA5" or size.upper() == "DINA3L": 
+    elif size.upper() == "DINA5" or size.upper() == "DINA5L": 
         w = 21
         h = 14.85
     elif size.upper() == "DINA5P": 
@@ -669,7 +670,8 @@ def display( nameList = None):
         #
         scan.plotItem = target.plotItem.twinx()
         
-        if len( _pysp.getScanList()) >= _pysp._MANY_SCANS:
+        if len( _pysp.getScanList()) >= _pysp._MANY_SCANS or \
+           scan.yTicksVisible == False: 
             plt.setp( scan.plotItem.get_yticklabels(), visible=False)
 
         hsh = _preparePlotParams( scan)

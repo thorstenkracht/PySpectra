@@ -119,7 +119,7 @@ def setWsViewport( size = None):
     #print "graphics.setWsViewport", wPixel, hPixel
     _win.setGeometry( 30, 30, int(wPixel), int(hPixel))
     _QApp.processEvents()
-    _pysp._setWsViewportFixed( True)
+    _pysp.setWsViewportFixed( True)
 
     return 
 

@@ -86,6 +86,9 @@ class QListWidgetTK( QtGui.QListWidget):
             return 
         if event.button() == QtCore.Qt.LeftButton:
             item = self.currentItem()
+            if item is None: 
+                print "mouseReleaseEvent: click on the name"
+                return 
             if item.checkState() == QtCore.Qt.Checked:
                 item.setCheckState(QtCore.Qt.Unchecked)       
             else:
@@ -355,6 +358,205 @@ class PyQtConfig( QtGui.QMainWindow):
                 "<ul>"
                 "<li> Margins (left, top, etc.): the margins around the plots</li>"
                 "<li> Spacing (hor., vert.): the spacing between the plots </li>"
+                "</ul>"
+                ))
+#
+#
+#
+class Config( QtGui.QMainWindow):
+    def __init__( self, parent = None):
+        super( Config, self).__init__( parent)
+        self.parent = parent
+
+        self.setWindowTitle( "Config")
+        self.prepareWidgets()
+
+        self.menuBar = QtGui.QMenuBar()
+        self.setMenuBar( self.menuBar)
+        self.prepareMenuBar()
+
+        #
+        # Status Bar
+        #
+        self.statusBar = QtGui.QStatusBar()
+        self.setStatusBar( self.statusBar)
+        self.prepareStatusBar()
+
+        self.updateTimer = QtCore.QTimer(self)
+        self.updateTimer.timeout.connect( self.cb_refreshAttr)
+        self.updateTimer.start( int( updateTime*1000))
+        self.show()
+        
+    def prepareWidgets( self):
+        w = QtGui.QWidget()
+        #
+        # start with a vertical layout
+        #
+        self.layout_grid = QtGui.QGridLayout()
+        w.setLayout( self.layout_grid)
+        self.setCentralWidget( w)
+
+        #
+        # name
+        #
+        row = 0
+        self.layout_grid.addWidget( QtGui.QLabel( "Font sizes:"), row, 0)
+        row += 1
+        self.layout_grid.addWidget( QtGui.QLabel( "Normal:"), row, 1)
+        self.fontNormal = QtGui.QLabel( "%d" % pysp.FONT_SIZE_NORMAL)
+        self.layout_grid.addWidget( self.fontNormal, row, 2)
+        self.fontNormalLineEdit = QtGui.QLineEdit()
+        self.fontNormalLineEdit.setMaximumWidth( 50)
+        self.layout_grid.addWidget( self.fontNormalLineEdit, row, 3)
+        row += 1
+        self.layout_grid.addWidget( QtGui.QLabel( "Small:"), row, 1)
+        self.fontSmall = QtGui.QLabel( "%d" % pysp.FONT_SIZE_SMALL)
+        self.layout_grid.addWidget( self.fontSmall, row, 2)
+        self.fontSmallLineEdit = QtGui.QLineEdit()
+        self.fontSmallLineEdit.setMaximumWidth( 50)
+        self.layout_grid.addWidget( self.fontSmallLineEdit, row, 3)
+        row += 1
+        self.layout_grid.addWidget( QtGui.QLabel( "VerySmall:"), row, 1)
+        self.fontVerySmall = QtGui.QLabel( "%d" % pysp.FONT_SIZE_VERY_SMALL)
+        self.layout_grid.addWidget( self.fontVerySmall, row, 2)
+        self.fontVerySmallLineEdit = QtGui.QLineEdit()
+        self.fontVerySmallLineEdit.setMaximumWidth( 50)
+        self.layout_grid.addWidget( self.fontVerySmallLineEdit, row, 3)
+
+        row += 1
+        self.layout_grid.addWidget( QtGui.QLabel( "Tick sizes:"), row, 0)
+        row += 1
+        self.layout_grid.addWidget( QtGui.QLabel( "Normal:"), row, 1)
+        self.tickFontNormal = QtGui.QLabel( "%d" % pysp.TICK_FONT_SIZE_NORMAL)
+        self.layout_grid.addWidget( self.tickFontNormal, row, 2)
+        self.tickFontNormalLineEdit = QtGui.QLineEdit()
+        self.tickFontNormalLineEdit.setMaximumWidth( 50)
+        self.layout_grid.addWidget( self.tickFontNormalLineEdit, row, 3)
+        row += 1
+        self.layout_grid.addWidget( QtGui.QLabel( "Small:"), row, 1)
+        self.tickFontSmall = QtGui.QLabel( "%d" % pysp.TICK_FONT_SIZE_SMALL)
+        self.layout_grid.addWidget( self.tickFontSmall, row, 2)
+        self.tickFontSmallLineEdit = QtGui.QLineEdit()
+        self.tickFontSmallLineEdit.setMaximumWidth( 50)
+        self.layout_grid.addWidget( self.tickFontSmallLineEdit, row, 3)
+        row += 1
+        self.layout_grid.addWidget( QtGui.QLabel( "VerySmall:"), row, 1)
+        self.tickFontVerySmall = QtGui.QLabel( "%d" % pysp.TICK_FONT_SIZE_VERY_SMALL)
+        self.layout_grid.addWidget( self.tickFontVerySmall, row, 2)
+        self.tickFontVerySmallLineEdit = QtGui.QLineEdit()
+        self.tickFontVerySmallLineEdit.setMaximumWidth( 50)
+        self.layout_grid.addWidget( self.tickFontVerySmallLineEdit, row, 3)
+
+    #
+    # the menu bar
+    #
+    def prepareMenuBar( self): 
+
+        self.fileMenu = self.menuBar.addMenu('&File')
+
+        self.exitAction = QtGui.QAction('E&xit', self)        
+        self.exitAction.setStatusTip('Exit application')
+        #self.exitAction.triggered.connect( sys.exit)
+        self.exitAction.triggered.connect( self.close)
+        self.fileMenu.addAction( self.exitAction)
+
+        #
+        # the activity menubar: help and activity
+        #
+        self.menuBarActivity = QtGui.QMenuBar( self.menuBar)
+        self.menuBar.setCornerWidget( self.menuBarActivity, QtCore.Qt.TopRightCorner)
+
+        #
+        # Help menu (bottom part)
+        #
+        self.helpMenu = self.menuBarActivity.addMenu('Help')
+        self.widgetAction = self.helpMenu.addAction(self.tr("Widget"))
+        self.widgetAction.triggered.connect( self.cb_helpWidget)
+
+        self.activityIndex = 0
+        self.activity = self.menuBarActivity.addMenu( "|")
+
+    #
+    # the status bar
+    #
+    def prepareStatusBar( self): 
+
+        self.display = QtGui.QPushButton(self.tr("&Display")) 
+        self.statusBar.addPermanentWidget( self.display) # 'permanent' to shift it right
+        self.display.clicked.connect( self.cb_display)
+        self.display.setShortcut( "Alt+d")
+
+        self.apply = QtGui.QPushButton(self.tr("&Apply")) 
+        self.statusBar.addPermanentWidget( self.apply) # 'permanent' to shift it right
+        self.apply.clicked.connect( self.cb_apply)
+        self.apply.setShortcut( "Alt+a")
+
+        self.exit = QtGui.QPushButton(self.tr("&Exit")) 
+        self.statusBar.addPermanentWidget( self.exit) # 'permanent' to shift it right
+        self.exit.clicked.connect( self.close)
+        self.exit.setShortcut( "Alt+x")
+
+    def cb_apply( self):
+        line = str(self.fontNormalLineEdit.text())
+        if len(line.strip()) > 0: 
+            pysp.FONT_SIZE_NORMAL = int( line.strip())
+            self.fontNormal.setText( "%d" % pysp.FONT_SIZE_NORMAL)
+            self.fontNormalLineEdit.clear()
+        line = str(self.fontSmallLineEdit.text())
+        if len(line.strip()) > 0: 
+            pysp.FONT_SIZE_SMALL = int( line.strip())
+            self.fontSmall.setText( "%d" % pysp.FONT_SIZE_SMALL)
+            self.fontSmallLineEdit.clear()
+        line = str(self.fontVerySmallLineEdit.text())
+        if len(line.strip()) > 0: 
+            pysp.FONT_SIZE_VERY_SMALL = int( line.strip())
+            self.fontVerySmall.setText( "%d" % pysp.FONT_SIZE_VERY_SMALL)
+            self.fontVerySmallLineEdit.clear()
+
+        line = str(self.tickFontNormalLineEdit.text())
+        if len(line.strip()) > 0: 
+            pysp.TICK_FONT_SIZE_NORMAL = int( line.strip())
+            self.tickFontNormal.setText( "%d" % pysp.TICK_FONT_SIZE_NORMAL)
+            self.tickFontNormalLineEdit.clear()
+        line = str(self.tickFontSmallLineEdit.text())
+        if len(line.strip()) > 0: 
+            pysp.TICK_FONT_SIZE_SMALL = int( line.strip())
+            self.tickFontSmall.setText( "%d" % pysp.TICK_FONT_SIZE_SMALL)
+            self.tickFontSmallLineEdit.clear()
+        line = str(self.tickFontVerySmallLineEdit.text())
+        if len(line.strip()) > 0: 
+            pysp.TICK_FONT_SIZE_VERY_SMALL = int( line.strip())
+            self.tickFontVerySmall.setText( "%d" % pysp.TICK_FONT_SIZE_VERY_SMALL)
+            self.tickFontVerySmallLineEdit.clear()
+
+        pysp.cls()
+        pysp.display()
+        
+    def cb_refreshAttr( self):
+
+        if self.isMinimized(): 
+            return
+        
+        self.activityIndex += 1
+        if self.activityIndex > (len( ACTIVITY_SYMBOLS) - 1):
+            self.activityIndex = 0
+        self.activity.setTitle( ACTIVITY_SYMBOLS[ self.activityIndex])
+        self.updateTimer.stop()
+
+        #self.w_gridXCheckBox.setCheckState( self.scan.showGridX) 
+        #self.w_gridYCheckBox.setCheckState( self.scan.showGridY) 
+        self.updateTimer.start( int( updateTime*1000))
+
+    def cb_display( self): 
+        pysp.cls()
+        pysp.display()
+
+    def cb_helpWidget(self):
+        QtGui.QMessageBox.about(self, self.tr("Help Widget"), self.tr(
+                "<h3> PyQt Configuration </h3>"
+                "<ul>"
+                "<li> 'Font sizes': normal/small/verySmall, these font sizes are used for texts, if several plots, many plots or very many plots are displayed.</li>"
+                "<li> 'Tick sizes': normal/small/verySmall, these sizes are used for tick labels, if several plots, many plots or very many plots are displayed.</li>"
                 "</ul>"
                 ))
 #
@@ -637,7 +839,7 @@ class ScanAttributes( QtGui.QMainWindow):
         #
         self.atLabel = QtGui.QLabel( "at:")
         self.layout_grid.addWidget( self.atLabel, row, 2)
-        self.atValue = QtGui.QLabel( "%s" % (self.scan.at))
+        self.atValue = QtGui.QLabel( "%s" % (str(self.scan.at)))
         self.layout_grid.addWidget( self.atValue, row, 3)
         self.atLineEdit = QtGui.QLineEdit()
         self.atLineEdit.setMaximumWidth( 70)
@@ -1065,6 +1267,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.setGeometry( geo.width() - 710, 30, geoWin.width(), geoWin.height())
 
         self.pyQtConfigWidget = None
+        self.configWidget = None
 
     #
     # the central widgets
@@ -1601,10 +1804,13 @@ class pySpectraGui( QtGui.QMainWindow):
         self.execAction.triggered.connect( self.cb_exec)
         self.debugMenu.addAction( self.execAction)
 
-
         self.pyqtConfigAction = QtGui.QAction('PyQtConfig', self)        
         self.pyqtConfigAction.triggered.connect( self.cb_pyqtConfig)
         self.debugMenu.addAction( self.pyqtConfigAction)
+
+        self.configAction = QtGui.QAction('Config', self)        
+        self.configAction.triggered.connect( self.cb_config)
+        self.debugMenu.addAction( self.configAction)
 
         #
         # the activity menubar: help and activity
@@ -1689,6 +1895,10 @@ class pySpectraGui( QtGui.QMainWindow):
         self.pyQtConfigWidget = PyQtConfig()
         self.pyQtConfigWidget.show()
         
+    def cb_config( self):
+        self.configWidget = Config()
+        self.configWidget.show()
+        
     def cb_displayExampleCode( self): 
         fName = pysp.examples.exampleCode.__file__
         editor = os.getenv( "EDITOR")
@@ -1711,6 +1921,9 @@ class pySpectraGui( QtGui.QMainWindow):
         if self.pyQtConfigWidget is not None:
             self.pyQtConfigWidget.close()
             self.pyQtConfigWidget = None
+        if self.configWidget is not None:
+            self.configWidget.close()
+            self.configWidget = None
         self.close()
         if self.flagExitOnClose:
             sys.exit( 0)

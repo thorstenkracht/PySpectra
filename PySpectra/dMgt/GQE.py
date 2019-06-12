@@ -29,7 +29,7 @@ _ScanAttrsPublic = [ 'at', 'autorangeX', 'autorangeY', 'colSpan', 'currentIndex'
                      'symbol', 'symbolColor', 'symbolSize', 
                      'textList', 'textOnly', 'viewBox', 
                      'x', 'xLog', 'xMax', 'xMin',
-                     'xLabel', 'y', 'yLabel', 'yLog', 'yMin', 'yMax'] 
+                     'xLabel', 'y', 'yLabel', 'yLog', 'yMin', 'yMax', 'yTicksVisible'] 
 
 _ScanAttrsPrivate = [ 'mouseClick', 'mouseLabel', 'mouseProxy', 
                       'plotItem', 'plotDataItem', 'scene']
@@ -410,6 +410,7 @@ class Scan( object):
         self.yLabel = None
         self.xLog = False
         self.yLog = False
+        self.yTicksVisible = True
         #
         # the attributes plot and mouseLabel are created by graphics.display(). 
         # However, it is initialized here to help cls()
@@ -970,11 +971,11 @@ def getFontSize( nameList):
     depending on how many scans are displayed the font size is adjusted
     '''
     if getNumberOfScansToBeDisplayed( nameList) < _pysp._MANY_SCANS:
-        fontSize = _pysp._FONT_SIZE_NORMAL
+        fontSize = _pysp.FONT_SIZE_NORMAL
     elif getNumberOfScansToBeDisplayed( nameList) <= _pysp._VERY_MANY_SCANS:
-        fontSize = _pysp._FONT_SIZE_SMALL
+        fontSize = _pysp.FONT_SIZE_SMALL
     else: 
-        fontSize = _pysp._FONT_SIZE_VERY_SMALL
+        fontSize = _pysp.FONT_SIZE_VERY_SMALL
 
     return fontSize
 
@@ -983,11 +984,11 @@ def getTickFontSize( nameList):
     depending on how many scans are displayed the font size is adjusted
     '''
     if getNumberOfScansToBeDisplayed( nameList) < _pysp._MANY_SCANS:
-        fontSize = _pysp._TICK_FONT_SIZE_NORMAL
+        fontSize = _pysp.TICK_FONT_SIZE_NORMAL
     elif getNumberOfScansToBeDisplayed( nameList) <= _pysp._VERY_MANY_SCANS:
-        fontSize = _pysp._TICK_FONT_SIZE_SMALL
+        fontSize = _pysp.TICK_FONT_SIZE_SMALL
     else: 
-        fontSize = _pysp._TICK_FONT_SIZE_VERY_SMALL
+        fontSize = _pysp.TICK_FONT_SIZE_VERY_SMALL
 
     return fontSize
 
