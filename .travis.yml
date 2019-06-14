@@ -16,6 +16,7 @@ addons:
     - python-taurus
     - python-psutil
     - python-tk
+    - python-sardana
     - xvfb
 
 install: 
