@@ -9,6 +9,7 @@ import math as _math
 import PySpectra as _pysp
 import PySpectra.dMgt.GQE as _GQE
 import sys as _sys
+import os as _os
 import time as _time
 
 def ssa( xIn, yIn, flagNbs = False, stbr = 3):
@@ -347,6 +348,9 @@ def inkey( resetTerminal = None):
     global _initInkeyOldTermAttr
     import atexit as _atexit
     import termios as _termios
+
+    if _os.isatty( 1) == 0:
+        return -1
 
     if resetTerminal and _initInkey:
         _initInkey = False

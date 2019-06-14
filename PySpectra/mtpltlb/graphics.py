@@ -188,6 +188,8 @@ def procEventsLoop():
     while True:
         _time.sleep(0.01)
         processEvents()
+        if _os.isatty( 1) == 0:
+            break
         key = _pysp.inkey()        
         if key == 10:
             break
