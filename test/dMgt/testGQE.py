@@ -7,7 +7,8 @@ python ./test/dMgt/testGQE.py testGQE.testNextPrev
 python ./test/dMgt/testGQE.py testGQE.testFillData
 '''
 import sys
-pySpectraPath = "/home/kracht/Misc/pySpectra"
+#pySpectraPath = "/home/kracht/Misc/pySpectra"
+pySpectraPath = "."
 sys.path.append( pySpectraPath)
 
 import PySpectra
