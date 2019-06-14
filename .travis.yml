@@ -10,6 +10,7 @@ addons:
     - python-qt4
     - python-pip
     - python-numpy
+    - python-scipy
 
 #install: 
 #  - pip install --user pytest
