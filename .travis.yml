@@ -9,6 +9,7 @@ addons:
     packages:
     - python-qt4
     - python-pip
+    - python-numpy
 
 #install: 
 #  - pip install --user pytest
