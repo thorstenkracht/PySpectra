@@ -11,6 +11,9 @@ addons:
     - python-pip
     - python-numpy
     - python-scipy
+    - python-pyqtgraph
+    - python-matplotlib
+    - python-taurus
 
 #install: 
 #  - pip install --user pytest
