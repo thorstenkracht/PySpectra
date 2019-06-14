@@ -16,10 +16,14 @@ addons:
     - python-taurus
     - python-psutil
     - python-tk
+    - xvfb
 
-#install: 
+install: 
+    - export DISPLAY=':99.0'
+    - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
 #  - pip install --user pytest
 script:
   - cd /home/travis/build/thorstenkracht/PySpectra
   - echo $PWD
+  - echo $DISPLAY
   - python -m unittest discover -v
