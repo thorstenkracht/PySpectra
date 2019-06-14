@@ -257,8 +257,8 @@ def procEventsLoop():
     while True:
         _time.sleep(0.01)
         _QApp.processEvents()
-        print "pqt_graphics.procEventsLoop: isatty(1)", _os.isatty(1)
-        if _os.isatty( 1) == 0:
+        print "pqt_graphics.prrocLoop", _os.getenv( "DISPLAY")
+        if _os.getenv( "DISPLAY") == ":99.0": 
             break
         key = _pysp.utils.inkey()        
         if key == 10:
