@@ -15,6 +15,7 @@ addons:
     - python-matplotlib
     - python-taurus
     - python-psutil
+    - python-tk
 
 #install: 
 #  - pip install --user pytest
