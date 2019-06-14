@@ -16,7 +16,8 @@ before_install:
   - python configure.py --confirm-license
   - make -j 2
   - sudo make install
-
+  - cd ..
 script:
+  - cd /home/travis/build/thorstenkracht/PySpectra
   - echo $PWD
   - python -m unittest discover -v
