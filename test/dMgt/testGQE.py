@@ -26,7 +26,7 @@ class testGQE( unittest.TestCase):
 
         PySpectra.delete()
         PySpectra.setTitle( "a_title")
-        self.assertEqual( PySpectra.getTitle(), "aaa_title")
+        self.assertEqual( PySpectra.getTitle(), "a_title")
         PySpectra.delete()
         self.assertEqual( PySpectra.getTitle(), None)
         PySpectra.setTitle( "a_title")
