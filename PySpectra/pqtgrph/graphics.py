@@ -253,7 +253,7 @@ def procEventsLoop():
     '''
     loops over QApp.processEvents until a <return> is entered
     '''
-    print "\nPress <return> to continue ",
+    print "\nPress <enter> to continue ",
     while True:
         _time.sleep(0.01)
         _QApp.processEvents()
