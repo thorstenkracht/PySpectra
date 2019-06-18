@@ -23,6 +23,7 @@ class testGQE( unittest.TestCase):
     
     def test_titleAndComment( self):
 
+        print "testGQE.test_titleAndComment"
         PySpectra.cls()
 
         PySpectra.delete()
@@ -64,8 +65,12 @@ class testGQE( unittest.TestCase):
         PySpectra.Scan( "t1")
         PySpectra.display()
         PySpectra.procEventsLoop()
+
+        print "testGQE.test_titleAndComment DONE"
     
     def test_readMca_v1( self):
+
+        print "testGQE.test_readMca_v1"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -80,7 +85,11 @@ class testGQE( unittest.TestCase):
         print "the graphics window should contain 1 MCA plot now"
         PySpectra.procEventsLoop()
 
+        print "testGQE.test_readMca_v1 DONE"
+
     def test_readMca_v2( self):
+
+        print "testGQE.test_readMca_v2"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -97,7 +106,11 @@ class testGQE( unittest.TestCase):
         print "the graphics window should contain 2 MCA plots now"
         PySpectra.procEventsLoop()
 
+        print "testGQE.test_readMca_v2 DONE"
+
     def test_read( self):
+
+        print "testGQE.test_read"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -125,14 +138,15 @@ class testGQE( unittest.TestCase):
         self.assertEqual( lst[2].name, "scan3")
         self.assertEqual( lst[3].name, "scan4")
         
-        print "before display"
         PySpectra.display()
-        print "before show"
         PySpectra.show()
-        print "the graphics window should contain 4 plots now"
         PySpectra.procEventsLoop()
 
+        print "testGQE.test_read DONE"
+
     def test_doty( self):
+
+        print "testGQE.test_doty"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -151,8 +165,12 @@ class testGQE( unittest.TestCase):
         PySpectra.display()
         PySpectra.show()
         PySpectra.procEventsLoop()
+
+        print "testGQE.test_doty DONE"
         
     def test_createScanByLimit( self):
+
+        print "testGQE.test_createScanByLimit"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -171,7 +189,11 @@ class testGQE( unittest.TestCase):
 
         self.assertEqual( scan.lineColor, 'red')
 
+        print "testGQE.test_createScanByLimit DONE"
+
     def test_createScanByData( self):
+
+        print "testGQE.test_createScanByData"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -203,8 +225,11 @@ class testGQE( unittest.TestCase):
         self.assertEqual( scan.y[4], 12)
 
         self.assertEqual( scan.currentIndex, 4)
+
+        print "testGQE.test_createScanByData, DONE"
         
     def testCreateDelete( self): 
+        print "testGQE.testCreateDelete"
         PySpectra.delete()
         scanLst = PySpectra.getScanList()
         self.assertEqual( len( scanLst), 0)
@@ -222,8 +247,11 @@ class testGQE( unittest.TestCase):
         PySpectra.delete()
         scanLst = PySpectra.getScanList()
         self.assertEqual( len( scanLst), 0)
+
+        print "testGQE.testCreateDelete, DONE"
         
     def testNextPrev( self):
+        print "testGQE.testNextPrev"
         PySpectra.delete()
         PySpectra.Scan( name = 't1')
         PySpectra.Scan( name = 't2')
@@ -245,7 +273,10 @@ class testGQE( unittest.TestCase):
         self.assertEqual( gqe._prevScan().name, 't2')
         self.assertEqual( gqe._prevScan().name, 't1')
 
+        print "testGQE.testNextPrev, DONE"
+
     def testFillData( self):
+        print "testGQE.testFillData"
         PySpectra.cls()
         PySpectra.delete()
         scan = PySpectra.Scan( name = 't1', xLabel = "up to 200 pts", 
@@ -255,12 +286,13 @@ class testGQE( unittest.TestCase):
         
         startTime = time.time()
         for i in range( len( scan.y)):
-            print "testGQE.testFillData", i
             scan.setY( i, math.tan( float( i)/10))
             PySpectra.display()
 
         diffTime = time.time() - startTime
         self.assertLess( diffTime, 5.)
+
+        print "testGQE.testFillData, DONE"
 
 if __name__ == "__main__":
     unittest.main()

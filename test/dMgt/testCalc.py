@@ -33,6 +33,8 @@ class testCalc( unittest.TestCase):
         ValueError: zero-size array to reduction operation maximum which has no identity
         '''
 
+        print "testCalc.testDerivative"
+
         PySpectra.cls()
         PySpectra.delete()
         scan = PySpectra.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
@@ -59,8 +61,12 @@ class testCalc( unittest.TestCase):
         PySpectra.display()
         PySpectra.show()
         PySpectra.procEventsLoop()
+
+        print "testCalc.testDerivative, DONE"
         
     def testAntiDerivative( self):
+
+        print "testCalc.testAntiDerivative"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -71,7 +77,11 @@ class testCalc( unittest.TestCase):
         PySpectra.show()
         PySpectra.procEventsLoop()
 
+        print "testCalc.testAntiDerivative, DONE"
+
     def testYToMinusY( self):
+
+        print "testCalc.testYToMinusY"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -81,6 +91,8 @@ class testCalc( unittest.TestCase):
         PySpectra.display()
         PySpectra.show()
         PySpectra.procEventsLoop()
+
+        print "testCalc.testYToMinusY, DONE"
 
 if __name__ == "__main__":
     unittest.main()

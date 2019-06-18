@@ -711,7 +711,7 @@ def _showScan( scan):
     
     '''
     if scan.textOnly: 
-        print "--- \n", scan.name, "(textOnly)"
+        print "--- GQE._showScan \n", scan.name, "(textOnly)"
         _displayTextList( scan)
         return 
     #
@@ -758,6 +758,12 @@ def _showScan( scan):
 
     for attr in _ScanAttrsPublic:
         if attr in scanAttrsPrinted: 
+            continue
+        if attr == 'x' or attr == 'y':
+            if len( getattr( scan, attr)) <= 10: 
+                print "  %s: %s" % ( attr, repr( getattr( scan, attr)))
+            else:
+                print "  %s[:10]: %s" % ( attr, repr( getattr( scan, attr)[:10]))
             continue
         try:
             print "  %s: %s" % ( attr, repr( getattr( scan, attr)))

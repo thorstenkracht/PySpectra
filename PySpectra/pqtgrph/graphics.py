@@ -257,7 +257,6 @@ def procEventsLoop():
     while True:
         _time.sleep(0.01)
         _QApp.processEvents()
-        print "pqt_graphics.prrocLoop", _os.getenv( "DISPLAY")
         #
         # :99.0 is the DISPLAY in travis
         #

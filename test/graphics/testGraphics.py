@@ -21,6 +21,8 @@ class testGraphics( unittest.TestCase):
         '''
         using showGridX, showGridY
         '''
+        print "testGrphics.testDoty"
+
         PySpectra.cls()
         PySpectra.delete()
         PySpectra.setTitle( "check x-axis doty")
@@ -33,10 +35,13 @@ class testGraphics( unittest.TestCase):
         PySpectra.show()
         PySpectra.procEventsLoop()
 
+        print "testGrphics.testDoty, DONE"
+
     def testGrid( self): 
         '''
         using showGridX, showGridY
         '''
+        print "testGrphics.testGrid"
         PySpectra.cls()
         PySpectra.delete()
         PySpectra.setTitle( "check grids")
@@ -55,10 +60,13 @@ class testGraphics( unittest.TestCase):
         PySpectra.show()
         PySpectra.procEventsLoop()
 
+        print "testGrphics.testGrid, DONE"
+
     def testDisplayScan_v1( self): 
         '''
         using setX and setY
         '''
+        print "testGrphics.testDisplayScan_v1"
         PySpectra.cls()
         PySpectra.delete()
 
@@ -68,11 +76,13 @@ class testGraphics( unittest.TestCase):
             sinus.setY( i, math.sin( i/10.))
             PySpectra.display( ['sinus'])
             time.sleep( 0.01)
+        print "testGrphics.testDisplayScan_v1, DONE"
 
     def testDisplayScan_v2( self): 
         '''
         using setY only
         '''
+        print "testGrphics.testDisplayScan_v2"
         PySpectra.cls()
         PySpectra.delete() 
         cosinus = PySpectra.Scan( name = 'cosinus', xMin = 0., 
@@ -81,11 +91,13 @@ class testGraphics( unittest.TestCase):
             cosinus.setY( i, math.cos( cosinus.x[i]))
             PySpectra.display( ['cosinus'])
             time.sleep( 0.01)
+        print "testGrphics.testDisplayScan_v2, DONE"
 
     def testDisplayScan_v3( self): 
         '''
         using setX and setY
         '''
+        print "testGrphics.testDisplayScan_v3"
         PySpectra.cls()
         PySpectra.delete()
 
@@ -99,10 +111,13 @@ class testGraphics( unittest.TestCase):
             PySpectra.display( ['sinus', 'cosinus'])
             time.sleep( 0.01)
 
+        print "testGrphics.testDisplayScan_v3, DONE"
+
     def testDisplayScan_v4( self): 
         '''
         using setX and setY, autorangeX
         '''
+        print "testGrphics.testDisplayScan_v4"
         PySpectra.cls()
         PySpectra.delete()
 
@@ -113,9 +128,11 @@ class testGraphics( unittest.TestCase):
             sinus.setY( i, math.sin( i/10.))
             PySpectra.display( ['sinus'])
             time.sleep( 0.01)
+        print "testGrphics.testDisplayScan_v4, DONE"
 
     def testDisplaySingle( self): 
 
+        print "testGrphics.testDisplaySingle"
         PySpectra.cls()
         PySpectra.delete()
 
@@ -128,7 +145,11 @@ class testGraphics( unittest.TestCase):
         PySpectra.show()
         PySpectra.procEventsLoop()
 
+        print "testGrphics.testDisplaySingle"
+
     def testDisplaySymbol( self): 
+
+        print "testGrphics.testDisplaySymbol"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -142,7 +163,11 @@ class testGraphics( unittest.TestCase):
         PySpectra.show()
         PySpectra.procEventsLoop()
 
+        print "testGrphics.testDisplaySymbol. DONE"
+
     def testDisplayTwo( self): 
+
+        print "testGrphics.testDisplayTwo"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -164,8 +189,11 @@ class testGraphics( unittest.TestCase):
         PySpectra.show()
         PySpectra.procEventsLoop()
 
+        print "testGrphics.testDisplayTwo, DONE"
 
     def testOverlay( self): 
+
+        print "testGrphics.testOverlay"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -211,8 +239,11 @@ class testGraphics( unittest.TestCase):
         PySpectra.show()
         PySpectra.procEventsLoop()
 
+        print "testGrphics.testOverlay, DONE"
 
     def testDisplayFour( self): 
+
+        print "testGrphics.testDisplayFour"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -231,7 +262,11 @@ class testGraphics( unittest.TestCase):
 
         PySpectra.procEventsLoop()
 
+        print "testGrphics.testDisplayFour, DONE"
+
     def testDisplayMany( self): 
+
+        print "testGrphics.testDisplayMany"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -250,10 +285,15 @@ class testGraphics( unittest.TestCase):
 
         PySpectra.procEventsLoop()
 
+        print "testGrphics.testDisplayMany, DONE"
+
     def testFastDisplay_v1( self):
         '''
         version 1: set the scan data and call display
         '''
+
+        print "testGrphics.testDisplay_v1"
+
         PySpectra.cls()
         PySpectra.delete()
         scan1 = PySpectra.Scan( name = 't1', nPts = 1000, yMin = -1., yMax = 1.)
@@ -279,10 +319,14 @@ class testGraphics( unittest.TestCase):
         diffTime = time.time() - startTime
         self.assertLess( diffTime, 5.)
 
+        print "testGrphics.testDisplay_v1, DONE"
+
     def testFastDisplay_v2( self):
         '''
         version 2: directly use the plotDataItem.setData() function
         '''
+        print "testGrphics.testDisplay_v2"
+
         PySpectra.cls()
         PySpectra.delete()
         scan1 = PySpectra.Scan( name = 't1', nPts = 1000, yMin = -1., yMax = 1.)
@@ -308,6 +352,7 @@ class testGraphics( unittest.TestCase):
 
         diffTime = time.time() - startTime
         self.assertLess( diffTime, 7.)
+        print "testGrphics.testDisplay_v2, DONE"
 
 if __name__ == "__main__":
     unittest.main()
