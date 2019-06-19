@@ -20,6 +20,7 @@ addons:
     - xvfb
 
 install: 
+    - pip install coverage
     - export DISPLAY=':99.0'
     - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     - sudo dpkg -i /home/travis/build/thorstenkracht/PySpectra/HasyUtils/python-hasyutils_1.55555_amd64.deb
@@ -29,4 +30,4 @@ script:
   - cd /home/travis/build/thorstenkracht/PySpectra
   - echo $PWD
   - echo $DISPLAY
-  - python -m unittest discover -v
+  - coverage python -m unittest discover -v
