@@ -30,4 +30,5 @@ script:
   - cd /home/travis/build/thorstenkracht/PySpectra
   - echo $PWD
   - echo $DISPLAY
+  - which python
   - coverage python -m unittest discover -v
