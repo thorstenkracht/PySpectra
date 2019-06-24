@@ -50,21 +50,21 @@ class testGQE( unittest.TestCase):
         PySpectra.Scan( "t1")
         PySpectra.display()
         PySpectra.show()
-        PySpectra.procEventsLoop()
+        PySpectra.procEventsLoop( 1)
 
         PySpectra.cls()
         PySpectra.delete()
         PySpectra.setTitle( "there is only a title, no comment")
         PySpectra.Scan( "t1")
         PySpectra.display()
-        PySpectra.procEventsLoop()
+        PySpectra.procEventsLoop( 1)
 
         PySpectra.cls()
         PySpectra.delete()
         PySpectra.setComment( "there is only a comment")
         PySpectra.Scan( "t1")
         PySpectra.display()
-        PySpectra.procEventsLoop()
+        PySpectra.procEventsLoop( 1)
 
         print "testGQE.test_titleAndComment DONE"
     
@@ -83,7 +83,7 @@ class testGQE( unittest.TestCase):
         PySpectra.display()
         PySpectra.show()
         print "the graphics window should contain 1 MCA plot now"
-        PySpectra.procEventsLoop()
+        PySpectra.procEventsLoop( 1)
 
         print "testGQE.test_readMca_v1 DONE"
 
@@ -104,7 +104,7 @@ class testGQE( unittest.TestCase):
         PySpectra.display()
         PySpectra.show()
         print "the graphics window should contain 2 MCA plots now"
-        PySpectra.procEventsLoop()
+        PySpectra.procEventsLoop( 1)
 
         print "testGQE.test_readMca_v2 DONE"
 
@@ -123,7 +123,7 @@ class testGQE( unittest.TestCase):
         PySpectra.display()
         PySpectra.show()
         print "the graphics window should contain 24 plots now"
-        PySpectra.procEventsLoop()
+        PySpectra.procEventsLoop( 1)
 
         PySpectra.cls()
         PySpectra.delete()
@@ -140,7 +140,7 @@ class testGQE( unittest.TestCase):
         
         PySpectra.display()
         PySpectra.show()
-        PySpectra.procEventsLoop()
+        PySpectra.procEventsLoop( 1)
 
         print "testGQE.test_read DONE"
 
@@ -164,7 +164,7 @@ class testGQE( unittest.TestCase):
 
         PySpectra.display()
         PySpectra.show()
-        PySpectra.procEventsLoop()
+        PySpectra.procEventsLoop( 1)
 
         print "testGQE.test_doty DONE"
         

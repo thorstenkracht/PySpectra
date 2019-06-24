@@ -33,7 +33,7 @@ class testGraphics( unittest.TestCase):
 
         PySpectra.display()
         PySpectra.show()
-        PySpectra.procEventsLoop()
+        PySpectra.procEventsLoop( 1)
 
         print "testGrphics.testDoty, DONE"
 
@@ -58,7 +58,7 @@ class testGraphics( unittest.TestCase):
 
         PySpectra.display()
         PySpectra.show()
-        PySpectra.procEventsLoop()
+        PySpectra.procEventsLoop( 1)
 
         print "testGrphics.testGrid, DONE"
 
@@ -143,7 +143,7 @@ class testGraphics( unittest.TestCase):
         sinus.y = np.sin( sinus.y)
         PySpectra.display( ['sinus'])
         PySpectra.show()
-        PySpectra.procEventsLoop()
+        PySpectra.procEventsLoop( 1)
 
         print "testGrphics.testDisplaySingle"
 
@@ -161,7 +161,7 @@ class testGraphics( unittest.TestCase):
         sinus.y = np.sin( sinus.y)
         PySpectra.display( ['sinus'])
         PySpectra.show()
-        PySpectra.procEventsLoop()
+        PySpectra.procEventsLoop( 1)
 
         print "testGrphics.testDisplaySymbol. DONE"
 
@@ -187,7 +187,7 @@ class testGraphics( unittest.TestCase):
 
         PySpectra.display()
         PySpectra.show()
-        PySpectra.procEventsLoop()
+        PySpectra.procEventsLoop( 1)
 
         print "testGrphics.testDisplayTwo, DONE"
 
@@ -237,7 +237,7 @@ class testGraphics( unittest.TestCase):
 
         PySpectra.display()
         PySpectra.show()
-        PySpectra.procEventsLoop()
+        PySpectra.procEventsLoop( 1)
 
         print "testGrphics.testOverlay, DONE"
 
@@ -260,7 +260,7 @@ class testGraphics( unittest.TestCase):
 
         PySpectra.show()
 
-        PySpectra.procEventsLoop()
+        PySpectra.procEventsLoop( 1)
 
         print "testGrphics.testDisplayFour, DONE"
 
@@ -283,7 +283,7 @@ class testGraphics( unittest.TestCase):
 
         PySpectra.show()
 
-        PySpectra.procEventsLoop()
+        PySpectra.procEventsLoop( 1)
 
         print "testGrphics.testDisplayMany, DONE"
 

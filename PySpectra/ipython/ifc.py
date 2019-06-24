@@ -2,6 +2,18 @@
 '''
 An interface to PySpectra, used by ipython, see 00-start.py, 
 and by pyspViewer.py
+
+  #!/usr/bin/env python
+  import __builtin__
+  #__builtin__.__dict__[ 'graphicsLib'] = 'matplotlib'
+  __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
+  import PySpectra as pysp
+  import PySpectra.ipython.startup
+ 
+  Afterwards: 
+    In [1]: create s1
+    In [1]: display
+
 '''
 import PySpectra as pysp
 import itertools
@@ -12,6 +24,10 @@ def command( line):
     receives a line like: 'cls', 'create t1', etc.
     the line is split into pieces and the pysp functions
     are called
+
+    Called: 
+      pysp.ipython.ifc.command( "create s1")
+      pysp.ipython.ifc.command( "display")
     '''
     line = line.strip()
     if len( line) == 0:

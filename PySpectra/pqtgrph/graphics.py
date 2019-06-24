@@ -85,7 +85,7 @@ def _setSizeGraphicsWindow( nScan):
     return 
 def setWsViewport( size = None):
     '''
-    size: DINA4, DINA4P, DINA3, DINA3P
+    size: DINA4, DINA4P, DINA5, DINA5P, DINA6, DINA6L
     '''
     if size is None:
         return 
@@ -249,14 +249,19 @@ def _getLayout( o):
         if type( item) == _pg.graphicsItems.GraphicsLayout.GraphicsLayout: 
             return item
 
-def procEventsLoop():
+def procEventsLoop( timeOut = None):
     '''
     loops over QApp.processEvents until a <return> is entered
     '''
-    print "\nPress <enter> to continue ",
+    if timeOut is None:
+        print "\nPress <enter> to continue ",
+    startTime = _time.time()
     while True:
         _time.sleep(0.01)
         _QApp.processEvents()
+        if timeOut is not None:
+            if (_time.time() - startTime) > timeOut: 
+                break
         #
         # :99.0 is the DISPLAY in travis
         #

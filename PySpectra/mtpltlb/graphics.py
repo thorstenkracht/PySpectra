@@ -62,6 +62,8 @@ def createPDF( fileName = None, flagPrint = False):
     if fileName is None:
         fileName = "pyspOutput.pdf"
 
+    if fileName.find( '.pdf') == -1:
+        fileName += ".pdf"
     if _os.system( "/usr/local/bin/vrsn -s -nolog %s" % fileName):
         print "graphics.createPDF: failed to save the current version of %s" % fileName
     
@@ -112,7 +114,7 @@ def _setSizeGraphicsWindow( nScan):
 
 def setWsViewport( size = None):
     '''
-    size: DINA4, DINA4P, DINA3, DINA3P
+    size: DINA4, DINA4P, DINA5, DINA5P, DINA6, DINA6L
     '''
     print "mpl_graphics.setWsViewport:", size
     if size is None:
@@ -180,14 +182,19 @@ def close():
     Fig = None
     return 
 
-def procEventsLoop():
+def procEventsLoop( timeOut = None):
     '''
     loops over QApp.processEvents until a <return> is entered
     '''
-    print "\nPress <return> to continue ",
+    if timeOut is None:
+        print "\nPress <return> to continue ",
+    startTime = _time.time()
     while True:
         _time.sleep(0.01)
         processEvents()
+        if timeOut is not None:
+            if (_time.time() - startTime) > timeOut: 
+                break
         #
         # :99.0 is the DISPLAY in travis
         #
