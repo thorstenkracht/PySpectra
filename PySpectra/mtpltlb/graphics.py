@@ -261,7 +261,7 @@ def _setTitle( scan, nameList):
         tempName = scan.name
 
     fontSize = _pysp.getFontSize( nameList)
-
+ 
     if _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp._MANY_SCANS:
         scan.plotItem.set_title( tempName, fontsize = fontSize)
     else:
@@ -269,7 +269,7 @@ def _setTitle( scan, nameList):
                             transform = scan.plotItem.transAxes, 
                             va = 'center', ha = 'right', 
                             fontsize = fontSize)
-
+  
 def _textIsOnDisplay( textStr):
     '''
     searches the Fig.texts() to see whether textStr exists already

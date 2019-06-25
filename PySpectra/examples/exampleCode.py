@@ -128,7 +128,7 @@ def example56x3Scans():
         t.y = _np.random.random_sample( (len( t.x), ))*1000.
     _pysp.display()
 
-def exampleGaussAndSinusOverlaid( self):
+def exampleGaussAndSinusOverlaid():
     '''
     overlay 2 scans
     '''
