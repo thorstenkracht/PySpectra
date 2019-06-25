@@ -26,6 +26,7 @@ install:
     - sudo dpkg -i /home/travis/build/thorstenkracht/PySpectra/HasyUtils/python-hasyutils_1.55555_amd64.deb
 
 script:
+  - CODECOV_TOKEN="02870c5a-e588-43e9-9a95-4790326187f6"
   - cd /home/travis/build/thorstenkracht/PySpectra
   - echo $PWD
   - echo $DISPLAY
