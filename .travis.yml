@@ -31,8 +31,8 @@ script:
   - echo $PWD
   - echo $DISPLAY
   - python -m unittest discover -v
-#  - python2-coverage run -m unittest discover -v
+  - python2-coverage run -m unittest discover -v
 #  - export CODECOV_TOKEN="02870c5a-e588-43e9-9a95-4790326187f6"
 #  - bash <(curl -s https://codecov.io/bash)
-   - bash <(curl -s https://codecov.io/bash) -t "02870c5a-e588-43e9-9a95-4790326187f6"
+#   - bash <(curl -s https://codecov.io/bash) -t "02870c5a-e588-43e9-9a95-4790326187f6"
 
