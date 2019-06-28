@@ -3,7 +3,6 @@
 # file name: mpl_scan.py
 #
 
-from sardana.macroserver.macro import macro, Type
 import time
 import matplotlib.pyplot as plt
 import numpy as np
@@ -58,7 +57,9 @@ def display():
         dt.set_data(range(i), tm[0:i])
         ax_dt.relim()
         ax_dt.autoscale_view(True,False,True)
-        plt.draw()
+        fig.canvas.flush_events()
+        #plt.pause( 0.001)
+        #plt.draw()
 
 if __name__ == "__main__":
     display()

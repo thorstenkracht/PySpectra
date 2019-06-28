@@ -190,7 +190,9 @@ _lineWidthArr = [
     '2.5',
     '3.0',
 ]
-
+#
+# the generic line styles: SOLID, DASHED, DOTTED, DASHDOTTED
+#
 _lineStyleArr = [ 
     'SOLID', 
     'DASHED', 
@@ -289,12 +291,11 @@ _symbolSizeArr = [
     '35',
 ]
 #
-# matplotlib
+# pyqtgraph
 #
-_lineStyle = { 
+_lineStylePQT = { 
     'SOLID': _QtCore.Qt.SolidLine,
     'DASHED': _QtCore.Qt.DashLine,
     'DOTTED': _QtCore.Qt.DotLine,
     'DASHDOTTED': _QtCore.Qt.DashDotLine,
-    'DASHDOTDOTTED': _QtCore.Qt.DashDotDotLine,
 }

@@ -20,7 +20,7 @@ def display():
     x = np.arange( xMin, xMax, xDelta)
     t = np.sin(x)
 
-    plt.ion()
+    #plt.ion()
     if not plt.get_fignums():
         fig = plt.figure( 1, figsize = (11.6, 8.2))
     else:
@@ -38,7 +38,7 @@ def display():
     sin, = ax_sin.plot( x, t, marker = 'o', color='red')
     ax_sin.set_xlim( xmin=x[0], xmax=x[-1])
 
-    plt.draw()
+    plt.show()
 
     print "Prtc ",
     sys.stdin.readline()

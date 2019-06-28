@@ -338,8 +338,8 @@ def _getPen( scan):
     else:
         clr = 'k'
 
-    if scan.lineStyle in _pysp._lineStyle:
-        stl = _pysp._lineStyle[ scan.lineStyle]
+    if scan.lineStyle in _pysp._lineStylePQT:
+        stl = _pysp._lineStylePQT[ scan.lineStyle]
     else:
         stl = _QtCore.Qt.DashLine
 

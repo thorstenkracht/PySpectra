@@ -12,8 +12,8 @@ import numpy as np
 import PySpectra as pysp
 import mtpltlb.graphics as mpl_graphics # to create postscript
 
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 win = None
@@ -1210,7 +1210,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.proxyDoor = None
         self.nMotor = 0
         
-        self.useMatplotlib = False
+        self.useMatplotlib = True # +++
         try:
             if os.environ["PYSP_USE_MATPLOTLIB"] == "True":
                 self.useMatplotlib = True
@@ -1252,9 +1252,11 @@ class pySpectraGui( QtGui.QMainWindow):
         # compromise: start with a big widget (DINA4) in QtGui
         #
         self.mplWidget = None
-        if self.useMatplotlib: 
-            self.mplWidget = MplWidget( self.logWidget)        
-            self.mplWidget.show()
+        # +++
+        #if self.useMatplotlib: 
+        #    self.mplWidget = MplWidget( self.logWidget)        
+        #    self.mplWidget.show()
+        # +++
         #
         # after show() we see where we are. then we move the widget
         #

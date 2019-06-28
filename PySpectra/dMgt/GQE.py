@@ -32,7 +32,7 @@ _ScanAttrsPublic = [ 'at', 'autorangeX', 'autorangeY', 'colSpan', 'currentIndex'
                      'xLabel', 'y', 'yLabel', 'yLog', 'yMin', 'yMax', 'yTicksVisible'] 
 
 _ScanAttrsPrivate = [ 'mouseClick', 'mouseLabel', 'mouseProxy', 
-                      'plotItem', 'plotDataItem', 'scene']
+                      'plotItem', 'plotDataItem', 'scene', 'xDateMpl']
 
 class Text(): 
     '''
@@ -86,7 +86,7 @@ class Scan( object):
         showGridX, 
         showGridY:  True/False
         lineColor:  'red', 'green', 'blue', 'yellow', 'cyan', 'magenta', 'black', 'NONE'
-        lineStyle:  'None', 'SOLID', 'DASHED', 'DOTTED', 'DASHDOTTED', 'DASHDOTDOTTED'
+        lineStyle:  'None', 'SOLID', 'DASHED', 'DOTTED', 'DASHDOTTED'
                     if None, the line is not plotted
         lineWidth:  float: 1.0, 1.2, 1.4, 1.6, 1.8, 2.0
                     line width, def.: 1

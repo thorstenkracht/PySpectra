@@ -15,6 +15,9 @@ import PySpectra as _pysp
 import PySpectra.pqtgrph.graphics as _pqt_graphics
 import datetime as _datetime
 
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+
 Fig = None
 Canvas = None
 _QApp = None
@@ -26,22 +29,36 @@ def _initGraphic( figureIn = None, canvasIn = None):
     '''
     global Fig, Canvas, _QApp
 
+    #print "mpl_graphics._initGraphic, BEGIN", repr( figureIn), repr( canvasIn)
+
     if _QApp is None:
         _QApp = _QtGui.QApplication.instance()
+        if _QApp is None:
+            _QApp = _QtGui.QApplication([])
 
     if figureIn is not None:
         Fig = figureIn
         Canvas = canvasIn
         return 
 
+
+#    if Fig is None or Canvas is None:
+#        if figureIn is not None:
+#            Fig = figureIn
+#            Canvas = canvasIn
+#        else: 
+#            Fig = Figure( figsize=(29.7/2.54, 21.0/2.54))
+#            Canvas = FigureCanvas( Fig)
+#        return 
+
     plt.ion()
-    #print "graphics._initGraphic"
 
     if not plt.get_fignums():
         Fig = plt.figure(1, figsize=(21./2.54, 14.85/2.54))
     else:
         Fig = plt.figure(1)
         Fig.clear()
+
     return
 
 def createPDF( fileName = None, flagPrint = False): 
@@ -156,7 +173,8 @@ def cls():
         _initGraphic()
 
     Fig.clear()
-    plt.draw()
+    Fig.canvas.flush_events()
+    #plt.draw()
     if Canvas is not None:
         try:
             Canvas.draw()
@@ -190,7 +208,7 @@ def procEventsLoop( timeOut = None):
         print "\nPress <return> to continue ",
     startTime = _time.time()
     while True:
-        _time.sleep(0.01)
+        _time.sleep(0.001)
         processEvents()
         if timeOut is not None:
             if (_time.time() - startTime) > timeOut: 
@@ -203,14 +221,18 @@ def procEventsLoop( timeOut = None):
         key = _pysp.inkey()        
         if key == 10:
             break
-    print ""
+
+    if timeOut is None:
+        print ""
 
 def processEvents(): 
 
     if Fig is None: 
         _initGraphic()
 
-    plt.draw()
+    Fig.canvas.flush_events()
+    #plt.pause( 0.001)
+    # draw()
     if Canvas is not None:
         Canvas.draw()
     _QApp.processEvents()
@@ -416,6 +438,7 @@ def _createPlotItem( scan, nameList):
 
     try:
         scan.plotItem = Fig.add_subplot( scan.nrow, scan.ncol, scan.nplot)
+
         if scan.textOnly: 
             scan.plotItem.axis( 'off')
             #+++scan.plotItem.set_xlim( [0., 1.])
@@ -582,7 +605,7 @@ def display( nameList = None):
         #
         if scan.plotItem is None:
             try:
-                #print "graphics.display: creating plot for", scan.name, nrow, ncol, nplot
+                #print "graphics.display: creating plot for", scan.name
                 _createPlotItem( scan, nameList)
             except ValueError, e:
                 print "graphics.display: exception from createPlotItem"
@@ -632,6 +655,7 @@ def display( nameList = None):
         # 
         if scan.lastIndex == scan.currentIndex or \
            scan.currentIndex  == 0:
+            #print "mpl_display, currentIndex, lastIndex", scan.currentIndex, scan.lastIndex, "continue"
             continue
 
         if scan.doty:
@@ -718,9 +742,15 @@ def display( nameList = None):
         if not scan.doty:
             scan.plotItem.set_xlim( scan.xMin, scan.xMax)
 
-    plt.draw()
+    #
+    # draw() is non-blocking
+    #
+    #plt.draw()
+    Fig.canvas.flush_events()
+    #plt.pause( 0.001)
     if Canvas is not None:
         try:
+            print "mpl_graphics.display, canvas draw"
             Canvas.draw()
         except Exception, e:
             print "mpl_graphics.display: caught exception from Canvas.draw"
