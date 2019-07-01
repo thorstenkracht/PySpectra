@@ -133,7 +133,7 @@ def setWsViewport( size = None):
     '''
     size: DINA4, DINA4P, DINA5, DINA5P, DINA6, DINA6L
     '''
-    print "mpl_graphics.setWsViewport:", size
+
     if size is None:
         return 
     if size.upper() == "DINA4" or size.upper() == "DINA4L": 
@@ -358,8 +358,6 @@ def _adjustFigure( nDisplay):
 def _displayTitleComment( nameList):     
     '''
     '''
-
-
     fontSize = _pysp.getFontSize( nameList)
 
     title = _pysp.getTitle()

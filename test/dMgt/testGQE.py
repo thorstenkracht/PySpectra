@@ -6,6 +6,7 @@ python -m unittest discover -v
 python ./test/dMgt/testGQE.py testGQE.testNextPrev
 python ./test/dMgt/testGQE.py testGQE.testFillData
 python ./test/dMgt/testGQE.py testGQE.testWrite
+python ./test/dMgt/testGQE.py testGQE.testReuse
 '''
 import sys
 #pySpectraPath = "/home/kracht/Misc/pySpectra"
@@ -21,7 +22,6 @@ import math
 
 class testGQE( unittest.TestCase):
 
-    
     def test_titleAndComment( self):
 
         print "testGQE.test_titleAndComment"
@@ -314,6 +314,20 @@ class testGQE( unittest.TestCase):
         self.assertEqual( scanLst[0].name, "t1")
         self.assertEqual( scanLst[0].nPts, 201)
 
+
+    def testReuse( self): 
+        print "testGQE.testReuse"
+        PySpectra.cls()
+        PySpectra.delete()
+        scan = PySpectra.Scan( name = 't1', xLabel = "100 pts, going to be re-used", 
+                               nPts = 100, yMin = -10., yMax = 10.)
+
+        for i in range( 10):
+            data = np.random.normal(size=(1,100))
+            x1  = np.linspace( 0., 10., 100)
+            PySpectra.display()
+            PySpectra.procEventsLoop( 1)
+            scan = PySpectra.Scan( name = 't1', reUse = True, x = x1, y = data[0])
         
         
 if __name__ == "__main__":

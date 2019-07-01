@@ -9,6 +9,7 @@ python ./test/graphics/testMplGraphics.py testMplGraphics.testDisplayScan_v4
 python ./test/graphics/testMplGraphics.py testMplGraphics.testDisplaySingle
 python ./test/graphics/testMplGraphics.py testMplGraphics.testFastDisplay_v1
 python ./test/graphics/testMplGraphics.py testMplGraphics.testWsViewport
+python ./test/graphics/testMplGraphics.py testMplGraphics.testCommentTitle
 '''
 import sys, os
 #pySpectraPath = "/home/kracht/Misc/pySpectra/PySpectra"
@@ -39,7 +40,7 @@ class testMplGraphics( unittest.TestCase):
         PySpectra.setTitle( "check x-axis doty")
 
         sinus = PySpectra.Scan( name = 'sinus', 
-                                xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red', doty = False)
+                                xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red', doty = True)
         sinus.y = np.sin( sinus.y)
 
         PySpectra.mtpltlb.graphics.display()
@@ -357,6 +358,27 @@ class testMplGraphics( unittest.TestCase):
             PySpectra.mtpltlb.graphics.procEventsLoop( 1)
 
         print "testGrphics.testWsViewport, DONE"
+
+    def testCommentTitle( self):
+        '''
+        '''
+        print "testMplGraphics.testCommentTitel"
+
+        PySpectra.mtpltlb.graphics.cls()
+        PySpectra.delete()
+        PySpectra.setComment( "this is a comment")
+        PySpectra.setTitle( "check comment and title")
+
+        sinus = PySpectra.Scan( name = 'sinus', 
+                                xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red')
+        sinus.y = np.sin( sinus.y)
+
+        PySpectra.mtpltlb.graphics.display()
+
+        PySpectra.show()
+        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+
+        print "testMplGraphics.testCommentTitle, DONE"
         
 
 if __name__ == "__main__":

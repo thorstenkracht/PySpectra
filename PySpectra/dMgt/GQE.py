@@ -66,10 +66,14 @@ class Scan( object):
     A Scan contains 2 arrays, x and y, and graphics attributes
 
     PySpectra.Scan( name = 'name', filename = 'test.fio', x = 1, y = 2)
+      read the data from a file
     PySpectra.Scan( name = 'name', x = xArr, y = yArr)
+      pass the data as arrays
     PySpectra.Scan( name = 'name', xMin = 0., xMax = 10., nPts = 101)
     PySpectra.Scan( name = 'name')
       the same as PySpectra.Scan( name = 'name', xMin = 0., xMax = 10., nPts = 101)
+    PySpectra.Scan( name = 'name', reUse = True, xArr, y = yArr)
+      re-use the existing data struckture, useful for MCA scans
 
     The attributes: 
         autorangeX, autorangeY
