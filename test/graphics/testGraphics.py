@@ -18,6 +18,7 @@ python ./test/graphics/testGraphics.py testGraphics.testDisplayMany
 python ./test/graphics/testGraphics.py testGraphics.testDisplayScan
 python ./test/graphics/testGraphics.py testGraphics.testFastDisplay_v1
 python ./test/graphics/testGraphics.py testGraphics.testFastDisplay_v2
+python ./test/graphics/testGraphics.py testGraphics.testWsViewport
 '''
 import sys
 pySpectraPath = "/home/kracht/Misc/pySpectra"
@@ -368,6 +369,27 @@ class testGraphics( unittest.TestCase):
         diffTime = time.time() - startTime
         self.assertLess( diffTime, 7.)
         print "testGrphics.testDisplay_v2, DONE"
+
+    def testWsViewport( self):
+        '''
+        '''
+        print "testGrphics.testWsViewport"
+
+        PySpectra.cls()
+        PySpectra.delete()
+        PySpectra.setTitle( "go through the viewports")
+
+        sinus = PySpectra.Scan( name = 'sinus', 
+                                xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red', doty = True)
+        sinus.y = np.sin( sinus.y)
+
+        for elm in [ 'DINA4', 'DINA4P', 'DINA5', 'DINA5P', 'DINA6', 'DINA6P']: 
+            PySpectra.setWsViewport( elm)
+            PySpectra.display()
+            PySpectra.procEventsLoop( 1)
+
+        print "testGrphics.testWsViewport, DONE"
+        
 
 if __name__ == "__main__":
     unittest.main()

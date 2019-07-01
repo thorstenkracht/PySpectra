@@ -5,6 +5,7 @@ python -m unittest discover -v
 
 python ./test/dMgt/testGQE.py testGQE.testNextPrev
 python ./test/dMgt/testGQE.py testGQE.testFillData
+python ./test/dMgt/testGQE.py testGQE.testWrite
 '''
 import sys
 #pySpectraPath = "/home/kracht/Misc/pySpectra"
@@ -15,7 +16,7 @@ import PySpectra
 import PySpectra.dMgt.GQE as gqe
 import numpy as np
 import unittest
-import time, sys
+import time, sys, os
 import math 
 
 class testGQE( unittest.TestCase):
@@ -294,5 +295,26 @@ class testGQE( unittest.TestCase):
 
         print "testGQE.testFillData, DONE"
 
+    def testWrite( self): 
+        print "testGQE.testWrite"
+        PySpectra.cls()
+        PySpectra.delete()
+        scan = PySpectra.Scan( name = 't1', xLabel = "up to 200 pts", 
+                               nPts = 201, yMin = -10., yMax = 10.)
+        ret = PySpectra.write( ['t1'])
+
+        PySpectra.delete()
+
+        self.assertEqual( os.path.exists( ret), True)
+
+        PySpectra.read( ret)
+
+        scanLst = PySpectra.getScanList()
+        self.assertEqual( len( scanLst), 1)
+        self.assertEqual( scanLst[0].name, "t1")
+        self.assertEqual( scanLst[0].nPts, 201)
+
+        
+        
 if __name__ == "__main__":
     unittest.main()

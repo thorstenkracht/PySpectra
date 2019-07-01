@@ -83,6 +83,7 @@ def _setSizeGraphicsWindow( nScan):
         #print "set-geo, new", widthNew, heightNew, "curr", geo.width(), geo.height()
         _win.setGeometry( 30, 30, widthNew, heightNew)
     return 
+
 def setWsViewport( size = None):
     '''
     size: DINA4, DINA4P, DINA5, DINA5P, DINA6, DINA6L
@@ -163,51 +164,11 @@ def cls():
 
     _QApp.processEvents()
     return 
-    # 
-    #
-    # clear the plotItems
-    #
-    scanList = _pysp.getScanList()
-    for scan in scanList:
-        if hasattr( scan, "mouseLabel"):
-            if scan.mouseLabel is not None:
-                del scan.mouseLabel
-                scan.mouseLabel = None
-        if hasattr( scan, "mouseProxy"):
-            if scan.mouseProxy is not None:
-                del scan.mouseProxy
-                scan.mouseProxy = None
-        try: 
-            #
-            # avoid this error: 'NoneType' object has no attribute 'removeItem'
-            #
-            if type( scan.plotItem) is _pg.graphicsItems.ViewBox.ViewBox and \
-               scan.plotItem.scene() is None: 
-                pass
-            else:
-                #
-                # close() always throws an error
-                #
-                if scan.plotItem is not None: 
-                    scan.plotItem.clear()
-        except Exception, e: 
-            print "pqt_graphic.cls: exception caught calling clear()"
-            print repr( e)
-            continue
-
-        scan.viewBox = None
-        scan.plotItem = None
-        scan.plotDataItem = None
-        scan.lastIndex = 0
-
-    #_itemCrawler( _win, "after cls()")
-    _QApp.processEvents()
-    return 
 
 _itemLevel = 0
 def _itemCrawler( o, msg = None): 
     '''
-    recursively crals though the items of an object
+    recursively crawls through the items of an object
     '''
     global _itemLevel
 

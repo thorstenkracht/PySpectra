@@ -876,6 +876,7 @@ def write( lst = None):
     PySpectra.write( [ 's1', 's2'])
       write selected scans
     '''
+    import HasyUtils as _HasyUtils
     if len(_scanList) == 0: 
         raise ValueError( "GQE.write: scan list is empty")
 
@@ -908,6 +909,7 @@ def write( lst = None):
         obj.columns.append( col)
     fileName = obj.write()
     print "created", fileName
+    return fileName
     
 def getNumberOfScansToBeDisplayed( nameList): 
     '''

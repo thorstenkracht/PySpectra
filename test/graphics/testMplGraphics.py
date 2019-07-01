@@ -8,6 +8,7 @@ python ./test/graphics/testMplGraphics.py testMplGraphics.testDisplayScan_v3
 python ./test/graphics/testMplGraphics.py testMplGraphics.testDisplayScan_v4
 python ./test/graphics/testMplGraphics.py testMplGraphics.testDisplaySingle
 python ./test/graphics/testMplGraphics.py testMplGraphics.testFastDisplay_v1
+python ./test/graphics/testMplGraphics.py testMplGraphics.testWsViewport
 '''
 import sys, os
 #pySpectraPath = "/home/kracht/Misc/pySpectra/PySpectra"
@@ -336,6 +337,27 @@ class testMplGraphics( unittest.TestCase):
 
         print "testMplGraphics.testDisplay_v1, DONE"
 
+
+    def testWsViewport( self):
+        '''
+        '''
+        print "testGrphics.testWsViewport"
+
+        PySpectra.mtpltlb.graphics.cls()
+        PySpectra.delete()
+        PySpectra.setTitle( "go through the viewports")
+
+        sinus = PySpectra.Scan( name = 'sinus', 
+                                xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red', doty = True)
+        sinus.y = np.sin( sinus.y)
+
+        for elm in [ 'DINA4', 'DINA4P', 'DINA5', 'DINA5P', 'DINA6', 'DINA6P']: 
+            PySpectra.mtpltlb.graphics.setWsViewport( elm)
+            PySpectra.mtpltlb.graphics.display()
+            PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+
+        print "testGrphics.testWsViewport, DONE"
+        
 
 if __name__ == "__main__":
     unittest.main()
