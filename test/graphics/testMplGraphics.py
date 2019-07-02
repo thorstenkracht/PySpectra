@@ -45,7 +45,7 @@ class testMplGraphics( unittest.TestCase):
 
         PySpectra.mtpltlb.graphics.display()
 
-        PySpectra.show()
+        #PySpectra.show()
         PySpectra.mtpltlb.graphics.procEventsLoop( 1)
 
         print "testMplGraphics.testDoty, DONE"
@@ -72,7 +72,7 @@ class testMplGraphics( unittest.TestCase):
 
         PySpectra.mtpltlb.graphics.display()
         PySpectra.mtpltlb.graphics.display()
-        PySpectra.show()
+        #PySpectra.show()
         PySpectra.mtpltlb.graphics.procEventsLoop( 1)
 
         print "testMplGraphics.testGrid, DONE"
@@ -157,7 +157,7 @@ class testMplGraphics( unittest.TestCase):
 
         sinus.y = np.sin( sinus.y)
         PySpectra.mtpltlb.graphics.display( ['sinus'])
-        PySpectra.show()
+        #PySpectra.show()
         PySpectra.mtpltlb.graphics.procEventsLoop( 1)
 
         print "testMplGraphics.testDisplaySingle, DONE"
@@ -175,7 +175,7 @@ class testMplGraphics( unittest.TestCase):
 
         sinus.y = np.sin( sinus.y)
         PySpectra.mtpltlb.graphics.display( ['sinus'])
-        PySpectra.show()
+        #PySpectra.show()
 
 
         PySpectra.mtpltlb.graphics.procEventsLoop( 1)
@@ -202,7 +202,7 @@ class testMplGraphics( unittest.TestCase):
         cosinus.y = np.cos( cosinus.y)
 
         PySpectra.mtpltlb.graphics.display()
-        PySpectra.show()
+        #PySpectra.show()
         PySpectra.mtpltlb.graphics.procEventsLoop( 1)
 
         print "testMplGraphics.testDisplayTwo, DONE"
@@ -252,7 +252,7 @@ class testMplGraphics( unittest.TestCase):
         cossquare.y = np.cos( tan.x) * np.cos( tan.x)
 
         PySpectra.mtpltlb.graphics.display()
-        PySpectra.show()
+        #PySpectra.show()
         PySpectra.mtpltlb.graphics.procEventsLoop( 1)
 
         print "testMplGraphics.testOverlay, DONE"
@@ -274,7 +274,7 @@ class testMplGraphics( unittest.TestCase):
 
         PySpectra.mtpltlb.graphics.display()
 
-        PySpectra.show()
+        #PySpectra.show()
 
         PySpectra.mtpltlb.graphics.procEventsLoop( 1)
 
@@ -297,7 +297,7 @@ class testMplGraphics( unittest.TestCase):
 
         PySpectra.mtpltlb.graphics.display()
 
-        PySpectra.show()
+        #PySpectra.show()
 
         PySpectra.mtpltlb.graphics.procEventsLoop( 1)
 
@@ -375,7 +375,7 @@ class testMplGraphics( unittest.TestCase):
 
         PySpectra.mtpltlb.graphics.display()
 
-        PySpectra.show()
+        #PySpectra.show()
         PySpectra.mtpltlb.graphics.procEventsLoop( 1)
 
         print "testMplGraphics.testCommentTitle, DONE"

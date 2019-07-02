@@ -82,7 +82,7 @@ class testGQE( unittest.TestCase):
         self.assertEqual( lst[0].nPts, 2048)
         
         PySpectra.display()
-        PySpectra.show()
+        #PySpectra.show()
         print "the graphics window should contain 1 MCA plot now"
         PySpectra.procEventsLoop( 1)
 
@@ -103,7 +103,7 @@ class testGQE( unittest.TestCase):
         self.assertEqual( lst[1].nPts, 8192)
         
         PySpectra.display()
-        PySpectra.show()
+        #PySpectra.show()
         print "the graphics window should contain 2 MCA plots now"
         PySpectra.procEventsLoop( 1)
 
@@ -122,7 +122,7 @@ class testGQE( unittest.TestCase):
         self.assertEqual( lst[1].name, "TI_AU_TIO2_SIO2_KAT55A_0001_RING")
         
         PySpectra.display()
-        PySpectra.show()
+        #PySpectra.show()
         print "the graphics window should contain 24 plots now"
         PySpectra.procEventsLoop( 1)
 
@@ -140,7 +140,7 @@ class testGQE( unittest.TestCase):
         self.assertEqual( lst[3].name, "scan4")
         
         PySpectra.display()
-        PySpectra.show()
+        #PySpectra.show()
         PySpectra.procEventsLoop( 1)
 
         print "testGQE.test_read DONE"
@@ -164,7 +164,7 @@ class testGQE( unittest.TestCase):
         self.assertEqual( scan2.doty, True)
 
         PySpectra.display()
-        PySpectra.show()
+        #PySpectra.show()
         PySpectra.procEventsLoop( 1)
 
         print "testGQE.test_doty DONE"

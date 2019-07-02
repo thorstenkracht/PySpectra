@@ -5,3 +5,6 @@ In [1]: import PySpectra as pysp
 
 In [2]: pysp?
 
+In [3]: pyspScan?
+
+
