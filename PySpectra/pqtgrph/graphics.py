@@ -165,45 +165,45 @@ def cls():
     _QApp.processEvents()
     return 
 
-_itemLevel = 0
-def _itemCrawler( o, msg = None): 
-    '''
-    recursively crawls through the items of an object
-    '''
-    global _itemLevel
-
-    if msg is not None: 
-        print ">>> ", msg
-    _itemLevel += 1
-    print " %s%d: --- type %s" % ('  ' * _itemLevel, _itemLevel, type( o))
-    if type( o.items) is _types.BuiltinFunctionType:
-        for item in o.items():
-            if hasattr( item, "nameTK"):
-                print " %s%d: Func, *** %s" % ( '  ' * _itemLevel, _itemLevel, item.nameTK)
-            else:
-                print " %s%d: Func, %s" % ( '  ' * _itemLevel, _itemLevel, repr( item))
-            if hasattr( item, "items"):
-                _itemCrawler( item)
-    elif type( o.items) is _types.DictType: 
-        for item in o.items.keys(): 
-            if hasattr( o.items[ item], "nameTK"):
-                print " %s%d: Dict, %s, *** %s" % ('  ' * _itemLevel, _itemLevel, repr( item), o.items[ item].nameTK)
-            else:
-                print " %s%d: Dict, %s, %s" % ('  ' * _itemLevel, _itemLevel, repr( item), repr( o.items[ item]))
-            if hasattr( item, "items"):
-                _itemCrawler( item)
-    elif type( o.items) is _types.ListType: 
-        for item in o.items: 
-            if hasattr( item, "nameTK"):
-                print " %s%d: List, *** %s" % ('  ' * _itemLevel, _itemLevel, item.nameTK)
-            else:
-                print " %s%d: List, %s" % ('  ' * _itemLevel, _itemLevel, repr( item))
-            if hasattr( item, "items"):
-                _itemCrawler( item)
-    else: 
-        print "failed to identify type", type( o.items)
-    _itemLevel -= 1
-    return 
+#_itemLevel = 0
+#def _itemCrawler( o, msg = None): 
+#    '''
+#    recursively crawls through the items of an object
+#    '''
+#    global _itemLevel
+#
+#    if msg is not None: 
+#        print ">>> ", msg
+#    _itemLevel += 1
+#    print " %s%d: --- type %s" % ('  ' * _itemLevel, _itemLevel, type( o))
+#    if type( o.items) is _types.BuiltinFunctionType:
+#        for item in o.items():
+#            if hasattr( item, "nameTK"):
+#                print " %s%d: Func, *** %s" % ( '  ' * _itemLevel, _itemLevel, item.nameTK)
+#            else:
+#                print " %s%d: Func, %s" % ( '  ' * _itemLevel, _itemLevel, repr( item))
+#            if hasattr( item, "items"):
+#                _itemCrawler( item)
+#    elif type( o.items) is _types.DictType: 
+#        for item in o.items.keys(): 
+#            if hasattr( o.items[ item], "nameTK"):
+#                print " %s%d: Dict, %s, *** %s" % ('  ' * _itemLevel, _itemLevel, repr( item), o.items[ item].nameTK)
+#            else:
+#                print " %s%d: Dict, %s, %s" % ('  ' * _itemLevel, _itemLevel, repr( item), repr( o.items[ item]))
+#            if hasattr( item, "items"):
+#                _itemCrawler( item)
+#    elif type( o.items) is _types.ListType: 
+#        for item in o.items: 
+#            if hasattr( item, "nameTK"):
+#                print " %s%d: List, *** %s" % ('  ' * _itemLevel, _itemLevel, item.nameTK)
+#            else:
+#                print " %s%d: List, %s" % ('  ' * _itemLevel, _itemLevel, repr( item))
+#            if hasattr( item, "items"):
+#                _itemCrawler( item)
+#    else: 
+#        print "failed to identify type", type( o.items)
+#    _itemLevel -= 1
+#    return 
 
 def _getLayout( o): 
     for item in o.items(): 
