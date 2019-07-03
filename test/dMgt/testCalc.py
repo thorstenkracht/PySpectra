@@ -4,6 +4,7 @@ cd /home/kracht/Misc/pySpectra
 python -m unittest discover -v
 
 python ./test/dMgt/testCalc.py testCalc.testDerivative
+python ./test/dMgt/testCalc.py testCalc.testYToMinusY
 '''
 import sys
 sys.path.append( "/home/kracht/Misc/pySpectra")
@@ -85,9 +86,17 @@ class testCalc( unittest.TestCase):
 
         PySpectra.cls()
         PySpectra.delete()
-        scan = PySpectra.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
+        scan = PySpectra.Scan( name = "t1", xMin = 2., xMax = 10.0, nPts = 201)
         scan.y = np.sin( scan.y)
-        PySpectra.yToMinusY( name = scan.name, nameNew = "t1_y2MinusY")
+        scanMY = PySpectra.yToMinusY( name = scan.name, nameNew = "t1_y2MinusY")
+
+        self.assertEqual( len( scan.y), len( scanMY.y))
+        self.assertEqual( len( scan.x), len( scanMY.x))
+        
+        for i in range( len( scan.y)):
+            self.assertEqual( scan.y[i], - scanMY.y[i])
+            self.assertEqual( scan.x[i], scanMY.x[i])
+        
         PySpectra.display()
         #PySpectra.show()
         PySpectra.procEventsLoop( 1)

@@ -4,9 +4,10 @@ PySpectra displays 1D data
 --------------------------
 
 The module PySpectra is usually imported by 
+
   import PySpectra as pysp
 
-It exports one class and several functions: 
+The interface
 Scan()              a class returning a scan object
 antiderivative()    calculate the Stammfunktion
 cls()               clear the screen graphics window
@@ -31,7 +32,9 @@ ssa()               simple scan analysis
 write()             create a .fio file
 yToMinusY()         change the sign of the y-values
 
-*** Default plot parameters for pyqtgraph
+*
+* Default plot parameters for pyqtgraph
+*
 Space around the plots
   marginLeft
   marginTop
@@ -40,28 +43,36 @@ Space around the plots
 Between the plots: 
   spacingHorizontal 
   spacingVertical 
-
-*** Applications based on PySpectra: 
+*
+* Applications based on PySpectra: 
+*
 $ pyspViewer.py
   successor of the FioViewer
 $ pyspMonitor.py
   successor of the SardanaMonitor
-
-*** To use PySpectra in ipython, start with 
+*
+* To use PySpectra in ipython, start with 
+*
   $ ipython --profile=PySpectra
+
 then edit
   ~/.ipython/profile_PySpectra/startup/00-start.py
+
 to look like 
   #!/usr/bin/env python
+  #__builtin__.__dict__[ 'graphicsLib'] = 'matplotlib'
+  __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
   import PySpectra as pysp
-  # to define some PySpectra macros uncomment the following line
-  #import PySpectra.ipython.startup 
+  # PySpectra macros
+  import PySpectra.ipython.startup 
+
 then again
 $ ipython --profile=PySpectra
-In [1]: pysp.testCreate10()
-
-*** To use PySpectra from Python:
-
+In [1]: create t1
+In [2]: display
+*
+* To use PySpectra from Python:
+*
 Look at some examples using pyspViewer->Examples then
 view the code pyspViewer->Examples->View Code
 
@@ -80,8 +91,8 @@ Select the graphics library by before importing PySpectra
 
 '''
 
-from PyQt4 import QtCore as _QtCore
-from PyQt4 import QtGui as _QtGui
+#from PyQt4 import QtCore as _QtCore
+#from PyQt4 import QtGui as _QtGui
 
 from dMgt.GQE import *
 from dMgt.calc import *
@@ -299,3 +310,4 @@ _lineStylePQT = {
     'DOTTED': _QtCore.Qt.DotLine,
     'DASHDOTTED': _QtCore.Qt.DashDotLine,
 }
+

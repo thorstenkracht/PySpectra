@@ -131,16 +131,23 @@ def _setSizeGraphicsWindow( nScan):
 
 def setWsViewport( size = None):
     '''
-    size: DINA4, DINA4P, DINA5, DINA5P, DINA6, DINA6L
+    size: DINA4, DINA4P, DINA4S, DINA5, DINA5P, DINA5S, DINA6, DINA6L, DINA6S
     '''
 
     if size is None:
         return 
+
+    if Fig is None: 
+        _initGraphic()
+
     if size.upper() == "DINA4" or size.upper() == "DINA4L": 
         w = 29.7
         h = 21
     elif size.upper() == "DINA4P": 
         w = 21
+        h = 29.7
+    elif size.upper() == "DINA4S": 
+        w = 29.7
         h = 29.7
     elif size.upper() == "DINA5" or size.upper() == "DINA5L": 
         w = 21
@@ -148,11 +155,17 @@ def setWsViewport( size = None):
     elif size.upper() == "DINA5P": 
         w = 14.85
         h = 21.0
+    elif size.upper() == "DINA5S": 
+        w = 21.0
+        h = 21.0
     elif size.upper() == "DINA6" or size.upper() == "DINA6L": 
         w = 14.85
         h = 10.5
     elif size.upper() == "DINA6P": 
         w = 10.5
+        h = 14.85
+    elif size.upper() == "DINA6S": 
+        w = 14.85
         h = 14.85
     else:
         raise ValueError( "graphics.setWsViewport: no valid size, %s" % size)
@@ -639,6 +652,10 @@ def display( nameList = None):
                 scan.plotDataItem, = scan.plotItem.plot( scan.x[:(scan.currentIndex + 1)], 
                                                          scan.y[:(scan.currentIndex + 1)], 
                                                          **hsh) 
+            #
+            # setData is the function name in pyqtgraph
+            #
+            scan.plotDataItem.setData = scan.plotDataItem.set_data
             scan.lastIndex = scan.currentIndex
 
         if scan.textOnly: 

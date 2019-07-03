@@ -91,6 +91,7 @@ def yToMinusY(name = None, nameNew = None):
 
     argout = _GQE.Scan( name = temp, nPts = len( scan.y))
 
+    argout.x =  scan.x[:] 
     argout.y = - scan.y[:]
 
     return argout

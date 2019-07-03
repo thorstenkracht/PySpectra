@@ -7,4 +7,8 @@ In [2]: pysp?
 
 In [3]: pyspScan?
 
+Examples: 
+  git clone https://github.com/thorstenkracht/PySpectra 
+  cd PySpectra/examples
+
 

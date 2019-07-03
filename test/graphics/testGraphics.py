@@ -19,6 +19,7 @@ python ./test/graphics/testGraphics.py testGraphics.testDisplayScan
 python ./test/graphics/testGraphics.py testGraphics.testFastDisplay_v1
 python ./test/graphics/testGraphics.py testGraphics.testFastDisplay_v2
 python ./test/graphics/testGraphics.py testGraphics.testWsViewport
+python ./test/graphics/testGraphics.py testGraphics.testLissajous
 '''
 import sys
 pySpectraPath = "/home/kracht/Misc/pySpectra"
@@ -389,6 +390,36 @@ class testGraphics( unittest.TestCase):
             PySpectra.procEventsLoop( 1)
 
         print "testGrphics.testWsViewport, DONE"
+
+
+    def testLissajous( self):
+        '''
+
+        '''
+        print "testGrphics.testLissayous"
+
+        PySpectra.cls()
+        PySpectra.delete()
+        scan = PySpectra.Scan( name = 'Lissajous', nPts = 1000, xMin = -1., xMax = 1.)
+
+        x  = np.linspace( 0., 6.5, 1000)
+        y  = np.linspace( 0., 6.5, 1000)
+
+        scan.x = np.cos( x)
+        scan.y = np.sin( y)
+
+        PySpectra.display()
+
+        startTime = time.time()
+        for i in range( 1500):
+            x = x + 0.005
+            scan.plotDataItem.setData(np.cos( x), np.sin( y))
+            PySpectra.processEvents()
+
+        diffTime = time.time() - startTime
+
+        self.assertLess( diffTime, 5.)
+        print "testGrphics.testLissajous, DONE"
         
 
 if __name__ == "__main__":

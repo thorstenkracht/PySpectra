@@ -678,15 +678,16 @@ def overlay( src, trgt):
     scanSrc.overlay = scanTrgt.name
     return 
     
-def show( scanName = None):
+def show( scanList = None):
     '''
-    prints some information about scans.
-    if no scanName is supplied, the contents of the scanList is printed
+    prints some information about scans in scaList.
+    if scanList is not supplied, all scans are 'show'ed
     '''
 
-    if scanName is not None:
-        scan = getScan( scanName)
-        _showScan( scan)
+    if scanList is not None:
+        for scn in scanList:
+            scan = getScan( scn)
+            _showScan( scan)
         return 
 
     if _scanList:

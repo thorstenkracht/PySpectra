@@ -10,7 +10,7 @@ from PyQt4 import QtGui, QtCore
 import numpy as np
 
 import PySpectra as pysp
-import mtpltlb.graphics as mpl_graphics # to create postscript
+import mtpltlb.graphics as mpl_graphics # to create pdf
 
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
@@ -275,7 +275,7 @@ class PyQtConfig( QtGui.QMainWindow):
         self.widgetAction.triggered.connect( self.cb_helpWidget)
 
         self.activityIndex = 0
-        self.activity = self.menuBarActivity.addMenu( "|")
+        self.activity = self.menuBarActivity.addMenu( "_")
 
     #
     # the status bar
@@ -474,7 +474,7 @@ class Config( QtGui.QMainWindow):
         self.widgetAction.triggered.connect( self.cb_helpWidget)
 
         self.activityIndex = 0
-        self.activity = self.menuBarActivity.addMenu( "|")
+        self.activity = self.menuBarActivity.addMenu( "_")
 
     #
     # the status bar
@@ -872,7 +872,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.widgetAction.triggered.connect( self.cb_helpWidget)
 
         self.activityIndex = 0
-        self.activity = self.menuBarActivity.addMenu( "|")
+        self.activity = self.menuBarActivity.addMenu( "_")
 
     #
     # the status bar
@@ -1678,15 +1678,15 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.display()
 
     def cb_prev( self): 
-        scan = gqe._prevScan()
-        index = gqe._getIndex( scan.name)
+        scan = pysp.dMgt.GQE._prevScan()
+        index = pysp.dMgt.GQE._getIndex( scan.name)
         pysp.cls()
         pysp.display( [ scan.name])
         self.scansListWidget.setCurrentRow( index)
 
     def cb_next( self): 
-        scan = gqe._nextScan()
-        index = gqe._getIndex( scan.name)
+        scan = pysp.dMgt.GQE._nextScan()
+        index = pysp.dMgt.GQE._getIndex( scan.name)
         pysp.cls()
         pysp.display( [ scan.name])
         self.scansListWidget.setCurrentRow( index)
@@ -1770,13 +1770,25 @@ class pySpectraGui( QtGui.QMainWindow):
         self.dina4Action.triggered.connect( lambda : pysp.setWsViewport( 'dina4'))
         self.optionsMenu.addAction( self.dina4Action)
 
+        self.dina4sAction = QtGui.QAction('DINA4S', self)        
+        self.dina4sAction.triggered.connect( lambda : pysp.setWsViewport( 'dina4s'))
+        self.optionsMenu.addAction( self.dina4sAction)
+
         self.dina5Action = QtGui.QAction('DINA5', self)        
         self.dina5Action.triggered.connect( lambda : pysp.setWsViewport( 'dina5'))
         self.optionsMenu.addAction( self.dina5Action)
 
+        self.dina5sAction = QtGui.QAction('DINA5S', self)        
+        self.dina5sAction.triggered.connect( lambda : pysp.setWsViewport( 'dina5s'))
+        self.optionsMenu.addAction( self.dina5sAction)
+
         self.dina6Action = QtGui.QAction('DINA6', self)        
         self.dina6Action.triggered.connect( lambda : pysp.setWsViewport( 'dina6'))
         self.optionsMenu.addAction( self.dina6Action)
+
+        self.dina6sAction = QtGui.QAction('DINA6S', self)        
+        self.dina6sAction.triggered.connect( lambda : pysp.setWsViewport( 'dina6s'))
+        self.optionsMenu.addAction( self.dina6sAction)
 
         #
         # examples
@@ -1828,7 +1840,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.widgetAction.triggered.connect( self.cb_helpWidget)
 
         self.activityIndex = 0
-        self.activity = self.menuBarActivity.addMenu( "|")
+        self.activity = self.menuBarActivity.addMenu( "_")
     #
     # the status bar
     #
@@ -1851,7 +1863,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.showBtn = QtGui.QPushButton(self.tr("&Show")) 
         self.statusBar.addWidget( self.showBtn) 
         self.showBtn.clicked.connect( self.cb_show)
-        self.showBtn.setToolTip( "Print info about the scans")
+        self.showBtn.setToolTip( "Print info about checked scans (or all scans)")
         self.showBtn.setShortcut( "Alt+s")
 
         if self.useMatplotlib:
@@ -1886,6 +1898,7 @@ class pySpectraGui( QtGui.QMainWindow):
             "exampleGauss": pysp.exampleGauss, 
             "exampleGaussAndSinusOverlaid": pysp.exampleGaussAndSinusOverlaid, 
             "exampleScanning": pysp.exampleScanning, 
+            "exampleLissajous": pysp.exampleLissajous, 
             }
 
         if hsh.has_key( funcName):
@@ -1963,7 +1976,7 @@ class pySpectraGui( QtGui.QMainWindow):
         return 
 
     def cb_show( self): 
-        pysp.show()
+        pysp.show( self.getCheckedNameList())
 
     def cb_pdf( self): 
         fileName = mpl_graphics.createPDF()
@@ -2016,28 +2029,28 @@ class pySpectraGui( QtGui.QMainWindow):
             
 
     def cb_derivative( self):
-        displayList = gqe._getDisplayList()
+        displayList = pysp.dMgt.GQE._getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append(  "cb_derivative: expecting 1 displayed scan")
             return 
         pysp.derivative( displayList[0].name)
 
     def cb_antiderivative( self):
-        displayList = gqe._getDisplayList()
+        displayList = pysp.dMgt.GQE._getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append(  "cb_antiderivative: expecting 1 displayed scan")
             return 
         pysp.antiderivative( displayList[0].name)
 
     def cb_y2my( self):
-        displayList = gqe._getDisplayList()
+        displayList = pysp.dMgt.GQE._getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append(  "cb_y2my: expecting 1 displayed scan")
             return 
         pysp.yToMinusY( displayList[0].name)
 
     def cb_ssa( self):
-        displayList = gqe._getDisplayList()
+        displayList = pysp.dMgt.GQE._getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append( "cb_ssa: expecting 1 displayed scan")
             return 
@@ -2070,4 +2083,3 @@ class pySpectraGui( QtGui.QMainWindow):
                 "<li> some remarks</li>"
                 "</ul>"
                 ))
- 

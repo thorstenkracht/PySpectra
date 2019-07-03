@@ -193,5 +193,28 @@ def exampleScanning():
         _pysp.display( ['sinus'])
         _time.sleep( 0.01)
 
+
     #_pysp.launchGui()
+
+def exampleLissajous(): 
+    '''
+    plots and updates a Lissajous figure
+    '''
+    _pysp.setWsViewport( "DINA6S")
     
+    _pysp.cls()
+    _pysp.delete()
+    scan = _pysp.Scan( name = 'Lissajous', nPts = 1000, xMin = -1., xMax = 1.)
+    
+    x  = _np.linspace( 0., 6.5, 1000)
+    y  = _np.linspace( 0., 6.5, 1000)
+    
+    scan.x = _np.cos( x)
+    scan.y = _np.sin( y)
+    
+    _pysp.display()
+    
+    for i in range( 1000):
+        x = x + 0.005
+        scan.plotDataItem.setData(_np.cos( x), _np.sin( y))
+        _pysp.processEvents()
