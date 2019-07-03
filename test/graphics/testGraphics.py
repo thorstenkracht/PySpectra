@@ -418,7 +418,7 @@ class testGraphics( unittest.TestCase):
 
         diffTime = time.time() - startTime
 
-        self.assertLess( diffTime, 5.)
+        self.assertLess( diffTime, 10.)
         print "testGrphics.testLissajous, DONE"
         
 
