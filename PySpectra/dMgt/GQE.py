@@ -441,7 +441,7 @@ class Scan( object):
 
         attr = 'lineWidth'
         if attr in kwargs:
-            if str(kwargs[ attr]) in _pysp._lineWidthArr:
+            if str(kwargs[ attr]) in _pysp.definitions.lineWidthArr:
                 setattr( self, attr, float( kwargs[ attr]))
             else: 
                 setattr( self, attr, 1.0)
@@ -983,12 +983,12 @@ def getFontSize( nameList):
     '''
     depending on how many scans are displayed the font size is adjusted
     '''
-    if getNumberOfScansToBeDisplayed( nameList) < _pysp._MANY_SCANS:
-        fontSize = _pysp.FONT_SIZE_NORMAL
-    elif getNumberOfScansToBeDisplayed( nameList) <= _pysp._VERY_MANY_SCANS:
-        fontSize = _pysp.FONT_SIZE_SMALL
+    if getNumberOfScansToBeDisplayed( nameList) < _pysp.definitions.MANY_SCANS:
+        fontSize = _pysp.definitions.FONT_SIZE_NORMAL
+    elif getNumberOfScansToBeDisplayed( nameList) <= _pysp.definitions.VERY_MANY_SCANS:
+        fontSize = _pysp.definitions.FONT_SIZE_SMALL
     else: 
-        fontSize = _pysp.FONT_SIZE_VERY_SMALL
+        fontSize = _pysp.definitions.FONT_SIZE_VERY_SMALL
 
     return fontSize
 
@@ -996,12 +996,12 @@ def getTickFontSize( nameList):
     '''
     depending on how many scans are displayed the font size is adjusted
     '''
-    if getNumberOfScansToBeDisplayed( nameList) < _pysp._MANY_SCANS:
-        fontSize = _pysp.TICK_FONT_SIZE_NORMAL
-    elif getNumberOfScansToBeDisplayed( nameList) <= _pysp._VERY_MANY_SCANS:
-        fontSize = _pysp.TICK_FONT_SIZE_SMALL
+    if getNumberOfScansToBeDisplayed( nameList) < _pysp.definitions.MANY_SCANS:
+        fontSize = _pysp.definitions.TICK_FONT_SIZE_NORMAL
+    elif getNumberOfScansToBeDisplayed( nameList) <= _pysp.definitions.VERY_MANY_SCANS:
+        fontSize = _pysp.definitions.TICK_FONT_SIZE_SMALL
     else: 
-        fontSize = _pysp.TICK_FONT_SIZE_VERY_SMALL
+        fontSize = _pysp.definitions.TICK_FONT_SIZE_VERY_SMALL
 
     return fontSize
 

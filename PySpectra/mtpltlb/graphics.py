@@ -290,14 +290,14 @@ def _setTitle( scan, nameList):
     # and the following display command, even with less scans, will 
     # also not fit into the graphics window
     #
-    if len( scan.name) > _pysp._LEN_MAX_TITLE:
-        tempName = "X_" + scan.name[-_pysp._LEN_MAX_TITLE:]
+    if len( scan.name) > _pysp.definitions.LEN_MAX_TITLE:
+        tempName = "X_" + scan.name[-_pysp.definitions.LEN_MAX_TITLE:]
     else: 
         tempName = scan.name
 
     fontSize = _pysp.getFontSize( nameList)
  
-    if _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp._MANY_SCANS:
+    if _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp.definitions.MANY_SCANS:
         scan.plotItem.set_title( tempName, fontsize = fontSize)
     else:
         scan.plotItem.text( 0.95, 0.8, tempName, 
@@ -514,7 +514,7 @@ def _createPlotItem( scan, nameList):
 
     _setTitle( scan, nameList)
 
-    if _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp._MANY_SCANS:
+    if _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp.definitions.MANY_SCANS:
         if hasattr( scan, 'xLabel') and scan.xLabel is not None:
             scan.plotItem.set_xlabel( scan.xLabel)
         if hasattr( scan, 'yLabel') and scan.yLabel is not None:
@@ -721,7 +721,7 @@ def display( nameList = None):
         #
         scan.plotItem = target.plotItem.twinx()
         
-        if len( _pysp.getScanList()) >= _pysp._MANY_SCANS or \
+        if len( _pysp.getScanList()) >= _pysp.definitions.MANY_SCANS or \
            scan.yTicksVisible == False: 
             plt.setp( scan.plotItem.get_yticklabels(), visible=False)
 

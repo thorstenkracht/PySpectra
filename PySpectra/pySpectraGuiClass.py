@@ -205,28 +205,28 @@ class PyQtConfig( QtGui.QMainWindow):
         self.layout_grid.addWidget( QtGui.QLabel( "Margins:"), row, 0)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "Left:"), row, 1)
-        self.marginLeft = QtGui.QLabel( "%g" % pysp.marginLeft)
+        self.marginLeft = QtGui.QLabel( "%g" % pysp.definitions.marginLeft)
         self.layout_grid.addWidget( self.marginLeft, row, 2)
         self.marginLeftLineEdit = QtGui.QLineEdit()
         self.marginLeftLineEdit.setMaximumWidth( 50)
         self.layout_grid.addWidget( self.marginLeftLineEdit, row, 3)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "Top:"), row, 1)
-        self.marginTop = QtGui.QLabel( "%g" % pysp.marginTop)
+        self.marginTop = QtGui.QLabel( "%g" % pysp.definitions.marginTop)
         self.layout_grid.addWidget( self.marginTop, row, 2)
         self.marginTopLineEdit = QtGui.QLineEdit()
         self.marginTopLineEdit.setMaximumWidth( 50)
         self.layout_grid.addWidget( self.marginTopLineEdit, row, 3)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "Right:"), row, 1)
-        self.marginRight = QtGui.QLabel( "%g" % pysp.marginRight)
+        self.marginRight = QtGui.QLabel( "%g" % pysp.definitions.marginRight)
         self.layout_grid.addWidget( self.marginRight, row, 2)
         self.marginRightLineEdit = QtGui.QLineEdit()
         self.marginRightLineEdit.setMaximumWidth( 50)
         self.layout_grid.addWidget( self.marginRightLineEdit, row, 3)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "Bottom:"), row, 1)
-        self.marginBottom = QtGui.QLabel( "%g" % pysp.marginBottom)
+        self.marginBottom = QtGui.QLabel( "%g" % pysp.definitions.marginBottom)
         self.layout_grid.addWidget( self.marginBottom, row, 2)
         self.marginBottomLineEdit = QtGui.QLineEdit()
         self.marginBottomLineEdit.setMaximumWidth( 50)
@@ -235,14 +235,14 @@ class PyQtConfig( QtGui.QMainWindow):
         self.layout_grid.addWidget( QtGui.QLabel( "Spacing:"), row, 0)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "Horizontal:"), row, 1)
-        self.spacingHorizontal = QtGui.QLabel( "%g" % pysp.spacingHorizontal)
+        self.spacingHorizontal = QtGui.QLabel( "%g" % pysp.definitions.spacingHorizontal)
         self.layout_grid.addWidget( self.spacingHorizontal, row, 2)
         self.spacingHorizontalLineEdit = QtGui.QLineEdit()
         self.spacingHorizontalLineEdit.setMaximumWidth( 50)
         self.layout_grid.addWidget( self.spacingHorizontalLineEdit, row, 3)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "Vertical:"), row, 1)
-        self.spacingVertical = QtGui.QLabel( "%g" % pysp.spacingVertical)
+        self.spacingVertical = QtGui.QLabel( "%g" % pysp.definitions.spacingVertical)
         self.layout_grid.addWidget( self.spacingVertical, row, 2)
         self.spacingVerticalLineEdit = QtGui.QLineEdit()
         self.spacingVerticalLineEdit.setMaximumWidth( 50)
@@ -300,34 +300,34 @@ class PyQtConfig( QtGui.QMainWindow):
     def cb_apply( self):
         line = str(self.marginLeftLineEdit.text())
         if len(line.strip()) > 0: 
-            pysp.marginLeft = float( line.strip())
-            self.marginLeft.setText( "%g" % pysp.marginLeft)
+            pysp.definitions.marginLeft = float( line.strip())
+            self.marginLeft.setText( "%g" % pysp.definitions.marginLeft)
             self.marginLeftLineEdit.clear()
         line = str(self.marginTopLineEdit.text())
         if len(line.strip()) > 0: 
-            pysp.marginTop = float( line.strip())
-            self.marginTop.setText( "%g" % pysp.marginTop)
+            pysp.definitions.marginTop = float( line.strip())
+            self.marginTop.setText( "%g" % pysp.definitions.marginTop)
             self.marginTopLineEdit.clear()
         line = str(self.marginRightLineEdit.text())
         if len(line.strip()) > 0: 
-            pysp.marginRight = float( line.strip())
-            self.marginRight.setText( "%g" % pysp.marginRight)
+            pysp.definitions.marginRight = float( line.strip())
+            self.marginRight.setText( "%g" % pysp.definitions.marginRight)
             self.marginRightLineEdit.clear()
         line = str(self.marginBottomLineEdit.text())
         if len(line.strip()) > 0: 
-            pysp.marginBottom = float( line.strip())
-            self.marginBottom.setText( "%g" % pysp.marginBottom)
+            pysp.definitions.marginBottom = float( line.strip())
+            self.marginBottom.setText( "%g" % pysp.definitions.marginBottom)
             self.marginBottomLineEdit.clear()
 
         line = str(self.spacingHorizontalLineEdit.text())
         if len(line.strip()) > 0: 
-            pysp.spacingHorizontal = float( line.strip())
-            self.spacingHorizontal.setText( "%g" % pysp.spacingHorizontal)
+            pysp.definitions.spacingHorizontal = float( line.strip())
+            self.spacingHorizontal.setText( "%g" % pysp.definitions.spacingHorizontal)
             self.spacingHorizontalLineEdit.clear()
         line = str(self.spacingVerticalLineEdit.text())
         if len(line.strip()) > 0: 
-            pysp.spacingVertical = float( line.strip())
-            self.spacingVertical.setText( "%g" % pysp.spacingVertical)
+            pysp.definitions.spacingVertical = float( line.strip())
+            self.spacingVertical.setText( "%g" % pysp.definitions.spacingVertical)
             self.spacingVerticalLineEdit.clear()
 
         pysp.cls()
@@ -403,21 +403,21 @@ class Config( QtGui.QMainWindow):
         self.layout_grid.addWidget( QtGui.QLabel( "Font sizes:"), row, 0)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "Normal:"), row, 1)
-        self.fontNormal = QtGui.QLabel( "%d" % pysp.FONT_SIZE_NORMAL)
+        self.fontNormal = QtGui.QLabel( "%d" % pysp.definitions.FONT_SIZE_NORMAL)
         self.layout_grid.addWidget( self.fontNormal, row, 2)
         self.fontNormalLineEdit = QtGui.QLineEdit()
         self.fontNormalLineEdit.setMaximumWidth( 50)
         self.layout_grid.addWidget( self.fontNormalLineEdit, row, 3)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "Small:"), row, 1)
-        self.fontSmall = QtGui.QLabel( "%d" % pysp.FONT_SIZE_SMALL)
+        self.fontSmall = QtGui.QLabel( "%d" % pysp.definitions.FONT_SIZE_SMALL)
         self.layout_grid.addWidget( self.fontSmall, row, 2)
         self.fontSmallLineEdit = QtGui.QLineEdit()
         self.fontSmallLineEdit.setMaximumWidth( 50)
         self.layout_grid.addWidget( self.fontSmallLineEdit, row, 3)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "VerySmall:"), row, 1)
-        self.fontVerySmall = QtGui.QLabel( "%d" % pysp.FONT_SIZE_VERY_SMALL)
+        self.fontVerySmall = QtGui.QLabel( "%d" % pysp.definitions.FONT_SIZE_VERY_SMALL)
         self.layout_grid.addWidget( self.fontVerySmall, row, 2)
         self.fontVerySmallLineEdit = QtGui.QLineEdit()
         self.fontVerySmallLineEdit.setMaximumWidth( 50)
@@ -427,21 +427,21 @@ class Config( QtGui.QMainWindow):
         self.layout_grid.addWidget( QtGui.QLabel( "Tick sizes:"), row, 0)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "Normal:"), row, 1)
-        self.tickFontNormal = QtGui.QLabel( "%d" % pysp.TICK_FONT_SIZE_NORMAL)
+        self.tickFontNormal = QtGui.QLabel( "%d" % pysp.definitions.TICK_FONT_SIZE_NORMAL)
         self.layout_grid.addWidget( self.tickFontNormal, row, 2)
         self.tickFontNormalLineEdit = QtGui.QLineEdit()
         self.tickFontNormalLineEdit.setMaximumWidth( 50)
         self.layout_grid.addWidget( self.tickFontNormalLineEdit, row, 3)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "Small:"), row, 1)
-        self.tickFontSmall = QtGui.QLabel( "%d" % pysp.TICK_FONT_SIZE_SMALL)
+        self.tickFontSmall = QtGui.QLabel( "%d" % pysp.definitions.TICK_FONT_SIZE_SMALL)
         self.layout_grid.addWidget( self.tickFontSmall, row, 2)
         self.tickFontSmallLineEdit = QtGui.QLineEdit()
         self.tickFontSmallLineEdit.setMaximumWidth( 50)
         self.layout_grid.addWidget( self.tickFontSmallLineEdit, row, 3)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "VerySmall:"), row, 1)
-        self.tickFontVerySmall = QtGui.QLabel( "%d" % pysp.TICK_FONT_SIZE_VERY_SMALL)
+        self.tickFontVerySmall = QtGui.QLabel( "%d" % pysp.definitions.TICK_FONT_SIZE_VERY_SMALL)
         self.layout_grid.addWidget( self.tickFontVerySmall, row, 2)
         self.tickFontVerySmallLineEdit = QtGui.QLineEdit()
         self.tickFontVerySmallLineEdit.setMaximumWidth( 50)
@@ -499,34 +499,34 @@ class Config( QtGui.QMainWindow):
     def cb_apply( self):
         line = str(self.fontNormalLineEdit.text())
         if len(line.strip()) > 0: 
-            pysp.FONT_SIZE_NORMAL = int( line.strip())
-            self.fontNormal.setText( "%d" % pysp.FONT_SIZE_NORMAL)
+            pysp.definitions.FONT_SIZE_NORMAL = int( line.strip())
+            self.fontNormal.setText( "%d" % pysp.definitions.FONT_SIZE_NORMAL)
             self.fontNormalLineEdit.clear()
         line = str(self.fontSmallLineEdit.text())
         if len(line.strip()) > 0: 
-            pysp.FONT_SIZE_SMALL = int( line.strip())
-            self.fontSmall.setText( "%d" % pysp.FONT_SIZE_SMALL)
+            pysp.definitions.FONT_SIZE_SMALL = int( line.strip())
+            self.fontSmall.setText( "%d" % pysp.definitions.FONT_SIZE_SMALL)
             self.fontSmallLineEdit.clear()
         line = str(self.fontVerySmallLineEdit.text())
         if len(line.strip()) > 0: 
-            pysp.FONT_SIZE_VERY_SMALL = int( line.strip())
-            self.fontVerySmall.setText( "%d" % pysp.FONT_SIZE_VERY_SMALL)
+            pysp.definitions.FONT_SIZE_VERY_SMALL = int( line.strip())
+            self.fontVerySmall.setText( "%d" % pysp.definitions.FONT_SIZE_VERY_SMALL)
             self.fontVerySmallLineEdit.clear()
 
         line = str(self.tickFontNormalLineEdit.text())
         if len(line.strip()) > 0: 
-            pysp.TICK_FONT_SIZE_NORMAL = int( line.strip())
-            self.tickFontNormal.setText( "%d" % pysp.TICK_FONT_SIZE_NORMAL)
+            pysp.definitions.TICK_FONT_SIZE_NORMAL = int( line.strip())
+            self.tickFontNormal.setText( "%d" % pysp.definitions.TICK_FONT_SIZE_NORMAL)
             self.tickFontNormalLineEdit.clear()
         line = str(self.tickFontSmallLineEdit.text())
         if len(line.strip()) > 0: 
-            pysp.TICK_FONT_SIZE_SMALL = int( line.strip())
-            self.tickFontSmall.setText( "%d" % pysp.TICK_FONT_SIZE_SMALL)
+            pysp.definitions.TICK_FONT_SIZE_SMALL = int( line.strip())
+            self.tickFontSmall.setText( "%d" % pysp.definitions.TICK_FONT_SIZE_SMALL)
             self.tickFontSmallLineEdit.clear()
         line = str(self.tickFontVerySmallLineEdit.text())
         if len(line.strip()) > 0: 
-            pysp.TICK_FONT_SIZE_VERY_SMALL = int( line.strip())
-            self.tickFontVerySmall.setText( "%d" % pysp.TICK_FONT_SIZE_VERY_SMALL)
+            pysp.definitions.TICK_FONT_SIZE_VERY_SMALL = int( line.strip())
+            self.tickFontVerySmall.setText( "%d" % pysp.definitions.TICK_FONT_SIZE_VERY_SMALL)
             self.tickFontVerySmallLineEdit.clear()
 
         pysp.cls()
@@ -741,9 +741,9 @@ class ScanAttributes( QtGui.QMainWindow):
         self.lineColorLabel = QtGui.QLabel( "LineColor")
         self.layout_grid.addWidget( self.lineColorLabel, row, 0)
         self.w_lineColorComboBox = QtGui.QComboBox()
-        for lineColor in pysp._lineColorArr:
+        for lineColor in pysp.definitions.lineColorArr:
             self.w_lineColorComboBox.addItem( lineColor)
-        self.w_lineColorComboBox.setCurrentIndex( pysp._lineColorDct[ self.scan.lineColor.upper()])
+        self.w_lineColorComboBox.setCurrentIndex( pysp.lineColorDct[ self.scan.lineColor.upper()])
         self.w_lineColorComboBox.currentIndexChanged.connect( self.cb_lineColor)
         self.layout_grid.addWidget( self.w_lineColorComboBox, row, 1) 
         #
@@ -752,9 +752,9 @@ class ScanAttributes( QtGui.QMainWindow):
         self.lineStyleLabel = QtGui.QLabel( "LineStyle")
         self.layout_grid.addWidget( self.lineStyleLabel, row, 2)
         self.w_lineStyleComboBox = QtGui.QComboBox()
-        for lineStyle in pysp._lineStyleArr:
+        for lineStyle in pysp.definitions.lineStyleArr:
             self.w_lineStyleComboBox.addItem( lineStyle)
-        self.w_lineStyleComboBox.setCurrentIndex( pysp._lineStyleDct[ self.scan.lineStyle.upper()])
+        self.w_lineStyleComboBox.setCurrentIndex( pysp.definitions.lineStyleDct[ self.scan.lineStyle.upper()])
         self.w_lineStyleComboBox.currentIndexChanged.connect( self.cb_lineStyle)
         self.layout_grid.addWidget( self.w_lineStyleComboBox, row, 3) 
         #
@@ -763,11 +763,11 @@ class ScanAttributes( QtGui.QMainWindow):
         self.lineWidthLabel = QtGui.QLabel( "LineWidth")
         self.layout_grid.addWidget( self.lineWidthLabel, row, 4)
         self.w_lineWidthComboBox = QtGui.QComboBox()
-        if str( self.scan.lineWidth) not in pysp._lineWidthDct.keys():
+        if str( self.scan.lineWidth) not in pysp.definitions.lineWidthDct.keys():
             self.scan.lineWidth = 1.0
-        for lineWidth in pysp._lineWidthArr:
+        for lineWidth in pysp.definitions.lineWidthArr:
             self.w_lineWidthComboBox.addItem( lineWidth)
-        self.w_lineWidthComboBox.setCurrentIndex( pysp._lineWidthDct[ str( self.scan.lineWidth)])
+        self.w_lineWidthComboBox.setCurrentIndex( pysp.definitions.lineWidthDct[ str( self.scan.lineWidth)])
         self.w_lineWidthComboBox.currentIndexChanged.connect( self.cb_lineWidth)
         self.layout_grid.addWidget( self.w_lineWidthComboBox, row, 5) 
 
@@ -778,12 +778,12 @@ class ScanAttributes( QtGui.QMainWindow):
         self.symbolColorLabel = QtGui.QLabel( "SymbolColor")
         self.layout_grid.addWidget( self.symbolColorLabel, row, 0)
         self.w_symbolColorComboBox = QtGui.QComboBox()
-        if str( self.scan.symbolColor).upper() not in pysp._lineColorDct.keys():
+        if str( self.scan.symbolColor).upper() not in pysp.definitions.lineColorDct.keys():
             self.scan.symbolColor = 'black'
-        for symbolColor in pysp._lineColorArr:
+        for symbolColor in pysp.definitions.lineColorArr:
             self.w_symbolColorComboBox.addItem( symbolColor)
         self.w_symbolColorComboBox.setCurrentIndex( 
-            pysp._lineColorDct[ str( self.scan.symbolColor).upper()])
+            pysp.definitions.lineColorDct[ str( self.scan.symbolColor).upper()])
         self.w_symbolColorComboBox.currentIndexChanged.connect( self.cb_symbolColor)
         self.layout_grid.addWidget( self.w_symbolColorComboBox, row, 1) 
         #
@@ -792,11 +792,11 @@ class ScanAttributes( QtGui.QMainWindow):
         self.symbolLabel = QtGui.QLabel( "Symbol")
         self.layout_grid.addWidget( self.symbolLabel, row, 2)
         self.w_symbolComboBox = QtGui.QComboBox()
-        if str( self.scan.symbol) not in pysp._symbolArr:
+        if str( self.scan.symbol) not in pysp.definitions.symbolArr:
             self.scan.symbol = 'o'
-        for symbol in pysp._symbolArr:
-            self.w_symbolComboBox.addItem( pysp._symbolDctFullName[ str( symbol)])
-        self.w_symbolComboBox.setCurrentIndex( pysp._symbolDct[ str( self.scan.symbol)])
+        for symbol in pysp.definitions.symbolArr:
+            self.w_symbolComboBox.addItem( pysp.definitions.symbolDctFullName[ str( symbol)])
+        self.w_symbolComboBox.setCurrentIndex( pysp.definitions.symbolDct[ str( self.scan.symbol)])
         self.w_symbolComboBox.currentIndexChanged.connect( self.cb_symbol)
         self.layout_grid.addWidget( self.w_symbolComboBox, row, 3) 
         #
@@ -805,12 +805,12 @@ class ScanAttributes( QtGui.QMainWindow):
         self.symbolSizeLabel = QtGui.QLabel( "SymbolSize")
         self.layout_grid.addWidget( self.symbolSizeLabel, row, 4)
         self.w_symbolSizeComboBox = QtGui.QComboBox()
-        if str( self.scan.symbolSize) not in pysp._symbolSizeDct.keys():
+        if str( self.scan.symbolSize) not in pysp.definitions.symbolSizeDct.keys():
             self.scan.symbolSize = 5
-        for symbolSize in pysp._symbolSizeArr:
+        for symbolSize in pysp.definitions.symbolSizeArr:
             self.w_symbolSizeComboBox.addItem( symbolSize)
         self.w_symbolSizeComboBox.setCurrentIndex( 
-            pysp._symbolSizeDct[ str( self.scan.symbolSize)])
+            pysp.definitions.symbolSizeDct[ str( self.scan.symbolSize)])
         self.w_symbolSizeComboBox.currentIndexChanged.connect( self.cb_symbolSize)
         self.layout_grid.addWidget( self.w_symbolSizeComboBox, row, 5) 
         #
@@ -1002,7 +1002,7 @@ class ScanAttributes( QtGui.QMainWindow):
 
     def cb_symbol( self): 
         temp = self.w_symbolComboBox.currentText()
-        for k, v in pysp._symbolDctFullName.items():
+        for k, v in pysp.definitions.symbolDctFullName.items():
             if v == temp:
                 temp = k
         self.scan.symbol = str( temp)
@@ -1414,11 +1414,11 @@ class pySpectraGui( QtGui.QMainWindow):
         for i in range( self.nMotor): 
             self.motPosLabels[ i].setText( "%g" % self.motProxies[i].position) 
             if self.motProxies[i].state() == PyTango.DevState.MOVING:
-                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % pysp._BLUE_MOVING)
+                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % pysp.definitions.BLUE_MOVING)
             elif self.motProxies[i].state() == PyTango.DevState.ON:
-                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % pysp._GREEN_OK)
+                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % pysp.definitions.GREEN_OK)
             else:
-                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % pysp._RED_ALARM)
+                self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % pysp.definitions.RED_ALARM)
 
 
     def addScanFrame( self): 
@@ -1533,7 +1533,7 @@ class pySpectraGui( QtGui.QMainWindow):
         #
         # pathName is a file: update scansList
         #
-        elif pathNameTokens[-1] in pysp._dataFormats:
+        elif pathNameTokens[-1] in pysp.definitions.dataFormats:
             pysp.cls()
             pysp.dMgt.GQE.delete()
             try: 
@@ -1650,7 +1650,7 @@ class pySpectraGui( QtGui.QMainWindow):
         
         for file in lst:
             fileNameTokens = file.split( '.')
-            if fileNameTokens[-1] in pysp._dataFormats:
+            if fileNameTokens[-1] in pysp.definitions.dataFormats:
                 self.filesListWidget.addItem( file)
             elif file.startswith( "."):
                 continue
@@ -1667,7 +1667,7 @@ class pySpectraGui( QtGui.QMainWindow):
         import HasyUtils
         for file in os.listdir( "."):
             fileNameTokens = file.split( '.')
-            if fileNameTokens[-1] in pysp._dataFormats:
+            if fileNameTokens[-1] in pysp.definitions.dataFormats:
                 for pat in patternList:
                     if HasyUtils.match( file, pat): 
                         argout.append( file)

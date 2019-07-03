@@ -306,13 +306,13 @@ def _getPen( scan):
     if scan.lineColor.upper() == 'NONE': 
         return None
 
-    if scan.lineColor.lower() in _pysp._colorCode: 
-        clr = _pysp._colorCode[ scan.lineColor.lower()]
+    if scan.lineColor.lower() in _pysp.definitions.colorCode: 
+        clr = _pysp.definitions.colorCode[ scan.lineColor.lower()]
     else:
         clr = 'k'
 
-    if scan.lineStyle in _pysp._lineStylePQT:
-        stl = _pysp._lineStylePQT[ scan.lineStyle]
+    if scan.lineStyle in _pysp.definitions.lineStylePQT:
+        stl = _pysp.definitions.lineStylePQT[ scan.lineStyle]
     else:
         stl = _QtCore.Qt.DashLine
 
@@ -499,8 +499,8 @@ def _addTexts( scan, nameList):
             anchorY = 1
         elif elm.vAlign == 'center':
             anchorY = 0.5
-        if elm.color.lower() in _pysp._colorCode:
-            txt = _pg.TextItem( color=_pysp._colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
+        if elm.color.lower() in _pysp.definitions.colorCode:
+            txt = _pg.TextItem( color=_pysp.definitions.colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
             txt.setHtml( '<div style="font-size:%dpx;">%s</div>' % (sz, elm.text))
         else:
             txt = _pg.TextItem( color='k', anchor = ( anchorX, anchorY))
@@ -527,12 +527,12 @@ def _setTitle( scan, nameList):
     # and the following display command, even with less scans, will 
     # also not fit into the graphics window
     #
-    if len( scan.name) > _pysp._LEN_MAX_TITLE:
-        tempName = "X_" + scan.name[-_pysp._LEN_MAX_TITLE:]
+    if len( scan.name) > _pysp.definitions.LEN_MAX_TITLE:
+        tempName = "X_" + scan.name[-_pysp.definitions.LEN_MAX_TITLE:]
     else: 
         tempName = scan.name
 
-    if _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp._MANY_SCANS:
+    if _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp.definitions.MANY_SCANS:
         scan.plotItem.setTitle( title = tempName, size = '%dpx' % fontSize)
     else:
         vb = scan.plotItem.getViewBox()
@@ -723,7 +723,7 @@ def _createPlotItem( scan, nameList):
     scan.plotItem.showGrid( x = scan.showGridX, y = scan.showGridY)
     
 
-    if _pysp.getNumberOfScansToBeDisplayed( nameList) <= _pysp._MANY_SCANS:
+    if _pysp.getNumberOfScansToBeDisplayed( nameList) <= _pysp.definitions.MANY_SCANS:
         if hasattr( scan, 'xLabel') and scan.xLabel is not None:
             scan.plotItem.setLabel( 'bottom', text=scan.xLabel)
         if hasattr( scan, 'yLabel')  and scan.yLabel is not None:
@@ -910,8 +910,8 @@ def display( nameList = None):
                 else:
                     scan.plotDataItem = scan.plotItem.plot(pen = _getPen( scan), 
                                                            symbol = scan.symbol, 
-                                                           symbolPen = _pysp._colorCode[ scan.symbolColor.lower()], 
-                                                           symbolBrush = _pysp._colorCode[ scan.symbolColor.lower()], 
+                                                           symbolPen = _pysp.definitions.colorCode[ scan.symbolColor.lower()], 
+                                                           symbolBrush = _pysp.definitions.colorCode[ scan.symbolColor.lower()], 
                                                            symbolSize = scan.symbolSize)
 
         if scan.textOnly:
@@ -1010,8 +1010,8 @@ def display( nameList = None):
         else:
             curveItem = _pg.ScatterPlotItem( x = scan.x, y = scan.y,
                                              symbol = scan.symbol, 
-                                             pen = _pysp._colorCode[ scan.symbolColor.lower()], 
-                                             brush = _pysp._colorCode[ scan.symbolColor.lower()], 
+                                             pen = _pysp.definitions.colorCode[ scan.symbolColor.lower()], 
+                                             brush = _pysp.definitions.colorCode[ scan.symbolColor.lower()], 
                                              size = scan.symbolSize)
 
         curveItem.nameTK = "curve_%s" % target.name
@@ -1034,9 +1034,9 @@ def display( nameList = None):
     #    _win.ci.layout.setVerticalSpacing( -15)
     #    pass
 
-    _win.ci.layout.setContentsMargins( _pysp.marginLeft, _pysp.marginTop, _pysp.marginRight, _pysp.marginBottom)
-    _win.ci.layout.setHorizontalSpacing( _pysp.spacingHorizontal)
-    _win.ci.layout.setVerticalSpacing( _pysp.spacingVertical)
+    _win.ci.layout.setContentsMargins( _pysp.definitions.marginLeft, _pysp.definitions.marginTop, _pysp.definitions.marginRight, _pysp.definitions.marginBottom)
+    _win.ci.layout.setHorizontalSpacing( _pysp.definitions.spacingHorizontal)
+    _win.ci.layout.setVerticalSpacing( _pysp.definitions.spacingVertical)
     #
     # debug scanning.py
     #

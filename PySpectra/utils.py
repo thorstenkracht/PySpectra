@@ -249,7 +249,7 @@ def setScanVPs( nameList, flagDisplaySingle):
             nrow = 2
         else:
             ncol = int( _math.floor( _math.sqrt( usedVPs)))
-            if usedVPs > _pysp._MANY_SCANS: 
+            if usedVPs > _pysp.definitions.MANY_SCANS: 
                 ncol -= 1
             nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
         nplot = 1 
@@ -278,7 +278,7 @@ def setScanVPs( nameList, flagDisplaySingle):
             nrow = 2
         else:
             ncol = int( _math.floor( _math.sqrt( usedVPs)))
-            if usedVPs > _pysp._MANY_SCANS: 
+            if usedVPs > _pysp.definitions.MANY_SCANS: 
                 ncol -= 1
             nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
         nplot = 1 
