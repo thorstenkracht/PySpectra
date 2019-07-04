@@ -22,7 +22,9 @@ ip = get_ipython()
 @register_line_magic
 def antiderivative(line):
     '''
-    creates the antiderivative of a scan (Stammfunktion)
+    antiderivative <scan> [<scanNew>] 
+
+    creates the antiderivative of a scan (Stammfunktion) a la Spectra
 
     Example
     -------
@@ -84,7 +86,8 @@ def delete(line):
 @register_line_magic
 def derivative(line):
     '''
-    calc the derivative of a scan
+    derivative <scan> [<scanNew>] 
+    calculates the derivative of a scan a la Spectra
 
     Example
     -------
@@ -114,6 +117,14 @@ def display(line):
     '''
     ifc.command( "display " + line)
 
+
+@register_line_magic
+def info(line):
+    '''
+    prints information about scans
+    '''
+    ifc.command( "info " + line)
+
 @register_line_magic
 def overlay(line):
     '''
@@ -134,7 +145,7 @@ def pysp_help( line):
     print " ---------------------------------"
     print " These are the available commands"
     print "   antiderivative, cls, create, delete, derivative,"
-    print "   display, overlay, procEventsLoop, read, setTitle, "
+    print "   display, info, overlay, procEventsLoop, read, setTitle, "
     print "   setComment, show, write, y2my"
     print ""
     print "  for more help use, e.g.: create?"
@@ -265,6 +276,7 @@ del createPDF
 del delete
 del derivative
 del display
+del info
 del overlay
 del procEventsLoop
 del pysp_help

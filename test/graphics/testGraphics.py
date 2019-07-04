@@ -384,7 +384,8 @@ class testGraphics( unittest.TestCase):
                                 xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red', doty = True)
         sinus.y = np.sin( sinus.y)
 
-        for elm in [ 'DINA4', 'DINA4P', 'DINA5', 'DINA5P', 'DINA6', 'DINA6P']: 
+        for elm in [ 'DINA4', 'DINA4P', 'DINA4S', 'DINA5', 'DINA5P', 'DINA5S', 
+                     'DINA6', 'DINA6P', 'DINA6S']: 
             PySpectra.setWsViewport( elm)
             PySpectra.display()
             PySpectra.procEventsLoop( 1)

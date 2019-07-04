@@ -1,7 +1,7 @@
 #!/bin/env python
 '''
 GQE - contains the Scan() class and functions to handle scans: 
-      delete(), getScan(), getScanList(), show(), overlay(), show()
+      delete(), getScan(), getScanList(), info(), overlay(), show()
 '''
 # 1.8.2
 
@@ -625,6 +625,9 @@ def delete( nameLst = None):
     PySpectra.delete( ["t1", "t2"])
       delete t1 and t2
 
+    PySpectra.delete( "t1")
+      delete the scan t1, also OK
+
     PySpectra.delete()
       delete all scans
     '''
@@ -642,6 +645,23 @@ def delete( nameLst = None):
         setComment( None)
         return 
 
+    if type( nameLst) is not list:
+        name = nameLst
+        for i in range( len( _scanList)):
+            if name.upper() == _scanList[i].name.upper():
+                #
+                # we had many MCA spectra displayed on top of each other
+                #
+                if _scanList[i].plotItem is not None:
+                    _scanList[i].plotItem.clear()
+                del _pysp.__dict__[ _scanList[i].name]
+                del _scanList[i]
+                break
+        else:
+            print "GQE.delete: not found", name
+        return 
+
+        
     for name in nameLst:
         for i in range( len( _scanList)):
             if name.upper() == _scanList[i].name.upper():
@@ -655,6 +675,7 @@ def delete( nameLst = None):
                 break
         else:
             print "GQE.delete: not found", name
+    return 
 
 def overlay( src, trgt):
     '''
@@ -678,22 +699,27 @@ def overlay( src, trgt):
     scanSrc.overlay = scanTrgt.name
     return 
     
-def show( scanList = None):
+def info( scanList = None):
     '''
-    prints some information about scans in scaList.
-    if scanList is not supplied, all scans are 'show'ed
+    prints some information about scans in scanList.
+    if scanList is not supplied, info is displayed for all scans
     '''
 
     if scanList is not None:
+        if type(scanList) is not list:
+            scan = getScan( scanList)
+            _infoScan( scan)
+            return 
+
         for scn in scanList:
             scan = getScan( scn)
-            _showScan( scan)
+            _infoScan( scan)
         return 
 
     if _scanList:
         print "The List of Scans:"
         for scan in _scanList:
-            _showScan( scan)
+            _infoScan( scan)
         print "\n--- %s scans" % len( _scanList)
     else: 
         print "scan list is empty"
@@ -711,12 +737,12 @@ def _displayTextList( scan):
         print "    color: %s" % str( text.color)
     return 
 
-def _showScan( scan): 
+def _infoScan( scan): 
     '''
     
     '''
     if scan.textOnly: 
-        print "--- GQE._showScan \n", scan.name, "(textOnly)"
+        print "--- GQE._infoScan \n", scan.name, "(textOnly)"
         _displayTextList( scan)
         return 
     #
@@ -780,6 +806,17 @@ def _showScan( scan):
         _displayTextList( scan)
 
     return 
+
+def show(): 
+    '''
+    lists all scans, one line per scan
+    '''
+    if _scanList is None: 
+        print "scan list is empty"
+
+    print "The List of Scans:"
+    for scan in _scanList:
+        print "%s, nPts %d, xMin %g, xMax %g" % (scan.name, scan.nPts, scan.xMin, scan.xMax)
 
 def _nextScan():
     '''

@@ -743,7 +743,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.w_lineColorComboBox = QtGui.QComboBox()
         for lineColor in pysp.definitions.lineColorArr:
             self.w_lineColorComboBox.addItem( lineColor)
-        self.w_lineColorComboBox.setCurrentIndex( pysp.lineColorDct[ self.scan.lineColor.upper()])
+        self.w_lineColorComboBox.setCurrentIndex( pysp.definitions.lineColorDct[ self.scan.lineColor.upper()])
         self.w_lineColorComboBox.currentIndexChanged.connect( self.cb_lineColor)
         self.layout_grid.addWidget( self.w_lineColorComboBox, row, 1) 
         #

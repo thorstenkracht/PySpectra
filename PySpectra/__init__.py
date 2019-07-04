@@ -19,7 +19,9 @@ getComment()        return the comment
 getScan()           return a scan object
 getScanList()       return the list of the scans
 getTitle()          return the title
+info()              print information about scans
 launchGui()         launches the Gui
+list()              print the list of scans
 overlay( src, trgt) plot src in the viewport of trgt
 procEventsLoop()    loop over QApp.processEvents until a <return> is entered
 processEvents()     call QApp.processEvents()
@@ -27,13 +29,14 @@ read()              read .fio or .dat files
 setComment()        set the comment 
 setTitle()          set the title
 setWsViewPort()     set the size of the graphics window
-show()              print the scans
+show()              print the list of scans
 ssa()               simple scan analysis
 write()             create a .fio file
 yToMinusY()         change the sign of the y-values
 
 *
 * Default plot parameters for pyqtgraph
+* in PySpectra.definitions
 *
 Space around the plots
   marginLeft
@@ -46,8 +49,9 @@ Between the plots:
 *
 * Applications based on PySpectra: 
 *
-$ pyspViewer.py
+$ pyspViewer.py [-m]
   successor of the FioViewer
+  -m for matplotlib
 $ pyspMonitor.py
   successor of the SardanaMonitor
 *
@@ -70,6 +74,7 @@ then again
 $ ipython --profile=PySpectra
 In [1]: create t1
 In [2]: display
+In [3]: dir( pysp.t1)
 *
 * To use PySpectra from Python:
 *

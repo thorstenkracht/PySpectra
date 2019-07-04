@@ -10,6 +10,8 @@ python ./test/graphics/testMplGraphics.py testMplGraphics.testDisplaySingle
 python ./test/graphics/testMplGraphics.py testMplGraphics.testFastDisplay_v1
 python ./test/graphics/testMplGraphics.py testMplGraphics.testWsViewport
 python ./test/graphics/testMplGraphics.py testMplGraphics.testCommentTitle
+python ./test/graphics/testMplGraphics.py testMplGraphics.testWsViewport
+python ./test/graphics/testMplGraphics.py testMplGraphics.testLissajous
 '''
 import sys, os
 #pySpectraPath = "/home/kracht/Misc/pySpectra/PySpectra"
@@ -379,6 +381,59 @@ class testMplGraphics( unittest.TestCase):
         PySpectra.mtpltlb.graphics.procEventsLoop( 1)
 
         print "testMplGraphics.testCommentTitle, DONE"
+
+
+    def testWsViewport( self):
+        '''
+        '''
+        print "testMplGrphics.testWsViewport"
+
+        PySpectra.cls()
+        PySpectra.delete()
+        PySpectra.setTitle( "go through the viewports")
+
+        sinus = PySpectra.Scan( name = 'sinus', 
+                                xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red', doty = True)
+        sinus.y = np.sin( sinus.y)
+
+        for elm in [ 'DINA4', 'DINA4P', 'DINA4S', 'DINA5', 'DINA5P', 'DINA5S', 
+                     'DINA6', 'DINA6P', 'DINA6S']: 
+            PySpectra.mtpltlb.graphics.setWsViewport( elm)
+            PySpectra.mtpltlb.graphics.display()
+            PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+
+        print "testMplGrphics.testWsViewport, DONE"
+
+
+    def testLissajous( self):
+        '''
+
+        '''
+        print "testMplGrphics.testLissayous"
+
+        PySpectra.mtpltlb.graphics.cls()
+        PySpectra.mtpltlb.graphics.setWsViewport( "dinA6s")
+        PySpectra.delete()
+        scan = PySpectra.Scan( name = 'Lissajous', nPts = 1000, xMin = -1., xMax = 1.)
+
+        x  = np.linspace( 0., 6.5, 1000)
+        y  = np.linspace( 0., 6.5, 1000)
+
+        scan.x = np.cos( x)
+        scan.y = np.sin( y)
+
+        PySpectra.mtpltlb.graphics.display()
+
+        startTime = time.time()
+        for i in range( 150):
+            x = x + 0.005
+            scan.plotDataItem.setData(np.cos( x), np.sin( y))
+            PySpectra.mtpltlb.graphics.processEvents()
+
+        diffTime = time.time() - startTime
+
+        self.assertLess( diffTime, 6.)
+        print "testMplGrphics.testLissajous, DONE"
         
 
 if __name__ == "__main__":

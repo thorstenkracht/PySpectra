@@ -54,6 +54,8 @@ def command( line):
         return derivative( lineRest)
     elif lst[0] == 'display':
         return display( lineRest)
+    elif lst[0] == 'info':
+        return info( lineRest)
     elif lst[0] == 'overlay':
         return overlay( lineRest)
     elif lst[0] == 'read':
@@ -189,6 +191,9 @@ def delete( line):
     if line: 
         lst = line.split(' ')
     pysp.delete( lst)
+
+def info( line):
+    pysp.info()
 
 def overlay( line):
     lst = line.split( ' ')

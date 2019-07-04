@@ -407,46 +407,48 @@ def launchGui():
     #_sys.exit( app.exec_())
 
 
-def waitAndProcessEvents( waitTime): 
-    '''
-    Wait for waitTime seconds to expire. During the wait time 
-    the QApp events are processed. If 'p' is pressed, the function
-    waits until another 'p' is pressed. This feature has been 
-    implemented to suppress, e.g., new file reads. 
-
-    startTime = _time.time()
-    while (time.time() - startTime) < WAIT_TIME:
-        pysp.processEvents()
-        key = inkey()
-        if key == 32:
-            return 32
-        if key == 112: # 'p'
-            print "paused, press 'p' to resume"
-            while True:
-                pysp.processEvents()
-                if inkey() == 112:
-                    print "unpaused, press 'p' to pause"
-                    break
-                time.sleep(0.01)
-        time.sleep(0.01)
-    '''
-
-    startTime = _time.time()
-    while (_time.time() - startTime) < waitTime:
-        _pysp.processEvents()
-        key = inkey()
-        if key == 32:
-            return 32
-        if key == 112: # 'p'
-            print "paused, press 'p' to resume"
-            while True:
-                _pysp.processEvents()
-                if inkey() == 112:
-                    print "unpaused, press 'p' to pause"
-                    break
-                _time.sleep(0.01)
-        _time.sleep(0.01)
-    return True
+#def waitAndProcessEvents( waitTime): 
+#    '''
+#    Wait for waitTime seconds to expire. During the wait time 
+#    the QApp events are processed. If 'p' is pressed, the function
+#    waits until another 'p' is pressed. 
+#    implemented to suppress, e.g., new file reads. 
+#
+#    4.7.2019 taken out because it is no longer clear for what this function us useful
+#
+#    startTime = _time.time()
+#    while (time.time() - startTime) < WAIT_TIME:
+#        pysp.processEvents()
+#        key = inkey()
+#        if key == 32:
+#            return 32
+#        if key == 112: # 'p'
+#            print "paused, press 'p' to resume"
+#            while True:
+#                pysp.processEvents()
+#                if inkey() == 112:
+#                    print "unpaused, press 'p' to pause"
+#                    break
+#                time.sleep(0.01)
+#        time.sleep(0.01)
+#    '''
+#
+#    startTime = _time.time()
+#    while (_time.time() - startTime) < waitTime:
+#        _pysp.processEvents()
+#        key = inkey()
+#        if key == 32:
+#            return 32
+#        if key == 112: # 'p'
+#            print "paused, press 'p' to resume"
+#            while True:
+#                _pysp.processEvents()
+#                if inkey() == 112:
+#                    print "unpaused, press 'p' to pause"
+#                    break
+#                _time.sleep(0.01)
+#        _time.sleep(0.01)
+#    return True
 
 def prtc(): 
     print "Prtc ",

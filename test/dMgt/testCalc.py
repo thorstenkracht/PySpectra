@@ -3,8 +3,9 @@
 cd /home/kracht/Misc/pySpectra
 python -m unittest discover -v
 
-python ./test/dMgt/testCalc.py testCalc.testDerivative
 python ./test/dMgt/testCalc.py testCalc.testYToMinusY
+python ./test/dMgt/testCalc.py testCalc.testDerivative
+python ./test/dMgt/testCalc.py testCalc.testDerivativeAntiDerivative
 '''
 import sys
 sys.path.append( "/home/kracht/Misc/pySpectra")
@@ -16,6 +17,29 @@ import time, sys
 import math 
 
 class testCalc( unittest.TestCase):
+
+    def testYToMinusY( self):
+
+        print "testCalc.testYToMinusY"
+
+        PySpectra.cls()
+        PySpectra.delete()
+        scan = PySpectra.Scan( name = "t1", xMin = 2., xMax = 10.0, nPts = 201)
+        scan.y = np.sin( scan.y)
+        scanMY = PySpectra.yToMinusY( name = scan.name, nameNew = "t1_y2MinusY")
+
+        self.assertEqual( len( scan.y), len( scanMY.y))
+        self.assertEqual( len( scan.x), len( scanMY.x))
+        
+        for i in range( len( scan.y)):
+            self.assertEqual( scan.y[i], - scanMY.y[i])
+            self.assertEqual( scan.x[i], scanMY.x[i])
+        
+        PySpectra.display()
+        #PySpectra.show()
+        PySpectra.procEventsLoop( 1)
+
+        print "testCalc.testYToMinusY, DONE"
         
     def testDerivative( self):
         '''
@@ -79,29 +103,42 @@ class testCalc( unittest.TestCase):
         PySpectra.procEventsLoop( 1)
 
         print "testCalc.testAntiDerivative, DONE"
+        
+    def testDerivativeAntiDerivative( self):
 
-    def testYToMinusY( self):
-
-        print "testCalc.testYToMinusY"
+        print "testCalc.testDerivativeAntiDerivative"
 
         PySpectra.cls()
         PySpectra.delete()
-        scan = PySpectra.Scan( name = "t1", xMin = 2., xMax = 10.0, nPts = 201)
+        scan = PySpectra.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
         scan.y = np.sin( scan.y)
-        scanMY = PySpectra.yToMinusY( name = scan.name, nameNew = "t1_y2MinusY")
+        derivative = PySpectra.derivative( name = scan.name, nameNew = "t1_d")
+        stamm = PySpectra.antiderivative( name = derivative.name, nameNew = "t1_ad")
 
-        self.assertEqual( len( scan.y), len( scanMY.y))
-        self.assertEqual( len( scan.x), len( scanMY.x))
+        self.assertEqual( len( scan.y), len( stamm.y))
+        self.assertEqual( len( scan.x), len( stamm.x))
         
         for i in range( len( scan.y)):
-            self.assertEqual( scan.y[i], - scanMY.y[i])
-            self.assertEqual( scan.x[i], scanMY.x[i])
+            self.assertEqual( scan.x[i], stamm.x[i])
         
-        PySpectra.display()
-        #PySpectra.show()
-        PySpectra.procEventsLoop( 1)
+        diff = 0.
+        for i in range( len( scan.y) - 1):
+            diff = diff + math.fabs( scan.y[i] - stamm.y[i])
 
-        print "testCalc.testYToMinusY, DONE"
+        self.assertLess( diff, 0.08)
+
+        stamm.lineColor = 'blue'
+        PySpectra.delete( "t1_d")
+
+        PySpectra.overlay( "t1_ad", "t1") 
+
+        PySpectra.cls()
+        PySpectra.display()
+
+        #PySpectra.launchGui()
+        PySpectra.procEventsLoop( 3)
+
+        print "testCalc.testDerivativeAntiDerivative, DONE"
 
 if __name__ == "__main__":
     unittest.main()
