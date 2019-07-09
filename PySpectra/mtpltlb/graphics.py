@@ -489,14 +489,15 @@ def _createPlotItem( scan, nameList):
     if scan.yMin is None or scan.yMax is None:
         arY = True
 
-    if scan.doty: 
-        scan.plotItem.set_autoscalex_on( True)
+    #if scan.doty: 
+    #    scan.plotItem.set_autoscalex_on( True)
 
     if not arX: 
         if not scan.doty: 
             scan.plotItem.set_xlim( scan.xMin, scan.xMax)
     else: 
-        scan.plotItem.set_autoscalex_on( arX)
+        pass
+        #scan.plotItem.set_autoscalex_on( arX)
 
     if not arY:
         if scan.yMin == scan.yMax:
@@ -504,7 +505,8 @@ def _createPlotItem( scan, nameList):
         else:
             scan.plotItem.set_ylim( [scan.yMin, scan.yMax])
     else:
-        scan.plotItem.set_autoscaley_on( arY)
+        pass
+        #scan.plotItem.set_autoscaley_on( arY)
     #
     # grid
     #
@@ -513,7 +515,6 @@ def _createPlotItem( scan, nameList):
     else:
         scan.plotItem.grid( False)
     
-
     _setTitle( scan, nameList)
 
     if _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp.definitions.MANY_SCANS:
