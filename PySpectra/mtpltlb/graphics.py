@@ -492,7 +492,7 @@ def _createPlotItem( scan, nameList):
     if scan.doty: 
         scan.plotItem.set_autoscalex_on( True)
 
-    if not arX:
+    if not arX: 
         if not scan.doty: 
             scan.plotItem.set_xlim( scan.xMin, scan.xMax)
     else: 
