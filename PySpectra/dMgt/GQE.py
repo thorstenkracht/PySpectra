@@ -525,6 +525,34 @@ class Scan( object):
         self.currentIndex = index
         return
 
+    def getX( self, index):
+        '''
+        Gets a x-value of the scan
+
+        Parameters:
+        -----------
+        index: int
+          The index of the first point is 0
+        '''
+        if index >= self.y.size:
+            raise ValueError( "GQE.Scan.getX: %s, index %d out of range [0, %d]" % 
+                              ( self.name, index, self.x.size))
+        return self.x[ index] 
+
+    def getY( self, index):
+        '''
+        Gets a y-value of the scan
+
+        Parameters:
+        -----------
+        index: int
+          The index of the first point is 0
+        '''
+        if index >= self.y.size:
+            raise ValueError( "GQE.Scan.getY: %s, index %d out of range [0, %d]" % 
+                              ( self.name, index, self.y.size))
+        return self.y[ index] 
+
     def setXY( self, index, xValue, yValue):
         '''
         Sets the x- and y-value at index
@@ -547,6 +575,33 @@ class Scan( object):
         self.y[ index] = yValue
         self.currentIndex = index
         return
+
+    def sort( self): 
+        '''
+        put this functions in because it is in Spectra, I don't know
+        whether we really need it in pysp. reserve scans do not make 
+        any problems in pyqtgraph. however, in matplotlib it plots
+        from the wrong direction.
+        '''
+        pass
+
+
+    def setCurrent( self, i): 
+        '''
+        be compatible with spectra
+        '''
+        self.currentIndex = i
+        return 
+
+    def autoscale( self): 
+        '''
+        be compatible with spectra
+        '''
+        pass
+
+    def display( self): 
+        _pysp.display()
+        return 
 
 def getScanList():
     '''

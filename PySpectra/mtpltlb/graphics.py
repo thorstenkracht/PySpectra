@@ -494,7 +494,7 @@ def _createPlotItem( scan, nameList):
 
     if not arX:
         if not scan.doty: 
-            scan.plotItem.set_xlim( [scan.xMin, scan.xMax])
+            scan.plotItem.set_xlim( scan.xMin, scan.xMax)
     else: 
         scan.plotItem.set_autoscalex_on( arX)
 
@@ -505,7 +505,9 @@ def _createPlotItem( scan, nameList):
             scan.plotItem.set_ylim( [scan.yMin, scan.yMax])
     else:
         scan.plotItem.set_autoscaley_on( arY)
-
+    #
+    # grid
+    #
     if scan.showGridX or scan.showGridY:
         scan.plotItem.grid( True)
     else:
@@ -683,8 +685,13 @@ def display( nameList = None):
         else:
             scan.plotDataItem.set_data( scan.x[:(scan.currentIndex + 1)], 
                                         scan.y[:(scan.currentIndex + 1)])
-
-            scan.plotItem.set_xlim( scan.x[0], scan.x[scan.currentIndex])
+            #
+            #  9.7.2019: setting x-limits of the scan
+            #    - for aligning motors the x-axis should be autoranged
+            #    - for scans the x-axis should be fully visible from the beginning
+            #
+            if scan.autorangeX:
+                scan.plotItem.set_xlim( scan.x[0], scan.x[scan.currentIndex])
             scan.plotItem.set_ylim( _np.min( scan.y[:(scan.currentIndex + 1)]), 
                                     _np.max( scan.y[:(scan.currentIndex + 1)]))
         #

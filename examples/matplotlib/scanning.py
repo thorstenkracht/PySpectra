@@ -14,8 +14,8 @@ def display():
     global dt, ax_dt 
 
     xMin = 0
-    xMax = 50
-    xDelta = 0.1
+    xMax = 10
+    xDelta = 0.05
     x = np.arange( xMin, xMax, xDelta)
     t = np.tan(x)
     tm = range( len(t))
