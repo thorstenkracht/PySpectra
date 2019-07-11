@@ -13,7 +13,7 @@ def main():
 
     sinus = PySpectra.Scan( name = 'sinus', 
                             xMin = 0., xMax = 6.0, nPts = 101, 
-                            autorangeX = True, 
+                            autoscaleX = True, 
                             lineColor = 'red', yMin = -1.2, yMax = 1.2)
     for i in range( sinus.nPts): 
         sinus.y[i] = math.sin( i/10.) 
