@@ -2,18 +2,18 @@
 '''
 python ./test/graphics/testMplGraphics.py testMplGraphics.testDoty
 python ./test/graphics/testMplGraphics.py testMplGraphics.testGrid
-python ./test/graphics/testMplGraphics.py testMplGraphics.testScanning_v1
-python ./test/graphics/testMplGraphics.py testMplGraphics.testScanning_v2
-python ./test/graphics/testMplGraphics.py testMplGraphics.testScanning_v3
-python ./test/graphics/testMplGraphics.py testMplGraphics.testScanning_v4
-python ./test/graphics/testMplGraphics.py testMplGraphics.testScanningAutorangeX_v1
-python ./test/graphics/testMplGraphics.py testMplGraphics.testScanningReverse_v1
+python ./test/graphics/testMplGraphics.py testMplGraphics.testScanning
+python ./test/graphics/testMplGraphics.py testMplGraphics.testScanningWithText
+python ./test/graphics/testMplGraphics.py testMplGraphics.testScanningTwoPlots
+python ./test/graphics/testMplGraphics.py testMplGraphics.testScanningAutoscaleX
+python ./test/graphics/testMplGraphics.py testMplGraphics.testScanningReverse
+python ./test/graphics/testMplGraphics.py testMplGraphics.testScanningReverseAutoscaleX
 python ./test/graphics/testMplGraphics.py testMplGraphics.testDisplaySingle
 python ./test/graphics/testMplGraphics.py testMplGraphics.testFastDisplay_v1
-python ./test/graphics/testMplGraphics.py testMplGraphics.testWsViewport
 python ./test/graphics/testMplGraphics.py testMplGraphics.testCommentTitle
 python ./test/graphics/testMplGraphics.py testMplGraphics.testWsViewport
 python ./test/graphics/testMplGraphics.py testMplGraphics.testLissajous
+python ./test/graphics/testMplGraphics.py testMplGraphics.testWsViewport
 '''
 import sys, os
 #pySpectraPath = "/home/kracht/Misc/pySpectra/PySpectra"
@@ -81,44 +81,52 @@ class testMplGraphics( unittest.TestCase):
 
         print "testMplGraphics.testGrid, DONE"
 
-    def testScanning_v1( self): 
+    def testScanning( self): 
         '''
         using setX and setY
         '''
-        print "testMplGraphics.testScanning_v1"
+        print "testMplGraphics.testScanning"
         PySpectra.mtpltlb.graphics.cls()
         PySpectra.delete()
 
+        PySpectra.setTitle( "x-axis not re-scaled")
         sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red')
         for i in range( sinus.nPts): 
             sinus.setX( i, i/10.)
             sinus.setY( i, math.sin( i/10.))
             PySpectra.mtpltlb.graphics.display( ['sinus'])
             time.sleep( 0.01)
-        print "testMplGraphics.testScanning_v1, DONE"
+        print "testMplGraphics.testScanning, DONE"
 
-    def testScanning_v2( self): 
-        '''
-        using setY only
-        '''
-        print "testMplGraphics.testScanning_v2"
-        PySpectra.mtpltlb.graphics.cls()
-        PySpectra.delete() 
-        cosinus = PySpectra.Scan( name = 'cosinus', xMin = 0., 
-                                xMax = 6.0, nPts = 101, lineColor = 'blue')
-        for i in range( cosinus.nPts): 
-            cosinus.setY( i, math.cos( cosinus.x[i]))
-            PySpectra.mtpltlb.graphics.display( ['cosinus'])
-            time.sleep( 0.01)
-        print "testMplGraphics.testScanning_v2, DONE"
-
-    def testScanning_v3( self): 
+    def testScanningWithText( self): 
         '''
         using setX and setY
         '''
-        print "testMplGraphics.testScanning_v3"
+        print "testGrphics.testScanningWithText"
         PySpectra.mtpltlb.graphics.cls()
         PySpectra.delete()
+
+        PySpectra.setTitle( "x-axis is not re-scaled, watch text")
+
+        scan = PySpectra.Scan( name = 'tangens', xMin = 0., xMax = 6.0, nPts = 101, autoscaleY = True, lineColor = 'red')
+        scan.addText( text = "a test text", x = 0.95, y = 0.9, hAlign = 'right', 
+                       vAlign = 'center', fontSize = 14, color = 'black', NDC = True)
+        for i in range( scan.nPts): 
+            scan.setX( i, i/10.)
+            scan.setY( i, math.tan( i/10.))
+            PySpectra.mtpltlb.graphics.display( ['tangens'])
+            time.sleep( 0.02)
+        print "testGrphics.testScanningWithText, DONE"
+
+    def testScanningTwoPlots( self): 
+        '''
+        using setX and setY
+        '''
+        print "testMplGraphics.testScanningTwoPlots"
+        PySpectra.mtpltlb.graphics.cls()
+        PySpectra.delete()
+
+        PySpectra.setTitle( "two plots, x-axis not re-scaled")
 
         sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red')
         cosinus = PySpectra.Scan( name = 'cosinus', xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'blue')
@@ -130,53 +138,37 @@ class testMplGraphics( unittest.TestCase):
             PySpectra.mtpltlb.graphics.display( ['sinus', 'cosinus'])
             time.sleep( 0.01)
 
-        print "testMplGraphics.testScanning_v3, DONE"
+        print "testMplGraphics.testScanningTwoPlots, DONE"
 
-    def testScanning_v4( self): 
-        '''
-        using setX and setY, autorangeX
-        '''
-        print "testMplGraphics.testScanning_v4"
-        PySpectra.mtpltlb.graphics.cls()
-        PySpectra.delete()
-
-        sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 100.0, nPts = 101, lineColor = 'red',
-                                autorangeX = True)
-        for i in range( sinus.nPts): 
-            sinus.setX( i, i/10.)
-            sinus.setY( i, math.sin( i/10.))
-            PySpectra.mtpltlb.graphics.display( ['sinus'])
-            time.sleep( 0.01)
-        print "testMplGraphics.testScanning_v4, DONE"
-
-
-    def testScanningAutorangeX_v1( self): 
+    def testScanningAutoscaleX( self): 
         '''
         using setX and setY
         '''
-        print "testGrphics.testScanningAutorangeX_v1"
+        print "testGrphics.testScanningAutoscaleX_v1"
         PySpectra.mtpltlb.graphics.cls()
         PySpectra.delete()
 
+        PySpectra.setTitle( "x-axis is re-scaled")
         sinus = PySpectra.Scan( name = 'sinus', 
                                 xMin = 0., xMax = 6.0, nPts = 101, 
-                                autorangeX = True, 
+                                autoscaleX = True, 
                                 lineColor = 'red')
         for i in range( sinus.nPts): 
             sinus.setX( i, i/10.)
             sinus.setY( i, math.sin( i/10.))
             PySpectra.mtpltlb.graphics.display( ['sinus'])
             time.sleep( 0.01)
-        print "testGrphics.testScanningAutorangeX_v1, DONE"
+        print "testGrphics.testScanningAutoscaleX_v1, DONE"
 
-    def testScanningReverse_v1( self): 
+    def testScanningReverse( self): 
         '''
         scanning in reverse direction
         '''
-        print "testGrphics.testScanningReverse_v1"
+        print "testGrphics.testScanningReverse"
         PySpectra.mtpltlb.graphics.cls()
         PySpectra.delete()
 
+        PySpectra.setTitle( "reverse scannning, no re-scale")
         sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red')
         sinus.xMax = 10.
         for i in range( sinus.nPts): 
@@ -186,6 +178,28 @@ class testMplGraphics( unittest.TestCase):
             PySpectra.mtpltlb.graphics.display( ['sinus'])
             time.sleep( 0.01)
         print "testGrphics.testScanningReverse_v1, DONE"
+
+    def testScanningReverseAutoscaleX( self): 
+        '''
+        scanning in reverse direction
+        '''
+        print "testGrphics.testScanningReverseAutoscaleX"
+        PySpectra.mtpltlb.graphics.cls()
+        PySpectra.delete()
+
+        PySpectra.setTitle( "reverse scannning, re-scale")
+        sinus = PySpectra.Scan( name = 'sinus', 
+                                xMin = 0., xMax = 6.0, nPts = 101, 
+                                autoscaleX = True, 
+                                lineColor = 'red')
+        sinus.xMax = 10.
+        for i in range( sinus.nPts): 
+            x = 10. - i/10.
+            sinus.setX( i, x)
+            sinus.setY( i, math.sin( i/10.))
+            PySpectra.mtpltlb.graphics.display( ['sinus'])
+            time.sleep( 0.01)
+        print "testGrphics.testScanningReverseAutoscaleX, DONE"
 
     def testDisplaySingle( self): 
 
@@ -381,26 +395,6 @@ class testMplGraphics( unittest.TestCase):
         print "testMplGraphics.testDisplay_v1, DONE"
 
 
-    def testWsViewport( self):
-        '''
-        '''
-        print "testGrphics.testWsViewport"
-
-        PySpectra.mtpltlb.graphics.cls()
-        PySpectra.delete()
-        PySpectra.setTitle( "go through the viewports")
-
-        sinus = PySpectra.Scan( name = 'sinus', 
-                                xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red', doty = True)
-        sinus.y = np.sin( sinus.y)
-
-        for elm in [ 'DINA4', 'DINA4P', 'DINA5', 'DINA5P', 'DINA6', 'DINA6P']: 
-            PySpectra.mtpltlb.graphics.setWsViewport( elm)
-            PySpectra.mtpltlb.graphics.display()
-            PySpectra.mtpltlb.graphics.procEventsLoop( 1)
-
-        print "testGrphics.testWsViewport, DONE"
-
     def testCommentTitle( self):
         '''
         '''
@@ -475,6 +469,25 @@ class testMplGraphics( unittest.TestCase):
         self.assertLess( diffTime, 6.)
         print "testMplGrphics.testLissajous, DONE"
         
+    def testWsViewport( self):
+        '''
+        '''
+        print "testGrphics.testWsViewport"
+
+        PySpectra.mtpltlb.graphics.cls()
+        PySpectra.delete()
+        PySpectra.setTitle( "go through the viewports")
+
+        sinus = PySpectra.Scan( name = 'sinus', 
+                                xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red', doty = True)
+        sinus.y = np.sin( sinus.y)
+
+        for elm in [ 'DINA4', 'DINA4P', 'DINA5', 'DINA5P', 'DINA6', 'DINA6P']: 
+            PySpectra.mtpltlb.graphics.setWsViewport( elm)
+            PySpectra.mtpltlb.graphics.display()
+            PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+
+        print "testGrphics.testWsViewport, DONE"
 
 if __name__ == "__main__":
     unittest.main()

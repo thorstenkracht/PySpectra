@@ -455,3 +455,52 @@ def prtc():
     _sys.stdin.readline()
 
 
+def xMax( scan):
+    '''    
+    return the maximum x-value of a scan, used to place text on the screen, 
+    NDC coordinates
+    '''
+    if scan.autoscaleX:
+        ret = max( scan.x[0], scan.x[ scan.currentIndex])
+    else:
+        ret = max( scan.xMin, scan.xMax)
+    return ret
+
+def xMin( scan):
+    '''    
+    return the minimum x-value of a scan, used to place text on the screen,
+    NDC coordinates
+    '''
+    if scan.autoscaleX:
+        ret = min( scan.x[0], scan.x[ scan.currentIndex])
+    else:
+        ret = min( scan.xMin, scan.xMax)
+    return ret
+
+def yMax( scan):
+    '''    
+    return the maximum y-value of a scan, used to place text on the screen, 
+    NDC coordinates
+    '''
+    if scan.autoscaleY:
+        if scan.currentIndex == 0:
+            ret = scan.y[0]
+        else:
+            ret = _np.max( scan.y[:(scan.currentIndex + 1)])
+    else:
+        ret = scan.yMax
+    return ret
+
+def yMin( scan):
+    '''    
+    return the minimum y-value of a scan, used to place text on the screen,
+    NDC coordinates
+    '''
+    if scan.autoscaleY: 
+        if scan.currentIndex == 0:
+            ret = scan.y[0]
+        else:
+            ret = _np.min( scan.y[:(scan.currentIndex + 1)])
+    else:
+        ret = scan.yMin
+    return ret

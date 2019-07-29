@@ -4,6 +4,7 @@ from PyQt4 import QtCore as _QtCore
 from PyQt4 import QtGui as _QtGui
 
 import pyqtgraph as _pg
+import matplotlib as _mpl
 import time as _time
 import os as _os
 import math as _math
@@ -26,7 +27,7 @@ def _initGraphic():
     '''
     global _QApp, _win
 
-    if _QApp is not None: 
+    if _QApp is not None and _win is not None: 
         return (_QApp, _win)
 
     _QApp = _QtGui.QApplication.instance()
@@ -47,6 +48,18 @@ def _initGraphic():
         _win.setGeometry( 30, 30, 793, int( 793./1.414))
 
     return (_QApp, _win)
+
+def clear( scan): 
+    '''
+    the clear() is executed here to ensure that _win is still alive
+    '''
+    if _win is None: 
+        return 
+    #
+    # clear.__doc__: 'Remove all items from the ViewBox'
+    #
+    scan.plotItem.clear()
+    return 
 
 def close(): 
     global _win
@@ -143,8 +156,9 @@ def cls():
     global _clsFunctions
     #print "pqt_graphics.cls"
 
-    if _QApp is None: 
+    if _QApp is None or _win is None: 
         _initGraphic()
+
     #
     # since _win.clear() does not clear all, we have to 
     # run through the prepared cls-functions
@@ -325,8 +339,23 @@ def _make_cb_mouseMoved( scan):
     def mouseMoved(evt):
         #print " mouseMoved, evt[0]", scan.name, repr( evt[0])
         m = [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        #
+        # scan.plotItem can be None, if we created a PDF file. In this
+        # can scan.plotItem was used by matplotlib. It is cleared when 
+        # matplotlib is closed and it has no meaning in the pyqt world
+        # anyhow
+        #
+        if scan.plotItem is None:
+            return 
+        #
+        # still it is possible that scan.plotItem has been created
+        # by matplotlib. 
+        #
+        if scan.plotItem.__class__.__name__ != 'PlotItem':
+            return 
+
         mousePoint = scan.plotItem.vb.mapSceneToView(evt[0])
-        #print " scene", repr( evt[0]), "view", repr( mousePoint)
+
         if scan.doty:
             now = _datetime.datetime.now()
             year = now.year
@@ -371,11 +400,18 @@ def _make_cb_mouseClicked( scan):
     return mouseClicked
 
 def _prepareMouse( scan):
+    '''
+    see display() for some remarks about setting of the mouse/cursor
+    '''
     scan.mouseProxy = _pg.SignalProxy( scan.plotItem.scene().sigMouseMoved, 
                                        rateLimit=60, slot=_make_cb_mouseMoved( scan))
     scan.mouseClick = _pg.SignalProxy( scan.plotItem.scene().sigMouseClicked, 
                                        rateLimit=60, slot=_make_cb_mouseClicked( scan))
-    scan.mouseLabel = _pg.TextItem( "cursor", color='b', anchor = (0, 1.0))
+    #
+    # the mouseLabel.hide() call messes up the x-scale, so we plot only a ' '
+    #
+    scan.mouseLabel = _pg.TextItem( ".", color='b', anchor = (0.5, 0.5))
+    scan.mouseLabel.setPos( scan.x[0], scan.y[0])
     scan.mouseLabel.nameTK = "mouseLabel"
     scan.plotItem.addItem( scan.mouseLabel)
     scan.mouseLabel.hide()
@@ -439,21 +475,21 @@ def _displayTitleComment():
 def _calcTextPosition( scan, xIn, yIn): 
     '''
     return the text position, taking into accout:
-      - autorange
+      - autoscale
       - log scale
     '''
     
     if not scan.xLog:
-            x = (scan.xMax - scan.xMin)*xIn + scan.xMin
+        x = (_pysp.utils.xMax( scan) - _pysp.utils.xMin( scan))*xIn + _pysp.utils.xMin( scan)
     else:
         if scan.xMax <= 0. or scan.xMin <= 0.:
             raise ValueError( "pqt_graphics.calcTextPosition: xLog && (xMin <= 0: %g or xMax <= 0: %g" % 
                               (scan.xMin, scan.xMax))
         x = (_math.log10( scan.xMax) - _math.log10( scan.xMin))*xIn + _math.log10( scan.xMin)
 
-    if scan.autorangeY: 
-        yMax = _np.max( scan.y)
-        yMin = _np.min( scan.y)
+    if scan.autoscaleY: 
+        yMax = _np.max( scan.y[:scan.currentIndex + 1])
+        yMin = _np.min( scan.y[:scan.currentIndex + 1])
         if not scan.yLog:
             y = ( yMax - yMin)*yIn + yMin
         else:
@@ -463,17 +499,22 @@ def _calcTextPosition( scan, xIn, yIn):
             y = ( _math.log10( yMax) - _math.log10( yMin))*yIn + _math.log10( yMin)
     else: 
         if scan.yMax is None: 
-            scan.yMax = _np.max( scan.y)
+            scan.yMax = _np.max( scan.y[:scan.currentIndex + 1])
         if scan.yMin is None: 
-            scan.yMin = _np.min( scan.y)
+            scan.yMin = _np.min( scan.y[:scan.currentIndex + 1])
         if not scan.yLog:
-            y = ( scan.yMax - scan.yMin)*yIn + scan.yMin
+            #y = ( scan.yMax - scan.yMin)*yIn + scan.yMin
+            y = (_pysp.utils.yMax( scan) - _pysp.utils.yMin( scan))*yIn + _pysp.utils.yMin( scan)
         else:
             if scan.yMax <= 0. or scan.yMin <= 0.:
                 raise ValueError( "pqt_graphics.calcTextPosition: yLog && (yMin <= 0: %g or yMax <= 0: %g" % 
                                   (scan.yMin, scan.yMax))
             y = ( _math.log10( scan.yMax) - _math.log10( scan.yMin))*yIn + _math.log10( scan.yMin)
-
+    #
+    #print "pqt_graphics.calcTextPosition: yMin %g, yMax %g, y %g" % ( _pysp.utils.yMin( scan), 
+    #                                                                  _pysp.utils.yMax( scan), y)
+    #if hasattr( scan, "plotDataItem"): 
+    #    print scan.plotDataItem.dataBounds(1)
     return( x, y)
 
 def _addTexts( scan, nameList): 
@@ -500,11 +541,11 @@ def _addTexts( scan, nameList):
         elif elm.vAlign == 'center':
             anchorY = 0.5
         if elm.color.lower() in _pysp.definitions.colorCode:
-            txt = _pg.TextItem( color=_pysp.definitions.colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
-            txt.setHtml( '<div style="font-size:%dpx;">%s</div>' % (sz, elm.text))
+            textItem = _pg.TextItem( color=_pysp.definitions.colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
+            textItem.setHtml( '<div style="font-size:%dpx;">%s</div>' % (sz, elm.text))
         else:
-            txt = _pg.TextItem( color='k', anchor = ( anchorX, anchorY))
-            txt.setHtml( '<div style="font-size:%dpx;">%s</div>' % ( sz, elm.text))
+            textItem = _pg.TextItem( color='k', anchor = ( anchorX, anchorY))
+            textItem.setHtml( '<div style="font-size:%dpx;">%s</div>' % ( sz, elm.text))
 
         if scan.textOnly:
             x = elm.x
@@ -512,10 +553,26 @@ def _addTexts( scan, nameList):
         else:
             (x, y) = _calcTextPosition( scan, elm.x, elm.y)
             
-        txt.nameTK = "text_%s" % txt
-        scan.plotItem.addItem( txt)
-        txt.setPos( x, y)
-        txt.show()
+        elm.textItem = textItem
+        textItem.nameTK = "text_%s" % elm.text
+        scan.plotItem.addItem( textItem)
+        textItem.setPos( x, y)
+        textItem.show()
+    return
+
+def _updateTextPosition( scan): 
+    '''
+    need this for autoscaled scans
+    '''
+    for elm in scan.textList:
+
+        if scan.textOnly:
+            x = elm.x
+            y = elm.y
+        else:
+            (x, y) = _calcTextPosition( scan, elm.x, elm.y)
+        elm.textItem.setPos( x, y)
+    return 
 
 def _setTitle( scan, nameList): 
 
@@ -530,10 +587,18 @@ def _setTitle( scan, nameList):
     if len( scan.name) > _pysp.definitions.LEN_MAX_TITLE:
         tempName = "X_" + scan.name[-_pysp.definitions.LEN_MAX_TITLE:]
     else: 
-        tempName = scan.name
+        tempName = scan.name 
 
-    if _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp.definitions.MANY_SCANS:
-        scan.plotItem.setTitle( title = tempName, size = '%dpx' % fontSize)
+    #
+    # the title is above the plot
+    #
+    if _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp.definitions.MANY_SCANS: 
+        #+++
+        scan.plotItem.setLabel( 'top', text=tempName, size = '%dpx' % fontSize)
+        #scan.plotItem.setTitle( title = tempName, size = '%dpx' % fontSize)
+    #
+    # too many plots, so put the title into the plot
+    #
     else:
         vb = scan.plotItem.getViewBox()
         #
@@ -547,7 +612,7 @@ def _setTitle( scan, nameList):
             if scan.xMax <= 0. or scan.xMin <= 0.:
                 raise ValueError( "pqt_graphics.setTitle: xLog && (xMin <= 0: %g or xMax <= 0: %g" %( scan.xMin, scan.xMax))
             x = (_math.log10( scan.xMax) - _math.log10( scan.xMin))*1.0 + _math.log10( scan.xMin)
-        if scan.autorangeY: 
+        if scan.autoscaleY: 
             y = ( _np.max( scan.y) - _np.min( scan.y))*0.85 + _np.min( scan.y)
         else: 
             if scan.yMax is None: 
@@ -590,35 +655,35 @@ def _makeClsSceneFunc( scene, vb):
         return 
     return func
 
-def _setAutorangeForOverlaid( scan, target):
-    if scan.autorangeY is False:
+def _setAutoscaleForOverlaid( scan, target):
+    if scan.autoscaleY is False:
         if scan.yMin is None or scan.yMax is None: 
             if target.yMin is not None and target.yMax is not None: 
                 scan.viewBox.setYRange( target.yMin, target.yMax)
                 aY = False
             else:
                 aY = True
-                #raise ValueError( "pqt_graphics.display: not autorangeY and (yMin is None or yMax is None)")
+                #raise ValueError( "pqt_graphics.display: not autoscaleY and (yMin is None or yMax is None)")
         else:
             scan.viewBox.setYRange( scan.yMin, scan.yMax)
             aY = False
     else:
         aY = True
 
-    if scan.autorangeX is False:
+    if scan.autoscaleX is False:
         if scan.xMin is None or scan.xMax is None: 
             if target.xMin is not None and target.xMax is not None: 
                 scan.viewBox.setXRange( target.xMin, target.xMax)
                 aX = False
             else:
                 aX = True
-                #raise ValueError( "pqt_graphics.display: not autorangeX and (xMin is None or xMax is None)")
+                #raise ValueError( "pqt_graphics.display: not autoscaleX and (xMin is None or xMax is None)")
         else:
             scan.viewBox.setXRange( scan.xMin, scan.xMax)
             aX = False
     else:
         aX = True
-    scan.viewBox.enableAutoRange( x = aX, y = aY)
+    #scan.viewBox.enableAutoscale( x = aX, y = aY)
     return 
 
 def _isNotOverlayTarget( scan): 
@@ -721,7 +786,6 @@ def _createPlotItem( scan, nameList):
     scan.plotItem = plotItem 
 
     scan.plotItem.showGrid( x = scan.showGridX, y = scan.showGridY)
-    
 
     if _pysp.getNumberOfScansToBeDisplayed( nameList) <= _pysp.definitions.MANY_SCANS:
         if hasattr( scan, 'xLabel') and scan.xLabel is not None:
@@ -730,24 +794,26 @@ def _createPlotItem( scan, nameList):
             scan.plotItem.setLabel( 'left', text=scan.yLabel)
 
     font=_QtGui.QFont()
-    font.setPixelSize( _pysp.getTickFontSize( nameList))
+    #
+    # setPointSize() is device-independent, setPixelSize() not
+    #
+    font.setPointSize( _pysp.getTickFontSize( nameList))
 
     plotItem.getAxis("bottom").tickFont = font
     plotItem.getAxis("left").tickFont = font
     #
     # autoscale
     #
-    arX = scan.autorangeX
-    arY = scan.autorangeY
+    arX = scan.autoscaleX
+    arY = scan.autoscaleY
 
     if scan.yMin is None or scan.yMax is None:
         arY = True
 
     #
-    # problem: autorange needs padding != 0
+    # problem: autoscale needs padding != 0
     #
-    scan.plotItem.enableAutoRange( x = arX, y = arY)
-
+    #scan.plotItem.enableAutoscale( x = arX, y = arY)
     #
     # log scale
     # this statement has to precede the setYRange()
@@ -760,7 +826,8 @@ def _createPlotItem( scan, nameList):
             # if yLog, the limits have to be supplied as logs
             #
             if scan.yMax <= 0. or scan.yMin <= 0.:
-                raise ValueError( "pqt_graphics.createPlotItem: yLog && (yMin <= 0: %g or yMax <= 0: %g" % (scan.yMin, scan.yMax))
+                raise ValueError( "pqt_graphics.createPlotItem: yLog && (yMin <= 0: %g or yMax <= 0: %g" % \
+                                  (scan.yMin, scan.yMax))
             scan.plotItem.setYRange( _math.log10( scan.yMin), _math.log10(scan.yMax))
         else:
             scan.plotItem.setYRange( scan.yMin, scan.yMax)
@@ -768,7 +835,8 @@ def _createPlotItem( scan, nameList):
     if not arX: 
         if scan.xLog:
             if scan.xMax <= 0. or scan.xMin <= 0.:
-                raise ValueError( "pqt_graphics.createPlotItem: xLog && (xMin <= 0: %g or xMax <= 0: %g" % (scan.xMin, scan.xMax))
+                raise ValueError( "pqt_graphics.createPlotItem: xLog && (xMin <= 0: %g or xMax <= 0: %g" % \
+                                  (scan.xMin, scan.xMax))
             scan.plotItem.setXRange( _math.log10( scan.xMin), _math.log10(scan.xMax))
         else:
             scan.plotItem.setXRange( scan.xMin, scan.xMax)
@@ -871,8 +939,14 @@ def display( nameList = None):
     #     non-overlaid scans
     #
     for scan in scanList:
-        #print "graphics.display.firstPass,", scan.name
+        #print "graphics.display.firstPass,", scan.name, scan.currentIndex
 
+        #
+        # if currentIndex == 0 it is a problem to draw the axes, escpecially 
+        # to put text strings on the screen
+        #
+        if not scan.textOnly and scan.currentIndex == 0:
+            continue
         #
         # overlay? - don't create a plot for this scan. Plot it
         # in the second pass. But it is displayed, if it is the only 
@@ -932,9 +1006,15 @@ def display( nameList = None):
         # keep track of what has already been displayed
         #
         scan.lastIndex = scan.currentIndex
-        if flagDisplaySingle: 
+        #
+        # the mouse interferes a little bit with scanning type displays.
+        # the problem is that the cursor, or ' ' is placed somewhere on
+        # the screen and this may have an influence of the whole graphics
+        #
+        if scan.currentIndex == (len( scan.x) - 1) and flagDisplaySingle: 
             _prepareMouse( scan)
 
+        _updateTextPosition( scan)
     #
     # --- second pass: display overlaid scans
     #
@@ -969,7 +1049,7 @@ def display( nameList = None):
         scan.plotItem = target.plotItem
 
         scan.viewBox = _pg.ViewBox()
-        _setAutorangeForOverlaid( scan, target)
+        _setAutoscaleForOverlaid( scan, target)
         #
         # for the overlaid scan show the right axis ...
         #
@@ -1018,6 +1098,7 @@ def display( nameList = None):
         scan.viewBox.addItem( curveItem )
         
         scan.lastIndex = scan.currentIndex
+        _updateTextPosition( scan)
     #
     # <class 'PyQt4.QtGui.QGraphicsGridLayout'>
     # left, top, right, bottom [pixels]
@@ -1034,7 +1115,8 @@ def display( nameList = None):
     #    _win.ci.layout.setVerticalSpacing( -15)
     #    pass
 
-    _win.ci.layout.setContentsMargins( _pysp.definitions.marginLeft, _pysp.definitions.marginTop, _pysp.definitions.marginRight, _pysp.definitions.marginBottom)
+    _win.ci.layout.setContentsMargins( _pysp.definitions.marginLeft, _pysp.definitions.marginTop, 
+                                       _pysp.definitions.marginRight, _pysp.definitions.marginBottom)
     _win.ci.layout.setHorizontalSpacing( _pysp.definitions.spacingHorizontal)
     _win.ci.layout.setVerticalSpacing( _pysp.definitions.spacingVertical)
     #
@@ -1046,7 +1128,6 @@ def display( nameList = None):
     processEvents()
     #print "+++pqt_graph: after process events, again "
     #_pysp.prtc()
-
     #print "pqt_graphics.display: time  %g" % ( _time.time() - startTime)
     #print "pqt_graphics.display: memory consumption percent %g" % p.memory_percent()
     #_itemCrawler( _win, "after display()")

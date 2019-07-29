@@ -34,11 +34,12 @@ def display():
     tan.setXRange( xMin - 0.25, xMax + 0.25)
 
     tan.clear()
-    tan.plot( x, t, pen=( 0, 0, 255))
+    t = tan.plot( x, t, pen=( 0, 0, 255))
     app.processEvents()
     time.sleep(0.1)
     app.processEvents()
 
+    print "plotDataItem, viewPos", repr(t.dataBounds( 0))
     print "Prtc ",
     sys.stdin.readline()
     

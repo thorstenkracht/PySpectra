@@ -5,8 +5,10 @@ python -m unittest discover -v
 
 python ./test/dMgt/testGQE.py testGQE.testNextPrev
 python ./test/dMgt/testGQE.py testGQE.testFillData
+python ./test/dMgt/testGQE.py testGQE.testCreateDelete
 python ./test/dMgt/testGQE.py testGQE.testWrite
 python ./test/dMgt/testGQE.py testGQE.testReuse
+python ./test/dMgt/testGQE.py testGQE.testYGreaterThanZero
 '''
 import sys
 #pySpectraPath = "/home/kracht/Misc/pySpectra"
@@ -238,6 +240,7 @@ class testGQE( unittest.TestCase):
         PySpectra.Scan( name = 't2')
         PySpectra.Scan( name = 't3')
         PySpectra.Scan( name = 't4')
+        PySpectra.display()
         scanLst = PySpectra.getScanList()
         self.assertEqual( len( scanLst), 4)
         PySpectra.delete( [ 't1', 't2'])
@@ -328,7 +331,36 @@ class testGQE( unittest.TestCase):
             PySpectra.display()
             PySpectra.procEventsLoop( 1)
             scan = PySpectra.Scan( name = 't1', reUse = True, x = x1, y = data[0])
+
+    def testYGreaterThanZero( self): 
+        print "testGQE.testYGreaterThanZero"
+        PySpectra.cls()
+        PySpectra.delete()
+        scan = PySpectra.Scan( name = 't1', xLabel = "100 pts, going to be re-used", 
+                               xMin = 0, yMin = 10, 
+                               nPts = 11, )
+
         
-        
+        for i in range( 11):
+            scan.y[i] = scan.y[i]*scan.y[i]
+
+        scan.y[2] = 0
+        scan.y[7] = 0
+        #
+        # remove the zeros
+        #
+        scan.yGreaterThanZero()
+
+        self.assertEqual( len( scan.y), 8)
+        self.assertEqual( len( scan.x), 8)
+        self.assertEqual( scan.y[0], 1)
+        self.assertEqual( scan.y[1], 9)
+        self.assertEqual( scan.y[2], 16)
+        self.assertEqual( scan.y[3], 25)
+        self.assertEqual( scan.y[4], 36)
+        self.assertEqual( scan.y[5], 64)
+        self.assertEqual( scan.y[6], 81)
+        self.assertEqual( scan.y[7], 100)
+
 if __name__ == "__main__":
     unittest.main()

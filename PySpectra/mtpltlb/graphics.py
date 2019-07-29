@@ -72,9 +72,11 @@ def createPDF( fileName = None, flagPrint = False):
     if Fig is None:
         #_pqt_graphics.close()
         _initGraphic()
-        cls()
-        display()
         flag = True
+
+    setWsViewport( "DINA4")
+    cls()
+    display()
 
     if fileName is None:
         fileName = "pyspOutput.pdf"
@@ -92,6 +94,7 @@ def createPDF( fileName = None, flagPrint = False):
         return None
 
     if flag:
+        cls()
         close()
         #_pqt_graphics._initGraphic()
 
@@ -203,6 +206,16 @@ def cls():
         scan.plotItem = None
         scan.plotDataItem = None
         scan.lastIndex = 0
+
+def clear( scan): 
+    '''
+    the clear() is executed here to ensure that Fig is still alive
+    '''
+    if Fig is None: 
+        return 
+
+    scan.plotItem.clear()
+    return 
 
 def close(): 
     '''
@@ -470,7 +483,7 @@ def _createPlotItem( scan, nameList):
     for tick in scan.plotItem.yaxis.get_major_ticks():
                 tick.label.set_fontsize(fontSize) 
 
-    #print "mpl_graphics.createPlotItem, autorange", scan.autorangeX, scan.autorangeY
+    #print "mpl_graphics.createPlotItem, autoscale", scan.autoscaleX, scan.autoscaleY
 
     #
     # log scale
@@ -483,14 +496,15 @@ def _createPlotItem( scan, nameList):
     #
     # autoscale
     #
-    arX = scan.autorangeX
-    arY = scan.autorangeY
+    arX = scan.autoscaleX
+    arY = scan.autoscaleY
 
     if scan.yMin is None or scan.yMax is None:
         arY = True
 
-    #if scan.doty: 
-    #    scan.plotItem.set_autoscalex_on( True)
+    if scan.doty: 
+        pass
+        #scan.plotItem.set_autoscalex_on( True)
 
     if not arX: 
         if not scan.doty: 
@@ -688,11 +702,13 @@ def display( nameList = None):
                                         scan.y[:(scan.currentIndex + 1)])
             #
             #  9.7.2019: setting x-limits of the scan
-            #    - for aligning motors the x-axis should be autoranged
+            #    - for aligning motors the x-axis should be auto-ranged, 
+            #      in both directions
             #    - for scans the x-axis should be fully visible from the beginning
             #
-            if scan.autorangeX:
-                scan.plotItem.set_xlim( scan.x[0], scan.x[scan.currentIndex])
+            if scan.autoscaleX:
+                scan.plotItem.set_xlim( min( scan.x[0], scan.x[scan.currentIndex]), 
+                                        max( scan.x[0], scan.x[scan.currentIndex]))
             scan.plotItem.set_ylim( _np.min( scan.y[:(scan.currentIndex + 1)]), 
                                     _np.max( scan.y[:(scan.currentIndex + 1)]))
         #

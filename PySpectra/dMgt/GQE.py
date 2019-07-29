@@ -7,7 +7,6 @@ GQE - contains the Scan() class and functions to handle scans:
 
 import numpy as _np
 import PySpectra as _pysp
-
 from PyQt4 import QtCore as _QtCore
 from PyQt4 import QtGui as _QtGui
 
@@ -22,7 +21,7 @@ _comment = None
 #
 _wsViewportFixed = False
 
-_ScanAttrsPublic = [ 'at', 'autorangeX', 'autorangeY', 'colSpan', 'currentIndex', 
+_ScanAttrsPublic = [ 'at', 'autoscaleX', 'autoscaleY', 'colSpan', 'currentIndex', 
                      'dType', 'doty', 'fileName', 'lastIndex', 
                      'nPts', 'name', 'ncol', 'nplot', 'nrow', 'overlay', 'showGridX', 'showGridY', 
                      'lineColor', 'lineStyle', 'lineWidth', 
@@ -38,16 +37,18 @@ class Text():
     '''
     Texts belong to a Scan, created by Scan.addText(), they are stored in Scan.textList.
     text: 'someString'
-    x: [0., 1.]
-    y: [0., 1.]
+    x: 0.5
+    y: 0.5
     hAlign: 'left', 'right', 'center'
     vAlign: 'top', 'bottom', 'center'
     color: 'red', 'green', 'blue', 'yellow', 'cyan', 'magenta', 'black'
     fontSize: e.g. 12 or None
       if None, the fontsize is chosen automatically depending on the number of plots
+    NDC: True, normalized device coordinates
     '''
     def __init__( self, text = 'Empty', x = 0.5, y = 0.5, 
-                  hAlign = 'left', vAlign = 'top', color = 'black', fontSize = None): 
+                  hAlign = 'left', vAlign = 'top', color = 'black', fontSize = None,
+                  NDC = True): 
 
         self.text = text
         self.x = x
@@ -56,6 +57,7 @@ class Text():
         self.vAlign = vAlign
         self.color = color
         self.fontSize = fontSize
+        self.NDC = NDC
 '''
 A value of (0,0) sets the upper-left corner
                      of the text box to be at the position specified by setPos(), while a value of (1,1)
@@ -76,8 +78,8 @@ class Scan( object):
       re-use the existing data struckture, useful for MCA scans
 
     The attributes: 
-        autorangeX, autorangeY
-                    if you know the x-range beforehand, set autorangeY to False
+        autoscaleX, autoscaleY
+                    if you know the x-range beforehand, set autoscaleY to False
         colSpan:    def.: 1
         doty:       bool
                     if True, the x-axis tick mark labels are dates, def. False
@@ -209,10 +211,16 @@ class Scan( object):
         #else: 
         #    raise ValueError( "GQE.Scan.__getattr__: Scan %s wrong attribute name %s" % ( self.name, name))
         
+    def __del__( self): 
+        pass
+
     @staticmethod
     def move( target): 
         import PyTango as _PyTango
         #print "GQE.Scan.move: to", target, "using", Scan.monitorGui.scanInfo
+        #
+        # move() has to be called from the pyspMonitor application
+        #
         if Scan.monitorGui is None or Scan.monitorGui.scanInfo is None: 
             return
 
@@ -336,7 +344,7 @@ class Scan( object):
 
         yMin, def.: None
         yMax, def.: None
-          if yMin is None, autorange will be enabled for y
+          if yMin is None, autoscale will be enabled for y
         '''
         #
         # 
@@ -388,8 +396,8 @@ class Scan( object):
         '''
 
         self.at = None
-        self.autorangeX = False
-        self.autorangeY = False
+        self.autoscaleX = False
+        self.autoscaleY = False
         self.colSpan = 1
         self.doty = False            # x-axis is date-of-the year
         self.fileName = None
@@ -423,7 +431,7 @@ class Scan( object):
         self.mouseLabel = None
         self.mouseProxy = None
 
-        for attr in [ 'autorangeX', 'autorangeY', 'colSpan', 'doty', 'fileName',  
+        for attr in [ 'autoscaleX', 'autoscaleY', 'colSpan', 'doty', 'fileName',  
                       'xLog', 'yLog', 
                       'ncol', 'nrow', 'nplot', 'overlay', 'showGridX', 'showGridY', 
                       'lineColor', 'lineStyle', 
@@ -478,11 +486,13 @@ class Scan( object):
                                       (scan.name, str( self.at), self.name))
         return 
 
-    def addText( self, text = 'Empty', x = 0.5, y = 0.5, hAlign = 'left', vAlign = 'top', color = 'black', fontSize = None):
+    def addText( self, text = 'Empty', x = 0.5, y = 0.5, 
+                 hAlign = 'left', vAlign = 'top', 
+                 color = 'black', fontSize = None, NDC = True):
         '''
         Docu can found in Text()
         '''
-        txt = Text( text, x, y, hAlign, vAlign, color, fontSize)
+        txt = Text( text, x, y, hAlign, vAlign, color, fontSize, NDC)
         self.textList.append( txt)
 
     def setY( self, index, yValue):
@@ -585,7 +595,6 @@ class Scan( object):
         '''
         pass
 
-
     def setCurrent( self, i): 
         '''
         be compatible with spectra
@@ -603,6 +612,23 @@ class Scan( object):
         _pysp.display()
         return 
 
+    def yGreaterThanZero( self): 
+        '''
+        prepare for log display: remove points with y <= 0. 
+        '''
+        x = _np.copy( self.x)
+        y = _np.copy( self.y)
+        count = 0
+        for i in range( len( self.y)):
+            if self.y[i] <= 0.:
+                continue
+            x[count] = self.x[i]
+            y[count] = self.y[i]
+            count += 1
+        self.x = _np.copy( x[:count])
+        self.y = _np.copy( y[:count])
+        return 
+        
 def getScanList():
     '''
     returns the list of scans
@@ -663,6 +689,7 @@ def setComment( text = None):
         return 
     text = text.replace( "'", "")
     text = text.replace( '"', '')
+
     _comment = text
     return 
 
@@ -687,13 +714,18 @@ def delete( nameLst = None):
       delete all scans
     '''
     global _scanIndex
+
     #print "GQE.delete, nameList:", repr( nameLst)
     
     if not nameLst:    
         while len( _scanList) > 0:
             tmp = _scanList.pop()
             if tmp.plotItem is not None:
-                tmp.plotItem.clear()
+                #
+                # clear.__doc__: 'Remove all items from the ViewBox'
+                #
+                _pysp.clear( tmp)
+                #tmp.plotItem.clear()
             del _pysp.__dict__[ tmp.name]
             _scanIndex = None
         setTitle( None)
@@ -708,7 +740,8 @@ def delete( nameLst = None):
                 # we had many MCA spectra displayed on top of each other
                 #
                 if _scanList[i].plotItem is not None:
-                    _scanList[i].plotItem.clear()
+                    _pysp.clear( _scanList[i])
+                    #_scanList[i].plotItem.clear()
                 del _pysp.__dict__[ _scanList[i].name]
                 del _scanList[i]
                 break
@@ -716,7 +749,6 @@ def delete( nameLst = None):
             print "GQE.delete: not found", name
         return 
 
-        
     for name in nameLst:
         for i in range( len( _scanList)):
             if name.upper() == _scanList[i].name.upper():
@@ -724,7 +756,11 @@ def delete( nameLst = None):
                 # we had many MCA spectra displayed on top of each other
                 #
                 if _scanList[i].plotItem is not None:
-                    _scanList[i].plotItem.clear()
+                    #
+                    # clear.__doc__: 'Remove all items from the ViewBox'
+                    #
+                    _pysp.clear( _scanList[i])
+                    #_scanList[i].plotItem.clear()
                 del _pysp.__dict__[ _scanList[i].name]
                 del _scanList[i]
                 break
@@ -827,9 +863,9 @@ def _infoScan( scan):
     print "  xLabel: %s, yLabel: %s" % ( str(scan.xLabel), str(scan.yLabel))
     scanAttrsPrinted.append( 'xLabel')
     scanAttrsPrinted.append( 'yLabel')
-    print "  autorangeX: %s, autorangeY: %s" % ( str(scan.autorangeX), str(scan.autorangeY))
-    scanAttrsPrinted.append( 'autorangeX')
-    scanAttrsPrinted.append( 'autorangeY')
+    print "  autoscaleX: %s, autoscaleY: %s" % ( str(scan.autoscaleX), str(scan.autoscaleY))
+    scanAttrsPrinted.append( 'autoscaleX')
+    scanAttrsPrinted.append( 'autoscaleY')
     print "  at: %s, colSpan: %s" % ( str(scan.at), str(scan.colSpan))
     scanAttrsPrinted.append( 'at')
     scanAttrsPrinted.append( 'colSpan')

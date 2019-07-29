@@ -12,7 +12,6 @@ def main():
     pg.setConfigOption('foreground', 'k') 
 
     pgWidg = pg.GraphicsLayoutWidget()   
-    print dir( pgWidg)
     pgWidg.resize(750, 250)  
 
     pgWidg.addLabel( "Title", row = 1, col = 1, colspan=10)
