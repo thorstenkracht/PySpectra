@@ -14,6 +14,9 @@ python ./test/graphics/testMplGraphics.py testMplGraphics.testCommentTitle
 python ./test/graphics/testMplGraphics.py testMplGraphics.testWsViewport
 python ./test/graphics/testMplGraphics.py testMplGraphics.testLissajous
 python ./test/graphics/testMplGraphics.py testMplGraphics.testWsViewport
+python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2BothLog
+python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2FirstLog
+python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2SecondLog
 '''
 import sys, os
 #pySpectraPath = "/home/kracht/Misc/pySpectra/PySpectra"
@@ -488,6 +491,80 @@ class testMplGraphics( unittest.TestCase):
             PySpectra.mtpltlb.graphics.procEventsLoop( 1)
 
         print "testGrphics.testWsViewport, DONE"
+
+
+    def testOverlay2BothLog( self):
+        '''
+
+        '''
+        print "testGrphics.testOverly2BothLog"
+
+        PySpectra.mtpltlb.graphics.cls()
+        PySpectra.delete()
+        PySpectra.setTitle( "2 Overlay Scans, with log scale")
+        g1 = PySpectra.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = True, nPts = 101, lineColor = 'red')
+        mu = 0.
+        sigma = 1.
+        g1.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g1.y-mu)**2/(2.*sigma**2))
+        g2 = PySpectra.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0.001, yLog = True, 
+                             yMax = 1., nPts = 101, lineColor = 'green')
+        mu = 0.5
+        sigma = 1.2
+        g2.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g2.y-mu)**2/(2.*sigma**2))
+        
+        PySpectra.overlay( "gauss2", "gauss")
+        PySpectra.mtpltlb.graphics.display()
+        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+
+    def testOverlay2FirstLog( self):
+        '''
+
+        '''
+        print "testGrphics.testOverly2FirstLog"
+
+        PySpectra.mtpltlb.graphics.cls()
+        PySpectra.delete()
+        PySpectra.setTitle( "2 Overlay Scans, with log scale")
+        g1 = PySpectra.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = True, nPts = 101, lineColor = 'red')
+        mu = 0.
+        sigma = 1.
+        g1.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g1.y-mu)**2/(2.*sigma**2))
+        g2 = PySpectra.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0.001, yLog = False,
+                             nPts = 101, lineColor = 'green')
+        mu = 0.5
+        sigma = 1.2
+        g2.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g2.y-mu)**2/(2.*sigma**2))
+        
+        PySpectra.overlay( "gauss2", "gauss")
+        PySpectra.mtpltlb.graphics.display()
+        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+
+        print "testGrphics.testOverly2FirstLog DONE"
+
+    def testOverlay2SecondLog( self):
+        '''
+
+        '''
+        print "testGrphics.testOverly2SecondLog"
+
+        PySpectra.mtpltlb.graphics.cls()
+        PySpectra.delete()
+        PySpectra.setTitle( "2 Overlay Scans, with log scale")
+        g1 = PySpectra.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = False, nPts = 101, lineColor = 'red')
+        mu = 0.
+        sigma = 1.
+        g1.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g1.y-mu)**2/(2.*sigma**2))
+        g2 = PySpectra.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0.001, yLog = True, 
+                             yMax = 1., nPts = 101, lineColor = 'green')
+        mu = 0.5
+        sigma = 1.2
+        g2.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g2.y-mu)**2/(2.*sigma**2))
+        
+        PySpectra.overlay( "gauss2", "gauss")
+        PySpectra.mtpltlb.graphics.display()
+        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+
+        print "testGrphics.testOverly2SecondLog"
 
 if __name__ == "__main__":
     unittest.main()

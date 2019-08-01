@@ -191,46 +191,6 @@ def cls():
     _QApp.processEvents()
     return 
 
-#_itemLevel = 0
-#def _itemCrawler( o, msg = None): 
-#    '''
-#    recursively crawls through the items of an object
-#    '''
-#    global _itemLevel
-#
-#    if msg is not None: 
-#        print ">>> ", msg
-#    _itemLevel += 1
-#    print " %s%d: --- type %s" % ('  ' * _itemLevel, _itemLevel, type( o))
-#    if type( o.items) is _types.BuiltinFunctionType:
-#        for item in o.items():
-#            if hasattr( item, "nameTK"):
-#                print " %s%d: Func, *** %s" % ( '  ' * _itemLevel, _itemLevel, item.nameTK)
-#            else:
-#                print " %s%d: Func, %s" % ( '  ' * _itemLevel, _itemLevel, repr( item))
-#            if hasattr( item, "items"):
-#                _itemCrawler( item)
-#    elif type( o.items) is _types.DictType: 
-#        for item in o.items.keys(): 
-#            if hasattr( o.items[ item], "nameTK"):
-#                print " %s%d: Dict, %s, *** %s" % ('  ' * _itemLevel, _itemLevel, repr( item), o.items[ item].nameTK)
-#            else:
-#                print " %s%d: Dict, %s, %s" % ('  ' * _itemLevel, _itemLevel, repr( item), repr( o.items[ item]))
-#            if hasattr( item, "items"):
-#                _itemCrawler( item)
-#    elif type( o.items) is _types.ListType: 
-#        for item in o.items: 
-#            if hasattr( item, "nameTK"):
-#                print " %s%d: List, *** %s" % ('  ' * _itemLevel, _itemLevel, item.nameTK)
-#            else:
-#                print " %s%d: List, %s" % ('  ' * _itemLevel, _itemLevel, repr( item))
-#            if hasattr( item, "items"):
-#                _itemCrawler( item)
-#    else: 
-#        print "failed to identify type", type( o.items)
-#    _itemLevel -= 1
-#    return 
-
 def _getLayout( o): 
     for item in o.items(): 
         if type( item) == _pg.graphicsItems.GraphicsLayout.GraphicsLayout: 
@@ -412,7 +372,6 @@ def _prepareMouse( scan):
     #
     scan.mouseLabel = _pg.TextItem( ".", color='b', anchor = (0.5, 0.5))
     scan.mouseLabel.setPos( scan.x[0], scan.y[0])
-    scan.mouseLabel.nameTK = "mouseLabel"
     scan.plotItem.addItem( scan.mouseLabel)
     scan.mouseLabel.hide()
     return 
@@ -554,7 +513,6 @@ def _addTexts( scan, nameList):
             (x, y) = _calcTextPosition( scan, elm.x, elm.y)
             
         elm.textItem = textItem
-        textItem.nameTK = "text_%s" % elm.text
         scan.plotItem.addItem( textItem)
         textItem.setPos( x, y)
         textItem.show()
@@ -627,7 +585,6 @@ def _setTitle( scan, nameList):
                 y = ( _math.log10( scan.yMax) - _math.log10( scan.yMin))*0.85 + \
                     _math.log10( scan.yMin)
         txt.setPos( x, y)
-        txt.nameTK = "text_%s" % tempName
         vb.addItem( txt)
 
 def _make_updateViews( target, scan): 
@@ -734,7 +691,6 @@ def _createPlotItem( scan, nameList):
         # pyqtgraph.graphicsItems.ViewBox.ViewBox.ViewBox
         #
         scan.plotItem = _win.addViewBox( row, col)
-        scan.plotItem.nameTK = "viewBox_text_%s" % scan.name
         scan.plotItem.setRange( xRange = ( 0, 1), yRange = ( 0., 1.))
         _addTexts( scan, nameList)
         return 
@@ -748,7 +704,6 @@ def _createPlotItem( scan, nameList):
             # <class 'pyqtgraph.graphicsItems.PlotItem.PlotItem.PlotItem'>
             #
             plotItem = _win.addPlot( row = row, col = col, colspan = scan.colSpan)
-        plotItem.nameTK = "plot_%s" % scan.name
 
             
     except Exception, e:
@@ -1032,7 +987,6 @@ def display( nameList = None):
         #
         if scan.overlay is None:
             continue
-
         #
         # check, if theren is something to display
         #
@@ -1064,13 +1018,12 @@ def display( nameList = None):
         # we don't set the log mode to false, the overlaid scan 
         # receive the log mode from the target scan
         #
-        target.plotItem.getAxis('right').setLogMode( False)
+        #target.plotItem.getAxis('right').setLogMode( False)
         target.scene = target.plotItem.scene()
-        scan.viewBox.nameTK = "viewBox_%s" % target.name
         target.scene.addItem( scan.viewBox)
 
-        if scan.yLog or scan.xLog:
-            raise ValueError( "pqt_graphic.display: no log-scale for the overlaid scan")
+        #if scan.yLog or scan.xLog:
+        #    raise ValueError( "pqt_graphic.display: no log-scale for the overlaid scan")
 
         target.plotItem.getAxis('right').linkToView( scan.viewBox)
         #
@@ -1086,50 +1039,52 @@ def display( nameList = None):
 
         target.plotItem.vb.sigResized.connect( _make_updateViews( target, scan))
         if scan.symbolColor.upper()  == 'NONE':
-            curveItem = _pg.PlotCurveItem( x = scan.x, y = scan.y, pen = _getPen( scan))
+            #curveItem = _pg.PlotCurveItem( x = scan.x, y = scan.y, pen = _getPen( scan))
+            dataItem = _pg.PlotDataItem( x = scan.x, y = scan.y, pen = _getPen( scan))
         else:
-            curveItem = _pg.ScatterPlotItem( x = scan.x, y = scan.y,
-                                             symbol = scan.symbol, 
-                                             pen = _pysp.definitions.colorCode[ scan.symbolColor.lower()], 
-                                             brush = _pysp.definitions.colorCode[ scan.symbolColor.lower()], 
-                                             size = scan.symbolSize)
+            dataItem = _pg.PlotDataItem( x = scan.x, y = scan.y, pen = _getPen( scan))
+            #curveItem = _pg.ScatterPlotItem( x = scan.x, y = scan.y,
+            #                                 symbol = scan.symbol, 
+            #                                 pen = _pysp.definitions.colorCode[ scan.symbolColor.lower()], 
+            #                                 brush = _pysp.definitions.colorCode[ scan.symbolColor.lower()], 
+            #                                 size = scan.symbolSize)
 
-        curveItem.nameTK = "curve_%s" % target.name
-        scan.viewBox.addItem( curveItem )
+        if scan.yLog:
+            #
+            # if yLog, the limits have to be supplied as logs
+            #
+            if scan.yMax <= 0. or scan.yMin <= 0.:
+                raise ValueError( "pqt_graphics.createPlotItem: yLog && (yMin <= 0 %g or yMax <= 0: %g" % \
+                                  (scan.yMin, scan.yMax))
+            dataItem.setLogMode( False, True)
+            scan.viewBox.setYRange( _math.log10( scan.yMin), _math.log10(scan.yMax))
+        else:
+            #scan.plotItem.setYRange( scan.yMin, scan.yMax)
+            pass
+        #
+        # we have to supress the tick marks of the right axis, if
+        # the overlaid plot has yLog == True and the target plot
+        # has yLog == False
+        #
+        # example files: 
+        #   pySpectra/examples/Overlay2.py
+        #   pySpectra/examples/Overlay2BothLog.py
+        #   pySpectra/examples/Overlay2FirstLog.py
+        #   pySpectra/examples/Overlay2SecondLog.py
+        #
+        if scan.yLog and not target.yLog: 
+            target.plotItem.getAxis('right').style[ 'showValues'] = False
+
+        scan.viewBox.addItem( dataItem )
         
         scan.lastIndex = scan.currentIndex
         _updateTextPosition( scan)
-    #
-    # <class 'PyQt4.QtGui.QGraphicsGridLayout'>
-    # left, top, right, bottom [pixels]
-    #_win.ci.layout.setContentsMargins( 20, 0, 0, 0)
-    #
-    #if nDisplay >= 30:
-    #    #_win.ci.layout.setContentsMargins( 20, 20, 1, 1)
-    #    _win.ci.layout.setHorizontalSpacing( -30)
-    #    _win.ci.layout.setVerticalSpacing( -12)
-    #    pass
-    #elif nDisplay >= 20:
-    #    #_win.ci.layout.setContentsMargins( 20, 20, 1, 1)
-    #    _win.ci.layout.setHorizontalSpacing( -40)
-    #    _win.ci.layout.setVerticalSpacing( -15)
-    #    pass
 
     _win.ci.layout.setContentsMargins( _pysp.definitions.marginLeft, _pysp.definitions.marginTop, 
                                        _pysp.definitions.marginRight, _pysp.definitions.marginBottom)
     _win.ci.layout.setHorizontalSpacing( _pysp.definitions.spacingHorizontal)
     _win.ci.layout.setVerticalSpacing( _pysp.definitions.spacingVertical)
-    #
-    # debug scanning.py
-    #
-    #processEvents()
-    #print "+++pqt_graph: after process events "
-    #_pysp.prtc()
+
     processEvents()
-    #print "+++pqt_graph: after process events, again "
-    #_pysp.prtc()
-    #print "pqt_graphics.display: time  %g" % ( _time.time() - startTime)
-    #print "pqt_graphics.display: memory consumption percent %g" % p.memory_percent()
-    #_itemCrawler( _win, "after display()")
 
     return

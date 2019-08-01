@@ -32,13 +32,13 @@ def example1ScanWithTexts():
     t1.y = _np.sin( t1.x) + 1.001
     _pysp.display()
 
-def example2OverlaidDoty():
+def example2OverlayDoty():
     '''
     create 2 overlaid scans
     '''
     _pysp.cls()
     _pysp.delete()
-    _pysp.setTitle( "2 Overlaid scans, x-axis tick labels show date")
+    _pysp.setTitle( "2 Overlay scans, x-axis tick labels show date")
     t1 = _pysp.Scan( name = "t1", xMin = 0, xMax = 10, nPts = 101, lineColor = 'blue', 
                yLabel = 'sin', doty = True)
     t1.y = _np.sin( t1.x)
@@ -128,13 +128,13 @@ def example56x3Scans():
         t.y = _np.random.random_sample( (len( t.x), ))*1000.
     _pysp.display()
 
-def exampleGaussAndSinusOverlaid():
+def exampleGaussAndSinusOverlay():
     '''
     overlay 2 scans
     '''
     _pysp.cls()
     _pysp.delete()
-    _pysp.setTitle( "2 Overlaid Scans")
+    _pysp.setTitle( "2 Overlay Scans")
     g = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, lineColor = 'red')
     mu = 0.
     sigma = 1.
@@ -143,26 +143,6 @@ def exampleGaussAndSinusOverlaid():
                     yMin = -1.5, yMax = 1.5, yLabel = 'sin')
     t1.y = _np.sin( t1.x)
     _pysp.overlay( "sinus", "gauss")
-    _pysp.display()
-
-def example2GaussOverlaidWithLog():
-    '''
-    create 2 Gauss, overlay the second to the first, log scale for first
-    '''
-    _pysp.cls()
-    _pysp.delete()
-    _pysp.setTitle( "2 Overlay Scans, with log scale")
-    g1 = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = True, nPts = 101, lineColor = 'red')
-    mu = 0.
-    sigma = 1.
-    g1.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g1.y-mu)**2/(2.*sigma**2))
-    g2 = _pysp.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0, 
-                    yMax = 1, nPts = 101, lineColor = 'green')
-    mu = 0.5
-    sigma = 1.2
-    g2.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g2.y-mu)**2/(2.*sigma**2))
-
-    _pysp.overlay( "gauss2", "gauss")
     _pysp.display()
 
 def exampleGauss():
@@ -218,3 +198,57 @@ def exampleLissajous():
         x = x + 0.005
         scan.plotDataItem.setData(_np.cos( x), _np.sin( y))
         _pysp.processEvents()
+
+def exampleOverlay2BothLog(): 
+    _pysp.cls()
+    _pysp.delete()
+    _pysp.setTitle( "2 Overlay Scans, with log scale")
+    g1 = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = True, nPts = 101, lineColor = 'red')
+    mu = 0.
+    sigma = 1.
+    g1.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g1.y-mu)**2/(2.*sigma**2))
+    g2 = _pysp.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0.001, yLog = True, 
+                    yMax = 1., nPts = 101, lineColor = 'green')
+    mu = 0.5
+    sigma = 1.2
+    g2.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g2.y-mu)**2/(2.*sigma**2))
+
+    _pysp.overlay( "gauss2", "gauss")
+
+    _pysp.display()
+
+def exampleOverlay2FirstLog(): 
+    _pysp.cls()
+    _pysp.delete()
+    _pysp.setTitle( "2 Overlay Scans, first has log scale")
+    g1 = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = True, nPts = 101, lineColor = 'red')
+    mu = 0.
+    sigma = 1.
+    g1.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g1.y-mu)**2/(2.*sigma**2))
+    g2 = _pysp.Scan( name = "gauss2", xMin = -5., yLog = False, 
+                    yMax = 1., nPts = 101, lineColor = 'green')
+    mu = 0.5
+    sigma = 1.2
+    g2.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g2.y-mu)**2/(2.*sigma**2))
+
+    _pysp.overlay( "gauss2", "gauss")
+
+    _pysp.display()
+
+def exampleOverlay2SecondLog(): 
+    _pysp.cls()
+    _pysp.delete()
+    _pysp.setTitle( "2 Overlay Scans, 2nd has log scale")
+    g1 = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = False, nPts = 101, lineColor = 'red')
+    mu = 0.
+    sigma = 1.
+    g1.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g1.y-mu)**2/(2.*sigma**2))
+    g2 = _pysp.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0.001, yLog = True, 
+                    yMax = 1., nPts = 101, lineColor = 'green')
+    mu = 0.5
+    sigma = 1.2
+    g2.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g2.y-mu)**2/(2.*sigma**2))
+
+    _pysp.overlay( "gauss2", "gauss")
+
+    _pysp.display()

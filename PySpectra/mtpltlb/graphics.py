@@ -87,7 +87,12 @@ def createPDF( fileName = None, flagPrint = False):
         print "graphics.createPDF: failed to save the current version of %s" % fileName
     
     try:
-        Fig.savefig( fileName, bbox_inches='tight')
+        # 
+        # the bbox_inches='tight' does not look good,
+        # if there is only one plot on the paper
+        # 
+        #Fig.savefig( fileName, bbox_inches='tight')
+        Fig.savefig( fileName)
     except Exception, e:
         print "graphics.createPDF: failed to create", fileName
         print repr( e)
@@ -99,6 +104,7 @@ def createPDF( fileName = None, flagPrint = False):
         #_pqt_graphics._initGraphic()
 
     if flagPrint: 
+        #+++_os.system( "evince %s &" % fileName)
         printer = _os.getenv( "PRINTER")
         if printer is None: 
             raise ValueError( "mpl_graphics.createPDF: environment variable PRINTER not defined")
@@ -744,6 +750,11 @@ def display( nameList = None):
         # instantiate a second axes that shares the same x-axis 
         #
         scan.plotItem = target.plotItem.twinx()
+
+        if scan.xLog: 
+            scan.plotItem.set_xscale( "log")
+        if scan.yLog: 
+            scan.plotItem.set_yscale( "log")
         
         if len( _pysp.getScanList()) >= _pysp.definitions.MANY_SCANS or \
            scan.yTicksVisible == False: 
@@ -789,7 +800,6 @@ def display( nameList = None):
     #plt.pause( 0.001)
     if Canvas is not None:
         try:
-            print "mpl_graphics.display, canvas draw"
             Canvas.draw()
         except Exception, e:
             print "mpl_graphics.display: caught exception from Canvas.draw"

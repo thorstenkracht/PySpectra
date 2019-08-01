@@ -71,16 +71,15 @@ def main():
 
     plotDataItem = plotItem.plot()
     plotDataItem.setData( x, y)
-
     
-    viewBox.addItem(pg.PlotCurveItem( x, y2, pen='#00ffff'))
+    dataItem = pg.PlotDataItem( x, y2, pen = '#00ffff')
+    dataItem.setLogMode( False, True)
+    viewBox.addItem( dataItem)
 
     plotItem.setLogMode( x = False, y = True)
-    #plotItem.getAxis('left').setLogMode( True)
-    plotItem.getAxis('right').setLogMode( False)
     
     viewBox.setXRange( -5, 5)
-    viewBox.setYRange( 0., 1.)
+    viewBox.setYRange( -10, 1)
 
     
 ## Start Qt event loop unless running in interactive mode or using pyside.

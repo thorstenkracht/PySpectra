@@ -1889,16 +1889,18 @@ class pySpectraGui( QtGui.QMainWindow):
             "example1LogScanWithText": pysp.example1LogScanWithText, 
             "example1ScanWithTexts": pysp.example1ScanWithTexts, 
             "example22Scans": pysp.example22Scans, 
-            "example2GaussOverlaidWithLog": pysp.example2GaussOverlaidWithLog, 
-            "example2OverlaidDoty": pysp.example2OverlaidDoty, 
+            "example2OverlayDoty": pysp.example2OverlayDoty, 
             "example3WithTextContainer": pysp.example3WithTextContainer, 
             "example56Scans": pysp.example56Scans, 
             "example56x3Scans": pysp.example56x3Scans, 
             "example5Scans": pysp.example5Scans, 
             "exampleGauss": pysp.exampleGauss, 
-            "exampleGaussAndSinusOverlaid": pysp.exampleGaussAndSinusOverlaid, 
+            "exampleGaussAndSinusOverlay": pysp.exampleGaussAndSinusOverlay, 
             "exampleScanning": pysp.exampleScanning, 
             "exampleLissajous": pysp.exampleLissajous, 
+            "exampleOverlay2BothLog": pysp.exampleOverlay2BothLog,
+            "exampleOverlay2FirstLog": pysp.exampleOverlay2FirstLog,
+            "exampleOverlay2SecondLog": pysp.exampleOverlay2SecondLog,
             }
 
         if hsh.has_key( funcName):
