@@ -330,6 +330,7 @@ class PyQtConfig( QtGui.QMainWindow):
             self.spacingVertical.setText( "%g" % pysp.definitions.spacingVertical)
             self.spacingVerticalLineEdit.clear()
 
+        pysp.configGraphics()
         pysp.cls()
         pysp.display()
         
@@ -667,24 +668,24 @@ class ScanAttributes( QtGui.QMainWindow):
         self.yMaxLineEdit.setMaximumWidth( 70)
         self.layout_grid.addWidget( self.yMaxLineEdit, row, 5)
         #
-        # autorangeX
+        # autoscaleX
         #
         row += 1
-        self.autorangeXLabel = QtGui.QLabel( "autorangeX:")
-        self.layout_grid.addWidget( self.autorangeXLabel, row, 0)
-        self.autorangeXCheckBox = QtGui.QCheckBox()
-        self.autorangeXCheckBox.setChecked( self.scan.autorangeX)
-        self.layout_grid.addWidget( self.autorangeXCheckBox, row, 1)
-        self.autorangeXCheckBox.stateChanged.connect( self.cb_autorangeXChanged)
+        self.autoscaleXLabel = QtGui.QLabel( "autoscaleX:")
+        self.layout_grid.addWidget( self.autoscaleXLabel, row, 0)
+        self.autoscaleXCheckBox = QtGui.QCheckBox()
+        self.autoscaleXCheckBox.setChecked( self.scan.autoscaleX)
+        self.layout_grid.addWidget( self.autoscaleXCheckBox, row, 1)
+        self.autoscaleXCheckBox.stateChanged.connect( self.cb_autoscaleXChanged)
         #
-        # autorangeY
+        # autoscaleY
         #
-        self.autorangeYLabel = QtGui.QLabel( "autorangeY:")
-        self.layout_grid.addWidget( self.autorangeYLabel, row, 3)
-        self.autorangeYCheckBox = QtGui.QCheckBox()
-        self.autorangeYCheckBox.setChecked( self.scan.autorangeY)
-        self.layout_grid.addWidget( self.autorangeYCheckBox, row, 4)
-        self.autorangeYCheckBox.stateChanged.connect( self.cb_autorangeYChanged)
+        self.autoscaleYLabel = QtGui.QLabel( "autoscaleY:")
+        self.layout_grid.addWidget( self.autoscaleYLabel, row, 3)
+        self.autoscaleYCheckBox = QtGui.QCheckBox()
+        self.autoscaleYCheckBox.setChecked( self.scan.autoscaleY)
+        self.layout_grid.addWidget( self.autoscaleYCheckBox, row, 4)
+        self.autoscaleYCheckBox.stateChanged.connect( self.cb_autoscaleYChanged)
         #
         # xLog
         #
@@ -894,25 +895,25 @@ class ScanAttributes( QtGui.QMainWindow):
         self.exit.clicked.connect( self.close)
         self.exit.setShortcut( "Alt+x")
 
-    def cb_autorangeXChanged( self): 
-        self.scan.autorangeX = self.autorangeXCheckBox.isChecked()
+    def cb_autoscaleXChanged( self): 
+        self.scan.autoscaleX = self.autoscaleXCheckBox.isChecked()
         pysp.cls()
-        pysp.display()
+        pysp.display( self.parent.getCheckedNameList())
 
-    def cb_autorangeYChanged( self): 
-        self.scan.autorangeY = self.autorangeYCheckBox.isChecked()
+    def cb_autoscaleYChanged( self): 
+        self.scan.autoscaleY = self.autoscaleYCheckBox.isChecked()
         pysp.cls()
-        pysp.display()
+        pysp.display( self.parent.getCheckedNameList())
 
     def cb_xLogChanged( self): 
         self.scan.xLog = self.xLogCheckBox.isChecked()
         pysp.cls()
-        pysp.display()
+        pysp.display( self.parent.getCheckedNameList())
 
     def cb_yLogChanged( self): 
         self.scan.yLog = self.yLogCheckBox.isChecked()
         pysp.cls()
-        pysp.display()
+        pysp.display( self.parent.getCheckedNameList())
 
     def cb_apply( self):
         line = str(self.xMinLineEdit.text())
@@ -961,13 +962,13 @@ class ScanAttributes( QtGui.QMainWindow):
                     self.atValue.setText( "[%d, %d, %d]" % (self.scan.at[0], self.scan.at[1], self.scan.at[2]))
         self.atLineEdit.clear()
         pysp.cls()
-        pysp.display()
+        pysp.display( self.parent.getCheckedNameList())
         
     def cb_lineColor( self): 
         temp = self.w_lineColorComboBox.currentText()
         self.scan.lineColor = str( temp)
         pysp.cls()
-        pysp.display()
+        pysp.display( self.parent.getCheckedNameList())
         return
 
     def cb_lineStyle( self): 
@@ -976,21 +977,21 @@ class ScanAttributes( QtGui.QMainWindow):
         if self.scan.lineStyle == 'None': 
             self.scan.lineStyle = None
         pysp.cls()
-        pysp.display()
+        pysp.display( self.parent.getCheckedNameList())
         return
 
     def cb_lineWidth( self): 
         temp = self.w_lineWidthComboBox.currentText()
         self.scan.lineWidth = float( temp)
         pysp.cls()
-        pysp.display()
+        pysp.display( self.parent.getCheckedNameList())
         return
 
     def cb_symbolSize( self): 
         temp = self.w_symbolSizeComboBox.currentText()
         self.scan.symbolSize = int( temp)
         pysp.cls()
-        pysp.display()
+        pysp.display( self.parent.getCheckedNameList())
         return
 
     def cb_symbolColor( self): 
@@ -1007,7 +1008,7 @@ class ScanAttributes( QtGui.QMainWindow):
                 temp = k
         self.scan.symbol = str( temp)
         pysp.cls()
-        pysp.display()
+        pysp.display( self.parent.getCheckedNameList())
         return
 
     def cb_overlay( self): 
@@ -1016,7 +1017,7 @@ class ScanAttributes( QtGui.QMainWindow):
             temp = None
         self.scan.overlay = temp
         pysp.cls()
-        pysp.display()
+        pysp.display( self.parent.getCheckedNameList())
         return
         
     def cb_refreshAttr( self):
@@ -1885,28 +1886,14 @@ class pySpectraGui( QtGui.QMainWindow):
         self.exit.setShortcut( "Alt+x")
 
     def make_example( self, funcName): 
-        hsh = {
-            "example1LogScanWithText": pysp.example1LogScanWithText, 
-            "example1ScanWithTexts": pysp.example1ScanWithTexts, 
-            "example22Scans": pysp.example22Scans, 
-            "example2OverlayDoty": pysp.example2OverlayDoty, 
-            "example3WithTextContainer": pysp.example3WithTextContainer, 
-            "example56Scans": pysp.example56Scans, 
-            "example56x3Scans": pysp.example56x3Scans, 
-            "example5Scans": pysp.example5Scans, 
-            "exampleGauss": pysp.exampleGauss, 
-            "exampleGaussAndSinusOverlay": pysp.exampleGaussAndSinusOverlay, 
-            "exampleScanning": pysp.exampleScanning, 
-            "exampleLissajous": pysp.exampleLissajous, 
-            "exampleOverlay2BothLog": pysp.exampleOverlay2BothLog,
-            "exampleOverlay2FirstLog": pysp.exampleOverlay2FirstLog,
-            "exampleOverlay2SecondLog": pysp.exampleOverlay2SecondLog,
-            }
-
-        if hsh.has_key( funcName):
-            return hsh[ funcName]
-        else: 
-            raise ValueError( "make_example: failed to find %s" % funcName)
+        def func(): 
+            f = getattr( pysp.examples.exampleCode, funcName)
+            if callable( f):
+                f()
+            else: 
+                print "pySpectraGuiClass.make_example: problem with %s" % funcName
+            return 
+        return func
         
     def cb_pyqtConfig( self):
         self.pyQtConfigWidget = PyQtConfig()

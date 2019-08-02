@@ -24,8 +24,9 @@ def display():
     win = pg.GraphicsWindow( title="Scan the Tango Function")
     win.clear()
 
-    win.addLabel( "A figure containing a single plot", row = 1, col = 1)
-    tan = win.addPlot( row=2, col=1)
+    win.addLabel( "A figure containing a single plot", row = 1, col = 1, colspan = 10)
+    win.addLabel( "A comment", row = 2, col = 1, colspan = 10)
+    tan = win.addPlot( row=3, col=1)
     tan.showGrid( x = True, y = True)
     tan.setTitle( title = "The tan() Function")
     tan.setLabel( 'left', 'tan')

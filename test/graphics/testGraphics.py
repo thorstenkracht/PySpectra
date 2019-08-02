@@ -41,7 +41,7 @@ class testGraphics( unittest.TestCase):
         '''
         using showGridX, showGridY
         '''
-        print "testGrphics.testDoty"
+        print "testGraphics.testDoty"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -55,13 +55,13 @@ class testGraphics( unittest.TestCase):
         #PySpectra.show()
         PySpectra.procEventsLoop( 1)
 
-        print "testGrphics.testDoty, DONE"
+        print "testGraphics.testDoty, DONE"
 
     def testGrid( self): 
         '''
         using showGridX, showGridY
         '''
-        print "testGrphics.testGrid"
+        print "testGraphics.testGrid"
         PySpectra.cls()
         PySpectra.delete()
         PySpectra.setTitle( "check grids")
@@ -80,13 +80,13 @@ class testGraphics( unittest.TestCase):
         #PySpectra.show()
         PySpectra.procEventsLoop( 1)
 
-        print "testGrphics.testGrid, DONE"
+        print "testGraphics.testGrid, DONE"
 
     def testScanning( self): 
         '''
         using setX and setY
         '''
-        print "testGrphics.testScanning"
+        print "testGraphics.testScanning"
         PySpectra.cls()
         PySpectra.delete()
 
@@ -98,13 +98,13 @@ class testGraphics( unittest.TestCase):
             sinus.setY( i, math.sin( i/10.))
             PySpectra.display( ['sinus'])
             time.sleep( 0.01)
-        print "testGrphics.testScanning, DONE"
+        print "testGraphics.testScanning, DONE"
 
     def testScanningWithText( self): 
         '''
         using setX and setY
         '''
-        print "testGrphics.testScanningWithText"
+        print "testGraphics.testScanningWithText"
         PySpectra.cls()
         PySpectra.delete()
 
@@ -118,13 +118,13 @@ class testGraphics( unittest.TestCase):
             scan.setY( i, math.tan( i/10.))
             PySpectra.display( ['tangens'])
             time.sleep( 0.02)
-        print "testGrphics.testScanningWithText, DONE"
+        print "testGraphics.testScanningWithText, DONE"
 
     def testScanningTwoPlots( self): 
         '''
         using setX and setY
         '''
-        print "testGrphics.testScanningTwoPlots"
+        print "testGraphics.testScanningTwoPlots"
         PySpectra.cls()
         PySpectra.delete()
 
@@ -140,13 +140,13 @@ class testGraphics( unittest.TestCase):
             PySpectra.display( ['sinus', 'cosinus'])
             time.sleep( 0.01)
 
-        print "testGrphics.testScanningTwoPlots, DONE"
+        print "testGraphics.testScanningTwoPlots, DONE"
 
     def testScanningAutoscaleX( self): 
         '''
         using setX and setY
         '''
-        print "testGrphics.testScanningAutoscaleX"
+        print "testGraphics.testScanningAutoscaleX"
         PySpectra.cls()
         PySpectra.delete()
 
@@ -161,13 +161,13 @@ class testGraphics( unittest.TestCase):
             sinus.setY( i, math.sin( i/10.))
             PySpectra.display( ['sinus'])
             time.sleep( 0.01)
-        print "testGrphics.testScanningAutoscaleX, DONE"
+        print "testGraphics.testScanningAutoscaleX, DONE"
 
     def testScanningReverse( self): 
         '''
         scanning in reverse direction
         '''
-        print "testGrphics.testScanningReverse"
+        print "testGraphics.testScanningReverse"
         PySpectra.cls()
         PySpectra.delete()
 
@@ -181,13 +181,13 @@ class testGraphics( unittest.TestCase):
             sinus.setY( i, math.sin( i/10.))
             PySpectra.display( ['sinus'])
             time.sleep( 0.01)
-        print "testGrphics.testScanningReverse, DONE"
+        print "testGraphics.testScanningReverse, DONE"
 
     def testScanningReverseAutoscaleX( self): 
         '''
         scanning in reverse direction
         '''
-        print "testGrphics.testScanningReverseAutoscaleX"
+        print "testGraphics.testScanningReverseAutoscaleX"
         PySpectra.cls()
         PySpectra.delete()
 
@@ -204,14 +204,14 @@ class testGraphics( unittest.TestCase):
             sinus.setY( i, math.sin( i/10.))
             PySpectra.display( ['sinus'])
             time.sleep( 0.01)
-        print "testGrphics.testScanningReverseAutoscalX, DONE"
+        print "testGraphics.testScanningReverseAutoscalX, DONE"
 
     def testDisplaySingleWithText( self): 
         '''
         spectra: 
           create/text/string=Text/x=0.95/y=0.95/v_align=1/h_align=3 1
         '''
-        print "testGrphics.testDisplaySingleWithText"
+        print "testGraphics.testDisplaySingleWithText"
         PySpectra.cls()
         PySpectra.delete()
 
@@ -228,11 +228,11 @@ class testGraphics( unittest.TestCase):
         #PySpectra.show()
         PySpectra.procEventsLoop( 1)
 
-        print "testGrphics.testDisplaySingleWidhtText"
+        print "testGraphics.testDisplaySingleWidhtText, DONE"
 
     def testDisplaySymbol( self): 
 
-        print "testGrphics.testDisplaySymbol"
+        print "testGraphics.testDisplaySymbol"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -246,11 +246,11 @@ class testGraphics( unittest.TestCase):
         #PySpectra.show()
         PySpectra.procEventsLoop( 1)
 
-        print "testGrphics.testDisplaySymbol. DONE"
+        print "testGraphics.testDisplaySymbol. DONE"
 
     def testDisplayTwo( self): 
 
-        print "testGrphics.testDisplayTwo"
+        print "testGraphics.testDisplayTwo"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -272,11 +272,11 @@ class testGraphics( unittest.TestCase):
         #PySpectra.show()
         PySpectra.procEventsLoop( 1)
 
-        print "testGrphics.testDisplayTwo, DONE"
+        print "testGraphics.testDisplayTwo, DONE"
 
     def testOverlay( self): 
 
-        print "testGrphics.testOverlay"
+        print "testGraphics.testOverlay"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -322,11 +322,11 @@ class testGraphics( unittest.TestCase):
         #PySpectra.show()
         PySpectra.procEventsLoop( 1)
 
-        print "testGrphics.testOverlay, DONE"
+        print "testGraphics.testOverlay, DONE"
 
     def testDisplayFour( self): 
 
-        print "testGrphics.testDisplayFour"
+        print "testGraphics.testDisplayFour"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -345,11 +345,11 @@ class testGraphics( unittest.TestCase):
 
         PySpectra.procEventsLoop( 1)
 
-        print "testGrphics.testDisplayFour, DONE"
+        print "testGraphics.testDisplayFour, DONE"
 
     def testDisplayMany( self): 
 
-        print "testGrphics.testDisplayMany"
+        print "testGraphics.testDisplayMany"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -368,14 +368,14 @@ class testGraphics( unittest.TestCase):
 
         PySpectra.procEventsLoop( 1)
 
-        print "testGrphics.testDisplayMany, DONE"
+        print "testGraphics.testDisplayMany, DONE"
 
     def testFastDisplay_v1( self):
         '''
         version 1: set the scan data and call display
         '''
 
-        print "testGrphics.testDisplay_v1"
+        print "testGraphics.testDisplay_v1"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -403,13 +403,13 @@ class testGraphics( unittest.TestCase):
         diffTime = time.time() - startTime
         self.assertLess( diffTime, 5.)
 
-        print "testGrphics.testDisplay_v1, DONE"
+        print "testGraphics.testDisplay_v1, DONE"
 
     def testFastDisplay_v2( self):
         '''
         version 2: directly use the plotDataItem.setData() function
         '''
-        print "testGrphics.testDisplay_v2"
+        print "testGraphics.testDisplay_v2"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -436,12 +436,12 @@ class testGraphics( unittest.TestCase):
 
         diffTime = time.time() - startTime
         self.assertLess( diffTime, 7.)
-        print "testGrphics.testDisplay_v2, DONE"
+        print "testGraphics.testDisplay_v2, DONE"
 
     def testWsViewport( self):
         '''
         '''
-        print "testGrphics.testWsViewport"
+        print "testGraphics.testWsViewport"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -457,14 +457,14 @@ class testGraphics( unittest.TestCase):
             PySpectra.display()
             PySpectra.procEventsLoop( 1)
 
-        print "testGrphics.testWsViewport, DONE"
+        print "testGraphics.testWsViewport, DONE"
 
 
     def testLissajous( self):
         '''
 
         '''
-        print "testGrphics.testLissayous"
+        print "testGraphics.testLissayous"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -487,13 +487,13 @@ class testGraphics( unittest.TestCase):
         diffTime = time.time() - startTime
 
         self.assertLess( diffTime, 10.)
-        print "testGrphics.testLissajous, DONE"
+        print "testGraphics.testLissajous, DONE"
 
     def testOverlay2BothLog( self):
         '''
 
         '''
-        print "testGrphics.testOverly2BothLog"
+        print "testGraphics.testOverly2BothLog"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -516,7 +516,7 @@ class testGraphics( unittest.TestCase):
         '''
 
         '''
-        print "testGrphics.testOverly2FirstLog"
+        print "testGraphics.testOverly2FirstLog"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -535,13 +535,13 @@ class testGraphics( unittest.TestCase):
         PySpectra.display()
         PySpectra.procEventsLoop( 1)
 
-        print "testGrphics.testOverly2FirstLog DONE"
+        print "testGraphics.testOverly2FirstLog DONE"
 
     def testOverlay2SecondLog( self):
         '''
 
         '''
-        print "testGrphics.testOverly2SecondLog"
+        print "testGraphics.testOverly2SecondLog"
 
         PySpectra.cls()
         PySpectra.delete()
@@ -560,7 +560,7 @@ class testGraphics( unittest.TestCase):
         PySpectra.display()
         PySpectra.procEventsLoop( 1)
 
-        print "testGrphics.testOverly2SecondLog"
+        print "testGraphics.testOverly2SecondLog"
 
 if __name__ == "__main__":
     unittest.main()

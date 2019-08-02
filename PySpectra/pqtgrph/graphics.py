@@ -387,6 +387,19 @@ def _textIsOnDisplay( textStr):
 
     return False
 
+def configGraphics(): 
+    '''
+    called from the GuiClass to adjust the distance between the plots
+    '''
+    if _QApp is None or _win is None: 
+        _initGraphic()
+
+    _win.ci.layout.setContentsMargins( _pysp.definitions.marginLeft, _pysp.definitions.marginTop, 
+                                       _pysp.definitions.marginRight, _pysp.definitions.marginBottom)
+    _win.ci.layout.setHorizontalSpacing( _pysp.definitions.spacingHorizontal)
+    _win.ci.layout.setVerticalSpacing( _pysp.definitions.spacingVertical)
+    return
+
 def _adjustFigure( nDisplay): 
     '''
     used for matplotlib
@@ -446,7 +459,7 @@ def _calcTextPosition( scan, xIn, yIn):
                               (scan.xMin, scan.xMax))
         x = (_math.log10( scan.xMax) - _math.log10( scan.xMin))*xIn + _math.log10( scan.xMin)
 
-    if scan.autoscaleY: 
+    if scan.autoscaleY:  
         yMax = _np.max( scan.y[:scan.currentIndex + 1])
         yMin = _np.min( scan.y[:scan.currentIndex + 1])
         if not scan.yLog:
@@ -674,8 +687,7 @@ def _createPlotItem( scan, nameList):
     #print "graphics.createPlotItem, nrow", scan.nrow, "ncol", scan.ncol, \
     #    "nplot", scan.nplot
     row = int( _math.floor(float( scan.nplot - 1)/float(scan.ncol)))
-    col = int( scan.nplot - 1 - row*scan.ncol)
-    #print "graphics.createPlotItem, row", row, "col", col
+    col = int( scan.nplot - 1 - row*scan.ncol) 
     #
     # take title and comment into account
     #
@@ -761,6 +773,16 @@ def _createPlotItem( scan, nameList):
     #
     arX = scan.autoscaleX
     arY = scan.autoscaleY
+    #
+    # this is a very bad fix for a bug that popped up in viewStatETH0.py. 
+    # There we have chosen a log scale with autorange == True
+    #
+    # see also the raise() at line 768 in 
+    #   /usr/lib/python2.7/dist-packages/pyqtgraph/graphicsItems/AxisItem.py
+    #
+    if arY and scan.yLog and len( _pysp.getScanList()) > 15:
+        arY = False
+        scan.setLimits()
 
     if scan.yMin is None or scan.yMax is None:
         arY = True
@@ -768,7 +790,7 @@ def _createPlotItem( scan, nameList):
     #
     # problem: autoscale needs padding != 0
     #
-    #scan.plotItem.enableAutoscale( x = arX, y = arY)
+    scan.plotItem.enableAutoRange( x = arX, y = arY)
     #
     # log scale
     # this statement has to precede the setYRange()
@@ -894,7 +916,7 @@ def display( nameList = None):
     #     non-overlaid scans
     #
     for scan in scanList:
-        #print "graphics.display.firstPass,", scan.name, scan.currentIndex
+        #print "graphics.display.firstPass,", scan.name
 
         #
         # if currentIndex == 0 it is a problem to draw the axes, escpecially 
@@ -975,8 +997,7 @@ def display( nameList = None):
     #
     for scan in scanList:
         #print "graphics.display.secondPass,", scan.name
-        if scan.name == "hasfpgm1_pl":
-            print "secondPass", scan.name, scan.x, scan.y
+
         #
         # if only one scan is displayed, there is no overlay
         #
@@ -984,6 +1005,9 @@ def display( nameList = None):
             break
         #
         # textContainers are not overlaid
+        #
+        if scan.textOnly:
+            continue
         #
         if scan.overlay is None:
             continue
@@ -995,6 +1019,7 @@ def display( nameList = None):
         
         if len( nameList) > 0 and scan.name not in nameList:
             continue
+
         target = _pysp.getScan( scan.overlay)
         if target is None or target.plotItem is None:
             raise ValueError( "pqt_graphics.display: %s tries to overlay to %s" %
@@ -1002,7 +1027,9 @@ def display( nameList = None):
 
         scan.plotItem = target.plotItem
 
-        scan.viewBox = _pg.ViewBox()
+        if scan.viewBox is None:
+            scan.viewBox = _pg.ViewBox()
+
         _setAutoscaleForOverlaid( scan, target)
         #
         # for the overlaid scan show the right axis ...
@@ -1013,12 +1040,7 @@ def display( nameList = None):
         #
         if nDisplay > 10: 
             target.plotItem.getAxis('right').style[ 'showValues'] = False #  not working on Debian-8, 0.9.8-3 
-        #
-        # the overlaid scan cannot have a log-scale. however, if
-        # we don't set the log mode to false, the overlaid scan 
-        # receive the log mode from the target scan
-        #
-        #target.plotItem.getAxis('right').setLogMode( False)
+
         target.scene = target.plotItem.scene()
         target.scene.addItem( scan.viewBox)
 
@@ -1079,12 +1101,14 @@ def display( nameList = None):
         
         scan.lastIndex = scan.currentIndex
         _updateTextPosition( scan)
-
-    _win.ci.layout.setContentsMargins( _pysp.definitions.marginLeft, _pysp.definitions.marginTop, 
-                                       _pysp.definitions.marginRight, _pysp.definitions.marginBottom)
-    _win.ci.layout.setHorizontalSpacing( _pysp.definitions.spacingHorizontal)
-    _win.ci.layout.setVerticalSpacing( _pysp.definitions.spacingVertical)
-
+    #
+    # if e.g. the vertical margin is changes, also the
+    # space for the title shrinks :(
+    #
+    #_win.ci.layout.setContentsMargins( _pysp.definitions.marginLeft, _pysp.definitions.marginTop, 
+    #                                   _pysp.definitions.marginRight, _pysp.definitions.marginBottom)
+    #_win.ci.layout.setHorizontalSpacing( _pysp.definitions.spacingHorizontal)
+    #_win.ci.layout.setVerticalSpacing( _pysp.definitions.spacingVertical)
     processEvents()
 
     return

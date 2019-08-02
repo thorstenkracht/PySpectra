@@ -320,11 +320,8 @@ class Scan( object):
 
         if len( self.x) == 0:
             raise ValueError( "GQE.Scan._createScanFromData: %s len(x) == 0" % (self.name))
-        self.xMin = _np.min( self.x)
-        self.xMax = _np.max( self.x)
-        self.yMin = _np.min( self.y)
-        self.yMax = _np.max( self.y)
-        self.yMax += (self.yMax - self.yMin)*0.05
+
+        self.setLimits()
 
         self.dType = type( self.x[0])
 
@@ -379,6 +376,11 @@ class Scan( object):
         self.y = _np.linspace( self.xMin, self.xMax, self.nPts)
         if self.y.dtype != self.dType:
             self.y = _np.astype( self.dType)
+
+        if self.yMin is None:
+            self.yMin = self.xMin
+        if self.yMax is None:
+            self.yMax = self.xMax
         #
         # the currentIndex points to the last valid point.
         # it starts at 0.
@@ -418,6 +420,7 @@ class Scan( object):
         self.symbol = 'o'
         self.symbolColor = 'NONE'
         self.symbolSize = 10
+        self.viewBox = None
         self.xLabel = None
         self.yLabel = None
         self.xLog = False
@@ -484,6 +487,17 @@ class Scan( object):
                    self.at[2] == scan.at[2]:
                     raise ValueError( "GQE.Scan.setAttr: %s is already at %s %s" % 
                                       (scan.name, str( self.at), self.name))
+        return 
+
+    def setLimits( self): 
+        '''
+        use x and y to calculate xMin, xMax, yMin and yMax
+        '''
+        self.xMin = _np.min( self.x)
+        self.xMax = _np.max( self.x)
+        self.yMin = _np.min( self.y)
+        self.yMax = _np.max( self.y)
+        self.yMax += (self.yMax - self.yMin)*0.05
         return 
 
     def addText( self, text = 'Empty', x = 0.5, y = 0.5, 

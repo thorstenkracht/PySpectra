@@ -9,6 +9,7 @@ python ./test/dMgt/testGQE.py testGQE.testCreateDelete
 python ./test/dMgt/testGQE.py testGQE.testWrite
 python ./test/dMgt/testGQE.py testGQE.testReuse
 python ./test/dMgt/testGQE.py testGQE.testYGreaterThanZero
+python ./test/dMgt/testGQE.py testGQE.testSetLimits
 '''
 import sys
 #pySpectraPath = "/home/kracht/Misc/pySpectra"
@@ -336,7 +337,7 @@ class testGQE( unittest.TestCase):
         print "testGQE.testYGreaterThanZero"
         PySpectra.cls()
         PySpectra.delete()
-        scan = PySpectra.Scan( name = 't1', xLabel = "100 pts, going to be re-used", 
+        scan = PySpectra.Scan( name = 't1', xLabel = "11 pts, going to be re-used", 
                                xMin = 0, yMin = 10, 
                                nPts = 11, )
 
@@ -361,6 +362,31 @@ class testGQE( unittest.TestCase):
         self.assertEqual( scan.y[5], 64)
         self.assertEqual( scan.y[6], 81)
         self.assertEqual( scan.y[7], 100)
+
+    def testSetLimits( self): 
+        print "testGQE.testSetLimits"
+        PySpectra.cls()
+        PySpectra.delete()
+        scan = PySpectra.Scan( name = 't1', 
+                               xMin = 0, xMax = 10, 
+                               nPts = 11, )
+
+        self.assertEqual( scan.xMin, 0.)
+        self.assertEqual( scan.xMax, 10.)
+        self.assertEqual( scan.yMin, 0.)
+        self.assertEqual( scan.yMax, 10.)
+
+        scan.xMin = -1.
+        scan.xMax = -1.
+        scan.yMin = -1.
+        scan.yMax = -1.
+
+        scan.setLimits()
+
+        self.assertEqual( scan.xMin, 0.)
+        self.assertEqual( scan.xMax, 10.)
+        self.assertEqual( scan.yMin, 0.)
+        self.assertEqual( scan.yMax, 10.5)
 
 if __name__ == "__main__":
     unittest.main()

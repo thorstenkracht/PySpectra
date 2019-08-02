@@ -114,6 +114,13 @@ def createPDF( fileName = None, flagPrint = False):
             print "createPDF: printed %s on %s" % (fileName, printer)
         
     return fileName
+
+
+def configGraphics(): 
+    '''
+    used for pyqtgraphics
+    '''
+    return 
     
 def _setSizeGraphicsWindow( nScan):
     '''
