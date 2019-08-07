@@ -92,7 +92,9 @@ class testGraphics( unittest.TestCase):
 
         PySpectra.setTitle( "x-axis is not re-scaled")
 
-        sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red')
+        sinus = PySpectra.Scan( name = 'sinus', 
+                                xMin = 0., xMax = 6.0, nPts = 101, autoscaleX = False, 
+                                lineColor = 'red')
         for i in range( sinus.nPts): 
             sinus.setX( i, i/10.)
             sinus.setY( i, math.sin( i/10.))
@@ -110,7 +112,10 @@ class testGraphics( unittest.TestCase):
 
         PySpectra.setTitle( "x-axis is not re-scaled, watch text")
 
-        scan = PySpectra.Scan( name = 'tangens', xMin = 0., xMax = 6.0, nPts = 101, autoscaleY = True, lineColor = 'red')
+        scan = PySpectra.Scan( name = 'tangens', 
+                               xMin = 0., xMax = 6.0, nPts = 101, 
+                               autoscaleX = False, autoscaleY = True, 
+                               lineColor = 'red')
         scan.addText( text = "a test text", x = 0.95, y = 0.9, hAlign = 'right', 
                        vAlign = 'center', fontSize = 18, color = 'red', NDC = True)
         for i in range( scan.nPts): 
@@ -130,8 +135,13 @@ class testGraphics( unittest.TestCase):
 
         PySpectra.setTitle( "two plot, x-axis is not re-scaled")
 
-        sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red')
-        cosinus = PySpectra.Scan( name = 'cosinus', xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'blue')
+        sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, 
+                                autoscaleX = False, 
+                                lineColor = 'red')
+        cosinus = PySpectra.Scan( name = 'cosinus', 
+                                  xMin = 0., xMax = 6.0, nPts = 101, 
+                                  autoscaleX = False, 
+                                  lineColor = 'blue')
         for i in range( sinus.nPts): 
             sinus.setX( i, i/10.)
             sinus.setY( i, math.sin( i/10.))
@@ -173,7 +183,10 @@ class testGraphics( unittest.TestCase):
 
         PySpectra.setTitle( "reverse scan, no re-scale")
 
-        sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red')
+        sinus = PySpectra.Scan( name = 'sinus', 
+                                xMin = 0., xMax = 6.0, nPts = 101, 
+                                autoscaleX = False, 
+                                lineColor = 'red')
         sinus.xMax = 10.
         for i in range( sinus.nPts): 
             x = 10. - i/10.
@@ -392,7 +405,7 @@ class testGraphics( unittest.TestCase):
         scan2.x = x
         
         startTime = time.time()
-        for i in range( 50):
+        for i in range( 100):
             PySpectra.cls()
             scan1.y = data[ptr%10]
             scan2.y = data[ptr%10]
@@ -401,7 +414,8 @@ class testGraphics( unittest.TestCase):
             PySpectra.processEvents()
 
         diffTime = time.time() - startTime
-        self.assertLess( diffTime, 5.)
+        self.assertLess( diffTime, 8.)
+        self.assertGreater( diffTime, 5.)
 
         print "testGraphics.testDisplay_v1, DONE"
 
@@ -428,14 +442,16 @@ class testGraphics( unittest.TestCase):
         PySpectra.display()
 
         startTime = time.time()
-        for i in range( 500):
+        for i in range( 200):
             scan1.plotDataItem.setData(x, data[ptr%10])
             scan2.plotDataItem.setData(x, data[ptr%10])
             ptr += 1
             PySpectra.processEvents()
 
         diffTime = time.time() - startTime
+
         self.assertLess( diffTime, 7.)
+        self.assertGreater( diffTime, 3.0)
         print "testGraphics.testDisplay_v2, DONE"
 
     def testWsViewport( self):
@@ -479,7 +495,7 @@ class testGraphics( unittest.TestCase):
         PySpectra.display()
 
         startTime = time.time()
-        for i in range( 1500):
+        for i in range( 500):
             x = x + 0.005
             scan.plotDataItem.setData(np.cos( x), np.sin( y))
             PySpectra.processEvents()

@@ -93,7 +93,10 @@ class testMplGraphics( unittest.TestCase):
         PySpectra.delete()
 
         PySpectra.setTitle( "x-axis not re-scaled")
-        sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red')
+        sinus = PySpectra.Scan( name = 'sinus', 
+                                xMin = 0., xMax = 6.0, nPts = 101, 
+                                autoscaleX = False, 
+                                lineColor = 'red')
         for i in range( sinus.nPts): 
             sinus.setX( i, i/10.)
             sinus.setY( i, math.sin( i/10.))
@@ -111,7 +114,10 @@ class testMplGraphics( unittest.TestCase):
 
         PySpectra.setTitle( "x-axis is not re-scaled, watch text")
 
-        scan = PySpectra.Scan( name = 'tangens', xMin = 0., xMax = 6.0, nPts = 101, autoscaleY = True, lineColor = 'red')
+        scan = PySpectra.Scan( name = 'tangens', 
+                               xMin = 0., xMax = 6.0, nPts = 101, 
+                               autoscaleY = True, autoscaleX = False,  
+                               lineColor = 'red')
         scan.addText( text = "a test text", x = 0.95, y = 0.9, hAlign = 'right', 
                        vAlign = 'center', fontSize = 14, color = 'black', NDC = True)
         for i in range( scan.nPts): 
@@ -131,8 +137,14 @@ class testMplGraphics( unittest.TestCase):
 
         PySpectra.setTitle( "two plots, x-axis not re-scaled")
 
-        sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red')
-        cosinus = PySpectra.Scan( name = 'cosinus', xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'blue')
+        sinus = PySpectra.Scan( name = 'sinus', 
+                                xMin = 0., xMax = 6.0, nPts = 101, 
+                                autoscaleX = False, 
+                                lineColor = 'red')
+        cosinus = PySpectra.Scan( name = 'cosinus', 
+                                  xMin = 0., xMax = 6.0, nPts = 101, 
+                                  autoscaleX = False, 
+                                  lineColor = 'blue')
         for i in range( sinus.nPts): 
             sinus.setX( i, i/10.)
             sinus.setY( i, math.sin( i/10.))
@@ -172,7 +184,10 @@ class testMplGraphics( unittest.TestCase):
         PySpectra.delete()
 
         PySpectra.setTitle( "reverse scannning, no re-scale")
-        sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red')
+        sinus = PySpectra.Scan( name = 'sinus', 
+                                xMin = 0., xMax = 6.0, nPts = 101, 
+                                autoscaleX = False, 
+                                lineColor = 'red')
         sinus.xMax = 10.
         for i in range( sinus.nPts): 
             x = 10. - i/10.

@@ -112,7 +112,8 @@ def example22Scans():
     _pysp.setTitle( "22 Scans")
     _pysp.setComment( "and a comment")
     for i in range( 22): 
-        t = _pysp.Scan( name = "t%d" % i, lineColor = 'blue', xLabel = 'Position', yLabel = 'rand')
+        t = _pysp.Scan( name = "t%d" % i, lineColor = 'blue',
+                        xLabel = 'Position', yLabel = 'rand')
         t.y = _np.random.random_sample( (len( t.x), ))*1000.
     _pysp.display()
 
@@ -232,7 +233,7 @@ def exampleLissajous():
     
     _pysp.display()
     
-    for i in range( 1000):
+    for i in range( 500):
         x = x + 0.005
         scan.plotDataItem.setData(_np.cos( x), _np.sin( y))
         _pysp.processEvents()

@@ -79,7 +79,7 @@ class Scan( object):
 
     The attributes: 
         autoscaleX, autoscaleY
-                    if you know the x-range beforehand, set autoscaleY to False
+                    default: True
         colSpan:    def.: 1
         doty:       bool
                     if True, the x-axis tick mark labels are dates, def. False
@@ -398,8 +398,8 @@ class Scan( object):
         '''
 
         self.at = None
-        self.autoscaleX = False
-        self.autoscaleY = False
+        self.autoscaleX = True
+        self.autoscaleY = True
         self.colSpan = 1
         self.doty = False            # x-axis is date-of-the year
         self.fileName = None
@@ -408,6 +408,7 @@ class Scan( object):
         self.nplot = None
         self.overlay = None
         self.plotItem = None
+        self.plotDataItem = None
         self.scene = None
         self.viewBox = None
         self.showGridX = False

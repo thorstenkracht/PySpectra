@@ -162,6 +162,8 @@ def cls():
     #
     # since _win.clear() does not clear all, we have to 
     # run through the prepared cls-functions
+    # the problem was visible when one runs through the 
+    # pyspViewer examples
     #
     for f in _clsFunctions: 
         f()
@@ -172,6 +174,7 @@ def cls():
     # one element, <class 'pyqtgraph.graphicsItems.GraphicsLayout.GraphicsLayout'>
     #
     _win.clear()
+
     #_itemCrawler( _win, "after _win.clear()")
 
     #
@@ -188,7 +191,12 @@ def cls():
         scan.plotDataItem = None
         scan.lastIndex = 0
 
-    _QApp.processEvents()
+    #
+    # _QApp.processEvents() must not follow a _win.clear(). 
+    # Otherwise all plots are displayed in the upper left corner
+    # before they are moves to the correct final positions
+    #
+    #+++_QApp.processEvents()
     return 
 
 def _getLayout( o): 
@@ -226,6 +234,8 @@ def processEvents():
     corner. We don't want the mainLoop() to execute the 
     second call to processEvents
     '''
+    _QApp.processEvents()
+    #_time.sleep( 0.1) # +++
     _QApp.processEvents()
     _QApp.processEvents()
 
@@ -526,7 +536,12 @@ def _addTexts( scan, nameList):
             (x, y) = _calcTextPosition( scan, elm.x, elm.y)
             
         elm.textItem = textItem
-        scan.plotItem.addItem( textItem)
+        #
+        # if 'ignoreBounds=True' is removed, the x-scaling goes
+        # crazy and the logTickStrings() error, AxisItem.py l.766
+        # appears
+        #
+        scan.plotItem.addItem( textItem, ignoreBounds = True)
         textItem.setPos( x, y)
         textItem.show()
     return
@@ -561,12 +576,16 @@ def _setTitle( scan, nameList):
         tempName = scan.name 
 
     #
-    # the title is above the plot
+    # the title is above the plot. This is the save way to plot the 
+    # title. If we do it with TextItem, see below and if we use
+    # autoscale, the x-axis is screwed-up
+    #
+    # see also 
+    #   /home/kracht/Misc/pySpectra/examples/create22.py
+    #   /home/kracht/Misc/pySpectra/examples/pyqtgraph/create22.py
     #
     if _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp.definitions.MANY_SCANS: 
-        #+++
         scan.plotItem.setLabel( 'top', text=tempName, size = '%dpx' % fontSize)
-        #scan.plotItem.setTitle( title = tempName, size = '%dpx' % fontSize)
     #
     # too many plots, so put the title into the plot
     #
@@ -598,7 +617,12 @@ def _setTitle( scan, nameList):
                 y = ( _math.log10( scan.yMax) - _math.log10( scan.yMin))*0.85 + \
                     _math.log10( scan.yMin)
         txt.setPos( x, y)
-        vb.addItem( txt)
+        #
+        # if 'ignoreBounds=True', the x-range is corrent and the log tick 
+        # mark error does not appear
+        #
+        vb.addItem( txt, ignoreBounds = True)
+    return 
 
 def _make_updateViews( target, scan): 
     def _func():
@@ -626,6 +650,7 @@ def _makeClsSceneFunc( scene, vb):
     return func
 
 def _setAutoscaleForOverlaid( scan, target):
+
     if scan.autoscaleY is False:
         if scan.yMin is None or scan.yMax is None: 
             if target.yMin is not None and target.yMax is not None: 
@@ -723,34 +748,33 @@ def _createPlotItem( scan, nameList):
         print repr( e)
         raise ValueError( "graphics.createPlotItem, throwing exception")
 
+    scan.plotItem = plotItem 
     #
     # Set the default clip-to-view mode for all PlotDataItems managed by this plot. 
     # If clip is True, then PlotDataItems will attempt to draw only points within 
     # the visible range of the ViewBox.
     #
-    plotItem.setClipToView( False)
+    scan.plotItem.setClipToView( False)
     #
     # we want a closed axis box and we want tick marks 
     # at the top and right axis, but no tick mark texts
     #
-    plotItem.showAxis('top')
-    plotItem.getAxis('top').style[ 'showValues'] = False #  not working on Debian-8, 0.9.8-3 
+    scan.plotItem.showAxis('top')
+    scan.plotItem.getAxis('top').style[ 'showValues'] = False #  not working on Debian-8, 0.9.8-3 
     #
     # plot the right axis here, if the scan is not the target
     # of another scan which is overlaid.
     #
     if _isNotOverlayTarget( scan):
-        plotItem.showAxis('right')
-        plotItem.getAxis('right').style[ 'showValues'] = False #  not working on Debian-8, 0.9.8-3 
+        scan.plotItem.showAxis('right')
+        scan.plotItem.getAxis('right').style[ 'showValues'] = False #  not working on Debian-8, 0.9.8-3 
     #
     # 0.9.8-3 
     #
     if _pg.__version__ is None: 
-        plotItem.getAxis('top').setTicks( [])
+        scan.plotItem.getAxis('top').setTicks( [])
         if _isNotOverlayTarget( scan):
-            plotItem.getAxis('right').setTicks( [])
-            
-    scan.plotItem = plotItem 
+            scan.plotItem.getAxis('right').setTicks( [])
 
     scan.plotItem.showGrid( x = scan.showGridX, y = scan.showGridY)
 
@@ -766,8 +790,9 @@ def _createPlotItem( scan, nameList):
     #
     font.setPointSize( _pysp.getTickFontSize( nameList))
 
-    plotItem.getAxis("bottom").tickFont = font
-    plotItem.getAxis("left").tickFont = font
+    scan.plotItem.getAxis("bottom").tickFont = font
+    scan.plotItem.getAxis("left").tickFont = font
+            
     #
     # autoscale
     #
@@ -782,6 +807,7 @@ def _createPlotItem( scan, nameList):
     #
     if arY and scan.yLog and len( _pysp.getScanList()) > 15:
         arY = False
+        #print "pqt_graphics.createPlotItem: changing autoRangeY to False"
         scan.setLimits()
 
     if scan.yMin is None or scan.yMax is None:
@@ -795,7 +821,7 @@ def _createPlotItem( scan, nameList):
     # log scale
     # this statement has to precede the setYRange()
     #
-    plotItem.setLogMode( x = scan.xLog, y = scan.yLog)
+    scan.plotItem.setLogMode( x = scan.xLog, y = scan.yLog)
 
     if not arY: 
         if scan.yLog:
@@ -816,16 +842,15 @@ def _createPlotItem( scan, nameList):
                                   (scan.xMin, scan.xMax))
             scan.plotItem.setXRange( _math.log10( scan.xMin), _math.log10(scan.xMax))
         else:
-            scan.plotItem.setXRange( scan.xMin, scan.xMax)
+            scan.plotItem.setXRange( scan.xMin, scan.xMax) #, padding = 0)
 
     #
     # idea: control the zoom in such a way the y-axis 
     # is re-scaled when we zoom in.
     #
+
     scan.plotItem.setMouseEnabled( x = True, y = True)
-
     _setTitle( scan, nameList)
-
     _addTexts( scan, nameList)
 
     return
@@ -1029,6 +1054,17 @@ def display( nameList = None):
 
         if scan.viewBox is None:
             scan.viewBox = _pg.ViewBox()
+            target.scene = target.plotItem.scene()
+            target.scene.addItem( scan.viewBox)
+            #
+            # _win.clear() doesn't really work. Therefore we have to 
+            # prepare a function to be called by cls()
+            #
+            _clsFunctions.append( _makeClsSceneFunc( target.scene, scan.viewBox))
+            #
+            # link the views x-axis to another view
+            #
+            scan.viewBox.setXLink( target.plotItem)
 
         _setAutoscaleForOverlaid( scan, target)
         #
@@ -1041,8 +1077,8 @@ def display( nameList = None):
         if nDisplay > 10: 
             target.plotItem.getAxis('right').style[ 'showValues'] = False #  not working on Debian-8, 0.9.8-3 
 
-        target.scene = target.plotItem.scene()
-        target.scene.addItem( scan.viewBox)
+        #target.scene = target.plotItem.scene()
+        #target.scene.addItem( scan.viewBox)
 
         #if scan.yLog or scan.xLog:
         #    raise ValueError( "pqt_graphic.display: no log-scale for the overlaid scan")
@@ -1052,25 +1088,28 @@ def display( nameList = None):
         # _win.clear() doesn't really work. Therefore we have to 
         # prepare a function to be called by cls()
         #
-        _clsFunctions.append( _makeClsSceneFunc( target.scene, scan.viewBox))
+        #_clsFunctions.append( _makeClsSceneFunc( target.scene, scan.viewBox))
         _updateViews( target, scan)
         #
         # link the views x-axis to another view
         #
-        scan.viewBox.setXLink( target.plotItem)
+        #scan.viewBox.setXLink( target.plotItem)
 
         target.plotItem.vb.sigResized.connect( _make_updateViews( target, scan))
-        if scan.symbolColor.upper()  == 'NONE':
-            #curveItem = _pg.PlotCurveItem( x = scan.x, y = scan.y, pen = _getPen( scan))
-            dataItem = _pg.PlotDataItem( x = scan.x, y = scan.y, pen = _getPen( scan))
-        else:
-            dataItem = _pg.PlotDataItem( x = scan.x, y = scan.y, pen = _getPen( scan))
-            #curveItem = _pg.ScatterPlotItem( x = scan.x, y = scan.y,
-            #                                 symbol = scan.symbol, 
-            #                                 pen = _pysp.definitions.colorCode[ scan.symbolColor.lower()], 
-            #                                 brush = _pysp.definitions.colorCode[ scan.symbolColor.lower()], 
-            #                                 size = scan.symbolSize)
 
+        if scan.plotDataItem is None:
+            if scan.symbolColor.upper()  == 'NONE':
+                #curveItem = _pg.PlotCurveItem( x = scan.x, y = scan.y, pen = _getPen( scan))
+                scan.plotDataItem = _pg.PlotDataItem( x = scan.x, y = scan.y, pen = _getPen( scan))
+            else:
+                scan.plotDataItem = _pg.PlotDataItem( x = scan.x, y = scan.y, pen = _getPen( scan))
+                #curveItem = _pg.ScatterPlotItem( x = scan.x, y = scan.y,
+                #                                 symbol = scan.symbol, 
+                #                                 pen = _pysp.definitions.colorCode[ scan.symbolColor.lower()], 
+                #                                 brush = _pysp.definitions.colorCode[ scan.symbolColor.lower()], 
+                #                                 size = scan.symbolSize)
+            scan.viewBox.addItem( scan.plotDataItem )
+                
         if scan.yLog:
             #
             # if yLog, the limits have to be supplied as logs
@@ -1078,7 +1117,7 @@ def display( nameList = None):
             if scan.yMax <= 0. or scan.yMin <= 0.:
                 raise ValueError( "pqt_graphics.createPlotItem: yLog && (yMin <= 0 %g or yMax <= 0: %g" % \
                                   (scan.yMin, scan.yMax))
-            dataItem.setLogMode( False, True)
+            scan.plotDataItem.setLogMode( False, True)
             scan.viewBox.setYRange( _math.log10( scan.yMin), _math.log10(scan.yMax))
         else:
             #scan.plotItem.setYRange( scan.yMin, scan.yMax)
@@ -1097,7 +1136,7 @@ def display( nameList = None):
         if scan.yLog and not target.yLog: 
             target.plotItem.getAxis('right').style[ 'showValues'] = False
 
-        scan.viewBox.addItem( dataItem )
+        #scan.viewBox.addItem( dataItem )
         
         scan.lastIndex = scan.currentIndex
         _updateTextPosition( scan)
