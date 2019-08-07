@@ -525,7 +525,7 @@ class Scan( object):
         '''
         if index >= self.y.size:
             raise ValueError( "GQE.Scan.setY: %s, index %d out of range [0, %d]" % 
-                              ( self.name, index, self.y.size))
+                              ( self.name, index, self.y.size - 1))
         self.y[ index] = yValue
         self.currentIndex = index
         return
@@ -545,7 +545,7 @@ class Scan( object):
         '''
         if index >= self.y.size:
             raise ValueError( "GQE.Scan.setX: %s, index %d out of range [0, %d]" % 
-                              ( self.name, index, self.x.size))
+                              ( self.name, index, self.x.size - 1))
         self.x[ index] = xValue
         self.currentIndex = index
         return
@@ -761,7 +761,7 @@ def delete( nameLst = None):
                 del _scanList[i]
                 break
         else:
-            print "GQE.delete: not found", name
+            raise ValueError( "GQE.delete: not found %s" % name)
         return 
 
     for name in nameLst:

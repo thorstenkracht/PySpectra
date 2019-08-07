@@ -10,6 +10,8 @@ python ./test/dMgt/testGQE.py testGQE.testWrite
 python ./test/dMgt/testGQE.py testGQE.testReuse
 python ./test/dMgt/testGQE.py testGQE.testYGreaterThanZero
 python ./test/dMgt/testGQE.py testGQE.testSetLimits
+python ./test/dMgt/testGQE.py testGQE.testSetXY
+python ./test/dMgt/testGQE.py testGQE.testExceptions
 '''
 import sys
 #pySpectraPath = "/home/kracht/Misc/pySpectra"
@@ -387,6 +389,112 @@ class testGQE( unittest.TestCase):
         self.assertEqual( scan.xMax, 10.)
         self.assertEqual( scan.yMin, 0.)
         self.assertEqual( scan.yMax, 10.5)
+
+    def testSetXY( self) : 
+        print "testGQE.testSetXY"
+        PySpectra.cls()
+        PySpectra.delete()
+        x  = np.linspace( 0., 10., 100)
+        y  = np.linspace( 0., 10., 100)
+        scan = PySpectra.Scan( 't1', x = x, y = y)
+
+        scan.setX( 0, 12)
+        self.assertEqual( scan.x[0], 12)
+        scan.setY( 0, 12)
+        self.assertEqual( scan.y[0], 12)
+        scan.setXY( 1, 11, 12)
+        self.assertEqual( scan.x[1], 11)
+        self.assertEqual( scan.y[1], 12)
+        
+    def testExceptions( self): 
+        print "testGQE.testExceptions"
+        PySpectra.cls()
+        PySpectra.delete()
+
+        with self.assertRaises( ValueError) as context:
+            PySpectra.delete()
+            scan = PySpectra.Scan()
+        self.assertTrue( "GQE.Scan: 'name' is missing" in context.exception)
+
+        with self.assertRaises( ValueError) as context:
+            PySpectra.delete()
+            scan = PySpectra.Scan( name = 't1')
+            ret = PySpectra.getScan( 't2')
+        #print repr( context.exception)
+        self.assertTrue( "GQE.getScan: failed to find t2" in context.exception)
+
+
+        with self.assertRaises( ValueError) as context:
+            PySpectra.delete()
+            scan = PySpectra.Scan( name = 't1')
+            PySpectra.delete( 't2')
+        #print repr( context.exception)
+        self.assertTrue( "GQE.delete: not found t2" in context.exception)
+
+        with self.assertRaises( ValueError) as context:
+            PySpectra.delete()
+            scan = PySpectra.Scan( 't1')
+            scan = PySpectra.Scan( 't1')
+        #print repr( context.exception)
+        self.assertTrue( "GQE.Scan: t1 exists already" in context.exception)
+
+        with self.assertRaises( ValueError) as context:
+            PySpectra.delete()
+            scan = PySpectra.Scan( 't1')
+            scan = PySpectra.Scan( 't1')
+        #print repr( context.exception)
+        self.assertTrue( "GQE.Scan: t1 exists already" in context.exception)
+
+        with self.assertRaises( ValueError) as context:
+            PySpectra.delete()
+            scan = PySpectra.Scan( 't1', y = None)
+        #print repr( context.exception)
+        self.assertTrue( "GQE.Scan.__init__: if 'x' or 'y' then both have to be supplied"
+                         in context.exception)
+
+        with self.assertRaises( ValueError) as context:
+            PySpectra.delete()
+            scan = PySpectra.Scan( 't1', fileName = 'hallo')
+        #print repr( context.exception)
+        self.assertTrue( "GQE.Scan.__init__: 'fileName' but no 'x' and no 'y', hallo"
+                         in context.exception)
+
+        with self.assertRaises( ValueError) as context:
+            PySpectra.delete()
+            scan = PySpectra.Scan( 't1', unknown = 't1')
+        #print repr( context.exception)
+        self.assertTrue( "GQE.Scan: dct not empty {'unknown': 't1'}"
+                         in context.exception)
+
+        with self.assertRaises( ValueError) as context:
+            PySpectra.delete()
+            x1  = np.linspace( 0., 10., 100)
+            y1  = np.linspace( 0., 10., 101)
+            scan = PySpectra.Scan( 't1', x = x1, y = y1)
+        #print repr( context.exception)
+        self.assertTrue( "GQE.Scan._createScanFromData: 'x' and 'y' differ in length 100 (x) 101 (y)"
+                         in context.exception)
+
+        with self.assertRaises( ValueError) as context:
+            PySpectra.delete()
+            x1  = np.linspace( 0., 10., 100)
+            y1  = np.linspace( 0., 10., 100)
+            scan = PySpectra.Scan( 't1', x = x1, y = y1)
+            scan.setX( 100, 1.)
+        #print repr( context.exception)
+        self.assertTrue( "GQE.Scan.setX: t1, index 100 out of range [0, 99]"
+                         in context.exception)
+
+        with self.assertRaises( ValueError) as context:
+            PySpectra.delete()
+            x1  = np.linspace( 0., 10., 100)
+            y1  = np.linspace( 0., 10., 100)
+            scan = PySpectra.Scan( 't1', x = x1, y = y1)
+            scan.setY( 100, 1.)
+        #print repr( context.exception)
+        self.assertTrue( "GQE.Scan.setY: t1, index 100 out of range [0, 99]"
+                         in context.exception)
+
 
 if __name__ == "__main__":
     unittest.main()
