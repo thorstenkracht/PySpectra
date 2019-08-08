@@ -29,6 +29,15 @@ def updateViews():
     viewBox.linkedViewChanged(plotItem.vb, viewBox.XAxis)
 
 
+class SmartFormat( pg.AxisItem):
+    def __init__(self, *args, **kwargs):
+        super(SmartFormat, self).__init__(*args, **kwargs)
+
+    def tickStrings(self, values, scale, spacing):
+        if self.logMode:
+            return [ "%g" % x for x in 10 ** np.array(values).astype(float)]
+        return super( SmartFormat, self).tickStrings( values, scale, spacing)
+
 def main(): 
     global plotItem, viewBox, pw
 
@@ -37,10 +46,12 @@ def main():
     mu = 0.
     sigma = 1.
     y = 1/(sigma * np.sqrt(2 * np.pi)) * np.exp( - (x - mu)**2 / (2 * sigma**2))
+    y *= 1000. # to see the effect of SmartFormat
 
     mu = 1.0
     sigma = 0.7
     y2 = 1/(sigma * np.sqrt(2 * np.pi)) * np.exp( - (x - mu)**2 / (2 * sigma**2))
+    y2 *= 1000.
 
     pg.setConfigOption( 'background', 'w')
     pg.setConfigOption( 'foreground', 'k')   
@@ -52,7 +63,8 @@ def main():
     win.addLabel( "A figure containing 2 plots", row = 1, col = 1, colspan = 10)
     win.addLabel( "A comment", row = 2, col = 1, colspan = 10)
 
-    plotItem = win.addPlot( row = 3, col = 1)
+    plotItem = win.addPlot( axisItems = { 'left': SmartFormat(orientation='left'), 
+                                          'right': SmartFormat(orientation='right')}, row = 3, col = 1)
     plotItem.setLabels(left='axis 1')
     
     ## create a new ViewBox, link the right axis to its coordinate system
@@ -86,7 +98,7 @@ def main():
     plotItem.setLogMode( x = False, y = True)
     
     viewBox.setXRange( -5, 5)
-    viewBox.setYRange( -10, 1)
+    viewBox.setYRange( -3, 3)
 
     app.processEvents()
     time.sleep(0.1)

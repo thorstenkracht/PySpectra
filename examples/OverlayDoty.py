@@ -5,10 +5,11 @@ import numpy as np
 import sys
 
 def main():
-    pysp.exampleOverlay2BothLog()
+    pysp.exampleOverlayDoty()
     print "Prtc ",
     sys.stdin.readline()
 
 if __name__ == '__main__': 
     main()
     #pysp.launchGui()
+

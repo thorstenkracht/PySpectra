@@ -746,15 +746,17 @@ def _createPlotItem( scan, nameList):
     try:
         if scan.doty: 
             plotItem = _win.addPlot( axisItems = { 'bottom': _CAxisTime( orientation='bottom'),
-                                                   'left': SmartFormat(orientation='left')}, 
+                                                   'left': SmartFormat(orientation='left'),
+                                                   'right': SmartFormat(orientation='right')}, # if overlay
                                      row = row, col = col, colspan = scan.colSpan) 
         else:
             #
             # <class 'pyqtgraph.graphicsItems.PlotItem.PlotItem.PlotItem'>
             #
             plotItem = _win.addPlot( row = row, col = col, colspan = scan.colSpan,
-                                     axisItems={ 'left': SmartFormat(orientation='left'), 
-                                                'bottom': SmartFormat(orientation='bottom')})
+                                     axisItems = { 'left': SmartFormat(orientation='left'), 
+                                                   'right': SmartFormat(orientation='right'),  # if overlay
+                                                   'bottom': SmartFormat(orientation='bottom')})
 
             
     except Exception, e:
@@ -1091,12 +1093,6 @@ def display( nameList = None):
         if nDisplay > 10: 
             target.plotItem.getAxis('right').style[ 'showValues'] = False #  not working on Debian-8, 0.9.8-3 
 
-        #target.scene = target.plotItem.scene()
-        #target.scene.addItem( scan.viewBox)
-
-        #if scan.yLog or scan.xLog:
-        #    raise ValueError( "pqt_graphic.display: no log-scale for the overlaid scan")
-
         target.plotItem.getAxis('right').linkToView( scan.viewBox)
         #
         # _win.clear() doesn't really work. Therefore we have to 
@@ -1137,9 +1133,8 @@ def display( nameList = None):
             #scan.plotItem.setYRange( scan.yMin, scan.yMax)
             pass
         #
-        # we have to supress the tick marks of the right axis, if
-        # the overlaid plot has yLog == True and the target plot
-        # has yLog == False
+        # we have to suppress the tick marks of the right axis, if
+        # the overlaid plot and the target don not have the same logMode
         #
         # example files: 
         #   pySpectra/examples/Overlay2.py
@@ -1147,7 +1142,8 @@ def display( nameList = None):
         #   pySpectra/examples/Overlay2FirstLog.py
         #   pySpectra/examples/Overlay2SecondLog.py
         #
-        if scan.yLog and not target.yLog: 
+        if scan.yLog and not target.yLog or \
+           not scan.yLog and target.yLog:
             target.plotItem.getAxis('right').style[ 'showValues'] = False
 
         #scan.viewBox.addItem( dataItem )

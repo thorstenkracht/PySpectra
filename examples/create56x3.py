@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
 import PySpectra as pysp
-import numpy as np
 import sys
 
 def main():
-    pysp.exampleOverlay2BothLog()
+    pysp.exampleCreate56x3Plots()
     print "Prtc ",
     sys.stdin.readline()
 

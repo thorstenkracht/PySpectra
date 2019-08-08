@@ -3,7 +3,7 @@
 the functions in this module are automatically inserted into the 'Examples'
 menu of 
   /home/kracht/Misc/pySpectra/PySpectra/pySpectraGuiClass.py 
-end they are unittest-executed by
+and they are unittest-executed by
   /home/kracht/Misc/pySpectra/test/examples/testExamples.py
 
 From the command line: 
@@ -16,7 +16,7 @@ import numpy as _np
 import math as _math
 import time as _time
 
-def example1LogScanWithText():
+def exampleLogPlotWithText():
     '''
     create 1 scan, y-log scale, one text
     '''
@@ -27,7 +27,7 @@ def example1LogScanWithText():
     t1.addText( text = "a left/center aligned text, should be in the center", x = 0.05, y = 0.5, hAlign = 'left', vAlign = 'center')
     _pysp.display()
 
-def example1ScanWithTexts():
+def examplePlotWithSeveralTexts():
     '''
     create 1 scan with several texts
     '''
@@ -45,7 +45,25 @@ def example1ScanWithTexts():
     t1.y = _np.sin( t1.x) + 1.001
     _pysp.display()
 
-def example2OverlayDoty():
+def exampleOverlay2():
+    '''
+    create 2 overlaid scans
+    '''
+    _pysp.cls()
+    _pysp.delete()
+    _pysp.setTitle( "Overlay 2 Scans")
+    _pysp.setComment( "no comment")
+    g = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, lineColor = 'red')
+    mu = 0.
+    sigma = 1.
+    g.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g.y-mu)**2/(2.*sigma**2))
+    t1 = _pysp.Scan( name = "sinus", lineColor = 'blue', xMin = -5, xMax = 5., 
+                    yMin = -1.5, yMax = 1.5, yLabel = 'sin')
+    t1.y = _np.sin( t1.x)
+    _pysp.overlay( "sinus", "gauss")
+    _pysp.display()
+
+def exampleOverlayDoty():
     '''
     create 2 overlaid scans
     '''
@@ -61,9 +79,9 @@ def example2OverlayDoty():
     t2.overlay = "t1"
     _pysp.display()
 
-def example3WithTextContainer():
+def examplePlotsWithTextContainer():
     '''
-    create 3 scans
+    create 3 scans and a text container
     '''
     _pysp.cls()
     _pysp.delete()
@@ -82,7 +100,7 @@ def example3WithTextContainer():
     t3.y = _np.tan( t3.x)
     _pysp.display()
 
-def example5Scans():
+def exampleCreate5Plots():
     '''
     create 5 scans, different colors, demonstrate overlay feature
     '''
@@ -103,9 +121,9 @@ def example5Scans():
     _pysp.overlay( 't5', 't3')
     _pysp.display()
 
-def example22Scans():
+def exampleCreate22Plots():
     '''
-    create 2 scans
+    create 22 plots
     '''
     _pysp.cls()
     _pysp.delete()
@@ -116,6 +134,7 @@ def example22Scans():
                         xLabel = 'Position', yLabel = 'rand')
         t.y = _np.random.random_sample( (len( t.x), ))*1000.
     _pysp.display()
+
 
 def example58ScansLogOverlay():
     '''
@@ -138,7 +157,7 @@ def example58ScansLogOverlay():
         _pysp.overlay( "tt%d" % i, "t%d" % i)
     _pysp.display()
 
-def example56Scans():
+def exampleCreate56Plots():
     '''
     create 56 scans
     '''
@@ -151,9 +170,9 @@ def example56Scans():
         t.y = _np.random.random_sample( (len( t.x), ))*1000.
     _pysp.display()
 
-def example56x3Scans():
+def exampleCreate56x3Plots():
     '''
-    create 56 scans
+    create 56x3 plots
     '''
     _pysp.cls()
     _pysp.delete()
@@ -166,6 +185,26 @@ def example56x3Scans():
         t = _pysp.Scan( name = "t%d_c" % i, lineColor = 'green', nPts = 200, yLabel = 'rand', overlay = "t%d_a" % i)
         t.y = _np.random.random_sample( (len( t.x), ))*1000.
     _pysp.display()
+    return 
+
+def exampleCreatePDF():
+    '''
+    create a pdf file
+    '''
+    _pysp.cls()
+    _pysp.delete()
+
+    _pysp.setTitle( "Create PDF file and send it to the printer")
+    scan = _pysp.Scan( name = 'PDF Output', nPts = 100, xMin = -1., xMax = 1.,
+                           xLabel = 'Position', yLabel = "Counts")
+    
+    scan.y = _np.sin( scan.x)
+
+    _pysp.setWsViewport( "DINA4")
+    _pysp.display()
+
+    _pysp.createPDF( flagPrint = True)
+    return 
 
 def exampleGaussAndSinusOverlay():
     '''
@@ -186,7 +225,7 @@ def exampleGaussAndSinusOverlay():
 
 def exampleGauss():
     '''
-    gauss scan
+    gauss plot
     '''
     _pysp.cls()
     _pysp.delete()
@@ -197,6 +236,7 @@ def exampleGauss():
     sigma = 1.
     g.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g.y-mu)**2/(2*sigma**2))
     _pysp.display()
+    return 
 
 def exampleScanning():
     '''    
@@ -204,16 +244,66 @@ def exampleScanning():
     _pysp.cls()
     _pysp.delete()
     
-    _pysp.setTitle( "sinus, shifted by +1.1")
-    sinus = _pysp.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red')
+    _pysp.setTitle( "scanning")
+    sinus = _pysp.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, autoscaleX = False, lineColor = 'red')
     for i in range( sinus.nPts): 
         sinus.setX( i, i/10. + 0.01)
-        sinus.setY( i, _math.sin( i/10.) + 1.1)
+        sinus.setY( i, _math.sin( i/10.))
         _pysp.display( ['sinus'])
         _time.sleep( 0.01)
+    return 
 
+def exampleScanningAutoscaleX():
+    '''    
+    '''
+    _pysp.cls()
+    _pysp.delete()
+    
+    _pysp.setTitle( "scanning, x-axis is re-scaled")
+    sinus = _pysp.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, autoscaleX = True, lineColor = 'red')
+    for i in range( sinus.nPts): 
+        sinus.setX( i, i/10. + 0.01)
+        sinus.setY( i, _math.sin( i/10.))
+        _pysp.display( ['sinus'])
+        _time.sleep( 0.01)
+    return 
 
-    #_pysp.launchGui()
+def exampleScanningReverse():
+    '''    
+    '''
+    _pysp.cls()
+    _pysp.delete()
+    
+    _pysp.setTitle( "scanning in reverse direction, no re-scale of the x-axis")
+    sinus = _pysp.Scan( name = 'sinus', 
+                        xMin = 0., xMax = 6.0, nPts = 101, 
+                        lineColor = 'red')
+    sinus.xMax = 10.
+    for i in range( sinus.nPts): 
+        x = 10. - i/10.
+        sinus.setX( i, x)
+        sinus.setY( i, _math.sin( i/10.))
+        _pysp.display( ['sinus'])
+        _time.sleep( 0.05)
+    return 
+
+def exampleScanningReverseAutoscaleX():
+    '''    
+    '''
+    _pysp.cls()
+    _pysp.delete()
+    _pysp.setTitle( "scanning in reverse direction, the x-axis is re-scales")
+    sinus = _pysp.Scan( name = 'sinus', 
+                            xMin = 0., xMax = 6.0, nPts = 101, 
+                            autoscaleX = True, 
+                            lineColor = 'red')
+    for i in range( sinus.nPts): 
+        x = 10. - i/10.
+        sinus.x[i] = x
+        sinus.y[i] = _math.sin( i/10.)
+        sinus.currentIndex = i
+        _pysp.display( ['sinus'])
+        _time.sleep( 0.02)
 
 def exampleLissajous(): 
     '''
@@ -241,7 +331,8 @@ def exampleLissajous():
 def exampleOverlay2BothLog(): 
     _pysp.cls()
     _pysp.delete()
-    _pysp.setTitle( "2 Overlay Scans, with log scale")
+    _pysp.setTitle( "2 Overlay Scans, both with log scale")
+    _pysp.setComment( "both axes have different ranges")
     g1 = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = True, nPts = 101, lineColor = 'red')
     mu = 0.
     sigma = 1.
@@ -250,7 +341,7 @@ def exampleOverlay2BothLog():
                     yMax = 1., nPts = 101, lineColor = 'green')
     mu = 0.5
     sigma = 1.2
-    g2.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g2.y-mu)**2/(2.*sigma**2))
+    g2.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g2.y-mu)**2/(2.*sigma**2))*100.
 
     _pysp.overlay( "gauss2", "gauss")
 
@@ -259,7 +350,8 @@ def exampleOverlay2BothLog():
 def exampleOverlay2FirstLog(): 
     _pysp.cls()
     _pysp.delete()
-    _pysp.setTitle( "2 Overlay Scans, first has log scale")
+    _pysp.setTitle( "2 Overlay Scans, first (red) has log scale")
+    _pysp.setComment( "Sadly, there are no major tick mark strings at the right axis")
     g1 = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = True, nPts = 101, lineColor = 'red')
     mu = 0.
     sigma = 1.
@@ -277,7 +369,8 @@ def exampleOverlay2FirstLog():
 def exampleOverlay2SecondLog(): 
     _pysp.cls()
     _pysp.delete()
-    _pysp.setTitle( "2 Overlay Scans, 2nd has log scale, no major tick mark strings")
+    _pysp.setTitle( "2 Overlay Scans, 2nd (green) has log scale")
+    _pysp.setComment( "Sadly, there are no major tick mark strings at the right axis")
     g1 = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = False, nPts = 101, lineColor = 'red')
     mu = 0.
     sigma = 1.
@@ -291,3 +384,32 @@ def exampleOverlay2SecondLog():
     _pysp.overlay( "gauss2", "gauss")
 
     _pysp.display()
+
+def exampleSimpleLog(): 
+    _pysp.cls()
+    _pysp.delete()
+    _pysp.setTitle( "A simple plot")
+    _pysp.setComment( "here would be a comment")
+    g = _pysp.Scan( name = "linear", 
+                   xMin = 0.01, xMax = 5., nPts = 101, 
+                   xLabel = "Position", yLabel = 'Signal', 
+                   yLog = True, 
+                   lineColor = 'red')
+    g.y *= 10.
+    _pysp.display()
+
+    return 
+
+def exampleSimplePlot(): 
+    _pysp.cls()
+    _pysp.delete()
+    _pysp.setTitle( "A simple plot")
+    _pysp.setComment( "here would be a comment")
+    g = _pysp.Scan( name = "linear", 
+                   xMin = 0.01, xMax = 5., nPts = 101, 
+                   xLabel = "Position", yLabel = 'Signal', 
+                   lineColor = 'red')
+    _pysp.display()
+
+    return 
+

@@ -5,7 +5,7 @@ import numpy as np
 import sys
 
 def main():
-    pysp.exampleOverlay2BothLog()
+    pysp.examplePlotsWithTextContainer()
     print "Prtc ",
     sys.stdin.readline()
 

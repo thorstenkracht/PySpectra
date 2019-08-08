@@ -1,34 +1,14 @@
 #!/usr/bin/env python
 
-import PySpectra
+import PySpectra as pysp
 import numpy as np
+import sys
 
-def main(): 
-    '''
-    
-    '''
-    print "testGrphics.testLissayous"
-
-    PySpectra.setWsViewport( "DINA5S")
-    
-    PySpectra.cls()
-    PySpectra.delete()
-    scan = PySpectra.Scan( name = 'Lissajous', nPts = 1000, xMin = -1., xMax = 1.)
-    
-    x  = np.linspace( 0., 6.5, 1000)
-    y  = np.linspace( 0., 6.5, 1000)
-    
-    scan.x = np.cos( x)
-    scan.y = np.sin( y)
-    
-    PySpectra.display()
-    
-    for i in range( 1500):
-        x = x + 0.005
-        scan.plotDataItem.setData(np.cos( x), np.sin( y))
-        PySpectra.processEvents()
-        
+def main():
+    pysp.exampleLissajous()
+    print "Prtc ",
+    sys.stdin.readline()
 
 if __name__ == '__main__': 
     main()
-    PySpectra.launchGui()
+    #pysp.launchGui()
