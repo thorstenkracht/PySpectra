@@ -22,6 +22,7 @@ def exampleLogPlotWithText():
     '''
     _pysp.cls()
     _pysp.delete()
+    _pysp.setWsViewport( "DINA6")
     t1 = _pysp.Scan( name = "t1", xMin = 0.01, xMax = 10., nPts = 101, 
                      lineColor = 'blue', xLabel='Position', yLabel = 'signal', yLog = True)
     t1.addText( text = "a left/center aligned text, should be in the center", x = 0.05, y = 0.5, hAlign = 'left', vAlign = 'center')
@@ -35,6 +36,7 @@ def examplePlotWithSeveralTexts():
     _pysp.delete()
     _pysp.setTitle( "Here could be the title")
     _pysp.setComment( "comment: Sinus(), shifted up by 1.1")
+    _pysp.setWsViewport( "DINA6")
     t1 = _pysp.Scan( name = "t1", xMin = 0.01, xMax = 10., nPts = 101, lineColor = 'blue', xLabel = 'Position', yLabel = 'sin')
     t1.addText( text = "a left/center aligned text", x = 0.05, y = 0.8, hAlign = 'left', vAlign = 'center')
     t1.addText( text = "a right/centeraligned text", x = 0.95, y = 0.8, hAlign = 'right', vAlign = 'center')
@@ -53,6 +55,7 @@ def exampleOverlay2():
     _pysp.delete()
     _pysp.setTitle( "Overlay 2 Scans")
     _pysp.setComment( "no comment")
+    _pysp.setWsViewport( "DINA6")
     g = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, lineColor = 'red')
     mu = 0.
     sigma = 1.
@@ -70,6 +73,7 @@ def exampleOverlayDoty():
     _pysp.cls()
     _pysp.delete()
     _pysp.setTitle( "2 Overlay scans, x-axis tick labels show date")
+    _pysp.setWsViewport( "DINA6")
     t1 = _pysp.Scan( name = "t1", xMin = 0, xMax = 10, nPts = 101, lineColor = 'blue', 
                      xLabel = 'Position', yLabel = 'sin', doty = True)
     t1.y = _np.sin( t1.x)
@@ -87,6 +91,7 @@ def examplePlotsWithTextContainer():
     _pysp.delete()
     _pysp.setTitle( "here could be a title")
     _pysp.setComment( "this is a comment")
+    _pysp.setWsViewport( "DINA6")
     textScan = _pysp.Scan( name = "textContainer", textOnly = True)
     textScan.addText( text = "some information", 
                       x = 0., y = 0.95, color = 'blue')
@@ -107,6 +112,7 @@ def exampleCreate5Plots():
     _pysp.cls()
     _pysp.delete()
     _pysp.setTitle( "5 Scans, t5 is overlaid to t3")
+    _pysp.setWsViewport( "DINA6")
     t1 = _pysp.Scan( name = "t1", lineColor = 'blue', yLabel = 'sin')
     t1.y = _np.sin( t1.x)
     t2 = _pysp.Scan( "t2", xLabel = 'Position', yLabel = 'cos', symbol = '+')
@@ -129,6 +135,7 @@ def exampleCreate22Plots():
     _pysp.delete()
     _pysp.setTitle( "22 Scans")
     _pysp.setComment( "and a comment")
+    _pysp.setWsViewport( "DINA4")
     for i in range( 22): 
         t = _pysp.Scan( name = "t%d" % i, lineColor = 'blue',
                         xLabel = 'Position', yLabel = 'rand')
@@ -144,6 +151,7 @@ def example58ScansLogOverlay():
     _pysp.delete()
     _pysp.setTitle( "58 Scans, log axis, overlay")
     _pysp.setComment( "and a comment")
+    _pysp.setWsViewport( "DINA4")
     textScan = _pysp.Scan( name = "textContainer", textOnly = True)
     textScan.addText( text = "some information", 
                       x = 0., y = 0.95, color = 'blue')
@@ -165,6 +173,7 @@ def exampleCreate56Plots():
     _pysp.delete()
     _pysp.setTitle( "56 Scans")
     _pysp.setComment( "and a comment")
+    _pysp.setWsViewport( "DINA4")
     for i in range( 56): 
         t = _pysp.Scan( name = "t%d_a" % i, lineColor = 'blue', nPts = 200, xLabel = 'Position', yLabel = 'rand')
         t.y = _np.random.random_sample( (len( t.x), ))*1000.
@@ -177,6 +186,7 @@ def exampleCreate56x3Plots():
     _pysp.cls()
     _pysp.delete()
     _pysp.setTitle( "56 x 3 Scans")
+    _pysp.setWsViewport( "DINA4")
     for i in range( 56): 
         t = _pysp.Scan( name = "t%d_a" % i, lineColor = 'blue', nPts = 200, yLabel = 'rand')
         t.y = _np.random.random_sample( (len( t.x), ))*1000.
@@ -191,10 +201,16 @@ def exampleCreatePDF():
     '''
     create a pdf file
     '''
+    printer = _os.getenv( "PRINTER")
+    if printer is None: 
+        print "examplecreatePDF: environment variable PRINTER not defined, returning"
+        return 
+
     _pysp.cls()
     _pysp.delete()
 
     _pysp.setTitle( "Create PDF file and send it to the printer")
+    _pysp.setWsViewport( "DINA6")
     scan = _pysp.Scan( name = 'PDF Output', nPts = 100, xMin = -1., xMax = 1.,
                            xLabel = 'Position', yLabel = "Counts")
     
@@ -213,6 +229,7 @@ def exampleGaussAndSinusOverlay():
     _pysp.cls()
     _pysp.delete()
     _pysp.setTitle( "2 Overlay Scans")
+    _pysp.setWsViewport( "DINA6")
     g = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, lineColor = 'red')
     mu = 0.
     sigma = 1.
@@ -231,6 +248,7 @@ def exampleGauss():
     _pysp.delete()
     _pysp.setTitle( "This is the position of the title")
     _pysp.setComment( "Here would be the comment")
+    _pysp.setWsViewport( "DINA6")
     g = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
     mu = 0.
     sigma = 1.
@@ -245,6 +263,7 @@ def exampleScanning():
     _pysp.delete()
     
     _pysp.setTitle( "scanning")
+    _pysp.setWsViewport( "DINA6")
     sinus = _pysp.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, autoscaleX = False, lineColor = 'red')
     for i in range( sinus.nPts): 
         sinus.setX( i, i/10. + 0.01)
@@ -260,6 +279,7 @@ def exampleScanningAutoscaleX():
     _pysp.delete()
     
     _pysp.setTitle( "scanning, x-axis is re-scaled")
+    _pysp.setWsViewport( "DINA6")
     sinus = _pysp.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, autoscaleX = True, lineColor = 'red')
     for i in range( sinus.nPts): 
         sinus.setX( i, i/10. + 0.01)
@@ -275,6 +295,7 @@ def exampleScanningReverse():
     _pysp.delete()
     
     _pysp.setTitle( "scanning in reverse direction, no re-scale of the x-axis")
+    _pysp.setWsViewport( "DINA6")
     sinus = _pysp.Scan( name = 'sinus', 
                         xMin = 0., xMax = 6.0, nPts = 101, 
                         lineColor = 'red')
@@ -292,7 +313,8 @@ def exampleScanningReverseAutoscaleX():
     '''
     _pysp.cls()
     _pysp.delete()
-    _pysp.setTitle( "scanning in reverse direction, the x-axis is re-scales")
+    _pysp.setTitle( "scanning in reverse direction, the x-axis is re-scaled")
+    _pysp.setWsViewport( "DINA6")
     sinus = _pysp.Scan( name = 'sinus', 
                             xMin = 0., xMax = 6.0, nPts = 101, 
                             autoscaleX = True, 
@@ -333,6 +355,7 @@ def exampleOverlay2BothLog():
     _pysp.delete()
     _pysp.setTitle( "2 Overlay Scans, both with log scale")
     _pysp.setComment( "both axes have different ranges")
+    _pysp.setWsViewport( "DINA6")
     g1 = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = True, nPts = 101, lineColor = 'red')
     mu = 0.
     sigma = 1.
@@ -352,6 +375,7 @@ def exampleOverlay2FirstLog():
     _pysp.delete()
     _pysp.setTitle( "2 Overlay Scans, first (red) has log scale")
     _pysp.setComment( "Sadly, there are no major tick mark strings at the right axis")
+    _pysp.setWsViewport( "DINA6")
     g1 = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = True, nPts = 101, lineColor = 'red')
     mu = 0.
     sigma = 1.
@@ -371,6 +395,7 @@ def exampleOverlay2SecondLog():
     _pysp.delete()
     _pysp.setTitle( "2 Overlay Scans, 2nd (green) has log scale")
     _pysp.setComment( "Sadly, there are no major tick mark strings at the right axis")
+    _pysp.setWsViewport( "DINA6")
     g1 = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = False, nPts = 101, lineColor = 'red')
     mu = 0.
     sigma = 1.
@@ -390,6 +415,7 @@ def exampleSimpleLog():
     _pysp.delete()
     _pysp.setTitle( "A simple plot")
     _pysp.setComment( "here would be a comment")
+    _pysp.setWsViewport( "DINA6")
     g = _pysp.Scan( name = "linear", 
                    xMin = 0.01, xMax = 5., nPts = 101, 
                    xLabel = "Position", yLabel = 'Signal', 
@@ -405,6 +431,7 @@ def exampleSimplePlot():
     _pysp.delete()
     _pysp.setTitle( "A simple plot")
     _pysp.setComment( "here would be a comment")
+    _pysp.setWsViewport( "DINA6")
     g = _pysp.Scan( name = "linear", 
                    xMin = 0.01, xMax = 5., nPts = 101, 
                    xLabel = "Position", yLabel = 'Signal', 
