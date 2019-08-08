@@ -584,7 +584,7 @@ def _setTitle( scan, nameList):
     #   /home/kracht/Misc/pySpectra/examples/create22.py
     #   /home/kracht/Misc/pySpectra/examples/pyqtgraph/create22.py
     #
-    if _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp.definitions.MANY_SCANS: 
+    if True or _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp.definitions.MANY_SCANS: 
         scan.plotItem.setLabel( 'top', text=tempName, size = '%dpx' % fontSize)
     #
     # too many plots, so put the title into the plot
@@ -693,6 +693,17 @@ def _isNotOverlayTarget( scan):
         if scan.name.lower() == elm.overlay.lower():
             return False
     return True
+
+
+class SmartFormat( _pg.AxisItem):
+    def __init__(self, *args, **kwargs):
+        super(SmartFormat, self).__init__(*args, **kwargs)
+
+    def tickStrings(self, values, scale, spacing):
+        if self.logMode:
+            return [ "%g" % x for x in 10 ** _np.array(values).astype(float)]
+        return super( SmartFormat, self).tickStrings( values, scale, spacing)
+
     
 def _createPlotItem( scan, nameList):            
     '''
@@ -734,13 +745,16 @@ def _createPlotItem( scan, nameList):
 
     try:
         if scan.doty: 
-            plotItem = _win.addPlot( axisItems = { 'bottom': _CAxisTime( orientation='bottom')}, 
+            plotItem = _win.addPlot( axisItems = { 'bottom': _CAxisTime( orientation='bottom'),
+                                                   'left': SmartFormat(orientation='left')}, 
                                      row = row, col = col, colspan = scan.colSpan) 
         else:
             #
             # <class 'pyqtgraph.graphicsItems.PlotItem.PlotItem.PlotItem'>
             #
-            plotItem = _win.addPlot( row = row, col = col, colspan = scan.colSpan)
+            plotItem = _win.addPlot( row = row, col = col, colspan = scan.colSpan,
+                                     axisItems={ 'left': SmartFormat(orientation='left'), 
+                                                'bottom': SmartFormat(orientation='bottom')})
 
             
     except Exception, e:
@@ -1115,7 +1129,7 @@ def display( nameList = None):
             # if yLog, the limits have to be supplied as logs
             #
             if scan.yMax <= 0. or scan.yMin <= 0.:
-                raise ValueError( "pqt_graphics.createPlotItem: yLog && (yMin <= 0 %g or yMax <= 0: %g" % \
+                raise ValueError( "pqt_graphics.createPlotItem: yLog && (yMin (%g) <= 0 or yMax (%g) <= 0" % \
                                   (scan.yMin, scan.yMax))
             scan.plotDataItem.setLogMode( False, True)
             scan.viewBox.setYRange( _math.log10( scan.yMin), _math.log10(scan.yMax))
@@ -1140,14 +1154,7 @@ def display( nameList = None):
         
         scan.lastIndex = scan.currentIndex
         _updateTextPosition( scan)
-    #
-    # if e.g. the vertical margin is changes, also the
-    # space for the title shrinks :(
-    #
-    #_win.ci.layout.setContentsMargins( _pysp.definitions.marginLeft, _pysp.definitions.marginTop, 
-    #                                   _pysp.definitions.marginRight, _pysp.definitions.marginBottom)
-    #_win.ci.layout.setHorizontalSpacing( _pysp.definitions.spacingHorizontal)
-    #_win.ci.layout.setVerticalSpacing( _pysp.definitions.spacingVertical)
+
     processEvents()
 
     return

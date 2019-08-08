@@ -277,7 +277,7 @@ def exampleOverlay2FirstLog():
 def exampleOverlay2SecondLog(): 
     _pysp.cls()
     _pysp.delete()
-    _pysp.setTitle( "2 Overlay Scans, 2nd has log scale")
+    _pysp.setTitle( "2 Overlay Scans, 2nd has log scale, no major tick mark strings")
     g1 = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = False, nPts = 101, lineColor = 'red')
     mu = 0.
     sigma = 1.

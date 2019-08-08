@@ -7,7 +7,7 @@ import sys
 def main():
     pysp.cls()
     pysp.delete()
-    t1 = pysp.Scan( name = "t1", xMin = 0.01, xMax = 10., nPts = 101, 
+    t1 = pysp.Scan( name = "t1", xMin = 0.1, xMax = 100., nPts = 101, 
                      lineColor = 'blue', xLabel='Position', yLabel = 'signal', yLog = True)
     t1.addText( text = "a left/center aligned text, should be in the center", 
                 x = 0.05, y = 0.5, hAlign = 'left', vAlign = 'center')

@@ -180,12 +180,6 @@ class Scan( object):
         else:
             self._createScanFromLimits( kwargs)
 
-        #
-        # if we store the scan also in the module name space, we 
-        # can access it via e.g.: pysp.t1
-        #
-        _pysp.__dict__[ name] = self
-        
         self.setAttr( kwargs)
 
         if kwargs:
@@ -494,6 +488,10 @@ class Scan( object):
         '''
         use x and y to calculate xMin, xMax, yMin and yMax
         '''
+        if len( self.x) == 0:
+            raise ValueError( "GQE.Scan.setLimits: %s len(x) == 0" % (self.name))
+        if len( self.y) == 0:
+            raise ValueError( "GQE.Scan.setLimits: %s len(y) == 0" % (self.name))
         self.xMin = _np.min( self.x)
         self.xMax = _np.max( self.x)
         self.yMin = _np.min( self.y)
@@ -741,7 +739,6 @@ def delete( nameLst = None):
                 #
                 _pysp.clear( tmp)
                 #tmp.plotItem.clear()
-            del _pysp.__dict__[ tmp.name]
             _scanIndex = None
         setTitle( None)
         setComment( None)
@@ -757,7 +754,6 @@ def delete( nameLst = None):
                 if _scanList[i].plotItem is not None:
                     _pysp.clear( _scanList[i])
                     #_scanList[i].plotItem.clear()
-                del _pysp.__dict__[ _scanList[i].name]
                 del _scanList[i]
                 break
         else:
@@ -776,7 +772,6 @@ def delete( nameLst = None):
                     #
                     _pysp.clear( _scanList[i])
                     #_scanList[i].plotItem.clear()
-                del _pysp.__dict__[ _scanList[i].name]
                 del _scanList[i]
                 break
         else:

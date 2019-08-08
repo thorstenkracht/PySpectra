@@ -12,6 +12,7 @@ Demonstrates a way to put multiple axes around a single plot.
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 import numpy as np
+import time, sys
 plotItem = None
 viewBox = None
 pw = None
@@ -40,20 +41,26 @@ def main():
     mu = 1.0
     sigma = 0.7
     y2 = 1/(sigma * np.sqrt(2 * np.pi)) * np.exp( - (x - mu)**2 / (2 * sigma**2))
-    
-    pg.mkQApp()
 
-    pw = pg.PlotWidget()
-    pw.show()
-    pw.setWindowTitle('pyqtgraph example: MultiplePlotAxes')
+    pg.setConfigOption( 'background', 'w')
+    pg.setConfigOption( 'foreground', 'k')   
+    app = pg.mkQApp()
 
-    plotItem = pw.plotItem
+    win = pg.GraphicsWindow( title="Overlay, 2 log scales")
+    win.clear()
+
+    win.addLabel( "A figure containing 2 plots", row = 1, col = 1, colspan = 10)
+    win.addLabel( "A comment", row = 2, col = 1, colspan = 10)
+
+    plotItem = win.addPlot( row = 3, col = 1)
     plotItem.setLabels(left='axis 1')
     
     ## create a new ViewBox, link the right axis to its coordinate system
     viewBox = pg.ViewBox()
     
+    plotItem.showAxis('top')
     plotItem.showAxis('right')
+    
     plotItem.scene().addItem(viewBox)
     #
     # Link this axis to a ViewBox, causing its displayed range to 
@@ -81,10 +88,15 @@ def main():
     viewBox.setXRange( -5, 5)
     viewBox.setYRange( -10, 1)
 
+    app.processEvents()
+    time.sleep(0.1)
+    app.processEvents()
+
+    print "Prtc ",
+    sys.stdin.readline()
     
 ## Start Qt event loop unless running in interactive mode or using pyside.
 if __name__ == '__main__':
-    import sys
+
     main()
-    if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
-        QtGui.QApplication.instance().exec_()
+
