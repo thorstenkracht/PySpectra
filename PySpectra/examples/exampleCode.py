@@ -29,6 +29,17 @@ def exampleLogPlotWithText():
     t1.addText( text = "a left/center aligned text, should be in the center", x = 0.05, y = 0.5, hAlign = 'left', vAlign = 'center')
     _pysp.display()
 
+def exampleLogXScale():
+    _pysp.cls()
+    _pysp.delete()
+    _pysp.setWsViewport( "DINA6")
+    _pysp.setTitle( "log x-scale")
+    t1 = _pysp.Scan( name = "t1", xMin = 0.01, xMax = 100., nPts = 101, 
+                    lineColor = 'blue', xLabel='Position', yLabel = 'signal', yLog = False, xLog = True)
+    #t1.addText( text = "a left/center aligned text, should be in the center", x = 0.05, y = 0.5, hAlign = 'left', vAlign = 'center')
+    _pysp.display()
+
+
 def examplePlotWithSeveralTexts():
     '''
     create 1 scan with several texts

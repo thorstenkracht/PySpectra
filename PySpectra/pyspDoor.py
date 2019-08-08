@@ -864,7 +864,7 @@ class spectraDoor( sms.BaseDoor):
                                       'xMax': self.stop,
                                       'lineColor': 'red',
                                       'nPts': npTemp,
-                                      'autorangeX': False}})
+                                      'autoscaleX': False}})
             
         env = self.getEnvironment()
         if env.has_key( 'SignalCounter'):
