@@ -14,6 +14,7 @@ From the command line:
 import PySpectra as _pysp
 import numpy as _np
 import math as _math
+import os as _os
 import time as _time
 
 def exampleLogPlotWithText():
