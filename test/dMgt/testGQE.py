@@ -297,7 +297,7 @@ class testGQE( unittest.TestCase):
             PySpectra.display()
 
         diffTime = time.time() - startTime
-        self.assertLess( diffTime, 5.)
+        self.assertLess( diffTime, 8)
 
         print "testGQE.testFillData, DONE"
 

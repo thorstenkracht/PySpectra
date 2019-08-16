@@ -502,7 +502,7 @@ class testGraphics( unittest.TestCase):
 
         diffTime = time.time() - startTime
 
-        self.assertLess( diffTime, 10.)
+        self.assertLess( diffTime, 12.)
         print "testGraphics.testLissajous, DONE"
 
     def testOverlay2BothLog( self):
