@@ -791,13 +791,16 @@ def display( nameList = None):
         #scan.plotItem.autoscale_view( True, True, True)
 
         scan.lastIndex = scan.currentIndex
-        if scan.yMin is None:
-            scan.plotItem.set_autoscale_on( True)
+        if scan.autoscaleY:
+            scan.plotItem.set_autoscaley_on( True)
         else:
             scan.plotItem.set_ylim( scan.yMin, scan.yMax)
 
         if not scan.doty:
-            scan.plotItem.set_xlim( scan.xMin, scan.xMax)
+            if scan.autoscaleX:
+                scan.plotItem.set_autoscalex_on( True)
+            else:
+                scan.plotItem.set_xlim( scan.xMin, scan.xMax)
 
     #
     # draw() is non-blocking

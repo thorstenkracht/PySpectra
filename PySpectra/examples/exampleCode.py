@@ -392,7 +392,7 @@ def exampleOverlay2FirstLog():
     mu = 0.
     sigma = 1.
     g1.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g1.y-mu)**2/(2.*sigma**2))
-    g2 = _pysp.Scan( name = "gauss2", xMin = -5., yLog = False, 
+    g2 = _pysp.Scan( name = "gauss2", xMin = -5., xMax = 5., yLog = False, 
                     yMax = 1., nPts = 101, lineColor = 'green')
     mu = 0.5
     sigma = 1.2

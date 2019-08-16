@@ -58,13 +58,14 @@ def derivative( name = None, nameNew = None):
     else:
         temp = nameNew
     argout = _GQE.Scan( name = temp, x = scan.x, y = scan.y)
+    argout.currentIndex = scan.currentIndex
 
     x = _np.array( scan.x)
     x = x - x[0]
     y = _np.array( scan.y)
     ty = _np.array( scan.y)
 
-    npoint = len( scan.y)
+    npoint = scan.currentIndex + 1
 
     for i in range( 1, npoint - 1):
       det = (x[i]*x[i+1]*x[i+1] - x[i+1]*x[i]*x[i] - 
@@ -114,10 +115,11 @@ def antiderivativeSciPy(name = None, nameNew = None):
         temp = nameNew
 
     argout = _GQE.Scan( name = temp, x = scan.x, y = scan.y)
+    argout.currentIndex = scan.currentIndex
     #
     #  tested the 3 lines below using sin/cosine
     #
-    for i in range(1, len( scan.x)):
+    for i in range(1, scan.currentIndex + 1):
         temp = _integrate.trapz( scan.y[:i], scan.x[:i])
         argout.setY( i - 1, temp)
 
@@ -147,8 +149,9 @@ def antiderivative( name = None, nameNew = None):
         temp = nameNew
 
     argout = _GQE.Scan( name = temp, x = scan.x, y = scan.y)
+    argout.currentIndex = scan.currentIndex
     argout.y[0] = 0.
-    for i in range(1, len( scan.x)):
+    for i in range(1, scan.currentIndex + 1):
         dx = float(scan.x[i] - scan.x[i-1])
         argout.y[i] = argout.y[i-1] + (scan.y[i] + scan.y[i-1])*0.5*dx
 
@@ -177,8 +180,9 @@ def yToMinusY(name = None, nameNew = None):
         temp = nameNew
 
     argout = _GQE.Scan( name = temp, nPts = len( scan.y))
-
-    argout.x =  scan.x[:] 
-    argout.y = - scan.y[:]
+    argout.currentIndex = scan.currentIndex
+    for i in range( argout.currentIndex + 1): 
+        argout.x[i] =  scan.x[i]
+        argout.y[i] =  -scan.y[i]
 
     return argout

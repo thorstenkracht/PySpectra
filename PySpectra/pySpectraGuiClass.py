@@ -1972,7 +1972,7 @@ class pySpectraGui( QtGui.QMainWindow):
         return 
 
     def cb_show( self): 
-        pysp.show( self.getCheckedNameList())
+        pysp.show()
 
     def cb_pdf( self): 
         fileName = mpl_graphics.createPDF()
