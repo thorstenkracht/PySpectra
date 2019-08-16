@@ -25,6 +25,7 @@ _ScanAttrsPublic = [ 'at', 'autoscaleX', 'autoscaleY', 'colSpan', 'currentIndex'
                      'dType', 'doty', 'fileName', 'lastIndex', 
                      'nPts', 'name', 'ncol', 'nplot', 'nrow', 'overlay', 'showGridX', 'showGridY', 
                      'lineColor', 'lineStyle', 'lineWidth', 
+                     'logWidget', 'motorList', 
                      'symbol', 'symbolColor', 'symbolSize', 
                      'textList', 'textOnly', 'viewBox', 
                      'x', 'xLog', 'xMax', 'xMin',
@@ -208,10 +209,51 @@ class Scan( object):
     def __del__( self): 
         pass
 
-    @staticmethod
-    def move( target): 
+    #@staticmethod
+    #
+    # why do we need a class function for move()
+    #
+    def move( self, target): 
         import PyTango as _PyTango
+        import time as _time
+
         #print "GQE.Scan.move: to", target, "using", Scan.monitorGui.scanInfo
+        #
+        # from moveMotor widget
+        #
+        if self.motorList is not None:
+            if len( self.motorList) != 1:
+                print "GQE.Scan.move: len != 1"
+                return 
+
+            proxy = self.motorList[0]
+            #
+            # stop the motor, if it is moving
+            #
+            if proxy.state() == _PyTango.DevState.MOVING:
+                if self.logWidget is not None:
+                    self.logWidget.append( "Move: stopping %s" % proxy.name()) 
+                proxy.stopMove()
+            while proxy.state() == _PyTango.DevState.MOVING:
+                _time.sleep(0.01)
+
+            msg = "Move %s from %g to %g" % ( proxy.name(), 
+                                             float( proxy.read_attribute( 'Position').value), 
+                                             float( target))
+            reply = _QtGui.QMessageBox.question( None, 'YesNo', msg, _QtGui.QMessageBox.Yes, _QtGui.QMessageBox.No)        
+            if not reply == _QtGui.QMessageBox.Yes:
+                if self.logWidget is not None:
+                    self.logWidget.append( "Move: move not confirmed") 
+                else:
+                    print "Move: move not confirmed"
+                return
+            if self.logWidget is not None:
+                self.logWidget.append( "Moving %s from %g to %g" % ( proxy.name(), 
+                                                                    float( proxy.read_attribute( 'Position').value), 
+                                                                    target))
+            self.motorList[0].Position = target
+            return 
+
         #
         # move() has to be called from the pyspMonitor application
         #
@@ -231,13 +273,14 @@ class Scan( object):
             return
             
         motorArr[motorIndex]['targetPos'] = target
-        r = (motorArr[motorIndex]['targetPos'] - motorArr[motorIndex]['start']) / (motorArr[motorIndex]['stop'] - motorArr[motorIndex]['start']) 
+        r = (motorArr[motorIndex]['targetPos'] - motorArr[motorIndex]['start']) / \
+            (motorArr[motorIndex]['stop'] - motorArr[motorIndex]['start']) 
 
         if length == 1:
             p0 = _PyTango.DeviceProxy( motorArr[0]['name'])
-            msg = "Move %s from %s to %s" % (motorArr[0]['name'], 
-                                             repr(p0.read_attribute( 'Position').value), 
-                                             repr(motorArr[0]['targetPos']))
+            msg = "Move %s from %g to %g" % (motorArr[0]['name'], 
+                                             float(p0.read_attribute( 'Position').value), 
+                                             float( motorArr[0]['targetPos']))
             reply = _QtGui.QMessageBox.question( None, 'YesNo', msg, _QtGui.QMessageBox.Yes, _QtGui.QMessageBox.No)        
 
         #
@@ -410,6 +453,8 @@ class Scan( object):
         self.lineColor = 'red'
         self.lineStyle = 'SOLID'
         self.lineWidth = 1.
+        self.logWidget = None
+        self.motorList = None
         self.mouseProxy = None
         self.mouseClick = None
         self.symbol = 'o'
@@ -430,7 +475,7 @@ class Scan( object):
         self.mouseProxy = None
 
         for attr in [ 'autoscaleX', 'autoscaleY', 'colSpan', 'doty', 'fileName',  
-                      'xLog', 'yLog', 
+                      'xLog', 'yLog', 'logWidget', 'motorList', 
                       'ncol', 'nrow', 'nplot', 'overlay', 'showGridX', 'showGridY', 
                       'lineColor', 'lineStyle', 
                       'symbol', 'symbolColor', 'symbolSize', 

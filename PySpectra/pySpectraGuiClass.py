@@ -620,6 +620,13 @@ class ScanAttributes( QtGui.QMainWindow):
         self.lengthValue = QtGui.QLabel( "%d" % len(self.scan.x))
         self.layout_grid.addWidget( self.lengthValue, row, 1)
         #
+        # currentIndex
+        #
+        self.currentIndexLabel = QtGui.QLabel( "CurrentIndex:")
+        self.layout_grid.addWidget( self.currentIndexLabel, row, 3)
+        self.currentIndexValue = QtGui.QLabel( "%d" % self.scan.currentIndex)
+        self.layout_grid.addWidget( self.currentIndexValue, row, 4)
+        #
         # xMin
         #
         row += 1

@@ -382,7 +382,7 @@ def _prepareMouse( scan):
     #
     scan.mouseLabel = _pg.TextItem( ".", color='b', anchor = (0.5, 0.5))
     scan.mouseLabel.setPos( scan.x[0], scan.y[0])
-    scan.plotItem.addItem( scan.mouseLabel)
+    scan.plotItem.addItem( scan.mouseLabel, ignoreBounds = True)
     scan.mouseLabel.hide()
     return 
 
@@ -1029,7 +1029,10 @@ def display( nameList = None):
         # the problem is that the cursor, or ' ' is placed somewhere on
         # the screen and this may have an influence of the whole graphics
         #
-        if scan.currentIndex == (len( scan.x) - 1) and flagDisplaySingle: 
+        # even after finishing a scan the currentIndex is != len()
+        #
+        #if scan.currentIndex == (len( scan.x) - 1) and flagDisplaySingle: 
+        if flagDisplaySingle: 
             _prepareMouse( scan)
 
         _updateTextPosition( scan)
