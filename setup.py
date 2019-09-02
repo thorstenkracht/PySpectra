@@ -10,19 +10,19 @@
 #   root$ python setup.py install
 #   root$ python setup.py clean
 #
-# to make a debian package ( or e.g. 'DoDebianBuild.pl haso113u' and 'DoDebianInstall.pl hastodt'): 
+# to make a debian package ( or e.g. 'DoDebianBuild.pl haso107tk' and 'DoDebianInstall.pl hastodt'): 
 # 
-# scp dist/python-pyspectra-1.0.tar.gz haso113u:/home/kracht/Misc/DebianBuilds
+# scp dist/python-pyspectra-1.0.tar.gz haso107tk:/home/kracht/Misc/DebianBuilds
 #   we assume that the directory 
-#     haso113u:/home/kracht/Misc/DebianBuilds/python-pyspectra-1.0
+#     haso107tk:/home/kracht/Misc/DebianBuilds/python-pyspectra-1.0
 #   does not exist
 #
-# ssh haso113u cd /home/kracht/Misc/DebianBuilds && /bin/rm -rf python-pyspectra-1.0
-# ssh haso113u "cd /home/kracht/Misc/DebianBuilds && tar xvzf python-pyspectra-1.0.tar.gz"
-# ssh haso113u "cd /home/kracht/Misc/DebianBuilds && mv python-pyspectra-1.0.tar.gz python-pyspectra_1.0.orig.tar.gz"
+# ssh haso107tk cd /home/kracht/Misc/DebianBuilds && /bin/rm -rf python-pyspectra-1.0
+# ssh haso107tk "cd /home/kracht/Misc/DebianBuilds && tar xvzf python-pyspectra-1.0.tar.gz"
+# ssh haso107tk "cd /home/kracht/Misc/DebianBuilds && mv python-pyspectra-1.0.tar.gz python-pyspectra_1.0.orig.tar.gz"
 #
-#   haso113u$ cd python-pyspectra-1.0/
-#   haso113u$ dh_make --native -s -y
+#   haso107tk$ cd python-pyspectra-1.0/
+#   haso107tk$ dh_make --native -s -y
 #     answer question 'Type of package' with 's' 
 #
 #    then change debian/control:
@@ -34,10 +34,10 @@
 #     Build-Depends: python-all, debhelper (>= 8.0.0)
 #     ... 
 #
-#   haso113u$ debuild -us -uc
+#   haso107tk$ debuild -us -uc
 #
-#   haso113u$ cd ..
-#   haso113u$ scp python-pyspectra_1.0_amd64.deb hastodt:/tmp
+#   haso107tk$ cd ..
+#   haso107tk$ scp python-pyspectra_1.0_amd64.deb hastodt:/tmp
 #
 #   root@hastodt# dpkg -r python-pyspectra                      # to remove the package
 #   root@hastodt# dpkg -i /tmp/python-pyspectra_1.0_amd64.deb   # to install the package

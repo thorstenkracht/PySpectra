@@ -799,15 +799,17 @@ def _createPlotItem( scan, nameList):
             scan.plotItem.setLabel( 'bottom', text=scan.xLabel)
         if hasattr( scan, 'yLabel')  and scan.yLabel is not None:
             scan.plotItem.setLabel( 'left', text=scan.yLabel)
-
-    font=_QtGui.QFont()
     #
-    # setPointSize() is device-independent, setPixelSize() not
+    # 2.9.2019, disabled setting of the font size because it seems
+    #           that the defaults are OK
+    #font=_QtGui.QFont()
+    ##
+    ## setPointSize() is device-independent, setPixelSize() not
+    ##
+    #font.setPointSize( _pysp.getTickFontSize( nameList))
     #
-    font.setPointSize( _pysp.getTickFontSize( nameList))
-
-    scan.plotItem.getAxis("bottom").tickFont = font
-    scan.plotItem.getAxis("left").tickFont = font
+    #scan.plotItem.getAxis("bottom").tickFont = font
+    #scan.plotItem.getAxis("left").tickFont = font
             
     #
     # autoscale

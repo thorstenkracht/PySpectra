@@ -101,8 +101,8 @@ class spectraDoor( sms.BaseDoor):
         temp = argin
         #
         # the new measurement group: 
-        #   tango://haso113u.desy.de:10000/expchan/vc_ipetra/1 -> expchan/vc_ipetra/1
-        #   ['tango:', '', 'haso113u.desy.de:10000', 'expchan', 'vc_ipetra', '1']
+        #   tango://haso107tk.desy.de:10000/expchan/vc_ipetra/1 -> expchan/vc_ipetra/1
+        #   ['tango:', '', 'haso107tk.desy.de:10000', 'expchan', 'vc_ipetra', '1']
         #
         if argin.find( 'tango') == 0:
             lst = argin.split("/")

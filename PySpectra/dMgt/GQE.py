@@ -1186,5 +1186,6 @@ def getTickFontSize( nameList):
     else: 
         fontSize = _pysp.definitions.TICK_FONT_SIZE_VERY_SMALL
 
+    print "GQE.getTickFontSize", fontSize
     return fontSize
 

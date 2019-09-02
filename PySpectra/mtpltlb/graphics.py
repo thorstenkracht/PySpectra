@@ -104,7 +104,6 @@ def createPDF( fileName = None, flagPrint = False):
         #_pqt_graphics._initGraphic()
 
     if flagPrint: 
-        #+++_os.system( "evince %s &" % fileName)
         printer = _os.getenv( "PRINTER")
         if printer is None: 
             raise ValueError( "mpl_graphics.createPDF: environment variable PRINTER not defined")
@@ -321,15 +320,16 @@ def _setTitle( scan, nameList):
     else: 
         tempName = scan.name
 
-    fontSize = _pysp.getFontSize( nameList)
+    #fontSize = _pysp.getFontSize( nameList)
  
     if _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp.definitions.MANY_SCANS:
-        scan.plotItem.set_title( tempName, fontsize = fontSize)
+        scan.plotItem.set_title( tempName)
+        #scan.plotItem.set_title( tempName, fontsize = fontSize)
     else:
         scan.plotItem.text( 0.95, 0.8, tempName, 
                             transform = scan.plotItem.transAxes, 
-                            va = 'center', ha = 'right', 
-                            fontsize = fontSize)
+                            va = 'center', ha = 'right')
+                            #fontsize = fontSize)
   
 def _textIsOnDisplay( textStr):
     '''
@@ -397,43 +397,43 @@ def _adjustFigure( nDisplay):
 def _displayTitleComment( nameList):     
     '''
     '''
-    fontSize = _pysp.getFontSize( nameList)
+    #fontSize = _pysp.getFontSize( nameList)
 
     title = _pysp.getTitle()
     if title is not None:
         if not _textIsOnDisplay( title):
             t = Fig.text( 0.5, 0.95, title, va='center', ha='center')
-            t.set_fontsize( fontSize)
+            #t.set_fontsize( fontSize)
     
     comment = _pysp.getComment()
     if comment is not None:
         if title is not None:
             if not _textIsOnDisplay( comment):
                 t = Fig.text( 0.5, 0.90, comment, va='center', ha='center')
-                t.set_fontsize( fontSize)
+                #t.set_fontsize( fontSize)
         else:
             if not _textIsOnDisplay( comment):
                 t = Fig.text( 0.5, 0.95, comment, va='center', ha='center')
-                t.set_fontsize( sz)
+                #t.set_fontsize( sz)
     return
 
 
 def _addTexts( scan, nameList):
     #print "mpl_graphics.addTexts"
 
-    fontSize = _pysp.getFontSize( nameList)
+    #fontSize = _pysp.getFontSize( nameList)
 
     for elm in scan.textList:
 
-        if elm.fontSize is None:
-            sz = fontSize
-        else:
-            sz = elm.fontSize
+        #if elm.fontSize is None:
+        #    sz = fontSize
+        #else:
+        #    sz = elm.fontSize
 
         scan.plotItem.text( elm.x, elm.y, elm.text, 
                             transform = scan.plotItem.transAxes, 
                             va = elm.vAlign, ha = elm.hAlign, 
-                            fontsize = sz, 
+                            # fontsize = sz, 
                             color = elm.color
                         )
 
@@ -478,8 +478,6 @@ def _createPlotItem( scan, nameList):
 
         if scan.textOnly: 
             scan.plotItem.axis( 'off')
-            #+++scan.plotItem.set_xlim( [0., 1.])
-            #+++scan.plotItem.set_ylim( [0., 1.])
             _addTexts( scan, nameList)
             return 
     except Exception, e:
@@ -487,14 +485,15 @@ def _createPlotItem( scan, nameList):
         print repr( e)
         raise ValueError( "graphics.createPlotItem, throwing exception")
     #
+    # see comment pq_graphics
     # set the font size of the tick mark labels
     #
-    fontSize = _pysp.getTickFontSize( nameList)
-
-    for tick in scan.plotItem.xaxis.get_major_ticks():
-                tick.label.set_fontsize(fontSize) 
-    for tick in scan.plotItem.yaxis.get_major_ticks():
-                tick.label.set_fontsize(fontSize) 
+    #fontSize = _pysp.getTickFontSize( nameList)
+    # 
+    #for tick in scan.plotItem.xaxis.get_major_ticks():
+    #            tick.label.set_fontsize(fontSize) 
+    #for tick in scan.plotItem.yaxis.get_major_ticks():
+    #            tick.label.set_fontsize(fontSize) 
 
     #print "mpl_graphics.createPlotItem, autoscale", scan.autoscaleX, scan.autoscaleY
 
