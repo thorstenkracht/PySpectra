@@ -365,6 +365,12 @@ def _make_cb_mouseClicked( scan):
     return a callback function for the mouseClicked signal
     '''
     def mouseClicked(evt):
+
+        if len( evt) != 1:
+            raise ValueError( "pqt_graphics.mouseClicked: len( evt-tuple) != 1, %s" % scan.name)
+            
+        if evt[0].button() != 1: 
+            return 
         mousePoint = scan.plotItem.vb.mapSceneToView(evt[0].scenePos())
         scan.move( mousePoint.x())
     return mouseClicked
