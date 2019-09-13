@@ -268,6 +268,25 @@ def exampleGauss():
     _pysp.display()
     return 
 
+def exampleGauss2():
+    ''' 
+    2 gauss plot
+    '''
+    _pysp.cls()
+    _pysp.delete()
+    _pysp.setTitle( "This is the position of the title")
+    _pysp.setComment( "Two Gauss curves")
+    _pysp.setWsViewport( "DINA5")
+    g = _pysp.Scan( name = "gauss", xMin = -10., xMax = 10., nPts = 101)
+    mu1 = 0.
+    sigma1 = 1.
+    mu2 = 6.5
+    sigma2 = 1.2
+    g.y = 1./(sigma1*_np.sqrt(2.*_np.pi))*_np.exp( -(g.y-mu1)**2/(2*sigma1**2)) + \
+          2./(sigma2*_np.sqrt(2.*_np.pi))*_np.exp( -(g.y-mu2)**2/(2*sigma2**2))
+    _pysp.display()
+    return 
+
 def exampleScanning():
     '''    
     '''

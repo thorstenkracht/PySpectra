@@ -35,12 +35,22 @@ def ssa( xIn, yIn, flagNbs = False, stbr = 3):
       dct['l_back']   left background
 
     '''
+
+    reason2String = { '0': 'ok', 
+                      '1': 'np < 6', 
+                      '2': 'signal-to-background', 
+                      '3': 'no y(i) > 0', 
+                      '4': 'midpoint calc.', 
+                      '5': 'midpoint calc.', 
+                      '6': 'maximum outside x-range', 
+                      '7': 'not a numpy array'}
     status = 1
     reason = 0
     dct = {}
 
     dct['status'] = status
     dct['reason'] = reason
+    dct['reasonString'] = reason2String[ str( dct['reason'])] 
     dct['cms'] = 0
     dct['integral'] = 0
     dct['midpoint'] = 0
@@ -54,6 +64,7 @@ def ssa( xIn, yIn, flagNbs = False, stbr = 3):
     if( type( xIn).__name__ != 'ndarray' or type( yIn).__name__ != 'ndarray'): 
         dct['status'] = 0
         dct['reason'] = 7
+        dct['reasonString'] = reason2String[ str(dct['reason'])]
         return dct
         
     if( xIn[-1] > xIn[0]):
@@ -71,6 +82,7 @@ def ssa( xIn, yIn, flagNbs = False, stbr = 3):
     if len(x) < 6:
         dct['status'] = 0
         dct['reason'] = 1
+        dct['reasonString'] = reason2String[ str(dct['reason'])]
         return dct
 
     b_back = 0
@@ -109,6 +121,7 @@ def ssa( xIn, yIn, flagNbs = False, stbr = 3):
     if( stbr*r_back > y_max or stbr*l_back > y_max):
         dct['status'] = 0
         dct['reason'] = 2
+        dct['reasonString'] = reason2String[ str(dct['reason'])]
         return dct
 
     #
@@ -136,6 +149,7 @@ def ssa( xIn, yIn, flagNbs = False, stbr = 3):
     if flag == 0:
         dct['status'] = 0
         dct['reason'] = 3 # no y > 0
+        dct['reasonString'] = reason2String[ str(dct['reason'])]
         return dct
 
     #
@@ -158,6 +172,7 @@ def ssa( xIn, yIn, flagNbs = False, stbr = 3):
     if flag == 0:
         dct['status'] = 0
         dct['reason'] = 4 # midpoint calc failed
+        dct['reasonString'] = reason2String[ str(dct['reason'])]
         return dct
   
     flag = 0
@@ -174,6 +189,7 @@ def ssa( xIn, yIn, flagNbs = False, stbr = 3):
     if flag == 0:
         dct['status'] = 0
         dct['reason'] = 5  # midpoint calc failed 
+        dct['reasonString'] = reason2String[ str(dct['reason'])]
         return dct
 
     fwhm     =  x_right-x_left
@@ -199,6 +215,7 @@ def ssa( xIn, yIn, flagNbs = False, stbr = 3):
       peak_x < x[0] or peak_x > x[-1]):
         dct['status'] = 0
         dct['reason'] = 6 # max outside x-interval 
+        dct['reasonString'] = reason2String[ str(dct['reason'])]
         return dct
 
     dct['status'] = status

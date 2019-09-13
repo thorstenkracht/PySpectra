@@ -22,16 +22,18 @@ _comment = None
 _wsViewportFixed = False
 
 _ScanAttrsPublic = [ 'at', 'autoscaleX', 'autoscaleY', 'colSpan', 'currentIndex', 
-                     'dType', 'doty', 'fileName', 'lastIndex', 
-                     'nPts', 'name', 'ncol', 'nplot', 'nrow', 'overlay', 'showGridX', 'showGridY', 
+                     'dType', 'doty', 'fileName', 'flagDisplayVLines', 'lastIndex', 
+                     'nPts', 'name', 'ncol', 'nplot', 'nrow', 'overlay', 'overlayUseTargetWindow', 
+                     'showGridX', 'showGridY', 
                      'lineColor', 'lineStyle', 'lineWidth', 
                      'logWidget', 'motorList', 
                      'symbol', 'symbolColor', 'symbolSize', 
                      'textList', 'textOnly', 'viewBox', 
-                     'x', 'xLog', 'xMax', 'xMin',
-                     'xLabel', 'y', 'yLabel', 'yLog', 'yMin', 'yMax', 'yTicksVisible'] 
+                     'x', 'xLog', 'xMax', 'xMin', 'xMaxDisplay', 'xMinDisplay', 
+                     'xLabel', 'y', 'yLabel', 'yLog', 'yMin', 'yMax','yMinDisplay', 'yMaxDisplay',
+                     'yTicksVisible'] 
 
-_ScanAttrsPrivate = [ 'mouseClick', 'mouseLabel', 'mouseProxy', 
+_ScanAttrsPrivate = [ 'infLineLeft', 'infLineRight', 'mouseClick', 'mouseLabel', 'mouseProxy', 
                       'plotItem', 'plotDataItem', 'scene', 'xDateMpl']
 
 class Text(): 
@@ -440,10 +442,12 @@ class Scan( object):
         self.colSpan = 1
         self.doty = False            # x-axis is date-of-the year
         self.fileName = None
+        self.flagDisplayVLines = False
         self.nrow = None
         self.ncol = None
         self.nplot = None
         self.overlay = None
+        self.overlayUseTargetWindow = False
         self.plotItem = None
         self.plotDataItem = None
         self.scene = None
@@ -686,7 +690,80 @@ class Scan( object):
         self.x = _np.copy( x[:count])
         self.y = _np.copy( y[:count])
         return 
+
+    def ssa( self, logWidget = None):
+        '''
+        simple scan analysis interface, called from e.g. PySpectraGuiClass.
+        the x-range may be determined by the VLines. Otherwise the whole
+        x-range is taken.
+        '''
+        lstX = []
+        lstY = []
+
+        if self.flagDisplayVLines: 
+            xi = self.infLineLeft.getPos()[0]
+            xa = self.infLineRight.getPos()[0]
+            if xa < xi: 
+                temp = xa
+                xa = xi
+                xi = temp
+            for i in range( self.currentIndex + 1):
+                #
+                # sorted normally
+                #
+                if self.x[i] >= xi and self.x[i] <= xa: 
+                    lstX.append( self.x[i])
+                    lstY.append( self.y[i])
+            logWidget.append( "ssa: %s limits: %g, %g" % (self.name, xi, xa))
+        else: 
+            lstX = self.x[:self.currentIndex]
+            lstY = self.y[:self.currentIndex]
+            logWidget.append( "ssa: %s total x-range" % (self.name))
+        #
+        # reversed x-values?
+        #
+        if lstX[0] > lstX[-1]:
+            lstX = list( reversed( lstX))
+            lstY = list( reversed( lstY))
+                
+        hsh = _pysp.ssa( _np.array( lstX), _np.array( lstY))
+
+        if hsh[ 'status'] != 1:
+            if logWidget is not None:
+                logWidget.append( "cb_ssa: ssa failed, reason: %s" % hsh[ 'reasonString'])
+            return
+
+        if logWidget is not None: 
+            logWidget.append( " midpoint: %g" % hsh[ 'midpoint'])
+            logWidget.append( " peak-x:   %g" % hsh[ 'peak_x'])
+            logWidget.append( " cms:      %g" % hsh[ 'cms'])
+            logWidget.append( " fwhm:     %g" % hsh[ 'fwhm'])
+            logWidget.append( " integral: %g" % hsh[ 'integral'])
+
+        self.addText( text = "midpoint: %g" % hsh[ 'midpoint'], x = 0.05, y = 0.95, hAlign = 'left', vAlign = 'top')
+        self.addText( text = "peak-x:   %g" % hsh[ 'peak_x'], x = 0.05, y = 0.88, hAlign = 'left', vAlign = 'top')
+        self.addText( text = "cms:      %g" % hsh[ 'cms'], x = 0.05, y = 0.81, hAlign = 'left', vAlign = 'top')
+        self.addText( text = "fwhm:     %g" % hsh[ 'fwhm'], x = 0.05, y = 0.74, hAlign = 'left', vAlign = 'top')
+
+        ssaName = '%s_ssa' % self.name
+        count = 1
+        while getScan( ssaName): 
+            ssaName = '%s_ssa_%-d' % (self.name, count)
+            count += 1
+            
+        res = Scan( name = ssaName, x = self.x[:self.currentIndex], y = self.y[:self.currentIndex],
+                    lineColor = 'None', 
+                    symbolColor = 'blue', symbolSize = 5, symbol = '+')
+
+        a = hsh[ 'integral']
+        mu = hsh[ 'midpoint'] 
+        sigma = hsh[ 'fwhm']/2.3548
         
+        res.y = a/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(res.x-mu)**2/(2*sigma**2))
+        res.overlay = self.name
+        res.overlayUseTargetWindow = True
+        return 
+
 def getScanList():
     '''
     returns the list of scans
@@ -713,7 +790,7 @@ def getScan( name):
     for scan in _scanList:
         if str( name).upper() == scan.name.upper():
             return scan
-    raise ValueError( "GQE.getScan: failed to find %s" % name)
+    return None
 
 def setTitle( text = None): 
     '''
@@ -964,38 +1041,50 @@ def show():
     for scan in _scanList:
         print "%s, nPts %d, xMin %g, xMax %g" % (scan.name, scan.nPts, scan.xMin, scan.xMax)
 
-def _nextScan():
+def _nextScan( name = None):
     '''
-    nextScan/prevScan return the next/previous scan objec
+    nextScan/prevScan return the next/previous scan object
     '''
     global _scanIndex
 
     if len( _scanList) == 0:
         raise ValueError( "GQE._nextScan: scan list empty")
 
-    if _scanIndex is None:
-        _scanIndex = 0
+    if name is not None:
+        for i in range( len(_scanList)): 
+            if _scanList[i].name == name:
+                _scanIndex = i + 1
+                break
     else:
-        _scanIndex += 1
+        if _scanIndex is None:
+            _scanIndex = 0
+        else:
+            _scanIndex += 1
         
     if _scanIndex >= len( _scanList) :
         _scanIndex = 0
 
     return _scanList[ _scanIndex]
 
-def _prevScan():
+def _prevScan( name = None):
     '''
-    nextScan/prevScan return the next/previous scan objec
+    nextScan/prevScan return the next/previous scan object
     '''
     global _scanIndex
 
     if len( _scanList) == 0:
         raise ValueError( "GQE._prevScan: scan list empty")
 
-    if _scanIndex is None:
-        _scanIndex = 0
+    if name is not None:
+        for i in range( len(_scanList)): 
+            if _scanList[i].name == name:
+                _scanIndex = i + 1
+                break
     else:
-        _scanIndex -= 1
+        if _scanIndex is None:
+            _scanIndex = 0
+        else:
+            _scanIndex -= 1
 
     if _scanIndex < 0:
         _scanIndex = len( _scanList) - 1

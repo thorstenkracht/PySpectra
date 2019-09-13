@@ -80,6 +80,9 @@ class QListWidgetTK( QtGui.QListWidget):
     def mouseReleaseEvent( self, event): 
         '''
         left-MB:  change checkState of a scan
+                  does not give the correct item, if 
+                  the user clicked on the checkbox 
+                  instead of the name
         right-MB: opens the attributesWidget
         '''
         if self.name == "filesListWidget":
@@ -104,61 +107,6 @@ class QListWidgetTK( QtGui.QListWidget):
             self.scanAttributes = ScanAttributes( self.parent, item.text())
         return 
 
-class QLineEditTK( QtGui.QLineEdit): 
-    '''
-    '''
-    def __init__( self, parent): 
-        QtGui.QListWidget.__init__(self)
-        self.parent = parent
-        self.history = []
-        self.historyIndex = 0
-
-    def storeHistory( self, text): 
-        if len( self.history) >= HISTORY_MAX: 
-            self.history = self.history[1:]
-        self.history.append( str(text))
-        self.historyIndex = len( self.history) - 1
-        #print "store", self.historyIndex, repr( self.history)
-        return 
-
-    def getPrevious( self): 
-        if self.historyIndex < 0:
-            return ""
-        self.historyIndex -= 1
-        return self.history[ self.historyIndex + 1] 
-        
-    def getNext( self): 
-        if len( self.history) == 0:
-            return ""
-        self.historyIndex += 1
-
-        if self.historyIndex < len( self.history): 
-            return self.history[ self.historyIndex] 
-
-        self.historyIndex -= 1
-        return ""
-
-    def keyPressEvent (self, eventQKeyEvent):
-        key = eventQKeyEvent.key()
-
-        if key == QtCore.Qt.Key_Down:
-            text = self.getNext()
-            self.clear()
-            self.insert( text)
-            #print "key down", key
-        elif key == QtCore.Qt.Key_Up:
-            text = self.getPrevious()
-            self.clear()
-            self.insert( text)
-            #print "key up", key
-        elif key == QtCore.Qt.Key_Return:
-            self.storeHistory( self.text())
-            #print "key return", key
-        else: 
-            #print "else: key", key
-            pass
-
-        return QtGui.QLineEdit.keyPressEvent(self, eventQKeyEvent)
 #
 #
 #
@@ -296,7 +244,7 @@ class PyQtConfig( QtGui.QMainWindow):
         self.statusBar.addPermanentWidget( self.exit) # 'permanent' to shift it right
         self.exit.clicked.connect( self.close)
         self.exit.setShortcut( "Alt+x")
-
+                
     def cb_apply( self):
         line = str(self.marginLeftLineEdit.text())
         if len(line.strip()) > 0: 
@@ -564,24 +512,35 @@ class Config( QtGui.QMainWindow):
 #
 #
 class ScanAttributes( QtGui.QMainWindow):
+
+    objectCounter = 0
     def __init__( self, parent = None, name = None):
         super( ScanAttributes, self).__init__( parent)
+        ScanAttributes.objectCounter += 1
         self.parent = parent
 
         if name is None:
             raise ValueError( "pyspFio.ScanAttributes: name not specified")
         self.name = name
         self.scan = pysp.getScan( self.name)
-        #pysp.show( self.name)
+
+        self.scan.flagDisplayVLines = False
+        pysp.cls()
+        pysp.display( [self.name])
         self.setWindowTitle( "ScanAttributes")
-        #geo = QtGui.QDesktopWidget().screenGeometry(-1)
-        # size
-        #self.setGeometry( geo.width() - 680, 30, 650, 500)
+
         self.prepareWidgets()
 
         self.menuBar = QtGui.QMenuBar()
         self.setMenuBar( self.menuBar)
         self.prepareMenuBar()
+        #
+        # we cannot set the geometry because we can have multiple 
+        #
+        if ScanAttributes.objectCounter == 1: 
+            geoWin = self.geometry()
+            geo = QtGui.QDesktopWidget().screenGeometry(-1)
+            self.setGeometry( geo.width() - 710, 600, geoWin.width(), geoWin.height())
 
         #
         # Status Bar
@@ -595,6 +554,10 @@ class ScanAttributes( QtGui.QMainWindow):
         self.updateTimer.start( int( updateTime*1000))
         self.show()
         
+    def __del__( self): 
+        print "the destructor"
+        return 
+
     def prepareWidgets( self):
         w = QtGui.QWidget()
         #
@@ -724,6 +687,16 @@ class ScanAttributes( QtGui.QMainWindow):
         self.layout_grid.addWidget( self.w_dotyCheckBox, row, 1) 
         self.w_dotyCheckBox.stateChanged.connect( self.cb_dotyChanged)
         #
+        # 
+        #
+        self.flagDisplayVLinesLabel = QtGui.QLabel( "VLines")
+        self.flagDisplayVLinesLabel.setToolTip( "Show vertical lines, if a single scan is displayed\nTo be used with SSA.")
+        self.layout_grid.addWidget( self.flagDisplayVLinesLabel, row, 3)
+        self.w_flagDisplayVLinesCheckBox = QtGui.QCheckBox()
+        self.w_flagDisplayVLinesCheckBox.setChecked( self.scan.flagDisplayVLines)
+        self.layout_grid.addWidget( self.w_flagDisplayVLinesCheckBox, row, 4) 
+        self.w_flagDisplayVLinesCheckBox.stateChanged.connect( self.cb_flagDisplayVLinesChanged)
+        #
         # GridX
         #
         row += 1
@@ -843,15 +816,33 @@ class ScanAttributes( QtGui.QMainWindow):
         self.w_overlayComboBox.currentIndexChanged.connect( self.cb_overlay)
         self.layout_grid.addWidget( self.w_overlayComboBox, row, 1) 
         #
+        # overlayUseTargetWindow
+        #
+        self.overlayUseTargetWindowLabel = QtGui.QLabel( "UseTargetWindow")
+        self.overlayUseTargetWindowLabel.setToolTip( "Use the yMin, yMax of target scan")
+        self.layout_grid.addWidget( self.overlayUseTargetWindowLabel, row, 2)
+        self.w_overlayUseTargetWindowCheckBox = QtGui.QCheckBox()
+        self.w_overlayUseTargetWindowCheckBox.setChecked( self.scan.overlayUseTargetWindow)
+        self.layout_grid.addWidget( self.w_overlayUseTargetWindowCheckBox, row, 3) 
+        self.w_overlayUseTargetWindowCheckBox.stateChanged.connect( self.cb_overlayUseTargetWindowChanged)
+
+        #
         # at
         #
+        row += 1
         self.atLabel = QtGui.QLabel( "at:")
-        self.layout_grid.addWidget( self.atLabel, row, 2)
+        self.layout_grid.addWidget( self.atLabel, row, 0)
         self.atValue = QtGui.QLabel( "%s" % (str(self.scan.at)))
-        self.layout_grid.addWidget( self.atValue, row, 3)
+        self.layout_grid.addWidget( self.atValue, row, 1)
         self.atLineEdit = QtGui.QLineEdit()
         self.atLineEdit.setMaximumWidth( 70)
-        self.layout_grid.addWidget( self.atLineEdit, row, 4)
+        self.layout_grid.addWidget( self.atLineEdit, row, 2)
+
+        #
+        #self.flagDisplayVLines = QtGui.QPushButton(self.tr("VLines")) 
+        #self.statusBar.addPermanentWidget( self.flagDisplayVLines) # 'permanent' to shift it right
+        #self.flagDisplayVLines.clicked.connect( self.cb_toggleDisplayVLines)
+        #self.flagDisplayVLines.setToolTip( "Enable vertical lines to set limits")
 
     #
     # the menu bar
@@ -863,8 +854,28 @@ class ScanAttributes( QtGui.QMainWindow):
         self.exitAction = QtGui.QAction('E&xit', self)        
         self.exitAction.setStatusTip('Exit application')
         #self.exitAction.triggered.connect( sys.exit)
-        self.exitAction.triggered.connect( self.close)
+        self.exitAction.triggered.connect( self.cb_close)
         self.fileMenu.addAction( self.exitAction)
+
+
+        self.utilsMenu = self.menuBar.addMenu('&Utils')
+
+        self.derivativeAction = QtGui.QAction('Derivative', self)        
+        self.derivativeAction.triggered.connect( self.cb_derivative)
+        self.utilsMenu.addAction( self.derivativeAction)
+
+        self.antiderivativeAction = QtGui.QAction('AntiDerivative', self)        
+        self.antiderivativeAction.triggered.connect( self.cb_antiderivative)
+        self.utilsMenu.addAction( self.antiderivativeAction)
+
+        self.y2myAction = QtGui.QAction('Y -> -Y', self)        
+        self.y2myAction.triggered.connect( self.cb_y2my)
+        self.utilsMenu.addAction( self.y2myAction)
+
+        self.ssaAction = QtGui.QAction('SSA', self)        
+        self.ssaAction.triggered.connect( self.cb_ssa)
+        self.utilsMenu.addAction( self.ssaAction)
+
 
         #
         # the activity menubar: help and activity
@@ -887,6 +898,17 @@ class ScanAttributes( QtGui.QMainWindow):
     #
     def prepareStatusBar( self): 
 
+
+        self.back = QtGui.QPushButton(self.tr("&Back")) 
+        self.statusBar.addPermanentWidget( self.back) # 'permanent' to shift it right
+        self.back.clicked.connect( self.cb_back)
+        self.back.setShortcut( "Alt+b")
+
+        self.next = QtGui.QPushButton(self.tr("&Next")) 
+        self.statusBar.addPermanentWidget( self.next) # 'permanent' to shift it right
+        self.next.clicked.connect( self.cb_next)
+        self.next.setShortcut( "Alt+n")
+
         self.display = QtGui.QPushButton(self.tr("&Display")) 
         self.statusBar.addPermanentWidget( self.display) # 'permanent' to shift it right
         self.display.clicked.connect( self.cb_display)
@@ -899,28 +921,69 @@ class ScanAttributes( QtGui.QMainWindow):
 
         self.exit = QtGui.QPushButton(self.tr("&Exit")) 
         self.statusBar.addPermanentWidget( self.exit) # 'permanent' to shift it right
-        self.exit.clicked.connect( self.close)
+        self.exit.clicked.connect( self.cb_close)
         self.exit.setShortcut( "Alt+x")
 
+
+    def cb_next( self): 
+        nextScan = pysp.dMgt.GQE._nextScan( self.name)
+        index = pysp.dMgt.GQE._getIndex( nextScan.name)
+        self.name = nextScan.name
+        self.scan = nextScan
+        pysp.cls()
+        pysp.display( [ self.name])
+        self.parent.scansListWidget.setCurrentRow( index)
+        return 
+
+    def cb_back( self): 
+        prevScan = pysp.dMgt.GQE._prevScan( self.name)
+        index = pysp.dMgt.GQE._getIndex( prevScan.name)
+        self.name = prevScan.name
+        self.scan = prevScan
+        pysp.cls()
+        pysp.display( [ self.name])
+        self.parent.scansListWidget.setCurrentRow( index)
+
+    def cb_derivative( self):
+        pysp.derivative( self.scan.name)
+
+    def cb_antiderivative( self):
+        pysp.antiderivative( self.scan.name)
+
+    def cb_y2my( self):
+        pysp.yToMinusY( self.scan.name)
+
+    def cb_ssa( self):
+        self.scan.ssa( self.logWidget)
+
+        pysp.cls()
+        pysp.display()
+
+    def cb_close( self): 
+        ScanAttributes.objectCounter -= 1
+        self.close()
+        return
+        
     def cb_autoscaleXChanged( self): 
         self.scan.autoscaleX = self.autoscaleXCheckBox.isChecked()
         pysp.cls()
-        pysp.display( self.parent.getCheckedNameList())
+        #pysp.display( self.parent.getCheckedNameList())
+        pysp.display( [self.name])
 
     def cb_autoscaleYChanged( self): 
         self.scan.autoscaleY = self.autoscaleYCheckBox.isChecked()
         pysp.cls()
-        pysp.display( self.parent.getCheckedNameList())
+        pysp.display( [self.name])
 
     def cb_xLogChanged( self): 
         self.scan.xLog = self.xLogCheckBox.isChecked()
         pysp.cls()
-        pysp.display( self.parent.getCheckedNameList())
+        pysp.display( [self.name])
 
     def cb_yLogChanged( self): 
         self.scan.yLog = self.yLogCheckBox.isChecked()
         pysp.cls()
-        pysp.display( self.parent.getCheckedNameList())
+        pysp.display( [self.name])
 
     def cb_apply( self):
         line = str(self.xMinLineEdit.text())
@@ -975,7 +1038,7 @@ class ScanAttributes( QtGui.QMainWindow):
         temp = self.w_lineColorComboBox.currentText()
         self.scan.lineColor = str( temp)
         pysp.cls()
-        pysp.display( self.parent.getCheckedNameList())
+        pysp.display( [ self.name])
         return
 
     def cb_lineStyle( self): 
@@ -984,28 +1047,28 @@ class ScanAttributes( QtGui.QMainWindow):
         if self.scan.lineStyle == 'None': 
             self.scan.lineStyle = None
         pysp.cls()
-        pysp.display( self.parent.getCheckedNameList())
+        pysp.display( [ self.name])
         return
 
     def cb_lineWidth( self): 
         temp = self.w_lineWidthComboBox.currentText()
         self.scan.lineWidth = float( temp)
         pysp.cls()
-        pysp.display( self.parent.getCheckedNameList())
+        pysp.display( [ self.name])
         return
 
     def cb_symbolSize( self): 
         temp = self.w_symbolSizeComboBox.currentText()
         self.scan.symbolSize = int( temp)
         pysp.cls()
-        pysp.display( self.parent.getCheckedNameList())
+        pysp.display( [ self.name])
         return
 
     def cb_symbolColor( self): 
         temp = self.w_symbolColorComboBox.currentText()
         self.scan.symbolColor = str( temp)
         pysp.cls()
-        pysp.display()
+        pysp.display( [ self.name])
         return
 
     def cb_symbol( self): 
@@ -1015,16 +1078,16 @@ class ScanAttributes( QtGui.QMainWindow):
                 temp = k
         self.scan.symbol = str( temp)
         pysp.cls()
-        pysp.display( self.parent.getCheckedNameList())
+        pysp.display( [ self.name])
         return
 
     def cb_overlay( self): 
         temp = str( self.w_overlayComboBox.currentText())
-        if temp == 'None': 
+        if temp.lower() == 'none': 
             temp = None
         self.scan.overlay = temp
         pysp.cls()
-        pysp.display( self.parent.getCheckedNameList())
+        pysp.display( [ self.name])
         return
         
     def cb_refreshAttr( self):
@@ -1038,9 +1101,57 @@ class ScanAttributes( QtGui.QMainWindow):
         self.activity.setTitle( ACTIVITY_SYMBOLS[ self.activityIndex])
         self.updateTimer.stop()
 
+        self.nameValue.setText( self.name)
+        self.lengthValue.setText( "%d" % len( self.scan.x))
+        self.currentIndexLabel.setText( "%s" % self.scan.currentIndex)
+        self.xMinValue.setText( "%g" % self.scan.xMin)
+        self.xMaxValue.setText( "%g" % self.scan.xMax)
+        if self.scan.yMin is None:
+            self.yMinValue.setText( "None")
+        else:
+            self.yMinValue.setText( "%g" % self.scan.yMin)
+        if self.scan.yMax is None:
+            self.yMaxValue.setText( "None")
+        else:
+            self.yMaxValue.setText( "%g" % self.scan.yMax)
+
+        self.autoscaleXCheckBox.setChecked( self.scan.autoscaleX)
+        self.autoscaleYCheckBox.setChecked( self.scan.autoscaleY)
+
+        self.xLogCheckBox.setChecked( self.scan.xLog)
+        self.yLogCheckBox.setChecked( self.scan.yLog)
+
+        self.w_dotyCheckBox.setChecked( self.scan.doty)
+
+        self.w_lineStyleComboBox.setCurrentIndex( pysp.definitions.lineStyleDct[ self.scan.lineStyle.upper()])
+        self.w_lineWidthComboBox.setCurrentIndex( pysp.definitions.lineWidthDct[ str( self.scan.lineWidth)])
+
+        self.w_symbolColorComboBox.setCurrentIndex( 
+            pysp.definitions.lineColorDct[ str( self.scan.symbolColor).upper()])
+        self.w_symbolComboBox.setCurrentIndex( pysp.definitions.symbolDct[ str( self.scan.symbol)])
+        self.w_symbolSizeComboBox.setCurrentIndex( 
+            pysp.definitions.symbolSizeDct[ str( self.scan.symbolSize)])
+
+        self.atValue.setText( "%s" % (str(self.scan.at)))
+
         #self.w_gridXCheckBox.setCheckState( self.scan.showGridX) 
         #self.w_gridYCheckBox.setCheckState( self.scan.showGridY) 
         self.updateTimer.start( int( updateTime*1000))
+
+    def cb_toggleDisplayVLines( self): 
+        if self.scan.flagDisplayVLines: 
+            self.scan.flagDisplayVLines = False
+        else: 
+            self.scan.flagDisplayVLines = True
+
+        pysp.cls()
+        pysp.display()
+        return 
+        
+    def cb_ssa( self): 
+        self.scan.ssa( self.parent.logWidget)
+        pysp.cls()
+        pysp.display()
 
     def cb_display( self): 
         pysp.cls()
@@ -1061,22 +1172,31 @@ class ScanAttributes( QtGui.QMainWindow):
     def cb_dotyChanged( self):
         self.scan.doty = self.w_dotyCheckBox.isChecked()
         pysp.cls()
-        pysp.display()
+        pysp.display( [ self.scan.name])
+        return 
 
+    def cb_flagDisplayVLinesChanged( self):
+        self.scan.flagDisplayVLines = self.w_flagDisplayVLinesCheckBox.isChecked()
+        pysp.cls()
+        pysp.display( [ self.scan.name])
+        return 
+
+    def cb_overlayUseTargetWindowChanged( self):
+        self.scan.overlayUseTargetWindow = self.w_overlayUseTargetWindowCheckBox.isChecked()
+        pysp.cls()
+        pysp.display( [ self.scan.name])
         return 
 
     def cb_gridXChanged( self):
         self.scan.showGridX = self.w_gridXCheckBox.isChecked()
         pysp.cls()
-        pysp.display()
-
+        pysp.display( [ self.scan.name])
         return 
 
     def cb_gridYChanged( self):
         self.scan.showGridY = self.w_gridYCheckBox.isChecked()
         pysp.cls()
-        pysp.display()
-
+        pysp.display( self.parent.getCheckedNameList())
         return 
 #
 #
@@ -1431,7 +1551,7 @@ class pySpectraGui( QtGui.QMainWindow):
 
     def addScanFrame( self): 
         '''
-        Prev | All | Checked | Next
+        Back | All | Checked | Next
         '''
 
         frame = QtGui.QFrame()
@@ -1444,22 +1564,16 @@ class pySpectraGui( QtGui.QMainWindow):
         #
         hBox = QtGui.QHBoxLayout()
 
-        self.lineEdit = QLineEditTK( self)
-        hBox.addWidget( self.lineEdit)
-        self.layout_frame_v.addLayout( hBox)
-        QtCore.QObject.connect( self.lineEdit, 
-                                QtCore.SIGNAL("returnPressed()"),self.cb_lineEdit)
-        self.lineEdit.hide()
         #
-        # prev, all, checked, next
+        # back, all, checked, next
         #
         hBox = QtGui.QHBoxLayout()
         hBox.addStretch()            
 
-        self.prev = QtGui.QPushButton(self.tr("&Prev"))
-        hBox.addWidget( self.prev)
-        self.prev.clicked.connect( self.cb_prev)
-        self.prev.setShortcut( "Alt+p")
+        self.back = QtGui.QPushButton(self.tr("&Back"))
+        hBox.addWidget( self.back)
+        self.back.clicked.connect( self.cb_back)
+        self.back.setShortcut( "Alt+b")
 
         self.all = QtGui.QPushButton(self.tr("&All"))
         hBox.addWidget( self.all)
@@ -1685,7 +1799,7 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.cls()
         pysp.display()
 
-    def cb_prev( self): 
+    def cb_back( self): 
         scan = pysp.dMgt.GQE._prevScan()
         index = pysp.dMgt.GQE._getIndex( scan.name)
         pysp.cls()
@@ -1699,15 +1813,6 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.display( [ scan.name])
         self.scansListWidget.setCurrentRow( index)
 
-    def cb_lineEdit( self): 
-        #+++pysp.ipython.ifc.command( str(self.lineEdit.text()))
-        try: 
-            exec str( self.lineEdit.text())
-        except Exception, e:
-            self.logWidget.append( "command: %s" % str( self.lineEdit.text()))
-            self.logWidget.append( "caused the exception\n %s" % repr( e))
-            
-        self.lineEdit.clear()
     #
     # the menu bar
     #
@@ -1721,6 +1826,10 @@ class pySpectraGui( QtGui.QMainWindow):
         self.writeFileAction.setStatusTip('Write .fio file')
         self.writeFileAction.triggered.connect( self.cb_writeFile)
         self.fileMenu.addAction( self.writeFileAction)
+
+        self.editAction = QtGui.QAction('Edit', self)        
+        self.editAction.triggered.connect( self.cb_edit)
+        self.fileMenu.addAction( self.editAction)
 
         self.createPDFAction = QtGui.QAction('Create PDF', self)        
         self.createPDFAction.setStatusTip('Create a PDF file')
@@ -1737,12 +1846,6 @@ class pySpectraGui( QtGui.QMainWindow):
             self.matplotlibAction.setStatusTip('Launch matplotlib to create ps or pdf output')
             self.matplotlibAction.triggered.connect( self.cb_matplotlib)
             self.fileMenu.addAction( self.matplotlibAction)
-
-        self.miscMenu = self.menuBar.addMenu('Misc')
-
-        self.editAction = QtGui.QAction('Edit', self)        
-        self.editAction.triggered.connect( self.cb_edit)
-        self.miscMenu.addAction( self.editAction)
 
         self.utilsMenu = self.menuBar.addMenu('&Utils')
 
@@ -1798,11 +1901,35 @@ class pySpectraGui( QtGui.QMainWindow):
         self.dina6sAction.triggered.connect( lambda : pysp.setWsViewport( 'dina6s'))
         self.optionsMenu.addAction( self.dina6sAction)
 
+
+        self.exitAction = QtGui.QAction('E&xit', self)        
+        self.exitAction.setStatusTip('Exit application')
+        self.exitAction.triggered.connect( self.cb_close)
+        self.fileMenu.addAction( self.exitAction)
+
+
+        self.configMenu = self.menuBar.addMenu('&Config')
+
+        self.pyqtConfigAction = QtGui.QAction('PyQtConfig', self)        
+        self.pyqtConfigAction.triggered.connect( self.cb_pyqtConfig)
+        self.configMenu.addAction( self.pyqtConfigAction)
+
+        self.configAction = QtGui.QAction('Config', self)        
+        self.configAction.triggered.connect( self.cb_config)
+        self.configMenu.addAction( self.configAction)
+
+        #
+        # the activity menubar: help and activity
+        #
+        self.menuBarActivity = QtGui.QMenuBar( self.menuBar)
+        self.menuBar.setCornerWidget( self.menuBarActivity, QtCore.Qt.TopRightCorner)
+
         #
         # examples
         #
-        self.examplesMenu = self.menuBar.addMenu('&Examples')
+        self.examplesMenu = self.menuBarActivity.addMenu('&Examples')
 
+        # /home/kracht/Misc/pySpectra/PySpectra/examples/exampleCode.py
         for funcName in dir( pysp.examples.exampleCode):
             if funcName.find( 'example') != 0: 
                 continue
@@ -1813,39 +1940,13 @@ class pySpectraGui( QtGui.QMainWindow):
         action = QtGui.QAction( "View code", self)        
         action.triggered.connect( self.cb_displayExampleCode)
         self.examplesMenu.addAction( action)
-
-        self.exitAction = QtGui.QAction('E&xit', self)        
-        self.exitAction.setStatusTip('Exit application')
-        self.exitAction.triggered.connect( self.cb_close)
-        self.fileMenu.addAction( self.exitAction)
-
-
-        self.debugMenu = self.menuBar.addMenu('&Debug')
-
-        self.execAction = QtGui.QAction('Python command line', self)        
-        self.execAction.triggered.connect( self.cb_exec)
-        self.debugMenu.addAction( self.execAction)
-
-        self.pyqtConfigAction = QtGui.QAction('PyQtConfig', self)        
-        self.pyqtConfigAction.triggered.connect( self.cb_pyqtConfig)
-        self.debugMenu.addAction( self.pyqtConfigAction)
-
-        self.configAction = QtGui.QAction('Config', self)        
-        self.configAction.triggered.connect( self.cb_config)
-        self.debugMenu.addAction( self.configAction)
-
-        #
-        # the activity menubar: help and activity
-        #
-        self.menuBarActivity = QtGui.QMenuBar( self.menuBar)
-        self.menuBar.setCornerWidget( self.menuBarActivity, QtCore.Qt.TopRightCorner)
-
         #
         # Help menu (bottom part)
         #
         self.helpMenu = self.menuBarActivity.addMenu('Help')
         self.widgetAction = self.helpMenu.addAction(self.tr("Widget"))
         self.widgetAction.triggered.connect( self.cb_helpWidget)
+
 
         self.activityIndex = 0
         self.activity = self.menuBarActivity.addMenu( "_")
@@ -1860,6 +1961,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.clsBtn = QtGui.QPushButton(self.tr("&Cls")) 
         self.statusBar.addWidget( self.clsBtn) 
         self.clsBtn.clicked.connect( self.cb_cls)
+        self.clsBtn.setToolTip( "Clear the graphics window")
         self.clsBtn.setShortcut( "Alt+c")
 
         self.deleteBtn = QtGui.QPushButton(self.tr("&Delete")) 
@@ -1867,12 +1969,6 @@ class pySpectraGui( QtGui.QMainWindow):
         self.deleteBtn.clicked.connect( self.cb_delete)
         self.deleteBtn.setToolTip( "Delete checked scans")
         self.deleteBtn.setShortcut( "Alt+d")
-
-        self.showBtn = QtGui.QPushButton(self.tr("&Show")) 
-        self.statusBar.addWidget( self.showBtn) 
-        self.showBtn.clicked.connect( self.cb_show)
-        self.showBtn.setToolTip( "Print info about checked scans (or all scans)")
-        self.showBtn.setShortcut( "Alt+s")
 
         if self.useMatplotlib:
             self.matplotlibBtn = QtGui.QPushButton(self.tr("&Matplotlib")) 
@@ -1971,9 +2067,6 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.display()
         return 
 
-    def cb_show( self): 
-        pysp.show()
-
     def cb_pdf( self): 
         fileName = mpl_graphics.createPDF()
         if fileName:
@@ -2017,13 +2110,6 @@ class pySpectraGui( QtGui.QMainWindow):
             editor = 'emacs'
         os.system( "%s %s&" % (editor, fName))
         
-    def cb_exec( self): 
-        if self.lineEdit.isHidden(): 
-            self.lineEdit.show()
-        else:
-            self.lineEdit.hide()
-            
-
     def cb_derivative( self):
         displayList = pysp.dMgt.GQE._getDisplayList()
         if len( displayList) != 1:
@@ -2051,17 +2137,10 @@ class pySpectraGui( QtGui.QMainWindow):
             self.logWidget.append( "cb_ssa: expecting 1 displayed scan")
             return 
         scan = displayList[0]
-        hsh = pysp.ssa( scan.x, scan.y)
-        if hsh[ 'status'] != 1:
-            self.logWidget.append( "cb_ssa: ssa failed")
-            return
+        scan.ssa( self.logWidget)
 
-        scan.addText( text = "midpoint: %g" % hsh[ 'midpoint'], x = 0.05, y = 0.95, hAlign = 'left', vAlign = 'top')
-        scan.addText( text = "peak-x:   %g" % hsh[ 'peak_x'], x = 0.05, y = 0.88, hAlign = 'left', vAlign = 'top')
-        scan.addText( text = "cms:      %g" % hsh[ 'cms'], x = 0.05, y = 0.81, hAlign = 'left', vAlign = 'top')
-        scan.addText( text = "fwhm:     %g" % hsh[ 'fwhm'], x = 0.05, y = 0.74, hAlign = 'left', vAlign = 'top')
         pysp.cls()
-        pysp.display( [scan.name])
+        pysp.display()
 
     def cb_writeFile( self):
         pysp.write()

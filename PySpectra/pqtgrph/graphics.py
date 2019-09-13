@@ -369,10 +369,22 @@ def _make_cb_mouseClicked( scan):
         if len( evt) != 1:
             raise ValueError( "pqt_graphics.mouseClicked: len( evt-tuple) != 1, %s" % scan.name)
             
-        if evt[0].button() != 1: 
-            return 
-        mousePoint = scan.plotItem.vb.mapSceneToView(evt[0].scenePos())
-        scan.move( mousePoint.x())
+        # left mouse button
+        if evt[0].button() == 1: 
+            mousePoint = scan.plotItem.vb.mapSceneToView(evt[0].scenePos())
+            scan.move( mousePoint.x())
+        # middle mouse button
+        #elif evt[0].button() == 4:
+        #    mousePoint = scan.plotItem.vb.mapSceneToView(evt[0].scenePos())
+        #    scan.autoscaleX = False
+        #    if not scan.flagSetXMin: 
+        #        scan.xMin = mousePoint.x()
+        #        scan.flagSetXMin = True
+        #        scan.flagSetXMax = False
+        #    elif not scan.flagSetXMax: 
+        #        scan.xMax = mousePoint.x()
+        #        scan.flagSetXMin = False
+        #        scan.flagSetXMax = True
     return mouseClicked
 
 def _prepareMouse( scan):
@@ -391,6 +403,23 @@ def _prepareMouse( scan):
     scan.plotItem.addItem( scan.mouseLabel, ignoreBounds = True)
     scan.mouseLabel.hide()
     return 
+
+def _addInfiniteLines( scan): 
+    if scan.currentIndex < 5:
+        return 
+    if not scan.flagDisplayVLines:
+        return 
+
+    scan.infLineLeft = _pg.InfiniteLine(movable=True, angle=90, label='x={value:0.2f}', 
+                                    labelOpts={'position':0.1, 'color': (0,0,0), 'movable': True})
+    scan.infLineRight = _pg.InfiniteLine(movable=True, angle=90, label='x={value:0.2f}', 
+                                    labelOpts={'position':0.1, 'color': (0,0,0), 'movable': True})
+    lIndex = int( scan.currentIndex*0.25)
+    rIndex = int( scan.currentIndex*0.75)
+    scan.plotItem.addItem( scan.infLineLeft)
+    scan.plotItem.addItem( scan.infLineRight)
+    scan.infLineLeft.setPos( scan.x[lIndex])
+    scan.infLineRight.setPos( scan.x[rIndex])
 
 def _textIsOnDisplay( textStr):
     '''
@@ -710,7 +739,6 @@ class SmartFormat( _pg.AxisItem):
             return [ "%g" % x for x in 10 ** _np.array(values).astype(float)]
         return super( SmartFormat, self).tickStrings( values, scale, spacing)
 
-    
 def _createPlotItem( scan, nameList):            
     '''
     create a plotItem, aka viewport (?) with title, axis descriptions and texts
@@ -836,7 +864,6 @@ def _createPlotItem( scan, nameList):
 
     if scan.yMin is None or scan.yMax is None:
         arY = True
-
     #
     # problem: autoscale needs padding != 0
     #
@@ -904,6 +931,8 @@ def display( nameList = None):
     # don't want to check for nameListis None below
     #
     global _clsFunctions
+    #import HasyUtils
+    #HasyUtils.printCallStack()
 
     startTime = _time.time()
 
@@ -1028,6 +1057,7 @@ def display( nameList = None):
         #
         scan.plotDataItem.setData( scan.x[:(scan.currentIndex + 1)], 
                                    scan.y[:(scan.currentIndex + 1)])
+
         #
         # keep track of what has already been displayed
         #
@@ -1042,8 +1072,10 @@ def display( nameList = None):
         #if scan.currentIndex == (len( scan.x) - 1) and flagDisplaySingle: 
         if flagDisplaySingle: 
             _prepareMouse( scan)
+            _addInfiniteLines( scan)
 
         _updateTextPosition( scan)
+
     #
     # --- second pass: display overlaid scans
     #
@@ -1123,12 +1155,12 @@ def display( nameList = None):
                 #curveItem = _pg.PlotCurveItem( x = scan.x, y = scan.y, pen = _getPen( scan))
                 scan.plotDataItem = _pg.PlotDataItem( x = scan.x, y = scan.y, pen = _getPen( scan))
             else:
-                scan.plotDataItem = _pg.PlotDataItem( x = scan.x, y = scan.y, pen = _getPen( scan))
-                #curveItem = _pg.ScatterPlotItem( x = scan.x, y = scan.y,
-                #                                 symbol = scan.symbol, 
-                #                                 pen = _pysp.definitions.colorCode[ scan.symbolColor.lower()], 
-                #                                 brush = _pysp.definitions.colorCode[ scan.symbolColor.lower()], 
-                #                                 size = scan.symbolSize)
+                #scan.plotDataItem = _pg.PlotDataItem( x = scan.x, y = scan.y, pen = _getPen( scan))
+                scan.plotDataItem = _pg.ScatterPlotItem( x = scan.x, y = scan.y,
+                                                         symbol = scan.symbol, 
+                                                         pen = _pysp.definitions.colorCode[ scan.symbolColor.lower()], 
+                                                         brush = _pysp.definitions.colorCode[ scan.symbolColor.lower()], 
+                                                         size = scan.symbolSize)
             scan.viewBox.addItem( scan.plotDataItem )
                 
         if scan.yLog:
@@ -1141,6 +1173,17 @@ def display( nameList = None):
             scan.plotDataItem.setLogMode( False, True)
             scan.viewBox.setYRange( _math.log10( scan.yMin), _math.log10(scan.yMax))
         else:
+            if scan.overlayUseTargetWindow:
+                if target.autoscaleY:
+                    mi = _np.min( target.y[:target.currentIndex])
+                    ma = _np.max( target.y[:target.currentIndex])
+                    scan.viewBox.setYRange( mi, ma)
+                    target.plotItem.setYRange( mi, ma)
+                    scan.xMin = mi
+                    scan.xMax = ma
+                else: 
+                    scan.viewBox.setYRange( target.yMin, target.yMax)
+
             #scan.plotItem.setYRange( scan.yMin, scan.yMax)
             pass
         #
