@@ -419,14 +419,6 @@ class testGQE( unittest.TestCase):
         with self.assertRaises( ValueError) as context:
             PySpectra.delete()
             scan = PySpectra.Scan( name = 't1')
-            ret = PySpectra.getScan( 't2')
-        #print repr( context.exception)
-        self.assertTrue( "GQE.getScan: failed to find t2" in context.exception)
-
-
-        with self.assertRaises( ValueError) as context:
-            PySpectra.delete()
-            scan = PySpectra.Scan( name = 't1')
             PySpectra.delete( 't2')
         #print repr( context.exception)
         self.assertTrue( "GQE.delete: not found t2" in context.exception)
