@@ -76,8 +76,10 @@ def createPDF( printer = None, fileName = None, flagPrint = False, format = 'DIN
 
     if fileName.find( '.pdf') == -1:
         fileName += ".pdf"
-    if _os.system( "/usr/local/bin/vrsn -s -nolog %s" % fileName):
-        print "graphics.createPDF: failed to save the current version of %s" % fileName
+ 
+    if _os.path.exists( "/usr/local/bin/vrsn"):
+        if _os.system( "/usr/local/bin/vrsn -s -nolog %s" % fileName):
+            print "graphics.createPDF: failed to save the current version of %s" % fileName
     
     try:
         # 
