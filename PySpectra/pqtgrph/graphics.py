@@ -716,9 +716,9 @@ def _setAutoscaleForOverlaid( scan, target):
     #scan.viewBox.enableAutoscale( x = aX, y = aY)
     return 
 
-def _isNotOverlayTarget( scan): 
+def _isOverlayTarget( scan, nameList): 
     '''
-    returns True, if scan is the target for the overlay 
+    returns True, if the scan is the target for the overlay 
     of another scan
     '''
     scanList = _pysp.getScanList()
@@ -726,8 +726,12 @@ def _isNotOverlayTarget( scan):
         if elm.overlay is None: 
             continue
         if scan.name.lower() == elm.overlay.lower():
-            return False
-    return True
+            #
+            # is the overlaid scan really displayed?
+            #
+            if elm.name.lower() in nameList:
+                return True
+    return False
 
 
 class SmartFormat( _pg.AxisItem):
@@ -764,7 +768,7 @@ def _createPlotItem( scan, nameList):
     row += 2
     
     if _isCellTaken( row, col):
-        raise ValueError( "graphics.createPlotItem: cell (%d, %d) is already taken" % ( row, col))
+        raise ValueError( "pqt_graphics.createPlotItem: cell (%d, %d) is already taken" % ( row, col))
     #
     # the textContainer
     #
@@ -815,7 +819,7 @@ def _createPlotItem( scan, nameList):
     # plot the right axis here, if the scan is not the target
     # of another scan which is overlaid.
     #
-    if _isNotOverlayTarget( scan):
+    if not _isOverlayTarget( scan, nameList):
         scan.plotItem.showAxis('right')
         scan.plotItem.getAxis('right').style[ 'showValues'] = False #  not working on Debian-8, 0.9.8-3 
     #
@@ -823,7 +827,7 @@ def _createPlotItem( scan, nameList):
     #
     if _pg.__version__ is None: 
         scan.plotItem.getAxis('top').setTicks( [])
-        if _isNotOverlayTarget( scan):
+        if not _isOverlayTarget( scan, nameList):
             scan.plotItem.getAxis('right').setTicks( [])
 
     scan.plotItem.showGrid( x = scan.showGridX, y = scan.showGridY)
@@ -947,7 +951,7 @@ def display( nameList = None):
     # Try /home/kracht/Misc/pySpectra/test/dMgt/testGQE.py testFillData
 
     #
-    # see if the members of nameList arr in the scanList
+    # see if the members of nameList are in the scanList
     #
     for nm in nameList:
         if _pysp.getScan( nm) is None:
@@ -1077,7 +1081,9 @@ def display( nameList = None):
         _updateTextPosition( scan)
 
     #
+    # --- 
     # --- second pass: display overlaid scans
+    # --- 
     #
     for scan in scanList:
         #print "graphics.display.secondPass,", scan.name
@@ -1173,7 +1179,7 @@ def display( nameList = None):
             scan.plotDataItem.setLogMode( False, True)
             scan.viewBox.setYRange( _math.log10( scan.yMin), _math.log10(scan.yMax))
         else:
-            if scan.overlayUseTargetWindow:
+            if scan.useTargetWindow:
                 if target.autoscaleY:
                     mi = _np.min( target.y[:target.currentIndex])
                     ma = _np.max( target.y[:target.currentIndex])

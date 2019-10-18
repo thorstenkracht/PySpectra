@@ -117,6 +117,22 @@ def examplePlotsWithTextContainer():
     t3.y = _np.tan( t3.x)
     _pysp.display()
 
+def exampleCreate3Plots():
+    '''
+    create 3 scans
+    '''
+    _pysp.cls()
+    _pysp.delete()
+    _pysp.setTitle( "5 Scans, t5 is overlaid to t3")
+    _pysp.setWsViewport( "DINA5")
+    t1 = _pysp.Scan( name = "t1", lineColor = 'blue', yLabel = 'sin')
+    t1.y = _np.sin( t1.x)
+    t2 = _pysp.Scan( "t2", xLabel = 'Position', yLabel = 'cos', symbol = '+')
+    t2.y = _np.cos( t2.x)
+    t3 = _pysp.Scan( name = "t3", lineColor = 'green', xLabel = 'Position', yLabel = 'tan')
+    t3.y = _np.tan( t3.x)
+    _pysp.display()
+
 def exampleCreate5Plots():
     '''
     create 5 scans, different colors, demonstrate overlay feature
@@ -265,6 +281,56 @@ def exampleGauss():
     mu = 0.
     sigma = 1.
     g.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g.y-mu)**2/(2*sigma**2))
+    _pysp.display()
+    return 
+
+def exampleGaussManyOverlay():
+    '''
+    gauss plot
+    '''
+    _pysp.cls()
+    _pysp.delete()
+    _pysp.setWsViewport( "DINA5")
+    g = _pysp.Scan( name = "gauss", xMin = -10., xMax = 10., nPts = 101)
+    #mu = 0.
+    #sigma = 1.
+    #g.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g.y-mu)**2/(2*sigma**2))
+    mu1 = 0.
+    sigma1 = 1.
+    mu2 = 6.5
+    sigma2 = 1.2
+    g.y = 1./(sigma1*_np.sqrt(2.*_np.pi))*_np.exp( -(g.y-mu1)**2/(2*sigma1**2)) + \
+          2./(sigma2*_np.sqrt(2.*_np.pi))*_np.exp( -(g.y-mu2)**2/(2*sigma2**2))
+    g.autoscaleX = False
+    g.autoscaleY = False
+    g.xMax = 11
+    g.xMin = -4
+    g.yMin = 0
+    g.yMax = 2
+    for i in range( 1,50):  # don't want i == 0
+        gqe = _pysp.Scan( name = "gauss%d" % i, xMin = -5., xMax = 5., nPts = 101)
+        gqe.x = g.x + 0.02 * i
+        gqe.y = g.y + 0.02 * i
+        _pysp.overlay( "gauss%d" % i, "gauss")
+        gqe.useTargetWindow = True
+        
+    _pysp.display()
+    return 
+
+def exampleGaussNoisy():
+    '''
+    gauss plot
+    '''
+    _pysp.cls()
+    _pysp.delete()
+    _pysp.setTitle( "This is the position of the title")
+    _pysp.setComment( "Here would be the comment")
+    _pysp.setWsViewport( "DINA5")
+    g = _pysp.Scan( name = "gauss_noisy", xMin = -5., xMax = 5., nPts = 101)
+    mu = 0.
+    sigma = 1.
+    g.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g.y-mu)**2/(2*sigma**2)) + \
+          _np.random.random_sample( (len( g.x), ))*0.1
     _pysp.display()
     return 
 

@@ -23,7 +23,7 @@ _wsViewportFixed = False
 
 _ScanAttrsPublic = [ 'at', 'autoscaleX', 'autoscaleY', 'colSpan', 'currentIndex', 
                      'dType', 'doty', 'fileName', 'flagDisplayVLines', 'lastIndex', 
-                     'nPts', 'name', 'ncol', 'nplot', 'nrow', 'overlay', 'overlayUseTargetWindow', 
+                     'nPts', 'name', 'ncol', 'nplot', 'nrow', 'overlay', 'useTargetWindow', 
                      'showGridX', 'showGridY', 
                      'lineColor', 'lineStyle', 'lineWidth', 
                      'logWidget', 'motorList', 
@@ -48,10 +48,11 @@ class Text():
     fontSize: e.g. 12 or None
       if None, the fontsize is chosen automatically depending on the number of plots
     NDC: True, normalized device coordinates
+    tag = 'n.n.', e.g. 'ssa_result'
     '''
     def __init__( self, text = 'Empty', x = 0.5, y = 0.5, 
                   hAlign = 'left', vAlign = 'top', color = 'black', fontSize = None,
-                  NDC = True): 
+                  NDC = True, tag = 'n.n.'): 
 
         self.text = text
         self.x = x
@@ -61,6 +62,7 @@ class Text():
         self.color = color
         self.fontSize = fontSize
         self.NDC = NDC
+        self.tag = tag
 '''
 A value of (0,0) sets the upper-left corner
                      of the text box to be at the position specified by setPos(), while a value of (1,1)
@@ -447,7 +449,7 @@ class Scan( object):
         self.ncol = None
         self.nplot = None
         self.overlay = None
-        self.overlayUseTargetWindow = False
+        self.useTargetWindow = False
         self.plotItem = None
         self.plotDataItem = None
         self.scene = None
@@ -550,11 +552,11 @@ class Scan( object):
 
     def addText( self, text = 'Empty', x = 0.5, y = 0.5, 
                  hAlign = 'left', vAlign = 'top', 
-                 color = 'black', fontSize = None, NDC = True):
+                 color = 'black', fontSize = None, NDC = True, tag = 'n.n.'):
         '''
         Docu can found in Text()
         '''
-        txt = Text( text, x, y, hAlign, vAlign, color, fontSize, NDC)
+        txt = Text( text, x, y, hAlign, vAlign, color, fontSize, NDC, tag)
         self.textList.append( txt)
 
     def setY( self, index, yValue):
@@ -740,10 +742,21 @@ class Scan( object):
             logWidget.append( " fwhm:     %g" % hsh[ 'fwhm'])
             logWidget.append( " integral: %g" % hsh[ 'integral'])
 
-        self.addText( text = "midpoint: %g" % hsh[ 'midpoint'], x = 0.05, y = 0.95, hAlign = 'left', vAlign = 'top')
-        self.addText( text = "peak-x:   %g" % hsh[ 'peak_x'], x = 0.05, y = 0.88, hAlign = 'left', vAlign = 'top')
-        self.addText( text = "cms:      %g" % hsh[ 'cms'], x = 0.05, y = 0.81, hAlign = 'left', vAlign = 'top')
-        self.addText( text = "fwhm:     %g" % hsh[ 'fwhm'], x = 0.05, y = 0.74, hAlign = 'left', vAlign = 'top')
+        #
+        # clear the text list. Otherwise several SSA results will appear on the screen.
+        #
+        if len( self.textList) > 0:
+            lst = []
+            for t in self.textList:
+                if t.tag.lower() == 'ssa_result':
+                    continue
+                lst.append( t)
+            self.textList = lst[:]
+        
+        self.addText( text = "midpoint: %g" % hsh[ 'midpoint'], x = 0.02, y = 0.95, hAlign = 'left', vAlign = 'top', tag = 'ssa_result')
+        self.addText( text = "peak-x:   %g" % hsh[ 'peak_x'], x = 0.02, y = 0.90, hAlign = 'left', vAlign = 'top', tag = 'ssa_result')
+        self.addText( text = "cms:      %g" % hsh[ 'cms'], x = 0.02, y = 0.85, hAlign = 'left', vAlign = 'top', tag = 'ssa_result')
+        self.addText( text = "fwhm:     %g" % hsh[ 'fwhm'], x = 0.02, y = 0.80, hAlign = 'left', vAlign = 'top', tag = 'ssa_result')
 
         ssaName = '%s_ssa' % self.name
         count = 1
@@ -761,7 +774,7 @@ class Scan( object):
         
         res.y = a/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(res.x-mu)**2/(2*sigma**2))
         res.overlay = self.name
-        res.overlayUseTargetWindow = True
+        res.useTargetWindow = True
         return 
 
 def getScanList():
@@ -1171,7 +1184,7 @@ def write( lst = None):
             length = len( scan.x)
             continue
         if length != len( scan.x):
-            raise ValueError( "GQE.write: wrong length %s" % scan.name)
+            raise ValueError( "GQE.write: output GQEs differ in length")
     
     obj = _HasyUtils.fioObj( namePrefix = "pysp")
     for scan in _scanList:
@@ -1181,11 +1194,11 @@ def write( lst = None):
             if scan.name not in lst:
                 continue
         col = _HasyUtils.fioColumn( scan.name)
-        col.x = scan.x
-        col.y = scan.y
+        col.x = scan.x[:scan.currentIndex]
+        col.y = scan.y[:scan.currentIndex]
         obj.columns.append( col)
     fileName = obj.write()
-    print "created", fileName
+    #print "created", fileName
     return fileName
     
 def getNumberOfScansToBeDisplayed( nameList): 

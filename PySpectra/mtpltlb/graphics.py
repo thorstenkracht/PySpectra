@@ -29,8 +29,6 @@ def _initGraphic( figureIn = None, canvasIn = None):
     '''
     global Fig, Canvas, _QApp
 
-    #print "mpl_graphics._initGraphic, BEGIN", repr( figureIn), repr( canvasIn)
-
     if _QApp is None:
         _QApp = _QtGui.QApplication.instance()
         if _QApp is None:
@@ -40,16 +38,6 @@ def _initGraphic( figureIn = None, canvasIn = None):
         Fig = figureIn
         Canvas = canvasIn
         return 
-
-
-#    if Fig is None or Canvas is None:
-#        if figureIn is not None:
-#            Fig = figureIn
-#            Canvas = canvasIn
-#        else: 
-#            Fig = Figure( figsize=(29.7/2.54, 21.0/2.54))
-#            Canvas = FigureCanvas( Fig)
-#        return 
 
     plt.ion()
 
@@ -61,20 +49,25 @@ def _initGraphic( figureIn = None, canvasIn = None):
 
     return
 
-def createPDF( fileName = None, flagPrint = False): 
+def createPDF( printer = None, fileName = None, flagPrint = False, format = 'DINA4'): 
     '''
     - create a PDF file, the default name is pyspOutput.pdf
     - a version of the last output file is created
     - if flagPrint is True, the file is sent to the PRINTER 
+    - returns the name of the output file
     '''
+
+    scanList = _pysp.getScanList()
+    if len( scanList) == 0:
+        return None
 
     flag = False
     if Fig is None:
-        #_pqt_graphics.close()
         _initGraphic()
         flag = True
 
-    setWsViewport( "DINA4")
+    setWsViewport( format)
+    
     cls()
     display()
 
@@ -101,16 +94,20 @@ def createPDF( fileName = None, flagPrint = False):
     if flag:
         cls()
         close()
-        #_pqt_graphics._initGraphic()
 
     if flagPrint: 
-        printer = _os.getenv( "PRINTER")
-        if printer is None: 
-            raise ValueError( "mpl_graphics.createPDF: environment variable PRINTER not defined")
+        if printer is None:
+            printer = _os.getenv( "PRINTER")
+            if printer is None: 
+                raise ValueError( "mpl_graphics.createPDF: environment variable PRINTER not defined")
         if _os.system( "/usr/bin/lpr -P %s %s" % (printer, fileName)):
             print "mpl_graphics.createPDF: failed to print %s on %s" % (fileName, printer)
         else:
-            print "createPDF: printed %s on %s" % (fileName, printer)
+            pass
+            # 
+            # it is not clear whether we should print a message here or in the application
+            # 
+            # print "createPDF: printed %s on %s" % (fileName, printer)
         
     return fileName
 
@@ -729,7 +726,9 @@ def display( nameList = None):
         scan.lastIndex = scan.currentIndex
 
     #
+    # --- 
     # --- second pass: display overlaid scans
+    # --- 
     #
     for scan in scanList:
         #
@@ -777,23 +776,19 @@ def display( nameList = None):
             scan.plotItem.plot( scan.x[:(scan.currentIndex + 1)], 
                                 scan.y[:(scan.currentIndex + 1)], 
                                 **hsh)
-        #
-        # Recompute the data limits based on current artists. 
-        # If you want to exclude invisible artists from the calculation, 
-        # set visible_only=True
-        #
-        #scan.plotItem.relim()
-        #
-        # Axes.autoscale_view(tight=None, scalex=True, scaley=True)
-        # Autoscale the view limits using the data limits
-        #
-        #scan.plotItem.autoscale_view( True, True, True)
 
         scan.lastIndex = scan.currentIndex
         if scan.autoscaleY:
             scan.plotItem.set_autoscaley_on( True)
         else:
             scan.plotItem.set_ylim( scan.yMin, scan.yMax)
+
+        if scan.useTargetWindow:
+            if target.autoscaleY:
+                (mi, ma) = target.plotItem.get_ylim()
+                scan.plotItem.set_ylim( mi, ma)
+            else: 
+                scan.plotItem.set_ylim( target.yMin, target.yMax)
 
         if not scan.doty:
             if scan.autoscaleX:

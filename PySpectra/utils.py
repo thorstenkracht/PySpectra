@@ -265,7 +265,7 @@ def setScanVPs( nameList, flagDisplaySingle):
             ncol = 1
             nrow = 2
         else:
-            ncol = int( _math.floor( _math.sqrt( usedVPs)))
+            ncol = int( _math.ceil( _math.sqrt( usedVPs)))
             if usedVPs > _pysp.definitions.MANY_SCANS: 
                 ncol -= 1
             nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
@@ -294,7 +294,7 @@ def setScanVPs( nameList, flagDisplaySingle):
             ncol = 1
             nrow = 2
         else:
-            ncol = int( _math.floor( _math.sqrt( usedVPs)))
+            ncol = int( _math.ceil( _math.sqrt( usedVPs)))
             if usedVPs > _pysp.definitions.MANY_SCANS: 
                 ncol -= 1
             nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
