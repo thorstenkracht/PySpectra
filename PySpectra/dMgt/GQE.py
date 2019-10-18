@@ -1194,8 +1194,12 @@ def write( lst = None):
             if scan.name not in lst:
                 continue
         col = _HasyUtils.fioColumn( scan.name)
-        col.x = scan.x[:scan.currentIndex]
-        col.y = scan.y[:scan.currentIndex]
+        #
+        # Mind currentIndex starts at 0. So, if currentIndex == 100, 
+        # we have 101 list elements
+        #
+        col.x = scan.x[:scan.currentIndex + 1]
+        col.y = scan.y[:scan.currentIndex + 1]
         obj.columns.append( col)
     fileName = obj.write()
     #print "created", fileName

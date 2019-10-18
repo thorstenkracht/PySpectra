@@ -148,13 +148,12 @@ def createPDF( line):
     '''
     create a PDF 
     '''
-    fileName = None
+    fName = None
     if line is not None:
         l = line.split( ' ')
         if l is not None and len(l) > 0:
-            fileName = l[0]
-
-    _mpl_graphics.createPDF( fileName)
+            fName = l[0]
+    _mpl_graphics.createPDF( fileName = fName)
 
 def derivative( line):
     '''
