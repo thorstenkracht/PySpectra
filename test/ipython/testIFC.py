@@ -4,6 +4,7 @@ cd /home/kracht/Misc/pySpectra
 python -m unittest discover -v
 
 python ./test/ipython/testIFC.py testIFC.test_create
+python ./test/ipython/testIFC.py testIFC.test_pdf
 '''
 import sys
 ##pySpectraPath = "/home/kracht/Misc/pySpectra"

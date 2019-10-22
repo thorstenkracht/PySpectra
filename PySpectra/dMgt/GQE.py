@@ -136,10 +136,10 @@ class Scan( object):
             if name == _scanList[i].name:
                 if 'reUse' in kwargs: 
                     if len( _scanList[i].x) != len( kwargs['x']):
-                        raise ValueError( "GQE.Scan: len( scan.x) %d != len( kwargs[ 'x'])" % \
+                        raise ValueError( "GQE.Scan: len( scan.x) %d != len( kwargs[ 'x']) %d" % \
                                           ( len( _scanList[i].x), len( kwargs['x'])))
                     if len( _scanList[i].y) != len( kwargs['y']):
-                        raise ValueError( "GQE.Scan: len( scan.y) %d != len( kwargs[ 'y'])" % \
+                        raise ValueError( "GQE.Scan: len( scan.y) %d != len( kwargs[ 'y']) %d" % \
                                           ( len( _scanList[i].y), len( kwargs['y'])))
                     _scanList[i].x = kwargs['x']
                     _scanList[i].y = kwargs['y']
@@ -171,6 +171,8 @@ class Scan( object):
         #    
         # 'fileName': data are read from a file
         #    
+        #  scan = PySpectra.Scan( name = 't1', fileName = "fName.fio", x = 1, y = 2)
+        #
         elif 'fileName' in kwargs: 
             if 'x' not in kwargs or 'y' not in kwargs:
                 raise ValueError( "GQE.Scan.__init__: 'fileName' but no 'x' and no 'y', %s" % kwargs[ 'fileName'])
@@ -200,7 +202,7 @@ class Scan( object):
            name in _ScanAttrsPrivate: 
             super(Scan, self).__setattr__(name, value)
         else: 
-            raise ValueError( "GQE.Scan.__setattr__: Scan %s wrong attribute name %s" % ( self.name, name))
+            raise ValueError( "GQE.Scan.__setattr__: %s wrong attribute %s" % ( self.name, name))
 
     def __getattr__( self, name): 
         raise ValueError( "GQE.Scan.__getattr__: %s wrong attribute %s" % ( self.name, name))
@@ -643,7 +645,7 @@ class Scan( object):
           the y-value
         '''
         if index >= self.y.size:
-            raise ValueError( "GQE.Scan.setX: %s, index %d out of range [0, %d]" % 
+            raise ValueError( "GQE.Scan.setXY: %s, index %d out of range [0, %d]" % 
                               ( self.name, index, self.x.size))
         self.x[ index] = xValue
         self.y[ index] = yValue
@@ -716,11 +718,13 @@ class Scan( object):
                 if self.x[i] >= xi and self.x[i] <= xa: 
                     lstX.append( self.x[i])
                     lstY.append( self.y[i])
-            logWidget.append( "ssa: %s limits: %g, %g" % (self.name, xi, xa))
+            if logWidget is not None:
+                logWidget.append( "ssa: %s limits: %g, %g" % (self.name, xi, xa))
         else: 
             lstX = self.x[:self.currentIndex]
             lstY = self.y[:self.currentIndex]
-            logWidget.append( "ssa: %s total x-range" % (self.name))
+            if logWidget is not None:
+                logWidget.append( "ssa: %s total x-range" % (self.name))
         #
         # reversed x-values?
         #
@@ -783,7 +787,7 @@ def getScanList():
     '''
     return _scanList
 
-def _getDisplayList(): 
+def getDisplayList(): 
     '''
     returns a list of scans which are currently displayed
     '''

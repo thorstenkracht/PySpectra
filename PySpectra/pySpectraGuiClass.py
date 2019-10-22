@@ -2190,28 +2190,28 @@ class pySpectraGui( QtGui.QMainWindow):
         return 
         
     def cb_derivative( self):
-        displayList = pysp.dMgt.GQE._getDisplayList()
+        displayList = pysp.dMgt.GQE.getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append(  "cb_derivative: expecting 1 displayed scan")
             return 
         pysp.derivative( displayList[0].name)
 
     def cb_antiderivative( self):
-        displayList = pysp.dMgt.GQE._getDisplayList()
+        displayList = pysp.dMgt.GQE.getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append(  "cb_antiderivative: expecting 1 displayed scan")
             return 
         pysp.antiderivative( displayList[0].name)
 
     def cb_y2my( self):
-        displayList = pysp.dMgt.GQE._getDisplayList()
+        displayList = pysp.dMgt.GQE.getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append(  "cb_y2my: expecting 1 displayed scan")
             return 
         pysp.yToMinusY( displayList[0].name)
 
     def cb_ssa( self):
-        displayList = pysp.dMgt.GQE._getDisplayList()
+        displayList = pysp.dMgt.GQE.getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append( "cb_ssa: expecting 1 displayed scan")
             return 

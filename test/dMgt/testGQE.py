@@ -7,11 +7,14 @@ python ./test/dMgt/testGQE.py testGQE.testNextPrev
 python ./test/dMgt/testGQE.py testGQE.testFillData
 python ./test/dMgt/testGQE.py testGQE.testCreateDelete
 python ./test/dMgt/testGQE.py testGQE.testWrite
+python ./test/dMgt/testGQE.py testGQE.testRead
 python ./test/dMgt/testGQE.py testGQE.testReuse
 python ./test/dMgt/testGQE.py testGQE.testYGreaterThanZero
 python ./test/dMgt/testGQE.py testGQE.testSetLimits
 python ./test/dMgt/testGQE.py testGQE.testSetXY
+python ./test/dMgt/testGQE.py testGQE.testGetXY
 python ./test/dMgt/testGQE.py testGQE.testExceptions
+python ./test/dMgt/testGQE.py testGQE.testSSA
 '''
 import sys
 #pySpectraPath = "/home/kracht/Misc/pySpectra"
@@ -320,6 +323,25 @@ class testGQE( unittest.TestCase):
         self.assertEqual( scanLst[0].name, "t1")
         self.assertEqual( scanLst[0].nPts, 201)
 
+    def testRead( self): 
+        print "testGQE.testRead"
+        PySpectra.cls()
+        PySpectra.delete()
+        scan = PySpectra.Scan( name = 't1', xLabel = "up to 200 pts", 
+                               nPts = 201, yMin = -10., yMax = 10.)
+        ret = PySpectra.write( ['t1'])
+
+        PySpectra.delete()
+
+        self.assertEqual( os.path.exists( ret), True)
+
+        scan = PySpectra.Scan( name = 't1', fileName = ret, x = 1, y = 2)
+
+        scanLst = PySpectra.getScanList()
+        self.assertEqual( len( scanLst), 1)
+        self.assertEqual( scanLst[0].name, "t1")
+        self.assertEqual( scanLst[0].nPts, 201)
+
 
     def testReuse( self): 
         print "testGQE.testReuse"
@@ -405,6 +427,26 @@ class testGQE( unittest.TestCase):
         scan.setXY( 1, 11, 12)
         self.assertEqual( scan.x[1], 11)
         self.assertEqual( scan.y[1], 12)
+
+
+        with self.assertRaises( ValueError) as context:
+            scan.setXY( 101, 11, 12)
+        print repr( context.exception)
+        self.assertTrue( "GQE.Scan.setXY: t1, index 101 out of range [0, 100]"
+                         in context.exception)
+
+    def testGetXY( self) : 
+        print "testGQE.testSetXY"
+        PySpectra.cls()
+        PySpectra.delete()
+        x  = np.linspace( 0., 10., 100)
+        y  = np.linspace( 0., 10., 100)
+        scan = PySpectra.Scan( 't1', x = x, y = y)
+
+        scan.setX( 0, 12)
+        self.assertEqual( scan.getX( 0), 12)
+        scan.setY( 0, 12)
+        self.assertEqual( scan.getY(0), 12)
         
     def testExceptions( self): 
         print "testGQE.testExceptions"
@@ -487,6 +529,81 @@ class testGQE( unittest.TestCase):
         self.assertTrue( "GQE.Scan.setY: t1, index 100 out of range [0, 99]"
                          in context.exception)
 
+        with self.assertRaises( ValueError) as context:
+            PySpectra.delete()
+            x1  = np.linspace( 0., 10., 100)
+            y1  = np.linspace( 0., 10., 100)
+            scan = PySpectra.Scan( 't1', x = x1, y = y1)
+            scan = PySpectra.Scan( 't1', reUse = True, x = x1[:99], y = y1[:99])
+        #print repr( context.exception)
+        self.assertTrue( "GQE.Scan: len( scan.x) 100 != len( kwargs[ 'x']) 99"
+                         in context.exception)
+
+        with self.assertRaises( ValueError) as context:
+            PySpectra.delete()
+            x1  = np.linspace( 0., 10., 100)
+            y1  = np.linspace( 0., 10., 100)
+            scan = PySpectra.Scan( 't1', x = x1, y = y1)
+            scan = PySpectra.Scan( 't1', reUse = True, x = x1, y = y1[:99])
+        #print repr( context.exception)
+        self.assertTrue( "GQE.Scan: len( scan.y) 100 != len( kwargs[ 'y']) 99"
+                         in context.exception)
+
+        with self.assertRaises( ValueError) as context:
+            PySpectra.delete()
+            x1  = np.linspace( 0., 10., 100)
+            y1  = np.linspace( 0., 10., 100)
+            scan = PySpectra.Scan( 't1', x = x1, y = y1)
+            scan.attrNotExist = 12
+        #print repr( context.exception)
+        self.assertTrue( "GQE.Scan.__setattr__: t1 wrong attribute attrNotExist"
+                         in context.exception)
+
+
+        with self.assertRaises( ValueError) as context:
+            PySpectra.delete()
+            x1  = np.linspace( 0., 10., 100)
+            y1  = np.linspace( 0., 10., 100)
+            scan = PySpectra.Scan( 't1', x = x1, y = y1)
+            temp = scan.attrNotExist
+        #print repr( context.exception)
+        self.assertTrue( "GQE.Scan.__getattr__: t1 wrong attribute attrNotExist"
+                         in context.exception)
+
+    def testSSA( self) : 
+        print "testGQE.testSSA"
+        PySpectra.cls()
+        PySpectra.delete()
+        g = PySpectra.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
+        mu = 0.
+        sigma = 1.
+        g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2*sigma**2))
+        
+        g.ssa()
+        self.assertEqual( len(g.textList), 4)
+
+        #
+        # midpoint: -6.84879e-06
+        # peak-x:   0
+        # cms:      -9.65309e-05
+        # fwhm:     2.3552
+        #
+        lst = g.textList[0].text.split( ':')
+        self.assertTrue( lst[0] == 'midpoint')
+        self.assertTrue( abs(float(lst[1])) < 0.0001)
+        
+        lst = g.textList[1].text.split( ':')
+        self.assertTrue( lst[0] == 'peak-x')
+        self.assertTrue( abs(float(lst[1])) < 0.0001)
+        
+        lst = g.textList[2].text.split( ':')
+        self.assertTrue( lst[0] == 'cms')
+        self.assertTrue( abs(float(lst[1])) < 0.0001)
+        
+        lst = g.textList[3].text.split( ':')
+        self.assertTrue( lst[0] == 'fwhm')
+        self.assertTrue( abs(float(lst[1])) < 2.356)
+        self.assertTrue( abs(float(lst[1])) > 2.350)
 
 if __name__ == "__main__":
     unittest.main()
