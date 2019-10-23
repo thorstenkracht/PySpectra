@@ -929,7 +929,7 @@ class ScanAttributes( QtGui.QMainWindow):
 
     def cb_next( self): 
         nextScan = pysp.dMgt.GQE._nextScan( self.name)
-        index = pysp.dMgt.GQE._getIndex( nextScan.name)
+        index = pysp.dMgt.GQE.getIndex( nextScan.name)
         self.name = nextScan.name
         self.scan = nextScan
         pysp.cls()
@@ -939,7 +939,7 @@ class ScanAttributes( QtGui.QMainWindow):
 
     def cb_back( self): 
         prevScan = pysp.dMgt.GQE._prevScan( self.name)
-        index = pysp.dMgt.GQE._getIndex( prevScan.name)
+        index = pysp.dMgt.GQE.getIndex( prevScan.name)
         self.name = prevScan.name
         self.scan = prevScan
         pysp.cls()
@@ -1805,14 +1805,14 @@ class pySpectraGui( QtGui.QMainWindow):
 
     def cb_back( self): 
         scan = pysp.dMgt.GQE._prevScan()
-        index = pysp.dMgt.GQE._getIndex( scan.name)
+        index = pysp.dMgt.GQE.getIndex( scan.name)
         pysp.cls()
         pysp.display( [ scan.name])
         self.scansListWidget.setCurrentRow( index)
 
     def cb_next( self): 
         scan = pysp.dMgt.GQE._nextScan()
-        index = pysp.dMgt.GQE._getIndex( scan.name)
+        index = pysp.dMgt.GQE.getIndex( scan.name)
         pysp.cls()
         pysp.display( [ scan.name])
         self.scansListWidget.setCurrentRow( index)

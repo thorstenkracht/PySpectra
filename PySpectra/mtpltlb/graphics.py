@@ -483,16 +483,6 @@ def _createPlotItem( scan, nameList):
         print "graphics.createPlotItem: caught exception"
         print repr( e)
         raise ValueError( "graphics.createPlotItem, throwing exception")
-    #
-    # see comment pq_graphics
-    # set the font size of the tick mark labels
-    #
-    #fontSize = _pysp.getTickFontSize( nameList)
-    # 
-    #for tick in scan.plotItem.xaxis.get_major_ticks():
-    #            tick.label.set_fontsize(fontSize) 
-    #for tick in scan.plotItem.yaxis.get_major_ticks():
-    #            tick.label.set_fontsize(fontSize) 
 
     #print "mpl_graphics.createPlotItem, autoscale", scan.autoscaleX, scan.autoscaleY
 

@@ -29,8 +29,8 @@ _ScanAttrsPublic = [ 'at', 'autoscaleX', 'autoscaleY', 'colSpan', 'currentIndex'
                      'logWidget', 'motorList', 
                      'symbol', 'symbolColor', 'symbolSize', 
                      'textList', 'textOnly', 'viewBox', 
-                     'x', 'xLog', 'xMax', 'xMin', 'xMaxDisplay', 'xMinDisplay', 
-                     'xLabel', 'y', 'yLabel', 'yLog', 'yMin', 'yMax','yMinDisplay', 'yMaxDisplay',
+                     'x', 'xLog', 'xMax', 'xMin', 
+                     'xLabel', 'y', 'yLabel', 'yLog', 'yMin', 'yMax',
                      'yTicksVisible'] 
 
 _ScanAttrsPrivate = [ 'infLineLeft', 'infLineRight', 'mouseClick', 'mouseLabel', 'mouseProxy', 
@@ -949,18 +949,21 @@ def info( scanList = None):
         if type(scanList) is not list:
             scan = getScan( scanList)
             _infoScan( scan)
-            return 
+            return 1
 
         for scn in scanList:
             scan = getScan( scn)
             _infoScan( scan)
-        return 
+        return len( scanList)
+
+    argout = 0
 
     if _scanList:
         print "The List of Scans:"
         for scan in _scanList:
             _infoScan( scan)
         print "\n--- %s scans" % len( _scanList)
+        argout += len( _scanList)
     else: 
         print "scan list is empty"
 
@@ -968,6 +971,8 @@ def info( scanList = None):
         print "Title:  ", _title
     if _comment: 
         print "Comment:", _comment
+
+    return argout
 
 def _displayTextList( scan): 
     for text in scan.textList:
@@ -1058,14 +1063,14 @@ def show():
     for scan in _scanList:
         print "%s, nPts %d, xMin %g, xMax %g" % (scan.name, scan.nPts, scan.xMin, scan.xMax)
 
-def _nextScan( name = None):
+def nextScan( name = None):
     '''
     nextScan/prevScan return the next/previous scan object
     '''
     global _scanIndex
 
     if len( _scanList) == 0:
-        raise ValueError( "GQE._nextScan: scan list empty")
+        raise ValueError( "GQE.nextScan: scan list empty")
 
     if name is not None:
         for i in range( len(_scanList)): 
@@ -1083,14 +1088,14 @@ def _nextScan( name = None):
 
     return _scanList[ _scanIndex]
 
-def _prevScan( name = None):
+def prevScan( name = None):
     '''
     nextScan/prevScan return the next/previous scan object
     '''
     global _scanIndex
 
     if len( _scanList) == 0:
-        raise ValueError( "GQE._prevScan: scan list empty")
+        raise ValueError( "GQE.prevScan: scan list empty")
 
     if name is not None:
         for i in range( len(_scanList)): 
@@ -1111,7 +1116,7 @@ def _prevScan( name = None):
 
     return _scanList[ _scanIndex]
 
-def _getIndex( name): 
+def getIndex( name): 
     '''
     returns the position of a scan in the scanList, 
     the first index is 0.
@@ -1121,7 +1126,7 @@ def _getIndex( name):
         if scan.name == name:
             return index
         index += 1
-    raise ValueError( "GQE._getIndex: not found %s" % name)
+    raise ValueError( "GQE.getIndex: not found %s" % name)
     
 def read( fileName, x = 1, y = None, flagMCA = False):
     '''    
@@ -1285,17 +1290,4 @@ def getFontSize( nameList):
 
     return fontSize
 
-def getTickFontSize( nameList): 
-    '''
-    depending on how many scans are displayed the font size is adjusted
-    '''
-    if getNumberOfScansToBeDisplayed( nameList) < _pysp.definitions.MANY_SCANS:
-        fontSize = _pysp.definitions.TICK_FONT_SIZE_NORMAL
-    elif getNumberOfScansToBeDisplayed( nameList) <= _pysp.definitions.VERY_MANY_SCANS:
-        fontSize = _pysp.definitions.TICK_FONT_SIZE_SMALL
-    else: 
-        fontSize = _pysp.definitions.TICK_FONT_SIZE_VERY_SMALL
-
-    print "GQE.getTickFontSize", fontSize
-    return fontSize
 

@@ -14,7 +14,7 @@ python ./test/dMgt/testGQE.py testGQE.testSetLimits
 python ./test/dMgt/testGQE.py testGQE.testSetXY
 python ./test/dMgt/testGQE.py testGQE.testGetXY
 python ./test/dMgt/testGQE.py testGQE.testExceptions
-python ./test/dMgt/testGQE.py testGQE.testSSA
+python ./test/dMgt/testGQE.py testGQE.testMisc
 '''
 import sys
 #pySpectraPath = "/home/kracht/Misc/pySpectra"
@@ -267,21 +267,21 @@ class testGQE( unittest.TestCase):
         PySpectra.Scan( name = 't2')
         PySpectra.Scan( name = 't3')
         PySpectra.Scan( name = 't4')
-        self.assertEqual( gqe._nextScan().name, 't1')
-        self.assertEqual( gqe._nextScan().name, 't2')
-        self.assertEqual( gqe._nextScan().name, 't3')
-        self.assertEqual( gqe._nextScan().name, 't4')
-        self.assertEqual( gqe._nextScan().name, 't1')
+        self.assertEqual( gqe.nextScan().name, 't1')
+        self.assertEqual( gqe.nextScan().name, 't2')
+        self.assertEqual( gqe.nextScan().name, 't3')
+        self.assertEqual( gqe.nextScan().name, 't4')
+        self.assertEqual( gqe.nextScan().name, 't1')
         PySpectra.delete()
         PySpectra.Scan( name = 't1')
         PySpectra.Scan( name = 't2')
         PySpectra.Scan( name = 't3')
         PySpectra.Scan( name = 't4')
-        self.assertEqual( gqe._prevScan().name, 't1')
-        self.assertEqual( gqe._prevScan().name, 't4')
-        self.assertEqual( gqe._prevScan().name, 't3')
-        self.assertEqual( gqe._prevScan().name, 't2')
-        self.assertEqual( gqe._prevScan().name, 't1')
+        self.assertEqual( gqe.prevScan().name, 't1')
+        self.assertEqual( gqe.prevScan().name, 't4')
+        self.assertEqual( gqe.prevScan().name, 't3')
+        self.assertEqual( gqe.prevScan().name, 't2')
+        self.assertEqual( gqe.prevScan().name, 't1')
 
         print "testGQE.testNextPrev, DONE"
 
@@ -604,6 +604,23 @@ class testGQE( unittest.TestCase):
         self.assertTrue( lst[0] == 'fwhm')
         self.assertTrue( abs(float(lst[1])) < 2.356)
         self.assertTrue( abs(float(lst[1])) > 2.350)
+
+
+    def testMisc( self) : 
+        print "testGQE.testMisc"
+        PySpectra.cls()
+        PySpectra.delete()
+        t1 = PySpectra.Scan( name = "t1", xMin = -5., xMax = 5., nPts = 101)
+        t2 = PySpectra.Scan( name = "t2", xMin = -5., xMax = 5., nPts = 101)
+        PySpectra.display()
+
+        lst = PySpectra.dMgt.GQE.getDisplayList()
+
+        self.assertTrue( len(lst) == 2)
+
+        self.assertTrue( PySpectra.dMgt.GQE.info() == 2)
+
+        self.assertTrue( PySpectra.dMgt.GQE.getIndex( 't1') == 0)
 
 if __name__ == "__main__":
     unittest.main()
