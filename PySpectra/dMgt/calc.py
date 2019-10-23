@@ -94,39 +94,39 @@ def derivative( name = None, nameNew = None):
 
     return argout
 
-def antiderivativeSciPy(name = None, nameNew = None):
-    '''
-    antiderivative <scanName> [<newScanName>]
-      calculates the anti-derivative of <scanName> using numpy.integrate.trapz
-      the result is stored in <newScanName> or <scanName>_antiderivative
-
-    returns the created scan
-    '''
-    if name is None:
-        raise ValueError( "calc.antiderivative: name not specified")
-
-    scan = _GQE.getScan( name)
-    if scan is None:
-        raise ValueError( "calc.antiderivative: failed to find %s" % name)
-
-    if nameNew is None:
-        temp = "%s_antiderivative" % scan.name
-    else:
-        temp = nameNew
-
-    argout = _GQE.Scan( name = temp, x = scan.x, y = scan.y)
-    argout.currentIndex = scan.currentIndex
-    #
-    #  tested the 3 lines below using sin/cosine
-    #
-    for i in range(1, scan.currentIndex + 1):
-        temp = _integrate.trapz( scan.y[:i], scan.x[:i])
-        argout.setY( i - 1, temp)
-
-    argout.yMin = _np.min( argout.y)
-    argout.yMax = _np.max( argout.y)
-        
-    return argout
+#def antiderivativeSciPy(name = None, nameNew = None):
+#    '''
+#    antiderivative <scanName> [<newScanName>]
+#      calculates the anti-derivative of <scanName> using numpy.integrate.trapz
+#      the result is stored in <newScanName> or <scanName>_antiderivative
+#
+#    returns the created scan
+#    '''
+#    if name is None:
+#        raise ValueError( "calc.antiderivative: name not specified")
+#
+#    scan = _GQE.getScan( name)
+#    if scan is None:
+#        raise ValueError( "calc.antiderivative: failed to find %s" % name)
+#
+#    if nameNew is None:
+#        temp = "%s_antiderivative" % scan.name
+#    else:
+#        temp = nameNew
+#
+#    argout = _GQE.Scan( name = temp, x = scan.x, y = scan.y)
+#    argout.currentIndex = scan.currentIndex
+#    #
+#    #  tested the 3 lines below using sin/cosine
+#    #
+#    for i in range(1, scan.currentIndex + 1):
+#        temp = _integrate.trapz( scan.y[:i], scan.x[:i])
+#        argout.setY( i - 1, temp)
+#
+#    argout.yMin = _np.min( argout.y)
+#    argout.yMax = _np.max( argout.y)
+#        
+#    return argout
 
 def antiderivative( name = None, nameNew = None):
     '''
