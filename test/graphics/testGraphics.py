@@ -402,8 +402,6 @@ class testGraphics( unittest.TestCase):
 
         PySpectra.display()
 
-        #PySpectra.show()
-
         PySpectra.procEventsLoop( 1)
 
         print "testGraphics.testDisplayMany, DONE"

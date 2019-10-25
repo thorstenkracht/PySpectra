@@ -300,8 +300,6 @@ def setScanVPs( nameList, flagDisplaySingle):
             nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
         nplot = 1 
 
-    print "+++utils ncol %d, nrow %d" % (ncol, nrow)
-
     for scan in scanList:
         #
         # overlay? - don't create a viewport scan.
