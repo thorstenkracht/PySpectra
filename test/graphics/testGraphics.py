@@ -17,6 +17,7 @@ python ./test/graphics/testGraphics.py testGraphics.testDisplayTwo
 python ./test/graphics/testGraphics.py testGraphics.testOverlay
 python ./test/graphics/testGraphics.py testGraphics.testDisplayFour
 python ./test/graphics/testGraphics.py testGraphics.testDisplayMany
+python ./test/graphics/testGraphics.py testGraphics.testDisplayVeryMany
 python ./test/graphics/testGraphics.py testGraphics.testFastDisplay_v1
 python ./test/graphics/testGraphics.py testGraphics.testFastDisplay_v2
 python ./test/graphics/testGraphics.py testGraphics.testWsViewport
@@ -101,6 +102,7 @@ class testGraphics( unittest.TestCase):
             PySpectra.display( ['sinus'])
             time.sleep( 0.01)
         print "testGraphics.testScanning, DONE"
+        PySpectra.close()
 
     def testScanningWithText( self): 
         '''
@@ -372,6 +374,29 @@ class testGraphics( unittest.TestCase):
                                 xMax = 6.0, nPts = 101, dType = np.float64,
                                 xLabel = 'rad', yLabel = 'Signal', 
                                 at = (5,4,i), lineColor = 'red', lineStyle = 'solid',
+                                lineWidth = 2.)
+            s.y = np.tan( s.y)
+
+        PySpectra.display()
+
+        #PySpectra.show()
+
+        PySpectra.procEventsLoop( 1)
+
+        print "testGraphics.testDisplayMany, DONE"
+
+    def testDisplayVeryMany( self): 
+
+        print "testGraphics.testDisplayMany"
+
+        PySpectra.cls()
+        PySpectra.delete()
+
+        for i in range( 1, 50):
+            s = PySpectra.Scan( name = 't%d' % i, xMin = 0., 
+                                xMax = 6.0, nPts = 101, dType = np.float64,
+                                xLabel = 'rad', yLabel = 'Signal', 
+                                lineColor = 'red', lineStyle = 'solid',
                                 lineWidth = 2.)
             s.y = np.tan( s.y)
 

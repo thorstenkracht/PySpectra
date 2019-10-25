@@ -300,6 +300,8 @@ def setScanVPs( nameList, flagDisplaySingle):
             nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
         nplot = 1 
 
+    print "+++utils ncol %d, nrow %d" % (ncol, nrow)
+
     for scan in scanList:
         #
         # overlay? - don't create a viewport scan.
@@ -326,8 +328,6 @@ def setScanVPs( nameList, flagDisplaySingle):
                 scan.nrow = scan.at[0]
                 scan.ncol = scan.at[1]
                 scan.nplot = scan.at[2]
-            #print "utils.setScanVPs", scan.name, \
-            #    "nrow", scan.nrow, "ncol", scan.ncol, "nplot", scan.nplot
             if scan.nrow*scan.ncol < scan.nplot:
                 raise ValueError( "utils.setScanVPs: nrow %d * ncol %d < nplot %d" % (scan.nrow, scan.ncol, scan.nplot))
             nplot += 1

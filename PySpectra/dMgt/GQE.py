@@ -525,6 +525,10 @@ class Scan( object):
                     self.at = [1, 1, 1]
                 else:
                     self.at = [int( i) for i in lstStr]
+            if int(self.at[0]) * int(self.at[1]) < int( self.at[2]):
+                raise ValueError( "GQE.Scan.setAttr: %s, 'at(%s,%s,%s)' is wrong, nplot > nrow*ncol" % 
+                                  (self.name, self.at[0], self.at[1], self.at[2]))
+                
             for scan in _scanList: 
                 if scan is self:
                     continue

@@ -1090,7 +1090,7 @@ def display( nameList = None):
         if scan.overlay is None:
             continue
         #
-        # check, if theren is something to display
+        # check, if there is something to display
         #
         if scan.lastIndex == scan.currentIndex:
             continue
