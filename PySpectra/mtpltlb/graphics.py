@@ -43,6 +43,7 @@ def _initGraphic( figureIn = None, canvasIn = None):
 
     if not plt.get_fignums():
         Fig = plt.figure(1, figsize=(21./2.54, 14.85/2.54))
+        Fig.canvas.set_window_title( "pySpectra Application (MPL)")
     else:
         Fig = plt.figure(1)
         Fig.clear()
@@ -603,7 +604,7 @@ def display( nameList = None):
     #
     # set scan.nrow, scan.ncol, scan.nplot
     #
-    _pysp.setScanVPs( nameList, flagDisplaySingle)
+    _pysp.setScanVPs( nameList, flagDisplaySingle, cls)
 
     _displayTitleComment( nameList)
     #

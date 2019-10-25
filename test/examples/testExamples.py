@@ -7,6 +7,15 @@ import unittest
 
 class testExamples( unittest.TestCase):
 
+
+    @classmethod
+    def setUpClass( testExamples):
+        pass
+
+    @classmethod
+    def tearDownClass( testExamples): 
+        PySpectra.close()
+
     def test_execTests( self):
         '''
         get the functions of ./PySpectra/examples/exampleCode.py and execute them

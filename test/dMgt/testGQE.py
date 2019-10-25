@@ -30,6 +30,14 @@ import math
 
 class testGQE( unittest.TestCase):
 
+    @classmethod
+    def setUpClass( testGQE):
+        pass
+
+    @classmethod
+    def tearDownClass( testGQE): 
+        PySpectra.close()
+
     def test_titleAndComment( self):
 
         print "testGQE.test_titleAndComment"

@@ -234,7 +234,7 @@ def ssa( xIn, yIn, flagNbs = False, stbr = 3):
 
 _lenPlotted = -1
 
-def setScanVPs( nameList, flagDisplaySingle):
+def setScanVPs( nameList, flagDisplaySingle, clsFunc):
     '''
     set the scan viewport, we use the at = (2,3,2) syntax
     which is (nrow, ncol, nplot)
@@ -243,6 +243,8 @@ def setScanVPs( nameList, flagDisplaySingle):
 
     if a scan has an 'at' field, like (2,2,3), these values
     have higher priority.
+
+    clsFunc is specified to be able to distinguish between mpl and pqt
     '''
     global _lenPlotted
 
@@ -254,7 +256,7 @@ def setScanVPs( nameList, flagDisplaySingle):
         #
         usedVPs = len( scanList) - _GQE._getNumberOfOverlaid()
         if usedVPs != _lenPlotted and _lenPlotted != -1: 
-            _pysp.cls()
+            clsFunc()
         _lenPlotted = usedVPs
         if usedVPs == 0:
             return 
@@ -272,7 +274,7 @@ def setScanVPs( nameList, flagDisplaySingle):
         nplot = 1 
     elif len( nameList) == 1:
         if _lenPlotted != 1 and _lenPlotted != -1: 
-            _pysp.cls()
+            clsFunc()
         _lenPlotted = 1
         ncol = 1
         nrow = 1
@@ -283,7 +285,7 @@ def setScanVPs( nameList, flagDisplaySingle):
         #
         usedVPs = len( nameList) - _GQE._getNumberOfOverlaid( nameList)
         if usedVPs != _lenPlotted and _lenPlotted != -1: 
-            _pysp.cls()
+            clsFunc()
         _lenPlotted = usedVPs
         if usedVPs == 0:
             return 

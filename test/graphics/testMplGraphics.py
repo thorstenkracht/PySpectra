@@ -1,5 +1,11 @@
 #!/bin/env python
 '''
+python -m unittest discover -v
+python ./test/graphics/testMplGraphics.py testMplGraphics.testClose
+python ./test/graphics/testMplGraphics.py testMplGraphics.testCommentTitle
+python ./test/graphics/testMplGraphics.py testMplGraphics.testDisplayFour
+python ./test/graphics/testMplGraphics.py testMplGraphics.testDisplayMany
+python ./test/graphics/testMplGraphics.py testMplGraphics.testDisplaySingle
 python ./test/graphics/testMplGraphics.py testMplGraphics.testDoty
 python ./test/graphics/testMplGraphics.py testMplGraphics.testGrid
 python ./test/graphics/testMplGraphics.py testMplGraphics.testScanning
@@ -8,14 +14,13 @@ python ./test/graphics/testMplGraphics.py testMplGraphics.testScanningTwoPlots
 python ./test/graphics/testMplGraphics.py testMplGraphics.testScanningAutoscaleX
 python ./test/graphics/testMplGraphics.py testMplGraphics.testScanningReverse
 python ./test/graphics/testMplGraphics.py testMplGraphics.testScanningReverseAutoscaleX
-python ./test/graphics/testMplGraphics.py testMplGraphics.testDisplaySingle
 python ./test/graphics/testMplGraphics.py testMplGraphics.testFastDisplay_v1
-python ./test/graphics/testMplGraphics.py testMplGraphics.testCommentTitle
 python ./test/graphics/testMplGraphics.py testMplGraphics.testWsViewport
 python ./test/graphics/testMplGraphics.py testMplGraphics.testLissajous
 python ./test/graphics/testMplGraphics.py testMplGraphics.testWsViewport
 python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2BothLog
 python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2FirstLog
+python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2SecondLog
 python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2SecondLog
 '''
 import sys, os
@@ -35,6 +40,45 @@ import time, sys
 import math 
 
 class testMplGraphics( unittest.TestCase):
+
+    @classmethod
+    def setUpClass( testMplGraphics):
+        pass
+
+    @classmethod
+    def tearDownClass( testMplGraphics): 
+        PySpectra.mtpltlb.graphics.close()
+
+    def testClose( self): 
+        '''
+        '''
+        print "testMplGraphics.testClose"
+
+        PySpectra.mtpltlb.graphics.cls()
+        PySpectra.delete()
+        PySpectra.setTitle( "check x-axis doty")
+
+        sinus = PySpectra.Scan( name = 'sinus', 
+                                xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red', doty = True)
+        sinus.y = np.sin( sinus.y)
+
+        PySpectra.mtpltlb.graphics.display()
+        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+
+        PySpectra.mtpltlb.graphics.close()
+
+        PySpectra.mtpltlb.graphics.cls()
+        PySpectra.delete()
+        PySpectra.setTitle( "check x-axis doty")
+
+        sinus = PySpectra.Scan( name = 'sinus', 
+                                xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red', doty = True)
+        sinus.y = np.sin( sinus.y)
+
+        PySpectra.mtpltlb.graphics.display()
+        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+
+        print "testMplGraphics.testClose, DONE"
 
     def testDoty( self): 
         '''
@@ -231,7 +275,6 @@ class testMplGraphics( unittest.TestCase):
 
         sinus.y = np.sin( sinus.y)
         PySpectra.mtpltlb.graphics.display( ['sinus'])
-        #PySpectra.show()
         PySpectra.mtpltlb.graphics.procEventsLoop( 1)
 
         print "testMplGraphics.testDisplaySingle, DONE"
@@ -347,8 +390,6 @@ class testMplGraphics( unittest.TestCase):
             s.y = np.tan( s.y)
 
         PySpectra.mtpltlb.graphics.display()
-
-        #PySpectra.show()
 
         PySpectra.mtpltlb.graphics.procEventsLoop( 1)
 

@@ -36,15 +36,11 @@ def _initGraphic():
 
     screen_resolution = _QApp.desktop().screenGeometry()
     width, height = screen_resolution.width(), screen_resolution.height()
-    #mw = _QtGui.QMainWindow()
+
     if _win is None:
         _pg.setConfigOption( 'background', 'w')
         _pg.setConfigOption( 'foreground', 'k')
-        #
-        # <class 'pyqtgraph.graphicsWindows.GraphicsWindow'>
-        #
-        _win = _pg.GraphicsWindow( title="PySpectra Application")
-        _win.name_TK = "graphicsWindow"
+        _win = _pg.GraphicsWindow( title="PySpectra Application (PQT)")
         _win.setGeometry( 30, 30, 793, int( 793./1.414))
 
     return (_QApp, _win)
@@ -63,11 +59,25 @@ def clear( scan):
 
 def close(): 
     global _win
+    global _clsFunctions
+
     if _win is None: 
         return
 
+    scanList = _pysp.getScanList()
+    for scan in scanList:
+        if scan.mouseProxy is not None: 
+            scan.mouseProxy.disconnect()
+            scan.mouseProxy = None
+        if scan.mouseClick is not None: 
+            scan.mouseClick.disconnect()
+            scan.mouseClick = None
+
     _win.destroy()
     _win = None
+
+    _clsFunctions = []
+
     return 
 
 def _setSizeGraphicsWindow( nScan):
@@ -971,7 +981,7 @@ def display( nameList = None):
     #
     # set scan.nrow, scan.ncol, scan.nplot
     #
-    _pysp.setScanVPs( nameList, flagDisplaySingle)
+    _pysp.setScanVPs( nameList, flagDisplaySingle, cls)
 
     #
     # _displayTitleComment() uses (0,0) and (1, 0)

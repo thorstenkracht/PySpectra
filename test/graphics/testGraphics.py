@@ -3,6 +3,7 @@
 cd /home/kracht/Misc/pySpectra
 python -m unittest discover -v
 
+python ./test/graphics/testGraphics.py testGraphics.testClose
 python ./test/graphics/testGraphics.py testGraphics.testDoty
 python ./test/graphics/testGraphics.py testGraphics.testGrid
 python ./test/graphics/testGraphics.py testGraphics.testScanning
@@ -37,6 +38,45 @@ import time, sys
 import math 
 
 class testGraphics( unittest.TestCase):
+
+    @classmethod
+    def setUpClass( testGraphics):
+        pass
+
+    @classmethod
+    def tearDownClass( testGraphics): 
+        PySpectra.close()
+
+    def testClose( self): 
+        '''
+        '''
+        print "testGraphics.testClose"
+
+        PySpectra.cls()
+        PySpectra.delete()
+        PySpectra.setTitle( "testing close()")
+
+        sinus = PySpectra.Scan( name = 'sinus', 
+                                xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red', doty = True)
+        sinus.y = np.sin( sinus.y)
+
+        PySpectra.display()
+        PySpectra.procEventsLoop( 1)
+
+        PySpectra.close()
+
+        PySpectra.cls()
+        PySpectra.delete()
+        PySpectra.setTitle( "testing close(), again")
+
+        sinus = PySpectra.Scan( name = 'sinus', 
+                                xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red', doty = True)
+        sinus.y = np.sin( sinus.y)
+
+        PySpectra.display()
+        PySpectra.procEventsLoop( 1)
+
+        print "testGraphics.testClose, DONE"
 
     def testDoty( self): 
         '''
@@ -102,7 +142,6 @@ class testGraphics( unittest.TestCase):
             PySpectra.display( ['sinus'])
             time.sleep( 0.01)
         print "testGraphics.testScanning, DONE"
-        PySpectra.close()
 
     def testScanningWithText( self): 
         '''
@@ -438,7 +477,7 @@ class testGraphics( unittest.TestCase):
 
         diffTime = time.time() - startTime
         self.assertLess( diffTime, 8.)
-        self.assertGreater( diffTime, 5.)
+        self.assertGreater( diffTime, 3.)
 
         print "testGraphics.testDisplay_v1, DONE"
 
@@ -474,7 +513,7 @@ class testGraphics( unittest.TestCase):
         diffTime = time.time() - startTime
 
         self.assertLess( diffTime, 7.)
-        self.assertGreater( diffTime, 3.0)
+        self.assertGreater( diffTime, 2.0)
         print "testGraphics.testDisplay_v2, DONE"
 
     def testWsViewport( self):

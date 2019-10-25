@@ -20,6 +20,14 @@ import math
 
 class testIFC( unittest.TestCase):
 
+    @classmethod
+    def setUpClass( testIFC):
+        pass
+
+    @classmethod
+    def tearDownClass( testIFC): 
+        PySpectra.close()
+
     def test_create1( self):
         PySpectra.cls()
         PySpectra.delete()

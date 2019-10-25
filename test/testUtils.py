@@ -11,6 +11,15 @@ import math
 
 class testUtils( unittest.TestCase):
 
+
+    @classmethod
+    def setUpClass( testUtils):
+        pass
+
+    @classmethod
+    def tearDownClass( testUtils): 
+        PySpectra.close()
+
     def test_ssa( self):
         '''
         overlay 2 scans

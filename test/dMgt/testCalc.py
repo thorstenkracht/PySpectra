@@ -18,6 +18,14 @@ import math
 
 class testCalc( unittest.TestCase):
 
+    @classmethod
+    def setUpClass( testCalc):
+        pass
+
+    @classmethod
+    def tearDownClass( testCalc): 
+        PySpectra.close()
+
     def testYToMinusY( self):
 
         print "testCalc.testYToMinusY"
