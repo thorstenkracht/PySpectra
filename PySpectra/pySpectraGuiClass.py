@@ -226,8 +226,9 @@ class PyQtConfig( QtGui.QMainWindow):
         # Help menu (bottom part)
         #
         self.helpMenu = self.menuBarActivity.addMenu('Help')
-        self.widgetAction = self.helpMenu.addAction(self.tr("Widget"))
-        self.widgetAction.triggered.connect( self.cb_helpWidget)
+
+        self.helpWidgetAction = self.helpMenu.addAction(self.tr("Widget"))
+        self.helpWidgetAction.triggered.connect( self.cb_helpWidget)
 
         self.activityIndex = 0
         self.activity = self.menuBarActivity.addMenu( "_")
@@ -306,7 +307,7 @@ class PyQtConfig( QtGui.QMainWindow):
 
     def cb_display( self): 
         pysp.cls()
-        pysp.display()
+        pysp.display()#
 
     def cb_helpWidget(self):
         QtGui.QMessageBox.about(self, self.tr("Help Widget"), self.tr(
@@ -316,7 +317,7 @@ class PyQtConfig( QtGui.QMainWindow):
                 "<li> Spacing (hor., vert.): the spacing between the plots </li>"
                 "</ul>"
                 ))
-#
+
 #
 #
 class Config( QtGui.QMainWindow):
@@ -883,8 +884,12 @@ class ScanAttributes( QtGui.QMainWindow):
         # Help menu (bottom part)
         #
         self.helpMenu = self.menuBarActivity.addMenu('Help')
-        self.widgetAction = self.helpMenu.addAction(self.tr("Widget"))
-        self.widgetAction.triggered.connect( self.cb_helpWidget)
+
+        self.helpScanAttributesAction = self.helpMenu.addAction(self.tr("Scan Attributes"))
+        self.helpScanAttributesAction.triggered.connect( self.cb_helpScanAttributes)
+
+        self.helpSymbolsAction = self.helpMenu.addAction(self.tr("Symbols"))
+        self.helpSymbolsAction.triggered.connect( self.cb_helpSymbols)
 
         self.activityIndex = 0
         self.activity = self.menuBarActivity.addMenu( "_")
@@ -928,7 +933,7 @@ class ScanAttributes( QtGui.QMainWindow):
 
 
     def cb_next( self): 
-        nextScan = pysp.dMgt.GQE._nextScan( self.name)
+        nextScan = pysp.dMgt.GQE.nextScan( self.name)
         index = pysp.dMgt.GQE.getIndex( nextScan.name)
         self.name = nextScan.name
         self.scan = nextScan
@@ -938,7 +943,7 @@ class ScanAttributes( QtGui.QMainWindow):
         return 
 
     def cb_back( self): 
-        prevScan = pysp.dMgt.GQE._prevScan( self.name)
+        prevScan = pysp.dMgt.GQE.prevScan( self.name)
         index = pysp.dMgt.GQE.getIndex( prevScan.name)
         self.name = prevScan.name
         self.scan = prevScan
@@ -1166,15 +1171,26 @@ class ScanAttributes( QtGui.QMainWindow):
         pysp.cls()
         pysp.display()
 
-    def cb_helpWidget(self):
-        QtGui.QMessageBox.about(self, self.tr("Help Widget"), self.tr(
-                "<h3> ScanAttributes Widget </h3>"
+    def cb_helpScanAttributes(self):
+        QtGui.QMessageBox.about(self, self.tr("Help Scan Attributes"), self.tr(
+                "<h3> Scan Attributes </h3>"
                 "<ul>"
                 "<li> Lines/markers are disabled by selecting the color NONE</li>"
                 "<li> yMin/yMax are reset to None by entering 'None' into the LineEdit widgets.</li>"
                 "<li> 'DOTY' is day-of-the-year, the x-axis ticks are date/time</li>"
                 "<li> 'Overlay' selects the target scan, meaning that the current scan is displayed in the viewport of the target scan.</li>"
                 "<li> 'at' makes sense for matplotlib only.</li>"
+                "</ul>"
+                ))
+
+    def cb_helpSymbols(self):
+        QtGui.QMessageBox.about(self, self.tr("Help Symbols"), self.tr(
+                "<h3> Symbols </h3>"
+                "<ul>"
+                "<li> '+' plus</li>"
+                "<li> 's' square</li>"
+                "<li> 'd' diamond</li>"
+                "<li> 'o' circle</li>"
                 "</ul>"
                 ))
 
@@ -1804,14 +1820,14 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.display()
 
     def cb_back( self): 
-        scan = pysp.dMgt.GQE._prevScan()
+        scan = pysp.dMgt.GQE.prevScan()
         index = pysp.dMgt.GQE.getIndex( scan.name)
         pysp.cls()
         pysp.display( [ scan.name])
         self.scansListWidget.setCurrentRow( index)
 
     def cb_next( self): 
-        scan = pysp.dMgt.GQE._nextScan()
+        scan = pysp.dMgt.GQE.nextScan()
         index = pysp.dMgt.GQE.getIndex( scan.name)
         pysp.cls()
         pysp.display( [ scan.name])
@@ -1957,9 +1973,14 @@ class pySpectraGui( QtGui.QMainWindow):
         # Help menu (bottom part)
         #
         self.helpMenu = self.menuBarActivity.addMenu('Help')
-        self.widgetAction = self.helpMenu.addAction(self.tr("Widget"))
-        self.widgetAction.triggered.connect( self.cb_helpWidget)
+        self.widgetAction = self.helpMenu.addAction(self.tr("PySpectra"))
+        self.widgetAction.triggered.connect( self.cb_helpPySpectra)
 
+        self.scanNameAction = self.helpMenu.addAction(self.tr("ScanName"))
+        self.scanNameAction.triggered.connect( self.cb_helpScanName)
+
+        self.examplesAction = self.helpMenu.addAction(self.tr("Examples"))
+        self.examplesAction.triggered.connect( self.cb_helpExamples)
 
         self.activityIndex = 0
         self.activity = self.menuBarActivity.addMenu( "_")
@@ -2045,7 +2066,6 @@ class pySpectraGui( QtGui.QMainWindow):
         if prnt is None: 
             QtGui.QMessageBox.about(self, 'Info Box', "No shell environment variable PRINTER.") 
             return
-        print "+++pySpClass", frmt
         fName = pysp.createPDF(format = frmt, flagPrint = False)
         self.logWidget.append( HasyUtils.getDateTime())
         self.logWidget.append("Created %s (%s)" % (fName, frmt))
@@ -2237,11 +2257,23 @@ class pySpectraGui( QtGui.QMainWindow):
         self.mplWidget.show()
         mpl_graphics.display( self.getCheckedNameList())
 
-    def cb_helpWidget(self):
+    def cb_helpPySpectra(self):
         QtGui.QMessageBox.about(self, self.tr("Help Widget"), self.tr(
                 "<h3> PySpectraGui</h3>"
-                "The Python Spectra Gui"
+                "The Python Spectra Gui: graphics using pyqtgraph and matplotlib"
+                ))
+
+    def cb_helpScanName(self):
+        QtGui.QMessageBox.about(self, self.tr("Help ScanName"), self.tr(
+                "<h3> The ScanName widget</h3>"
                 "<ul>"
-                "<li> some remarks</li>"
+                "<li> if no Scan (aka GQE) is checked, all are displayed</li>"
+                "<li> the MB3-click opens a widget for the GQE attributes</li>"
                 "</ul>"
+                ))
+
+    def cb_helpExamples(self):
+        QtGui.QMessageBox.about(self, self.tr("Help Examples"), self.tr(
+                "<h3> PySpectra by Examples</h3>"
+                "Execute the example code snippets and look at the code."
                 ))

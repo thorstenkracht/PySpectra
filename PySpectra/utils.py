@@ -471,7 +471,6 @@ def prtc():
     print "Prtc ",
     _sys.stdin.readline()
 
-
 def xMax( scan):
     '''    
     return the maximum x-value of a scan, used to place text on the screen, 
@@ -521,3 +520,101 @@ def yMin( scan):
     else:
         ret = scan.yMin
     return ret
+
+
+def toPyspMonitor( hsh, node = None):
+    """
+    sends a dictionary to a PyspMonitor process, 
+    returns a dictionary ...
+
+import PySpectra
+import random
+MAX = 10
+pos = [float(n)/MAX for n in range( MAX)]
+d1 = [random.random() for n in range( MAX)]
+d2 = [random.random() for n in range( MAX)]
+
+hsh = { 'putData': 
+           {'title': "Important Data", 
+            'columns': 
+            [ { 'name': "d1_mot01", 'data' : pos},
+              { 'name': "d1_c01", 'data' : d1},
+              { 'name': "d1_c02", 'data' : d2},
+           ]}}
+smNode = "haso107d1"
+hsh = PySpectra.toPyspMonitor( hsh, node = smNode)
+print hsh
+if hsh[ 'result'].upper() == 'DONE':
+    print "success!"
+    
+print PySpectra.toPyspMonitor( {'gra_decode_text': "date()"}, node = smNode)
+print PySpectra.toPyspMonitor( {'gra_decode_int': "2*3"}, node = smNode)
+print PySpectra.toPyspMonitor( {'gra_decode_double': "sqrt(2.)"}, node = smNode)
+print PySpectra.toPyspMonitor( {'gra_command': "cls;wait 1;display 1"}, node = smNode)
+hsh = PySpectra.toPyspMonitor( { 'getData': True})
+print repr( hsh.keys())
+print repr( hsh['getData'].keys())
+print repr( hsh['getData']['D1_C01']['x'])
+
+    """
+    import zmq, json, socket
+
+    if node is None:
+        node = socket.gethostbyname( socket.getfqdn())
+
+    context = zmq.Context()
+    sckt = context.socket(zmq.REQ)
+    #
+    # prevent context.term() from hanging, if the message
+    # is not consumed by a receiver.
+    #
+    sckt.setsockopt(zmq.LINGER, 1)
+    try:
+        sckt.connect('tcp://%s:7778' % node)
+    except Exception, e:
+        sckt.close()
+        return { 'result': "utils.toPyspMonitor: failed to connect to %s" % node}
+
+    hshEnc = json.dumps( hsh)
+    try:
+        res = sckt.send( hshEnc)
+    except Exception, e:
+        sckt.close()
+        return { 'result': "TgUtils.toPyspMonitor: exception by send() %s" % repr(e)}
+    #
+    # PyspMonitor receives the Dct, processes it and then
+    # returns the message. This may take some time. To pass
+    # 4 arrays, each with 10000 pts takes 2.3s
+    #
+    if hsh.has_key( 'isAlive'):
+        lst = zmq.select([sckt], [], [], 0.5)
+        if sckt in lst[0]:
+            hshEnc = sckt.recv() 
+            sckt.close()
+            context.term()
+            return json.loads( hshEnc)
+        else: 
+            sckt.close()
+            context.term()
+            return { 'result': 'notAlive'}
+    else:
+        lst = zmq.select([sckt], [], [], 3.0)
+        if sckt in lst[0]:
+            hshEnc = sckt.recv() 
+            sckt.close()
+            context.term()
+            return json.loads( hshEnc)
+        else: 
+            sckt.close()
+            context.term()
+            return { 'result': 'utils: no reply from pyspMonitor'}
+
+def isPyspMonitorAlive( node = None):
+    '''
+    returns True, if there is a pyspMonitor responding to the isAlive prompt
+    '''
+    hsh = toPyspMonitor( { 'isAlive': True}, node = node)
+    if hsh[ 'result'] == 'notAlive':
+        return False
+    else:
+        return True

@@ -21,8 +21,18 @@ from PyQt4 import QtCore
 from PyQt4 import QtGui 
 
 import PyTango as _PyTango
+import zmq, json, socket
 
 updateTime = 0.1
+
+#
+# the Jan Garrevoet option: Do not listen to the normal Door output
+#
+flagNoDoor = False
+#
+#
+#
+flagGraphicsOnly = False
 
 #
 # ===
@@ -39,6 +49,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         __builtin__.__dict__[ 'queue'] = self.queue
 
         self.refreshCount = 0
+        self.flagIsBusy = False
         self.updateTimer = QtCore.QTimer(self)
         self.updateTimer.timeout.connect( self.cb_refreshMain)
         self.updateTimer.start( int( updateTime*1000))
@@ -46,6 +57,113 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             self.door = _PyTango.DeviceProxy( HasyUtils.getDoorNames()[0])
         except Exception, e:
             print "pyspMonitor.__init__: failed to get Door proxy", HasyUtils.getDoorNames()[0]
+
+        self.helpMoveAction = self.helpMenu.addAction(self.tr("Move"))
+        self.helpMoveAction.triggered.connect( self.cb_helpMove)
+
+        #
+        # the zmq interface allows other processes to send data
+        # to the SardanaMonitor which are then displayed
+        #
+        self.context = zmq.Context()
+        self.sckt = self.context.socket(zmq.REP)
+        #
+        # don't use localhost. it is a different interface
+        #
+        try:
+            self.sckt.bind( "tcp://%s:7778" % socket.gethostbyname( socket.getfqdn()))
+            self.timerZMQ = QtCore.QTimer( self)
+            self.timerZMQ.timeout.connect( self.cb_timerZMQ)
+            self.timerZMQ.start(100)
+        except Exception, e:
+            print "SardanaMonitorMain.__init__(): ZMQ error (json-dict receiver)"
+            print "message:", repr( e)
+            print "assuming another SardanaMonitor is ready to receive json-dcts"
+            pass
+
+    def receiveDct( self, hsh):
+        #
+        # putData
+        #
+        if self.flagIsBusy:
+            return "pyspMonitor: rejecting dct while scanning"
+
+        pysp.putData( hsh)
+        #try: 
+        #    __builtin__.__dict__[ 'flagDataFromScan'] = False
+        #    pysp.putData( hsh)
+        #except Exception, e:
+        #    return "pyspMonitor.receiveDct: caught %s" % repr( e)
+        return "done"
+
+    def cb_timerZMQ( self):
+        #
+        # checks whether there is a request on the ZMQ socket
+        # Use cases: 
+        #   - mvsa or another client fetches data from the SardanaMonitor
+        #   - a client sends data to be displayed by the SardanaMonitor
+        #   - interface HasyUtils.toSardanaMonitor
+        #
+        self.timerZMQ.stop()
+        lst = zmq.select([self.sckt], [], [], 0.1)
+        argout = {}
+        if self.sckt in lst[0]:
+            msg = self.sckt.recv()
+            hsh = json.loads( msg)
+            if hsh.has_key( 'putData'):
+                argout[ 'result'] = self.receiveDct( hsh[ 'putData'])
+                #if flagNoDoor or flagGraphicsOnly:
+                #    argout[ 'result'] = self.receiveDct( hsh[ 'putData'])
+                #else:
+                #    argout[ 'result'] = HasyUtils.spectraDoor.spectraDoorInstance.receiveDct( hsh[ 'putData'])
+            elif hsh.has_key( 'getData'):
+                try:
+                    argout[ 'getData'] = pysp.getData()
+                    argout[ 'result'] = 'done'
+                except Exception, e:
+                    argout[ 'getData'] = {}
+                    argout[ 'result'] = repr( e)
+            elif hsh.has_key( 'isAlive'):
+                argout[ 'result'] = 'done'
+            else:
+                argout[ 'result'] = "pyspMonitorClass.cb_timerZMG: something is wrong"
+            msg = json.dumps( argout)
+            self.sckt.send( msg)
+        self.timerZMQ.start(100)
+
+    def cb_helpMove(self):
+        QtGui.QMessageBox.about(self, self.tr("Help Move"), self.tr(
+                "<h3> Move</h3>"
+                "A motor can be moved by"
+                "<ul>"
+                "<li> Selecting a single Scan for display</li>"
+                "<li> Clicking into the Scan</li>"
+                "</ul>"
+                " The user is asked for confimation before the move is executed"
+                ))
+
+    def setCertainWidgetEnabled( self, flag):
+        '''
+        enable/display widgets while a scan is active
+        '''
+
+        self.fileMenu.setEnabled( flag)
+        self.utilsMenu.setEnabled( flag)
+        self.optionsMenu.setEnabled( flag)
+        self.configMenu.setEnabled( flag)
+        self.examplesMenu.setEnabled( flag)
+
+        self.all.setEnabled( flag)
+        self.checked.setEnabled( flag)
+        self.clsBtn.setEnabled( flag)
+        self.deleteBtn.setEnabled( flag)
+        self.back.setEnabled( flag)
+        self.next.setEnabled( flag)
+        self.refreshFiles.setEnabled( flag)
+        self.scrollAreaFiles.setEnabled( flag)
+        self.scrollAreaScans.setEnabled( flag)
+        if self.useMatplotlib:
+            self.matplotlibBtn.setEnabled( flag)
 
     def execHsh( self, hsh): 
         #print "queueSM.execHsh", repr( hsh)
@@ -62,6 +180,12 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
                 pysp.display()
             else: 
                 pysp.display( hsh[ 'display'])
+        elif hsh.has_key( 'newScan') and hsh[ 'newScan']: 
+            self.setCertainWidgetEnabled( False)
+            self.flagIsBusy = True
+        elif hsh.has_key( 'endScan') and hsh[ 'endScan']: 
+            self.setCertainWidgetEnabled( True)
+            self.flagIsBusy = False
         elif hsh.has_key( 'setTitle'):
             pysp.setTitle( hsh[ 'setTitle'])
         elif hsh.has_key( 'setComment'):
@@ -97,7 +221,6 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             return
 
         motorArr = self.scanInfo['motors']        
-
         for i in range( 3):
             if i < length: 
                 self.motNameLabels[i].setText( motorArr[i]['name'])

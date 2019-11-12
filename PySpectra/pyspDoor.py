@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 '''
 the Door which communicates to pyspMonitor via a queue
+
+the Door is the sender
 '''
 import PyTango
 import time, sys, os, math
@@ -191,6 +193,7 @@ class spectraDoor( sms.BaseDoor):
             #
             self.sendHsh( { 'Scan': { 'name': self.mcaAliases[n],
                                       'reUse': True, 
+                                      'flagMCA': True, 
                                       'lineColor': 'blue', 
                                       'x': x, 
                                       'y': y}}) 
@@ -314,7 +317,7 @@ class spectraDoor( sms.BaseDoor):
         self.title = dataRecord[1]['data']['title']
 
         self.sendHsh( { 'setTitle': self.title})
-        self.sendHsh( { 'setComment': "%s, %s" % (self.startTime, self.filename)})
+        self.sendHsh( { 'setComment': "%s, %s" % (self.filename, self.startTime)})
 
     def getPosition( self, name): 
         pos = None
@@ -817,6 +820,12 @@ class spectraDoor( sms.BaseDoor):
         self.meshGoingUp = True 
         self.meshSweepCount = 1
         
+        #
+        # scrollAreaFiles.setEnabled( False)
+        # scrollAreaScans.setEnabled( False)
+        #
+        self.sendHsh( { 'newScan': True})
+
         self.indexScan = 1
 
         self.cleanupSpectra()
@@ -1003,6 +1012,11 @@ class spectraDoor( sms.BaseDoor):
             #for elm in self.counter_gqes.keys():
             #    Spectra.gra_command( "sort %s" % elm)
             self.flagIsBusy = False
+            #
+            # scrollAreaFiles.setEnabled( True)
+            # scrollAreaScans.setEnabled( True)
+            #
+            self.sendHsh( { 'endScan': True})
             return
  
         # ('',
@@ -1123,12 +1137,14 @@ class spectraDoor( sms.BaseDoor):
         if len( self.mcaAliases) > 0:
             self.displayMCAs()
             self.sendHsh( { 'display': None})
-
         self.sendHsh( { 'display': None})
 
         self.indexScan += 1
 
     def sendHsh( self, hsh): 
+        '''
+        sends a dictionary to the pyspMonitor
+        '''
         try:
             self.queue.put( hsh)
         except Exception, e:

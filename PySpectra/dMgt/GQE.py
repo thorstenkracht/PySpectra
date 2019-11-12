@@ -22,7 +22,9 @@ _comment = None
 _wsViewportFixed = False
 
 _ScanAttrsPublic = [ 'at', 'autoscaleX', 'autoscaleY', 'colSpan', 'currentIndex', 
-                     'dType', 'doty', 'fileName', 'flagDisplayVLines', 'lastIndex', 
+                     'dType', 'doty', 'fileName', 
+                     'flagDisplayVLines', 'flagMCA', 
+                     'lastIndex', 
                      'nPts', 'name', 'ncol', 'nplot', 'nrow', 'overlay', 'useTargetWindow', 
                      'showGridX', 'showGridY', 
                      'lineColor', 'lineStyle', 'lineWidth', 
@@ -111,6 +113,7 @@ class Scan( object):
                     the description of the x-axis
         yLabel:     string
                     the description of the y-axis
+        flagIsMCA   data from MCA, don't use for movements
     '''
     #
     # this class variable stores the Gui, needed to configure the motorsWidget, 
@@ -220,10 +223,29 @@ class Scan( object):
     # why do we need a class function for move()
     #
     def move( self, target): 
+        '''
+        this function is invoked by a mouse click from pqtgrph/graphics.py
+        '''
         import PyTango as _PyTango
         import time as _time
 
+
+        if Scan.monitorGui is None:
+            if self.logWidget is not None:
+                self.logWidget.append( "GQE.Scan.move: not called from pyspMonitor") 
+            else:
+                print "GQE.Scan.move: not called from pyspMonitor"
+            return 
+
+        #
+        # don't use MCA data to move motors
+        #
+        if self.flagMCA:
+            self.monitorGui.logWidget.append( "GQE.Scan.move: don't use MCAs to move motors") 
+            return 
+
         #print "GQE.Scan.move: to", target, "using", Scan.monitorGui.scanInfo
+
         #
         # from moveMotor widget
         #
@@ -345,6 +367,7 @@ class Scan( object):
     @staticmethod
     def setMonitorGui( monitorGui): 
         Scan.monitorGui = monitorGui
+        return 
     
     def _createScanFromData( self, kwargs):
         '''
@@ -452,6 +475,7 @@ class Scan( object):
         self.nplot = None
         self.overlay = None
         self.useTargetWindow = False
+        self.flagMCA = False
         self.plotItem = None
         self.plotDataItem = None
         self.scene = None
@@ -483,6 +507,7 @@ class Scan( object):
         self.mouseProxy = None
 
         for attr in [ 'autoscaleX', 'autoscaleY', 'colSpan', 'doty', 'fileName',  
+                      'flagMCA', 
                       'xLog', 'yLog', 'logWidget', 'motorList', 
                       'ncol', 'nrow', 'nplot', 'overlay', 'showGridX', 'showGridY', 
                       'lineColor', 'lineStyle', 
@@ -1294,4 +1319,148 @@ def getFontSize( nameList):
 
     return fontSize
 
+def getData():
+    '''
+    pack the interesting part of the spectra storage which has been
+    created by the pyspMonitor into a dictionary. 
+    '''
+    hsh = {}
+    for scan in _scanList:
+        name = scan.name
+        hsh[ name] = {}
+        #
+        # numpy array cannot be json-encoded
+        #
+        if scan.currentIndex >= 0:
+            hsh[ name]['x'] = list( scan.x[:(scan.currentIndex + 1)])
+            hsh[ name]['y'] = list( scan.y[:(scan.currentIndex + 1)])
+        else:
+            hsh[ name]['x'] = []
+            hsh[ name]['y'] = []
 
+    return hsh
+
+def fillDataByColumns( hsh):
+    if len( hsh[ 'columns']) < 2: 
+        raise Exception( "gra_ifc.putData", "less than 2 columns")
+
+    columns = []
+    xcol = hsh[ 'columns'][0]
+    for elm in hsh[ 'columns'][1:]:
+        if not elm.has_key( 'name'):
+            raise Exception( "GQE.fillDataByGqes", "missing 'name'")
+        if not elm.has_key( 'data'):
+            raise Exception( "GQE.fillDataByGqes", "missing 'data'")
+        data = elm[ 'data']
+        if len( data) != len( xcol[ 'data']):
+            raise Exception( "GQE.fillDataByGqes", 
+                             "column length differ %s: %d, %s: %d" % ( xcol[ 'name'], len( xcol[ 'data']),
+                                                                       elm[ 'name'], len(elm[ 'data'])))
+        scan = Scan( name = elm[ 'name'], 
+                    xMin = data[0], xMax = data[-1], nPts = len(data),
+                    xLabel = xcol[ 'name'], yLabel = elm[ 'name'],
+                    lineColor = 'red',
+                )
+        for i in range(len(data)):
+            scan.setX( i, xcol[ 'data'][i])
+            scan.setY( i, data[i])
+    _pysp.display()
+
+    return 
+
+def colorSpectraToPysp( color): 
+    '''
+    to be backwards compatible: allow the user to specify colors a la Spectra
+    '''
+    if color == 1:
+        color = 'black'
+    elif color == 2:
+        color = 'red'
+    elif color == 3:
+        color = 'green'
+    elif color == 4:
+        color = 'blue'
+    elif color == 5:
+        color = 'cyan'
+    elif color == 5:
+        color = 'cyan'
+    elif color == 6:
+        color = 'yellow'
+    elif color == 7:
+        color = 'magenta'
+
+    return color
+
+def fillDataByGqes( hsh):
+
+    flagAtFound = False
+    flagOverlayFound = False
+    
+    gqes = []
+    for elm in hsh[ 'gqes']:
+        if not elm.has_key( 'name'):
+            raise Exception( "GQE.fillDataByGqes", "missing 'name'")
+        if not elm.has_key( 'x'):
+            raise Exception( "GQE.fillDataByGqes", "missing 'x' for %s" % elm[ 'name'])
+        if not elm.has_key( 'y'):
+            raise Exception( "GQE.fillDataByGqes", "missing 'y' for %s" % elm[ 'name'])
+        if len( elm[ 'x']) != len( elm[ 'y']):
+            raise Exception( "GQE.fillDataByGqes", "%s, x and y have different length %d != %d" % (elm[ 'name'], 
+                                                                                                   len( elm[ 'x']), len( elm[ 'y'])))
+        at = '(1,1,1)'
+        if elm.has_key( 'at'):
+            flagAtFound = True
+            at = elm[ 'at']
+        xLabel = 'x-axis'
+        if elm.has_key( 'xlabel'):
+            xLabel = elm[ 'xlabel']
+        if elm.has_key( 'xLabel'):
+            xLabel = elm[ 'xLabel']
+        yLabel = 'y-axis'
+        if elm.has_key( 'ylabel'):
+            yLabel = elm[ 'ylabel']
+        if elm.has_key( 'yLabel'):
+            yLabel = elm[ 'yLabel']
+        color = 'red'
+        if elm.has_key( 'color'):
+            color = elm[ 'color']
+            color = colorSpectraToPysp( color)
+        
+        x = elm[ 'x']
+        y = elm[ 'y']
+        gqe = SCAN( name = elm[ 'name'],
+                    at = at, 
+                    xMin = x[0], xMax = x[-1], nPts = len(x),
+                    xLabel = xLabel, yLabel = yLabel,
+                    lineColor = color,
+                )
+        for i in range(len(x)):
+            gqe.setX( i, x[i])
+            gqe.setY( i, y[i])
+
+
+    _pysp.display()
+
+    return 
+
+    
+def putData( hsh):
+    '''
+    a plot is created based on a dictionary 
+    the use case: some data are sent pyspMonitor
+    '''
+    delete()
+    _pysp.cls()
+
+    if not hsh.has_key( 'title'):
+        setTitle( "NoTitle")
+    else:
+        setTitle( hsh[ 'title'])
+
+    if hsh.has_key( 'columns'):
+        fillDataByColumns( hsh)
+    elif hsh.has_key( 'gqes'):
+        fillDataByGqes( hsh)
+    else:
+        raise Exception( "GQE.putData", "expecting 'columns' or 'gqes'")
+    return 
