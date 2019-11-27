@@ -29,11 +29,12 @@ def parseCLI():
         description="PySpectra Sardana Monitor", 
         epilog='''  ''')
     parser.add_argument( '-m', dest="matplotlib", action="store_true", help='graphics from matplotlib, def.: pyqtgraph')
+    parser.add_argument( '-n', dest="flagNoDoor", action="store_true", help='do not receive data from a door')
     args = parser.parse_args()
 
     return args
         
-def main():
+def main( flagNoDoor):
 
     for i in range( len( sys.argv)): 
         if sys.argv[i] == '-m':
@@ -46,7 +47,7 @@ def main():
     if app is None:
         app = QtGui.QApplication(sys.argv)
 
-    o = pysp.pyspMonitorClass.pyspMonitor()
+    o = pysp.pyspMonitorClass.pyspMonitor( flagNoDoor)
     o.show()
 
     import PySpectra.pyspDoor
@@ -73,4 +74,4 @@ if __name__ == "__main__":
     import PySpectra as pysp
     import PySpectra.pyspMonitorClass
 
-    main()
+    main( args.flagNoDoor)

@@ -32,7 +32,7 @@ class testIFC( unittest.TestCase):
         PySpectra.cls()
         PySpectra.delete()
         PySpectra.ipython.ifc.command( "create s1 0 10 100")
-        lst = PySpectra.getScanList()
+        lst = PySpectra.getGqeList()
         self.assertEqual( len( lst), 1)
         self.assertEqual( lst[0].name, "s1")
         self.assertEqual( lst[0].nPts, 100)
@@ -47,25 +47,25 @@ class testIFC( unittest.TestCase):
         PySpectra.cls()
         PySpectra.delete()
         PySpectra.ipython.ifc.command( "create s1")
-        lst = PySpectra.getScanList()
+        lst = PySpectra.getGqeList()
         self.assertEqual( len( lst), 1)
         self.assertEqual( lst[0].name, "s1")
         PySpectra.ipython.ifc.command( "display s1")
 
         PySpectra.ipython.ifc.command( "derivative s1")
-        lst = PySpectra.getScanList()
+        lst = PySpectra.getGqeList()
         self.assertEqual( lst[1].name, "s1_derivative")
         self.assertEqual( len( lst), 2)
 
         PySpectra.ipython.ifc.command( "antiderivative s1")
-        lst = PySpectra.getScanList()
+        lst = PySpectra.getGqeList()
         self.assertEqual( lst[2].name, "s1_antiderivative")
         self.assertEqual( len( lst), 3)
 
         PySpectra.ipython.ifc.command( "delete s1")
         PySpectra.ipython.ifc.command( "delete s1_derivative")
         PySpectra.ipython.ifc.command( "delete s1_antiderivative")
-        lst = PySpectra.getScanList()
+        lst = PySpectra.getGqeList()
         self.assertEqual( len( lst), 0)
 
     def test_cls( self):
@@ -106,7 +106,7 @@ class testIFC( unittest.TestCase):
         PySpectra.ipython.ifc.command( "create s1")
         PySpectra.ipython.ifc.command( "y2my s1")
 
-        lst = PySpectra.getScanList()
+        lst = PySpectra.getGqeList()
         self.assertEqual( lst[1].name, "s1_y2my")
         self.assertEqual( len( lst), 2)
 

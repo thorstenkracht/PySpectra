@@ -519,9 +519,122 @@ def exampleSimpleLog():
 
     return 
 
+
+def exampleMeshMandelbrot1(): 
+
+    _pysp.setWsViewport( 'DINA5S')
+
+    _pysp.cls()
+    _pysp.delete()
+
+    (xmin, xmax) = (-2., 1)
+    (ymin, ymax) = (-1.5, 1.5)
+    (width, height) = (500, 500)
+    maxiter = 20
+    
+    r1 = _np.linspace(xmin, xmax, width)
+    r2 = _np.linspace(ymin, ymax, height)
+    n3 = _np.empty((width,height))
+    for i in range(width):
+        for j in range(height):
+            n3[i,j] = mandelbrot(r1[i] + 1j*r2[j],maxiter)
+            
+    m = _pysp.Mesh( name = "MandelbrotSet", data = n3, 
+                    xMin = xmin, xMax = xmax, width = width, 
+                    yMin = ymin, yMax = ymax, height = height, 
+                    xLabel = "eh_mot01", yLabel = "eh_mot02")
+
+    _pysp.cls()
+    _pysp.display()
+    return 
+
+def mandelbrot( c, maxiter):
+    z = c
+    for n in range(maxiter):
+        if abs(z) > 2:
+            return n
+        z = z*z + c
+    return 0
+
+def exampleMeshMandelbrot2(): 
+
+    _pysp.setWsViewport( 'DINA5S')
+
+    _pysp.cls()
+    _pysp.delete()
+
+    limits = [
+        (-2., -1., 0.0, 1.5), 
+        (-1., 1., 0.0, 1.5), 
+        (-2., -1., -1.5, 0.), 
+        (-1., 1., -1.5, 0), 
+    ]
+
+
+    (width, height) = (100, 100)
+    maxiter = 50
+
+    oArr = []
+    xArr = []
+    yArr = []
+    count = 1
+    for elm in limits: 
+        (xmin, xmax, ymin, ymax) = elm
+        oArr.append( _pysp.Mesh( name = "MandelbrotSet%d" % count, xMin = xmin, xMax = xmax, width = width,  
+                                 yMin = ymin, yMax = ymax, height = height, xLabel = "eh_mot01", yLabel = "eh_mot02"))
+    
+        xArr.append( _np.linspace(xmin, xmax, width))
+        yArr.append( _np.linspace(ymin, ymax, height))
+        count += 1
+
+    for i in range(width):
+        for j in range(height):
+            for k in range( len(limits)):
+                res = mandelbrot( xArr[k][i] + 1j*yArr[k][j],maxiter)
+                oArr[k].setPixel( x = xArr[k][i], y = yArr[k][j], value = res)
+        _pysp.cls()
+        _pysp.display()
+    return 
+
+def exampleMeshMandelbrot3(): 
+
+    _pysp.setWsViewport( 'DINA5S')
+
+    _pysp.cls()
+    _pysp.delete()
+
+    (xmin, xmax) = (-1., 0)
+    (ymin, ymax) = ( 0., 1.)
+    (width, height) = (500, 500)
+    maxiter = 50
+    
+    r1 = _np.linspace(xmin, xmax, width)
+    r2 = _np.linspace(ymin, ymax, height)
+    n3 = _np.empty((width,height))
+    for i in range(width):
+        for j in range(height):
+            n3[i,j] = mandelbrot(r1[i] + 1j*r2[j],maxiter)
+            
+    m = _pysp.Mesh( name = "MandelbrotSet", data = n3, 
+                    xMin = xmin, xMax = xmax, width = width, 
+                    yMin = ymin, yMax = ymax, height = height, 
+                    xLabel = "eh_mot01", yLabel = "eh_mot02")
+
+    t1 = _pysp.Scan( name = "t1", xMin = 0.01, xMax = 10., nPts = 101, 
+                     lineColor = 'blue', xLabel='Position', 
+                     yLabel = 'signal', yLog = True)
+
+    t2 = _pysp.Scan( name = "t2", xMin = 0.01, xMax = 10., nPts = 101, 
+                     lineColor = 'blue', xLabel='Position', 
+                     yLabel = 'signal', xLog = True)
+
+    _pysp.cls()
+    _pysp.display()
+    return 
+
 '''
 # 
-# this piece of conde can only be executed,   
+# this piece of code can only be executed,   
 # if the pyspMonitor.py is running
 #
 import PySpectra as pysp

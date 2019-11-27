@@ -3,27 +3,27 @@
 here are the definitions used in various python files of the project
 
   - this file is importet by PySpectra/__init__.py
-  - programm refere to the variables like pysp.definitions.MANY_SCANS
-  - we avoid _MANY_SCANS because this variable appear under pysp.definitions
+  - programm refere to the variables like pysp.definitions.MANY_GQES
+  - we avoid _MANY_GQES because this variable appear under pysp.definitions
     and is thus well hidden
 '''
 #
 #
-# if there are more scans than MANY_SCANS the x- and y-labels
+# if there are more scans than MANY_GQES the x- and y-labels
 # are suppressed and the title is moved into the plot
 #
 from PyQt4 import QtCore as _QtCore
 from PyQt4 import QtGui as _QtGui
-MANY_SCANS = 20
-VERY_MANY_SCANS = 30
+MANY_GQES = 20
+VERY_MANY_GQES = 30
 
 FONT_SIZE_NORMAL = 14
-FONT_SIZE_SMALL = 12       # number of scans > MANY_SCANS
-FONT_SIZE_VERY_SMALL = 10    # number of scans > VERY_MANY_SCANS
+FONT_SIZE_SMALL = 12       # number of scans > MANY_GQES
+FONT_SIZE_VERY_SMALL = 10    # number of scans > VERY_MANY_GQES
 
 TICK_FONT_SIZE_NORMAL = 12
-TICK_FONT_SIZE_SMALL = 10        # number of scans > MANY_SCANS
-TICK_FONT_SIZE_VERY_SMALL = 8    # number of scans > VERY_MANY_SCANS
+TICK_FONT_SIZE_SMALL = 10        # number of scans > MANY_GQES
+TICK_FONT_SIZE_VERY_SMALL = 8    # number of scans > VERY_MANY_GQES
 
 LEN_MAX_TITLE = 25
 #
@@ -36,7 +36,7 @@ marginBottom = 20
 spacingHorizontal = -30
 spacingVertical = -15
 
-dataFormats = [ 'fio', 'dat', 'iint']
+dataFormats = [ 'fio', 'dat', 'iint', 'nxs']
 
 BLUE_MOVING = "#a0b0ff"
 RED_ALARM = "#ff8080"

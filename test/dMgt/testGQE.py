@@ -27,6 +27,7 @@ import numpy as np
 import unittest
 import time, sys, os
 import math 
+import pyqtgraph as pg
 
 class testGQE( unittest.TestCase):
 
@@ -92,7 +93,7 @@ class testGQE( unittest.TestCase):
         PySpectra.cls()
         PySpectra.delete()
         PySpectra.read( "%s/test/data/tst_09153_mca_s1.fio" % pySpectraPath, flagMCA = True)
-        lst = PySpectra.getScanList()
+        lst = PySpectra.getGqeList()
         self.assertEqual( len( lst), 1)
         self.assertEqual( lst[0].name, "d1_mca01")
         self.assertEqual( lst[0].nPts, 2048)
@@ -111,7 +112,7 @@ class testGQE( unittest.TestCase):
         PySpectra.cls()
         PySpectra.delete()
         PySpectra.read( "%s/test/data/tst_09154_mca_s1.fio" % pySpectraPath, flagMCA = True)
-        lst = PySpectra.getScanList()
+        lst = PySpectra.getGqeList()
         self.assertEqual( len( lst), 2)
         self.assertEqual( lst[0].name, "d1_mca01")
         self.assertEqual( lst[0].nPts, 8192)
@@ -132,7 +133,7 @@ class testGQE( unittest.TestCase):
         PySpectra.cls()
         PySpectra.delete()
         PySpectra.read( "%s/test/data/ti_au_tio2_sio2_kat55a_0001.fio" % pySpectraPath)
-        lst = PySpectra.getScanList()
+        lst = PySpectra.getGqeList()
         self.assertEqual( len( lst), 24)
         self.assertEqual( lst[0].name, "TI_AU_TIO2_SIO2_KAT55A_0001")
         self.assertEqual( lst[1].name, "TI_AU_TIO2_SIO2_KAT55A_0001_RING")
@@ -147,7 +148,7 @@ class testGQE( unittest.TestCase):
         print "reading splitter"
         PySpectra.read( "%s/test/data/SPLITTER_PXE_BL_22_2.dat" % pySpectraPath)
         print "reading splitter DONE"
-        lst = PySpectra.getScanList()
+        lst = PySpectra.getGqeList()
         print "scanList", repr( lst)
         self.assertEqual( len( lst), 4)
         self.assertEqual( lst[0].name, "scan1")
@@ -223,7 +224,7 @@ class testGQE( unittest.TestCase):
         except ValueError, e:
             self.assertEqual( str( e), "GQE.Scan.__init__: if 'x' or 'y' then both have to be supplied")
 
-        lst = PySpectra.getScanList()
+        lst = PySpectra.getGqeList()
         self.assertEqual( len( lst), 0)
         
         scan = PySpectra.Scan( name = 't1', x = [0, 1, 2, 3, 4], y = [10, 12, 11, 14, 12])
@@ -248,22 +249,22 @@ class testGQE( unittest.TestCase):
     def testCreateDelete( self): 
         print "testGQE.testCreateDelete"
         PySpectra.delete()
-        scanLst = PySpectra.getScanList()
+        scanLst = PySpectra.getGqeList()
         self.assertEqual( len( scanLst), 0)
         PySpectra.Scan( name = 't1')
         PySpectra.Scan( name = 't2')
         PySpectra.Scan( name = 't3')
         PySpectra.Scan( name = 't4')
         PySpectra.display()
-        scanLst = PySpectra.getScanList()
+        scanLst = PySpectra.getGqeList()
         self.assertEqual( len( scanLst), 4)
         PySpectra.delete( [ 't1', 't2'])
-        scanLst = PySpectra.getScanList()
+        scanLst = PySpectra.getGqeList()
         self.assertEqual( len( scanLst), 2)
         self.assertEqual( scanLst[0].name, 't3')
         self.assertEqual( scanLst[1].name, 't4')
         PySpectra.delete()
-        scanLst = PySpectra.getScanList()
+        scanLst = PySpectra.getGqeList()
         self.assertEqual( len( scanLst), 0)
 
         print "testGQE.testCreateDelete, DONE"
@@ -326,7 +327,7 @@ class testGQE( unittest.TestCase):
 
         PySpectra.read( ret)
 
-        scanLst = PySpectra.getScanList()
+        scanLst = PySpectra.getGqeList()
         self.assertEqual( len( scanLst), 1)
         self.assertEqual( scanLst[0].name, "t1")
         self.assertEqual( scanLst[0].nPts, 201)
@@ -345,7 +346,7 @@ class testGQE( unittest.TestCase):
 
         scan = PySpectra.Scan( name = 't1', fileName = ret, x = 1, y = 2)
 
-        scanLst = PySpectra.getScanList()
+        scanLst = PySpectra.getGqeList()
         self.assertEqual( len( scanLst), 1)
         self.assertEqual( scanLst[0].name, "t1")
         self.assertEqual( scanLst[0].nPts, 201)

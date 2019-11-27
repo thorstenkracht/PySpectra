@@ -12,6 +12,10 @@ import sys as _sys
 import os as _os
 import time as _time
 
+#import matplotlib.pyplot as _plt
+import bisect as _bisect
+from scipy.optimize import curve_fit as _curve_fit
+
 def ssa( xIn, yIn, flagNbs = False, stbr = 3):
     '''
     performs a simple scan analysis
@@ -234,27 +238,27 @@ def ssa( xIn, yIn, flagNbs = False, stbr = 3):
 
 _lenPlotted = -1
 
-def setScanVPs( nameList, flagDisplaySingle, clsFunc):
+def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
     '''
-    set the scan viewport, we use the at = (2,3,2) syntax
+    set the gqe viewport, we use the at = (2,3,2) syntax
     which is (nrow, ncol, nplot)
     title and comment are ignored here. they are taken 
     care of in createPlotItem()
 
-    if a scan has an 'at' field, like (2,2,3), these values
+    if a gqe has an 'at' field, like (2,2,3), these values
     have higher priority.
 
     clsFunc is specified to be able to distinguish between mpl and pqt
     '''
     global _lenPlotted
 
-    scanList = _GQE.getScanList()
+    gqeList = _GQE.getGqeList()
 
     if len( nameList) == 0:
         #
-        # the number of used viewports is (len( scanList) - numberOfOverlaid) 
+        # the number of used viewports is (len( gqeList) - numberOfOverlaid) 
         #
-        usedVPs = len( scanList) - _GQE._getNumberOfOverlaid()
+        usedVPs = len( gqeList) - _GQE._getNumberOfOverlaid()
         if usedVPs != _lenPlotted and _lenPlotted != -1: 
             clsFunc()
         _lenPlotted = usedVPs
@@ -268,7 +272,7 @@ def setScanVPs( nameList, flagDisplaySingle, clsFunc):
             nrow = 2
         else:
             ncol = int( _math.ceil( _math.sqrt( usedVPs)))
-            if usedVPs > _pysp.definitions.MANY_SCANS: 
+            if usedVPs > _pysp.definitions.MANY_GQES: 
                 ncol -= 1
             nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
         nplot = 1 
@@ -297,39 +301,40 @@ def setScanVPs( nameList, flagDisplaySingle, clsFunc):
             nrow = 2
         else:
             ncol = int( _math.ceil( _math.sqrt( usedVPs)))
-            if usedVPs > _pysp.definitions.MANY_SCANS: 
+            if usedVPs > _pysp.definitions.MANY_GQES: 
                 ncol -= 1
             nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
         nplot = 1 
 
-    for scan in scanList:
+    for gqe in gqeList:
         #
-        # overlay? - don't create a viewport scan.
+        # overlay? - don't create a viewport gqe.
         #
-        if scan.overlay is not None and not flagDisplaySingle:
+        if gqe.overlay is not None and not flagDisplaySingle:
             #
-            # maybe the scan.overlay has beed deleted
+            # maybe the gqe.overlay has beed deleted
             #
-            if _GQE.getScan( scan.overlay) is None:
-                scan.overlay = None
+            if _GQE.getGqe( gqe.overlay) is None:
+                gqe.overlay = None
             else:
                 continue
 
         if len( nameList) > 0:
-            if scan.name not in nameList:
+            if gqe.name not in nameList:
                 continue
 
-        if scan.plotItem is None:
-            if scan.at is None:
-                scan.ncol = ncol
-                scan.nrow = nrow
-                scan.nplot = nplot
+        if gqe.plotItem is None:
+            if gqe.at is None:
+                gqe.ncol = ncol
+                gqe.nrow = nrow
+                gqe.nplot = nplot
             else: 
-                scan.nrow = scan.at[0]
-                scan.ncol = scan.at[1]
-                scan.nplot = scan.at[2]
-            if scan.nrow*scan.ncol < scan.nplot:
-                raise ValueError( "utils.setScanVPs: nrow %d * ncol %d < nplot %d" % (scan.nrow, scan.ncol, scan.nplot))
+                gqe.nrow = gqe.at[0]
+                gqe.ncol = gqe.at[1]
+                gqe.nplot = gqe.at[2]
+            if gqe.nrow*gqe.ncol < gqe.nplot:
+                raise ValueError( "utils.setGqeVPs: nrow %d * ncol %d < nplot %d, atr %s" % \
+                                  (gqe.nrow, gqe.ncol, gqe.nplot, gqe.at))
             nplot += 1
 
 _initInkey = False
@@ -526,13 +531,19 @@ def toPyspMonitor( hsh, node = None):
     """
     sends a dictionary to a PyspMonitor process, 
     returns a dictionary ...
-
-import PySpectra
+# 
+# this piece of code can only be executed,   
+# if the pyspMonitor.py is running
+#
+import PySpectra as pysp
 import random
-MAX = 10
+MAX = 5
 pos = [float(n)/MAX for n in range( MAX)]
 d1 = [random.random() for n in range( MAX)]
 d2 = [random.random() for n in range( MAX)]
+
+print "pos", repr( pos)
+print "d1:", repr( d1)
 
 hsh = { 'putData': 
            {'title': "Important Data", 
@@ -541,20 +552,20 @@ hsh = { 'putData':
               { 'name': "d1_c01", 'data' : d1},
               { 'name': "d1_c02", 'data' : d2},
            ]}}
-smNode = "haso107d1"
-hsh = PySpectra.toPyspMonitor( hsh, node = smNode)
-print hsh
-if hsh[ 'result'].upper() == 'DONE':
-    print "success!"
-    
-print PySpectra.toPyspMonitor( {'gra_decode_text': "date()"}, node = smNode)
-print PySpectra.toPyspMonitor( {'gra_decode_int': "2*3"}, node = smNode)
-print PySpectra.toPyspMonitor( {'gra_decode_double': "sqrt(2.)"}, node = smNode)
-print PySpectra.toPyspMonitor( {'gra_command': "cls;wait 1;display 1"}, node = smNode)
-hsh = PySpectra.toPyspMonitor( { 'getData': True})
-print repr( hsh.keys())
-print repr( hsh['getData'].keys())
-print repr( hsh['getData']['D1_C01']['x'])
+
+hsh = pysp.toPyspMonitor( hsh)
+print "return values of putData:", repr( hsh) 
+
+hsh = pysp.toPyspMonitor( { 'getData': True})
+for i in range( MAX):
+    if pos[i] != hsh[ 'getData']['d1_c01']['x'][i]:
+        print "error: pos[i] != x[i]"
+    if d1[i] != hsh[ 'getData'][ 'd1_c01'][ 'y'][i]:
+        print "error: d1[i] != y[i]"
+        
+print "getData, pos:", hsh[ 'getData']['d1_c01']['x']
+print "getData, pos:", hsh[ 'getData']['d1_c01']['y']
+return
 
     """
     import zmq, json, socket
@@ -618,3 +629,418 @@ def isPyspMonitorAlive( node = None):
         return False
     else:
         return True
+
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Feb 26 18:02:40 2015
+
+@author: sprung
+"""
+
+# --------------------------------------------------------------------------- #
+def fastscananalysis(x,y,mode):
+    """Fast scan analysis
+    # ---
+    # --- Input variables:
+    # --- x       : vector of motor positions
+    # --- y       : vector of intensity values
+    # --- mode    : supported "PEAK","CMS","CEN","DIP","DIPM","DIPC","STEP","STEPM","STEPC"
+    # ---
+    # --- Output variables:
+    # --- xpos    : "goal" motor position according to the chosen mode
+    # --- xpeak   :  motor position of the peak value 
+    # --- xcms    :  motor position of the center of mass
+    # --- xcen    :  motor position of the gaussian fit
+    # --- message :  some message string
+    # ---
+    # --- Version 03 by MS and AZ 20150209
+    # ---
+    """
+    # --- Debug switch
+    debug   = 0
+    
+    # --- Convert "x" and "y" to NUMPY arrays
+    x = _np.array(x)
+    y = _np.array(y)
+
+    # --- Predefine output variables
+    message = "undefined"
+    xpos    = _np.mean(x)
+    xpeak   = _np.mean(x)
+    xcms    = _np.mean(x)
+    xcen    = _np.mean(x)
+
+    # --- Check input variable "mode"
+    if not mode.lower() in [ "peak", "cen", "cms", "dip", "dipc", "dipm",
+                             "step", "stepc", "stepm", "slit", "slitc", "slitm"]:
+        if debug == 1:    
+            print "Scan analysis MODE not specified!\n Possible modes: peak, cen, cms, dip, dipc, dipm, step, stepc and stepm, slit, slitc and slitm!"        
+            return message, xpos, xpeak, xcen, xcms
+        mode = "peak"            
+
+    # --- Check input variables "x" and "y"
+    minpoints = 9
+    if len(x) < minpoints or len(y) < minpoints:
+        message = 'Not enough scan data points. Please scan over at least 9 points!'
+        return message, xpos, xpeak, xcen, xcms
+    if len(x) != len(y):
+        message = 'Error: Input vectors are not of identical length!'
+        return message, xpos, xpeak, xcen, xcms
+
+    # --- Prepare x and y according to mode selection
+    if mode.lower() == "peak" or mode.lower() == "cms" or mode.lower() == "cen":
+        y = y - _np.nanmin(y)            # --- remove constant offset
+        
+    if mode.lower() == "dip" or mode.lower() == "dipc" or mode.lower() == "dipm":
+        y = -y                          # --- invert the data
+        y = y - _np.nanmin(y)            # --- remove constant offset
+        
+    if mode.lower() == "step" or mode.lower() == "stepc" or mode.lower() == "stepm":
+        if y[0] > y[-1]:                # --- this is a negative slit scan
+            y = -y                      # --- invert the data
+        y = _deriv(y)                    # --- calculate derivative of signal of identical length
+        y = y - _np.nanmin(y)            # --- remove constant offset
+
+    if mode.lower() == "slit" or mode.lower() == "slitc" or mode.lower() == "slitm":
+        # --- Good cases: a) constant plus slope up   & b) slope down plus constant
+        # --- Bad  cases: c) constant plus slope down & d) slope up plus constant
+        SmoothWidth, SmoothType, Ends = (5, 3, 0)
+        # dy = _deriv(y)                                                           #--- calculate 1st derivative of signal
+        dy = _fastsmooth( _deriv(y), SmoothWidth, SmoothType, Ends)                #--- calculate 1st derivative of signal
+        if y[0] > y[-1] and _np.mean(dy[0:2]) > _np.mean(dy[-3:-1]): # --- case c)
+            y = -y                      # --- invert the data
+        if y[0] < y[-1] and _np.mean(dy[0:2]) > _np.mean(dy[-3:-1]): # --- case d)
+            y = -y                      # --- invert the data
+        # y = _deriv( _deriv(y))                                                     # --- calculate 2nd derivative of signal of identical length
+        # y = _deriv( _fastsmooth( _deriv(y), SmoothWidth, SmoothType, Ends))          # --- calculate 2nd derivative of signal of identical length
+        y = _fastsmooth( _deriv( _deriv(y)), SmoothWidth, SmoothType, Ends)          #--- calculate 2nd derivative of signal of identical length
+        y = y - _np.nanmin(y)            # --- remove constant offset
+
+    # --- Check if intensity signal contains a peak
+    # --- Returns also an estimate for a possible peak index & peak width
+    ispeak, peaki, peakw = _check4peak(x,y)
+    if ispeak == 0:
+        message = 'Error %s: No peak found in data!' % mode.upper()
+        return message, xpos, xpeak, xcen, xcms
+
+    # --- Pre-evaluate the data
+    imax  = _np.argmax(y)                   # --- index of maximum value (for peak, dip, step)
+    ip    = peaki
+    if debug == 1:
+        print 'Indices: ', imax, ip
+    yl    = y[:ip+1]                       # --- Intensity left  side
+    yr    = y[ip:]                         # --- Intensity right side
+    hl    = _np.amax(yl)- _np.amin(yl)       # --- Intensity difference left  side
+    hr    = _np.amax(yr)- _np.amin(yr)       # --- Intensity difference right side
+
+    # --- Some 'Return' conditions
+    if imax <= 1 or imax >= len(y) - 1: # --- Position of peak, dip or step at the far edge of the scan range
+        message = 'Error %s: Estimated position at the far edge of the scan range. Please use a larger scan range!' % mode.upper()
+        return message, xpos, xpeak, xcen, xcms
+
+    # --- One side of the peak is MUCH higher than the other
+    # --- The 'real' peak might be out of the scan range
+    minlevel = 0.90
+    if abs(hl-hr) >= minlevel * max(hl,hr): 
+        message = 'Error %s: One side of the peak is much higher than the other! Please use a larger scan range!' % mode.upper()
+        return message, xpos, xpeak, xcen, xcms
+
+    # --- Symmetrize/Reduce data points for Gaussian fitting (cen, dipc, stepc)
+    # --- (if peak is not measured completely)
+    xf          = x
+    yf          = y
+    yfmax       = _np.amax(y)
+    yfmin       = _np.amin(y)
+    sigma_start = peakw
+    if abs(hl-hr) <= minlevel * max(hl,hr) and abs(hl-hr) >= 0.40 * max(hl,hr):# --- One side of the peak is not fully measured
+        if hl >= hr:                                                           # --- Use the higher (better) side for fitting
+            yfmax  = _np.amax(yl)
+            yfmin  = _np.amin(yl)
+        else:
+            yfmax  = _np.amax(yr)
+            yfmin  = _np.amin(yr)
+
+    # --- Symmetrize/Reduce data points for CMS calculation (cms, dipm, stepm)
+    xm = x
+    ym = y
+    if abs(hl-hr) >= 0.025 * max(hl,hr):                       # --- One side of the peak is not fully measured or has a higher background
+        if hl > hr:
+            try:
+                ind = _bisect.bisect(yl, _np.amin(yr))           # --- Returns the index of the first element of yl greater than the minimum of yr 
+            except:
+                ind = 0
+            if ind < 0 or ind > len(xm):
+                ind = 0
+            if debug == 1:
+                print hl, hr, len(xm), imax, ind
+            xm = x[ind:]
+            ym = y[ind:]
+        else:
+            try:
+                ind = imax + _bisect.bisect(-yr, -_np.amin(yl))  # --- Returns the index of the first element of -yr greater than the negative minimum of yl 
+            except:
+                ind = len(xm)
+            if ind < 0 or ind > len(xm):
+                ind = len(xm)
+            if debug == 1:
+                print hl, hr, len(xm), imax, ind
+            xm = x[:ind]
+            ym = y[:ind]
+
+    # --- Calulating the goal position according to mode
+    xpeak = x[imax]
+    xcms  = _center_of_mass(xm,ym)
+    if debug == 2:
+        print xcms
+    p0    = [yfmin, yfmax-yfmin, x[imax], sigma_start]
+    npara = len(p0)
+    #
+    # 29.8.2017: try-except fixes the bug discovered by Florian Bertram
+    #
+    try:
+        coeff, var_matrix = _curve_fit( _gauss, xf, yf, p0=p0)
+    except: 
+        message = 'Error: trapped exception from _curve_fit'
+        return message, xpos, xpeak, xcen, xcms
+        
+    chi_2 = _chi2(npara, yf, _gauss(xf,*coeff))
+    xcen  = coeff[2]
+
+    # --- Output meassges
+    if debug == 1:
+        # --- Positive signals
+        if mode.lower() == "peak" or mode.lower() == "cms" or mode.lower() == "cen":
+            print 'Position of Peak: ', xpeak
+            print 'Position of CMS : ', xcms
+            print 'Position of CEN : %.7f' %xcen
+        # --- Negative signals
+        if mode.lower() == "dip" or mode.lower() == "dipm" or mode.lower() == "dipc":
+            print 'Position of DIP : ', xpeak
+            print 'Position of DIPM: ', xcms
+            print 'Position of DIPC: ', xcen
+        # --- Step-like signals
+        if mode.lower() == "step" or mode.lower() == "stepm" or mode.lower() == "stepc":
+            print 'Position of STEP : ', xpeak
+            print 'Position of STEPM: ', xcms
+            print 'Position of STEPC: ', xcen
+        # --- Step-like signals
+        if mode.lower() == "slit" or mode.lower() == "slitm" or mode.lower() == "slitc":
+            print 'Position of SLIT : ', xpeak
+            print 'Position of SLITM: ', xcms
+            print 'Position of SLITC: ', xcen
+        print 'Chi^2 value of Gaussian fit: %.7f' %chi_2
+
+    # --- Assign the correct value to the goal motor position
+    if mode.lower() == "peak" or mode.lower() == "dip" or mode.lower() == "step" or mode.lower() == "slit":
+        xpos = xpeak
+    elif mode.lower() == "cms" or mode.lower() == "dipm" or mode.lower() == "stepm" or mode.lower() == "slitm":
+        xpos = xcms
+    elif mode.lower() == "cen" or mode.lower() == "dipc" or mode.lower() == "stepc" or mode.lower() == "slitc":
+        xpos = xcen
+
+    # --- Last check if xpos is within scanning range
+    if xpos < _np.amin(x) or xpos > _np.amax(x):
+        xpos  = _np.mean(x)
+        xpeak = _np.mean(x)
+        xcms  = _np.mean(x)
+        xcen  = _np.mean(x)
+        message = 'Error %s: Goal position outside of scan range!' % mode.upper()
+        return message, xpos, xpeak, xcen, xcms
+
+    message = 'success'
+    return message, xpos, xpeak, xcms, xcen
+# --------------------------------------------------------------------------- #
+
+# --------------------------------------------------------------------------- #
+def _check4peak(x,y):
+    debug  = 0
+    # --- initialize output variables
+    ispeak = False
+    peaki  = int(round(len(x)/2))                # --- Dummy peak index (center point) 
+    peakw  = 0.125 * (_np.amax(x)-_np.amin(x))     # --- Dummy peak width
+    # --- Calculate smoothed derivative 'sdy' of intensity signal (of identical length!)
+    SmoothWidth, SmoothType, Ends = (5, 3, 1)
+    sdy = _fastsmooth( _deriv(y), SmoothWidth, SmoothType, Ends)
+    if debug == 1:
+        _plt.figure(102)
+        xval = range(1,len(y)+1)
+        _plt.plot(xval, _deriv(y), 'ro-')
+        _plt.plot(xval, sdy     , 'bo-')
+        _plt.show()
+    # --- Prepare some variables
+    L      = len(y)
+    w      = int(SmoothWidth)
+    if w % 2 == 0:
+        hw = int(w/2)                  # --- halfwidth of even smoothing values
+    else:
+        hw = int(_np.ceil(float(w)/2))  # --- halfwidth of odd smoothing values
+    # --- Collect information of possible peaks
+    peak = 1
+    p0   = 0.0 * y                     # --- initialize p0 (peak number)
+    p1   = 0.0 * y                     # --- initialize p1 (index of peak position)
+    p2   = 0.0 * y                     # --- initialize p2 (index of nearest previous  maximum of sdy)
+    p3   = 0.0 * y                     # --- initialize p3 (index of nearest following minimum of sdy)
+    p4   = 0.0 * y                     # --- initialize p4 (difference value between maximum and minimum) 
+    # --- Find zero crossings in the smoothed derivative 'sdy' (from positive to negative)
+    for ind in range((hw-1),L-(hw-1)):
+        # if float(_np.sign(sdy[ind])) > float(_np.sign(sdy[ind+1])):
+        if sdy[ind] >= 0 and sdy[ind+1] < 0:
+            kmax = ind
+            while kmax > 0 and sdy[kmax-1] > sdy[kmax]:
+                kmax = kmax -1
+            kmin = ind+1
+            while kmin < L-1 and sdy[kmin] > sdy[kmin+1]:
+                kmin = kmin + 1
+            p0[ind] = peak
+            p1[ind] = ind
+            p2[ind] = kmax
+            p3[ind] = kmin
+            p4[ind] = sdy[kmax] - sdy[kmin]
+            peak    = peak + 1
+    # --- Check the 'most promising' peak 
+    # --- By using the index of the maximum of p4 (largest difference in sdy!)
+    imax = _np.argmax(p4)
+    if p0[imax] > 0:           # --- Found (at least) one (positive to negative) zero crossing
+        if max(p0) > 1:        # --- More than one possible peak
+            if p3[imax] - p2[imax] >= w and p4[imax] >  3.0 * _np.std(sdy):
+                ispeak = True
+                peaki  = int(p1[imax])
+                peakw  = 1 / 2.355 * abs(x[int(p2[imax])] - x[int(p3[imax])])
+        elif max(p0) == 1:     # --- Just one possible peak (relax the other conditions)
+            if p3[imax] - p2[imax] >= w and p4[imax] >  1.0 * _np.std(sdy):
+                ispeak = True
+                peaki  = int(p1[imax])
+                peakw  = 1 / 2.355 * abs(x[int(p2[imax])] - x[int(p3[imax])])
+    # --- Return output variables
+    return ispeak, peaki, peakw
+# --------------------------------------------------------------------------- #
+
+# --------------------------------------------------------------------------- #
+def _fastsmooth(y, SmoothWidth, SmoothType, Ends):
+    debug = 0
+    # --- check/control variable 'Ends' 
+    Ends = int(Ends)
+    if Ends <= 0:
+        Ends = 0
+    if Ends >= 1:
+        Ends = 1
+    # --- check/control variable 'SmoothType' 
+    SmoothType = int(SmoothType)
+    if SmoothType < 1:
+        SmoothType = 1
+    if SmoothType > 3:
+        SmoothType = 3
+    # --- check/control variable 'SmoothWidth' 
+    SmoothWidth = int(SmoothWidth)
+    if SmoothWidth < 2:
+        SmoothWidth = 2
+    # ---
+    if debug == 1:
+        print SmoothWidth, SmoothType, Ends
+    # --- call the actual smoothing function
+    if SmoothType == 1:
+        sy = _smoothy(y , SmoothWidth, Ends)
+    elif SmoothType == 2:
+        y1 = _smoothy(y , SmoothWidth, Ends)
+        sy = _smoothy(y1, SmoothWidth, Ends)
+    elif SmoothType == 3:
+        y1 = _smoothy(y , SmoothWidth, Ends)
+        y2 = _smoothy(y1, SmoothWidth, Ends)
+        sy = _smoothy(y2, SmoothWidth, Ends)
+
+    if debug == 1:
+        _plt.figure(101)
+        xval = range(1,len(y)+1)
+        _plt.plot(xval,  y, 'ro-')
+        _plt.plot(xval, sy, 'bo-')
+        if SmoothType >= 2:
+            _plt.plot(xval, y1, 'k-')
+        if SmoothType >= 3:
+            _plt.plot(xval, y2, 'k-')
+        _plt.show()
+
+    return sy
+# --------------------------------------------------------------------------- #
+
+# --------------------------------------------------------------------------- #
+def _smoothy(y, sw, ends):
+    debug = 0
+    # --- initialize sy (smoothed signal)
+    sy    = 0.0 * y
+    # --- check/control variable 'ends' 
+    ends = int(ends)
+    if ends <= 0:
+        ends = 0
+    if ends >= 1:
+        ends = 1
+    # --- check/control variable 'sw' (smoothing width)
+    sw  = int(sw)
+    if sw < 2:
+        sw = 2
+    # ---
+    if debug == 1:
+        print sw, ends
+    # --- check/control variable 'hw' (smoothing halfwidth)
+    if sw % 2 == 0:  
+        hw = int(sw/2)
+    else:
+        hw = int(_np.ceil(float(sw)/2))
+    # ---
+    L  = len(y)                        # --- retrieve the number of y elements
+    # --- smooth the center region of y
+    SP = sum(y[0:sw-1])
+    for ind in range(0,L-sw):
+        sy[ind+hw-1] = SP
+        SP           = SP - y[ind] + y[ind+sw]
+    sy[L-hw] = sum(y[-sw:-1])
+    sy = sy / sw
+    # --- if required taper the ends
+    if ends == 1:
+        taperpoints = hw - 1
+        sy[0] =0
+        for ind in range(1,taperpoints):
+            sy[ind]    = _np.mean(y[0 : ind])
+            sy[-ind-1] = _np.mean(y[-ind-1:-1])
+        sy[-1] =0
+    return sy
+# --------------------------------------------------------------------------- #
+
+# --------------------------------------------------------------------------- #
+def _deriv(y):
+    dy     = 0.0 * y
+    dy[0]  = y[ 1] - y[ 0]
+    dy[-1] = y[-1] - y[-2]
+    for ind in range(1,len(y)-1):
+        dy[ind] = (y[ind+1] - y[ind-1]) / 2
+    return dy
+# --------------------------------------------------------------------------- #
+
+# --------------------------------------------------------------------------- #
+def _center_of_mass(x,y):
+    # ---
+    debug = 0
+    if debug == 1:
+        _plt.figure(103)
+        _plt.plot(x, y, 'ro-')
+        _plt.show()
+    # ---
+    ys = y * x / y.sum()
+    cy = ys.sum()
+    return cy
+# --------------------------------------------------------------------------- #
+
+# --------------------------------------------------------------------------- #
+def _gauss(x, *p):
+    offset, amplitude, center, sigma = p
+    gau = offset + amplitude * _np.exp(-(x-center)**2/(2.*sigma**2))
+    return gau
+# --------------------------------------------------------------------------- #
+
+# --------------------------------------------------------------------------- #
+def _chi2(npara, exp_data, sim_data):
+    delta = (exp_data-sim_data)**2
+    gam   = _np.abs(sim_data)
+    chi2  = delta.sum() / gam.sum()
+    chi2  = chi2 / (len(exp_data)-npara)
+    return chi2
+# --------------------------------------------------------------------------- #

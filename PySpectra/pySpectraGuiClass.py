@@ -48,9 +48,9 @@ class QListWidgetTK( QtGui.QListWidget):
                 self.parent.filesListWidget.setFocus()
                 self.parent.filesListWidget.setCurrentRow( 0)
         elif key == QtCore.Qt.Key_Right:
-            if self.parent.scansListWidget.count() > 0:
-                self.parent.scansListWidget.setFocus()
-                self.parent.scansListWidget.setCurrentRow( 0)
+            if self.parent.gqesListWidget.count() > 0:
+                self.parent.gqesListWidget.setFocus()
+                self.parent.gqesListWidget.setCurrentRow( 0)
         elif key == QtCore.Qt.Key_Down:
             pass
         elif key == QtCore.Qt.Key_Up:
@@ -107,13 +107,15 @@ class QListWidgetTK( QtGui.QListWidget):
                 self.parent.displayChecked()
         if event.button() == QtCore.Qt.RightButton:
             item = self.currentItem()
-            scan = pysp.getScan( item.text())
-            if scan.textOnly: 
-                self.logWidget.append( "%s is textOnly" % item.text())
-                return 
-            self.scanAttributes = ScanAttributes( self.parent, item.text(), self.logWidget)
+            gqe = pysp.getGqe( item.text())
+            if type( gqe) == pysp.dMgt.GQE.Scan:
+                if gqe.textOnly: 
+                    self.logWidget.append( "%s is textOnly" % item.text())
+                    return 
+                self.scanAttributes = ScanAttributes( self.parent, item.text(), self.logWidget)
+            elif type( gqe) == pysp.dMgt.GQE.Mesh:
+                self.meshAttributes = MeshAttributes( self.parent, item.text(), self.logWidget)
         return 
-
 #
 #
 #
@@ -531,7 +533,7 @@ class ScanAttributes( QtGui.QMainWindow):
             raise ValueError( "pyspFio.ScanAttributes: name not specified")
         self.name = name
         self.logWidget = logWidget
-        self.scan = pysp.getScan( self.name)
+        self.scan = pysp.getGqe( self.name)
 
         self.scan.flagDisplayVLines = False
         pysp.cls()
@@ -584,6 +586,13 @@ class ScanAttributes( QtGui.QMainWindow):
         self.layout_grid.addWidget( self.nameLabel, row, 0)
         self.nameValue = QtGui.QLabel( self.name)
         self.layout_grid.addWidget( self.nameValue, row, 1)
+        #
+        # xLabel
+        #
+        self.xLabel = QtGui.QLabel( "xLabel:")
+        self.layout_grid.addWidget( self.xLabel, row, 2)
+        self.xValue = QtGui.QLabel( self.scan.xLabel)
+        self.layout_grid.addWidget( self.xValue, row, 3)
         #
         # length
         #
@@ -814,7 +823,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.w_overlayComboBox.addItem( "None")
         count = 1 
         countTemp = -1
-        for scan in pysp.dMgt.GQE.getScanList(): 
+        for scan in pysp.dMgt.GQE.getGqeList(): 
             if scan.name == self.name:
                 continue
             if self.scan.overlay is not None and self.scan.overlay == scan.name:
@@ -872,6 +881,10 @@ class ScanAttributes( QtGui.QMainWindow):
         self.ssaAction = QtGui.QAction('SSA', self)        
         self.ssaAction.triggered.connect( self.cb_ssa)
         self.utilsMenu.addAction( self.ssaAction)
+
+        self.fsaAction = QtGui.QAction('FSA', self)        
+        self.fsaAction.triggered.connect( self.cb_fsa)
+        self.utilsMenu.addAction( self.fsaAction)
 
 
         #
@@ -939,7 +952,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.scan = nextScan
         pysp.cls()
         pysp.display( [ self.name])
-        self.parent.scansListWidget.setCurrentRow( index)
+        self.parent.gqesListWidget.setCurrentRow( index)
         return 
 
     def cb_back( self): 
@@ -949,7 +962,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.scan = prevScan
         pysp.cls()
         pysp.display( [ self.name])
-        self.parent.scansListWidget.setCurrentRow( index)
+        self.parent.gqesListWidget.setCurrentRow( index)
 
     def cb_vlines( self): 
         if self.scan.flagDisplayVLines: 
@@ -967,12 +980,6 @@ class ScanAttributes( QtGui.QMainWindow):
 
     def cb_y2my( self):
         pysp.yToMinusY( self.scan.name)
-
-    def cb_ssa( self):
-        self.scan.ssa( self.logWidget)
-
-        pysp.cls()
-        pysp.display()
 
     def cb_showTexts( self): 
         if len( self.scan.textList) == 0:
@@ -1126,6 +1133,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.updateTimer.stop()
 
         self.nameValue.setText( self.name)
+        self.xValue.setText( self.scan.xLabel)
         self.lengthValue.setText( "%d" % len( self.scan.x))
         self.currentIndexValue.setText( "%d/%d" % (self.scan.currentIndex, self.scan.lastIndex))
         self.xMinValue.setText( "%g" % self.scan.xMin)
@@ -1167,10 +1175,16 @@ class ScanAttributes( QtGui.QMainWindow):
         pysp.cls()
         pysp.display()
 
-    def cb_display( self): 
+
+    def cb_fsa( self):
+        self.scan.fsa( self.logWidget)
+
         pysp.cls()
         pysp.display()
 
+    def cb_display( self): 
+        pysp.cls()
+        pysp.display()
     def cb_helpScanAttributes(self):
         QtGui.QMessageBox.about(self, self.tr("Help Scan Attributes"), self.tr(
                 "<h3> Scan Attributes </h3>"
@@ -1217,6 +1231,387 @@ class ScanAttributes( QtGui.QMainWindow):
         pysp.cls()
         pysp.display( self.parent.getCheckedNameList())
         return 
+#
+#
+#
+class MeshAttributes( QtGui.QMainWindow):
+
+    objectCounter = 0
+    def __init__( self, parent = None, name = None, logWidget = None):
+        super( MeshAttributes, self).__init__( parent)
+        MeshAttributes.objectCounter += 1
+        self.parent = parent
+
+        if name is None:
+            raise ValueError( "pyspFio.MeshAttributes: name not specified")
+        self.name = name
+        self.logWidget = logWidget
+        self.mesh = pysp.getGqe( self.name)
+
+        pysp.cls()
+        pysp.display( [self.name])
+        #self.setWindowTitle( "MeshAttributes")
+        self.setWindowTitle( name)
+
+        self.prepareWidgets()
+
+        self.menuBar = QtGui.QMenuBar()
+        self.setMenuBar( self.menuBar)
+        self.prepareMenuBar()
+        #
+        # we cannot set the geometry because we can have multiple 
+        #
+        if MeshAttributes.objectCounter == 1: 
+            geoWin = self.geometry()
+            geo = QtGui.QDesktopWidget().screenGeometry(-1)
+            self.setGeometry( geo.width() - 710, 600, geoWin.width(), geoWin.height())
+
+        #
+        # Status Bar
+        #
+        self.statusBar = QtGui.QStatusBar()
+        self.setStatusBar( self.statusBar)
+        self.prepareStatusBar()
+
+        self.updateTimer = QtCore.QTimer(self)
+        self.updateTimer.timeout.connect( self.cb_refreshAttr)
+        self.updateTimer.start( int( updateTime*1000))
+        self.show()
+        
+    def __del__( self): 
+        print "the destructor"
+        return 
+
+    def prepareWidgets( self):
+        w = QtGui.QWidget()
+        #
+        # start with a vertical layout
+        #
+        self.layout_grid = QtGui.QGridLayout()
+        w.setLayout( self.layout_grid)
+        self.setCentralWidget( w)
+        #
+        # name
+        #
+        row = 0
+        self.nameLabel = QtGui.QLabel( "Name:")
+        self.layout_grid.addWidget( self.nameLabel, row, 0)
+        self.nameValue = QtGui.QLabel( self.name)
+        self.layout_grid.addWidget( self.nameValue, row, 1)
+        row += 1
+        #
+        # xLabel
+        #
+        self.xLabel = QtGui.QLabel( "xLabel:")
+        self.layout_grid.addWidget( self.xLabel, row, 0)
+        self.xValue = QtGui.QLabel( self.mesh.xLabel)
+        self.layout_grid.addWidget( self.xValue, row, 1)
+        #
+        # yLabel
+        #
+        self.yLabel = QtGui.QLabel( "yLabel:")
+        self.layout_grid.addWidget( self.yLabel, row, 3)
+        self.yValue = QtGui.QLabel( self.mesh.yLabel)
+        self.layout_grid.addWidget( self.yValue, row, 4)
+        #
+        # shape
+        #
+        row += 1
+        self.shapeLabel = QtGui.QLabel( "Shape:")
+        self.layout_grid.addWidget( self.shapeLabel, row, 0)
+        self.shapeValue = QtGui.QLabel( "%s" % repr( self.mesh.data.shape))
+        self.layout_grid.addWidget( self.shapeValue, row, 1)
+        #
+        # xMin
+        #
+        row += 1
+        self.xMinLabel = QtGui.QLabel( "xMin:")
+        self.layout_grid.addWidget( self.xMinLabel, row, 0)
+        self.xMinValue = QtGui.QLabel( "%g" % (self.mesh.xMin))
+        self.layout_grid.addWidget( self.xMinValue, row, 1)
+        self.xMinLineEdit = QtGui.QLineEdit()
+        self.xMinLineEdit.setMaximumWidth( 70)
+        self.layout_grid.addWidget( self.xMinLineEdit, row, 2)
+        #
+        # xMax
+        #
+        self.xMaxLabel = QtGui.QLabel( "xMax:")
+        self.layout_grid.addWidget( self.xMaxLabel, row, 3)
+        self.xMaxValue = QtGui.QLabel( "%g" % (self.mesh.xMax))
+        self.layout_grid.addWidget( self.xMaxValue, row, 4)
+        self.xMaxLineEdit = QtGui.QLineEdit()
+        self.xMaxLineEdit.setMaximumWidth( 70)
+        self.layout_grid.addWidget( self.xMaxLineEdit, row, 5)
+        #
+        # yMin
+        #
+        row += 1
+        self.yMinLabel = QtGui.QLabel( "yMin:")
+        self.layout_grid.addWidget( self.yMinLabel, row, 0)
+        if self.mesh.yMin is None:
+            self.yMinValue = QtGui.QLabel( "None")
+        else:
+            self.yMinValue = QtGui.QLabel( "%g" % (self.mesh.yMin))
+        self.layout_grid.addWidget( self.yMinValue, row, 1)
+        self.yMinLineEdit = QtGui.QLineEdit()
+        self.yMinLineEdit.setMaximumWidth( 70)
+        self.layout_grid.addWidget( self.yMinLineEdit, row, 2)
+        #
+        # yMax
+        #
+        self.yMaxLabel = QtGui.QLabel( "yMax:")
+        self.layout_grid.addWidget( self.yMaxLabel, row, 3)
+        if self.mesh.yMax is None:
+            self.yMaxValue = QtGui.QLabel( "None")
+        else:
+            self.yMaxValue = QtGui.QLabel( "%g" % (self.mesh.yMax))
+        self.layout_grid.addWidget( self.yMaxValue, row, 4)
+        self.yMaxLineEdit = QtGui.QLineEdit()
+        self.yMaxLineEdit.setMaximumWidth( 70)
+        self.layout_grid.addWidget( self.yMaxLineEdit, row, 5)
+        #
+        # Log
+        #
+        row += 1
+        self.logLabel = QtGui.QLabel( "log:")
+        self.layout_grid.addWidget( self.logLabel, row, 0)
+        self.logCheckBox = QtGui.QCheckBox()
+        self.logCheckBox.setChecked( self.mesh.log)
+        self.layout_grid.addWidget( self.logCheckBox, row, 1)
+        self.logCheckBox.stateChanged.connect( self.cb_logChanged)
+        #
+        # at
+        #
+        self.atLabel = QtGui.QLabel( "at:")
+        self.layout_grid.addWidget( self.atLabel, row, 3)
+        self.atValue = QtGui.QLabel( "%s" % (str(self.mesh.at)))
+        self.layout_grid.addWidget( self.atValue, row, 4)
+        self.atLineEdit = QtGui.QLineEdit()
+        self.atLineEdit.setMaximumWidth( 70)
+        self.layout_grid.addWidget( self.atLineEdit, row, 5)
+
+    #
+    # the menu bar
+    #
+    def prepareMenuBar( self): 
+
+        self.fileMenu = self.menuBar.addMenu('&File')
+
+        self.showTextsAction = QtGui.QAction('ShowTexts', self)        
+        self.showTextsAction.setStatusTip('Show the texts belonging to this GQE')
+        self.showTextsAction.triggered.connect( self.cb_showTexts)
+        self.fileMenu.addAction( self.showTextsAction)
+
+        self.exitAction = QtGui.QAction('E&xit', self)        
+        self.exitAction.setStatusTip('Exit application')
+        #self.exitAction.triggered.connect( sys.exit)
+        self.exitAction.triggered.connect( self.cb_close)
+        self.fileMenu.addAction( self.exitAction)
+
+
+        self.utilsMenu = self.menuBar.addMenu('&Utils')
+
+        self.derivativeAction = QtGui.QAction('Derivative', self)        
+        #self.derivativeAction.triggered.connect( self.cb_derivative)
+        self.utilsMenu.addAction( self.derivativeAction)
+
+        #
+        # the activity menubar: help and activity
+        #
+        self.menuBarActivity = QtGui.QMenuBar( self.menuBar)
+        self.menuBar.setCornerWidget( self.menuBarActivity, QtCore.Qt.TopRightCorner)
+
+        #
+        # Help menu (bottom part)
+        #
+        self.helpMenu = self.menuBarActivity.addMenu('Help')
+
+        self.helpMeshAttributesAction = self.helpMenu.addAction(self.tr("Mesh Attributes"))
+        self.helpMeshAttributesAction.triggered.connect( self.cb_helpMeshAttributes)
+
+        self.activityIndex = 0
+        self.activity = self.menuBarActivity.addMenu( "_")
+
+    #
+    # the status bar
+    #
+    def prepareStatusBar( self): 
+
+
+        self.back = QtGui.QPushButton(self.tr("&Back")) 
+        self.statusBar.addPermanentWidget( self.back) # 'permanent' to shift it right
+        self.back.clicked.connect( self.cb_back)
+        self.back.setShortcut( "Alt+b")
+
+        self.next = QtGui.QPushButton(self.tr("&Next")) 
+        self.statusBar.addPermanentWidget( self.next) # 'permanent' to shift it right
+        self.next.clicked.connect( self.cb_next)
+        self.next.setShortcut( "Alt+n")
+
+        self.display = QtGui.QPushButton(self.tr("&Display")) 
+        self.statusBar.addPermanentWidget( self.display) # 'permanent' to shift it right
+        self.display.clicked.connect( self.cb_display)
+        self.display.setShortcut( "Alt+d")
+
+        self.apply = QtGui.QPushButton(self.tr("&Apply")) 
+        self.statusBar.addPermanentWidget( self.apply) # 'permanent' to shift it right
+        self.apply.clicked.connect( self.cb_apply)
+        self.apply.setShortcut( "Alt+a")
+
+        self.exit = QtGui.QPushButton(self.tr("&Exit")) 
+        self.statusBar.addPermanentWidget( self.exit) # 'permanent' to shift it right
+        self.exit.clicked.connect( self.cb_close)
+        self.exit.setShortcut( "Alt+x")
+
+
+    def cb_next( self): 
+        nextMesh = pysp.dMgt.GQE.nextMesh( self.name)
+        index = pysp.dMgt.GQE.getIndex( nextMesh.name)
+        self.name = nextMesh.name
+        self.mesh = nextMesh
+        pysp.cls()
+        pysp.display( [ self.name])
+        self.parent.gqesListWidget.setCurrentRow( index)
+        return 
+
+    def cb_back( self): 
+        prevMesh = pysp.dMgt.GQE.prevMesh( self.name)
+        index = pysp.dMgt.GQE.getIndex( prevMesh.name)
+        self.name = prevMesh.name
+        self.mesh = prevMesh
+        pysp.cls()
+        pysp.display( [ self.name])
+        self.parent.gqesListWidget.setCurrentRow( index)
+
+    def cb_vlines( self): 
+        if self.scan.flagDisplayVLines: 
+            self.scan.flagDisplayVLines = False
+        else:
+            self.scan.flagDisplayVLines = True
+        pysp.cls()
+        pysp.display( [self.scan.name])
+
+    def cb_derivative( self):
+        pysp.derivative( self.scan.name)
+
+    def cb_antiderivative( self):
+        pysp.antiderivative( self.scan.name)
+
+    def cb_y2my( self):
+        pysp.yToMinusY( self.scan.name)
+
+    def cb_showTexts( self): 
+        if len( self.scan.textList) == 0:
+            self.logWidget.append( "%s has no texts" % self.scan.name)
+            return 
+        self.logWidget.append( "Texts of %s" % self.scan.name)
+        for t in self.scan.textList:
+            self.logWidget.append( "  '%s' at %g %g" % (t.text, t.x, t.y))
+        return 
+            
+    def cb_close( self): 
+        ScanAttributes.objectCounter -= 1
+        self.close()
+        return
+
+    def cb_logChanged( self): 
+        self.mesh.log = self.logCheckBox.isChecked()
+        pysp.cls()
+        pysp.display( [self.name])
+
+    def cb_apply( self):
+        line = str(self.xMinLineEdit.text())
+        if len(line.strip()) > 0: 
+            self.scan.xMin = float( line.strip())
+            self.xMinValue.setText( "%g" % self.scan.xMin)
+            self.xMinLineEdit.clear()
+
+        line = str(self.xMaxLineEdit.text())
+        if len(line.strip()) > 0: 
+            self.scan.xMax = float( line.strip())
+            self.xMaxValue.setText( "%g" % self.scan.xMax)
+            self.xMaxLineEdit.clear()
+
+        line = str(self.yMinLineEdit.text()).strip()
+        if len(line) > 0: 
+            if line.upper() == 'NONE':
+                self.scan.yMin = None
+                self.yMinValue.setText( "None")
+            else:
+                self.scan.yMin = float( line.strip())
+                self.yMinValue.setText( "%g" % self.scan.yMin)
+            self.yMinLineEdit.clear()
+
+        line = str(self.yMaxLineEdit.text()).strip()
+        if len(line) > 0: 
+            if line.upper() == 'NONE':
+                self.scan.yMax = None
+                self.yMaxValue.setText( "None")
+            else:
+                self.scan.yMax = float( line.strip())
+                self.yMaxValue.setText( "%g" % self.scan.yMax)
+            self.yMaxLineEdit.clear()
+
+        line = str(self.atLineEdit.text())
+        if len(line.strip()) > 0: 
+            line = line.strip()
+            if line == 'None':
+                self.scan.at = None
+            else:
+                lstStr = line[1:-1].split( ',')
+                if len( lstStr) == 3:
+                    self.scan.at = [int( i) for i in lstStr]
+                else: 
+                    self.scan.at = [1, 1, 1]
+                    self.atValue.setText( "[%d, %d, %d]" % (self.scan.at[0], self.scan.at[1], self.scan.at[2]))
+        self.atLineEdit.clear()
+        pysp.cls()
+        pysp.display( self.parent.getCheckedNameList())
+        
+    def cb_refreshAttr( self):
+
+        if self.isMinimized(): 
+            return
+        
+        self.activityIndex += 1
+        if self.activityIndex > (len( ACTIVITY_SYMBOLS) - 1):
+            self.activityIndex = 0
+        self.activity.setTitle( ACTIVITY_SYMBOLS[ self.activityIndex])
+        self.updateTimer.stop()
+
+        self.nameValue.setText( self.name)
+        self.xValue.setText( self.mesh.xLabel)
+        self.yValue.setText( self.mesh.yLabel)
+        self.shapeValue.setText( "%s" % repr( self.mesh.data.shape))
+        self.xMinValue.setText( "%g" % self.mesh.xMin)
+        self.xMaxValue.setText( "%g" % self.mesh.xMax)
+        if self.mesh.yMin is None:
+            self.yMinValue.setText( "None")
+        else:
+            self.yMinValue.setText( "%g" % self.mesh.yMin)
+        if self.mesh.yMax is None:
+            self.yMaxValue.setText( "None")
+        else:
+            self.yMaxValue.setText( "%g" % self.mesh.yMax)
+
+        self.logCheckBox.setChecked( self.mesh.log)
+
+        self.atValue.setText( "%s" % (str(self.mesh.at)))
+
+        self.updateTimer.start( int( updateTime*1000))
+
+    def cb_display( self): 
+        pysp.cls()
+        pysp.display()
+
+    def cb_helpMeshAttributes(self):
+        QtGui.QMessageBox.about(self, self.tr("Help Mesh Attributes"), self.tr(
+                "<h3> Mesh Attributes </h3>"
+                "<ul>"
+                "<li> n.n.</li>"
+                "</ul>"
+                ))
+
 #
 #
 #
@@ -1352,7 +1747,7 @@ class pySpectraGui( QtGui.QMainWindow):
         # used by cb_postscript
         self.lastFileWritten = None
 
-        self.scanList = None
+        self.gqeList = None
         self.scanAttributes = None
         self.proxyDoor = None
         self.nMotor = 0
@@ -1458,8 +1853,8 @@ class pySpectraGui( QtGui.QMainWindow):
         vBox.addWidget( self.fileNameLabel)
         self.scrollAreaScans = QtGui.QScrollArea()
         vBox.addWidget( self.scrollAreaScans)
-        self.scansListWidget = QListWidgetTK( self, self.newScanSelected, "scansListWidget", self.logWidget)
-        self.scrollAreaScans.setWidget( self.scansListWidget)
+        self.gqesListWidget = QListWidgetTK( self, self.newScanSelected, "gqesListWidget", self.logWidget)
+        self.scrollAreaScans.setWidget( self.gqesListWidget)
         hBox.addLayout( vBox)
 
         self.layout_v.addLayout( hBox)
@@ -1725,21 +2120,21 @@ class pySpectraGui( QtGui.QMainWindow):
     def updateScansList( self):
         #
         # the scan layout is updated, if
-        #   - nothing has been created before self.scanList == None
-        #   - the current scanList and the displayed scanList are different
+        #   - nothing has been created before self.gqeList == None
+        #   - the current gqeList and the displayed gqeList are different
         #
 
-        scanList = pysp.dMgt.GQE.getScanList()[:]
+        gqeList = pysp.dMgt.GQE.getGqeList()[:]
         
         flagUpdate = False
-        if self.scanList is None:
+        if self.gqeList is None:
             flagUpdate = True
         else:
-            if len( scanList) != len( self.scanList):
+            if len( gqeList) != len( self.gqeList):
                 flagUpdate = True
             else:
-                for i in range( len( scanList)):
-                    if scanList[i] != self.scanList[i]:
+                for i in range( len( gqeList)):
+                    if gqeList[i] != self.gqeList[i]:
                         flagUpdate = True
                         break
 
@@ -1747,28 +2142,29 @@ class pySpectraGui( QtGui.QMainWindow):
             self.updateTimerPySpectraGui.start( int( updateTime*1000))
             return 
         #
-        # so we have to make an update, clear the scanListWidget first
+        # so we have to make an update, clear the gqeListWidget first
         #
-        if self.scansListWidget.count() > 0:
-            self.scansListWidget.clear()
+        if self.gqesListWidget.count() > 0:
+            self.gqesListWidget.clear()
        
-        self.scanList = scanList[:]
+        self.gqeList = gqeList[:]
 
-        if len( self.scanList) == 0:
+        if len( self.gqeList) == 0:
             return 
             
         #
-        # fill the scansListWidget
+        # fill the gqesListWidget
         #
-        if len( self.scanList) > 0:
-            if self.scanList[0].fileName is not None:
-                self.fileNameLabel.setText( self.scanList[0].fileName)
+        if len( self.gqeList) > 0:
+            if type( self.gqeList[0]) == pysp.dMgt.GQE.Scan:
+                if self.gqeList[0].fileName is not None:
+                    self.fileNameLabel.setText( self.gqeList[0].fileName)
         # +++
-        for scan in self.scanList:
+        for scan in self.gqeList:
             item = QtGui.QListWidgetItem( scan.name)
             item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
             item.setCheckState(QtCore.Qt.Unchecked)       
-            self.scansListWidget.addItem( item)
+            self.gqesListWidget.addItem( item)
 
     def updateFilesList( self):
         '''
@@ -1824,14 +2220,14 @@ class pySpectraGui( QtGui.QMainWindow):
         index = pysp.dMgt.GQE.getIndex( scan.name)
         pysp.cls()
         pysp.display( [ scan.name])
-        self.scansListWidget.setCurrentRow( index)
+        self.gqesListWidget.setCurrentRow( index)
 
     def cb_next( self): 
         scan = pysp.dMgt.GQE.nextScan()
         index = pysp.dMgt.GQE.getIndex( scan.name)
         pysp.cls()
         pysp.display( [ scan.name])
-        self.scansListWidget.setCurrentRow( index)
+        self.gqesListWidget.setCurrentRow( index)
 
     #
     # the menu bar
@@ -1893,6 +2289,10 @@ class pySpectraGui( QtGui.QMainWindow):
         self.ssaAction = QtGui.QAction('SSA', self)        
         self.ssaAction.triggered.connect( self.cb_ssa)
         self.utilsMenu.addAction( self.ssaAction)
+
+        self.fsaAction = QtGui.QAction('FSA', self)        
+        self.fsaAction.triggered.connect( self.cb_fsa)
+        self.utilsMenu.addAction( self.fsaAction)
         #
         # options
         #
@@ -1976,7 +2376,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.widgetAction = self.helpMenu.addAction(self.tr("PySpectra"))
         self.widgetAction.triggered.connect( self.cb_helpPySpectra)
 
-        self.scanNameAction = self.helpMenu.addAction(self.tr("ScanName"))
+        self.scanNameAction = self.helpMenu.addAction(self.tr("ScanName widget"))
         self.scanNameAction.triggered.connect( self.cb_helpScanName)
 
         self.examplesAction = self.helpMenu.addAction(self.tr("Examples"))
@@ -2057,7 +2457,7 @@ class pySpectraGui( QtGui.QMainWindow):
     def _printHelper( self, frmt): 
         import HasyUtils
 
-        lst = pysp.dMgt.GQE.getScanList()
+        lst = pysp.dMgt.GQE.getGqeList()
         if len( lst) == 0:
             QtGui.QMessageBox.about(self, 'Info Box', "No Scans to print")
             return
@@ -2131,8 +2531,8 @@ class pySpectraGui( QtGui.QMainWindow):
         
     def getCheckedNameList( self): 
         nameList = []
-        for row in range( self.scansListWidget.count()):
-            item = self.scansListWidget.item( row)
+        for row in range( self.gqesListWidget.count()):
+            item = self.gqesListWidget.item( row)
             if item.checkState() == QtCore.Qt.Checked:
                 nameList.append( str( item.text()))
         return nameList
@@ -2161,7 +2561,7 @@ class pySpectraGui( QtGui.QMainWindow):
             self.logWidget.append( "failed to create PDF file")
         
     def cb_doty( self):
-        lst = pysp.dMgt.GQE.getScanList()
+        lst = pysp.dMgt.GQE.getGqeList()
         if self.dotyAction.isChecked():
             for elm in lst:
                 elm.doty = True
@@ -2172,7 +2572,7 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.display()
 
     def cb_grid( self): 
-        lst = pysp.dMgt.GQE.getScanList()
+        lst = pysp.dMgt.GQE.getGqeList()
         if self.gridAction.isChecked():
             for scan in lst:
                 scan.showGridX = True
@@ -2237,6 +2637,17 @@ class pySpectraGui( QtGui.QMainWindow):
             return 
         scan = displayList[0]
         scan.ssa( self.logWidget)
+
+        pysp.cls()
+        pysp.display()
+
+    def cb_fsa( self):
+        displayList = pysp.dMgt.GQE.getDisplayList()
+        if len( displayList) != 1:
+            self.logWidget.append( "cb_fsa: expecting 1 displayed scan")
+            return 
+        scan = displayList[0]
+        scan.fsa( self.logWidget)
 
         pysp.cls()
         pysp.display()

@@ -16,8 +16,8 @@ delete()            delete all or selected scans
 derivative()        calculate the derivative
 display()           display all or selected scans
 getComment()        return the comment
-getScan()           return a scan object
-getScanList()       return the list of the scans
+getGqe()            return a scan/mesh object
+getGqeList()        return the list of the scans/meshes
 getTitle()          return the title
 info()              print information about scans
 launchGui()         launches the Gui

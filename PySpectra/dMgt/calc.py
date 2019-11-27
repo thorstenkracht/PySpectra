@@ -17,7 +17,7 @@ import numpy as _np
 #    if name is None:
 #        raise ValueError( "calc.derivative: name not specified")
 #
-#    scan = _GQE.getScan( name)
+#    scan = _GQE.getGqe( name)
 #    if scan is None:
 #        raise ValueError( "calc.derivative: failed to find %s" % name)
 #                          
@@ -49,7 +49,7 @@ def derivative( name = None, nameNew = None):
     if name is None:
         raise ValueError( "calc.derivative: name not specified")
 
-    scan = _GQE.getScan( name)
+    scan = _GQE.getGqe( name)
     if scan is None:
         raise ValueError( "calc.derivative: failed to find %s" % name)
 
@@ -105,7 +105,7 @@ def derivative( name = None, nameNew = None):
 #    if name is None:
 #        raise ValueError( "calc.antiderivative: name not specified")
 #
-#    scan = _GQE.getScan( name)
+#    scan = _GQE.getGqe( name)
 #    if scan is None:
 #        raise ValueError( "calc.antiderivative: failed to find %s" % name)
 #
@@ -139,7 +139,7 @@ def antiderivative( name = None, nameNew = None):
     if name is None:
         raise ValueError( "calc.antiderivative: name not specified")
 
-    scan = _GQE.getScan( name)
+    scan = _GQE.getGqe( name)
     if scan is None:
         raise ValueError( "calc.antiderivative: failed to find %s" % name)
 
@@ -170,7 +170,7 @@ def yToMinusY(name = None, nameNew = None):
     if name is None:
         raise ValueError( "calc.yToMinusY: name not specified")
 
-    scan = _GQE.getScan( name)
+    scan = _GQE.getGqe( name)
     if scan is None:
         raise ValueError( "calc.yToMinus: failed to find %s" % name)
 

@@ -25,10 +25,7 @@ import zmq, json, socket
 
 updateTime = 0.1
 
-#
-# the Jan Garrevoet option: Do not listen to the normal Door output
-#
-flagNoDoor = False
+
 #
 #
 #
@@ -42,7 +39,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
     This class listens to a queue and displays the data.
     The queue is filled from pyspDoor.
     '''
-    def __init__( self, parent = None):
+    def __init__( self, flagNoDoor = None, parent = None):
         super( pyspMonitor, self).__init__( parent, calledFromSardanaMonitor = True)
 
         self.queue = Queue.Queue()
@@ -50,20 +47,32 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
 
         self.refreshCount = 0
         self.flagIsBusy = False
-        self.updateTimer = QtCore.QTimer(self)
-        self.updateTimer.timeout.connect( self.cb_refreshMain)
-        self.updateTimer.start( int( updateTime*1000))
-        try: 
-            self.door = _PyTango.DeviceProxy( HasyUtils.getDoorNames()[0])
-        except Exception, e:
-            print "pyspMonitor.__init__: failed to get Door proxy", HasyUtils.getDoorNames()[0]
+        #
+        # the Jan Garrevoet option: Do not listen to the normal Door output
+        #
+        self.flagNoDoor = flagNoDoor
+        if not self.flagNoDoor:
+            self.updateTimer = QtCore.QTimer(self)
+            self.updateTimer.timeout.connect( self.cb_refreshMain)
+            self.updateTimer.start( int( updateTime*1000))
+            try: 
+                if len( HasyUtils.getDoorNames()) == 0:
+                    print "pyspMonitor.__init__: no doors"
+                    sys.exit( 255)
+                    
+                self.door = _PyTango.DeviceProxy( HasyUtils.getDoorNames()[0])
+            except Exception, e:
+                print "pyspMonitor.__init__: failed to get Door proxy", HasyUtils.getDoorNames()[0]
 
         self.helpMoveAction = self.helpMenu.addAction(self.tr("Move"))
         self.helpMoveAction.triggered.connect( self.cb_helpMove)
 
+        self.setupZMQ()
+
+    def setupZMQ( self): 
         #
         # the zmq interface allows other processes to send data
-        # to the SardanaMonitor which are then displayed
+        # to the pyspMonitor which are then displayed, via toPyspMonitor()
         #
         self.context = zmq.Context()
         self.sckt = self.context.socket(zmq.REP)
@@ -76,33 +85,18 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             self.timerZMQ.timeout.connect( self.cb_timerZMQ)
             self.timerZMQ.start(100)
         except Exception, e:
-            print "SardanaMonitorMain.__init__(): ZMQ error (json-dict receiver)"
+            print "pyspMonitorMain.__init__(): ZMQ error (json-dict receiver)"
             print "message:", repr( e)
-            print "assuming another SardanaMonitor is ready to receive json-dcts"
+            print "assuming another pyspMonitor is ready to receive json-dcts"
             pass
-
-    def receiveDct( self, hsh):
-        #
-        # putData
-        #
-        if self.flagIsBusy:
-            return "pyspMonitor: rejecting dct while scanning"
-
-        pysp.putData( hsh)
-        #try: 
-        #    __builtin__.__dict__[ 'flagDataFromScan'] = False
-        #    pysp.putData( hsh)
-        #except Exception, e:
-        #    return "pyspMonitor.receiveDct: caught %s" % repr( e)
-        return "done"
+        return 
 
     def cb_timerZMQ( self):
         #
-        # checks whether there is a request on the ZMQ socket
-        # Use cases: 
-        #   - mvsa or another client fetches data from the SardanaMonitor
-        #   - a client sends data to be displayed by the SardanaMonitor
-        #   - interface HasyUtils.toSardanaMonitor
+        # checks whether there is a request on the ZMQ socket, 
+        # from toPyspMonitor()
+        #   - mvsa or another client fetches data from the pyspMonitor
+        #   - a client sends data to be displayed by the pyspMonitor
         #
         self.timerZMQ.stop()
         lst = zmq.select([self.sckt], [], [], 0.1)
@@ -110,12 +104,12 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         if self.sckt in lst[0]:
             msg = self.sckt.recv()
             hsh = json.loads( msg)
-            if hsh.has_key( 'putData'):
-                argout[ 'result'] = self.receiveDct( hsh[ 'putData'])
-                #if flagNoDoor or flagGraphicsOnly:
-                #    argout[ 'result'] = self.receiveDct( hsh[ 'putData'])
-                #else:
-                #    argout[ 'result'] = HasyUtils.spectraDoor.spectraDoorInstance.receiveDct( hsh[ 'putData'])
+            if hsh.has_key( 'command'):
+                argout[ 'result'] = pysp.commandIfc( hsh)
+            elif hsh.has_key( 'putData'):
+                if self.flagIsBusy:
+                    return "pyspMonitor: rejecting dct while scanning"
+                argout[ 'result'] = pysp.putData( hsh[ 'putData'])
             elif hsh.has_key( 'getData'):
                 try:
                     argout[ 'getData'] = pysp.getData()
@@ -123,21 +117,26 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
                 except Exception, e:
                     argout[ 'getData'] = {}
                     argout[ 'result'] = repr( e)
+            elif hsh.has_key( 'command'):
+                argout[ 'result'] = pysp.command( hsh[ 'command'])
             elif hsh.has_key( 'isAlive'):
                 argout[ 'result'] = 'done'
             else:
                 argout[ 'result'] = "pyspMonitorClass.cb_timerZMG: something is wrong"
             msg = json.dumps( argout)
             self.sckt.send( msg)
-        self.timerZMQ.start(100)
+        #
+        # mandelbrot 20x20: if we change 10 to 1, time from 15s to 10s
+        #
+        self.timerZMQ.start(10)
 
     def cb_helpMove(self):
         QtGui.QMessageBox.about(self, self.tr("Help Move"), self.tr(
                 "<h3> Move</h3>"
                 "A motor can be moved by"
                 "<ul>"
-                "<li> Selecting a single Scan for display</li>"
-                "<li> Clicking into the Scan</li>"
+                "<li> Select a single scan for display</li>"
+                "<li> Click into the Scan</li>"
                 "</ul>"
                 " The user is asked for confimation before the move is executed"
                 ))
@@ -166,7 +165,10 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             self.matplotlibBtn.setEnabled( flag)
 
     def execHsh( self, hsh): 
-        #print "queueSM.execHsh", repr( hsh)
+        '''
+        data come from the door
+        '''
+        #print "pyspMonitorClass.queueSM.execHsh", repr( hsh)
 
         if hsh.has_key( 'cls'):
             pysp.cls()
@@ -199,10 +201,10 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             self.scanInfo = hsh[ 'ScanInfo']
             self.configureMotorsWidget()
         elif hsh.has_key( 'setX'):
-            scan = pysp.getScan( hsh[ 'setX'][ 'name'])
+            scan = pysp.getGqe( hsh[ 'setX'][ 'name'])
             scan.setX(  hsh[ 'setX'][ 'index'], hsh[ 'setX'][ 'x'])
         elif hsh.has_key( 'setY'):
-            scan = pysp.getScan( hsh[ 'setY'][ 'name'])
+            scan = pysp.getGqe( hsh[ 'setY'][ 'name'])
             scan.setY(  hsh[ 'setY'][ 'index'], hsh[ 'setY'][ 'y'])
         else: 
             raise ValueError( "queueSM.execHsh: failed to identify key %s" % repr( hsh))
@@ -212,7 +214,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         we received a scanInfo block indicating that a new scan has started
         now we configure the motors widget using information from the scanInfo block
         '''
-        pysp.Scan.setMonitorGui( self)
+        pysp.GQE.setMonitorGui( self)
 
         length = len( self.scanInfo['motors'])
         if  length == 0 or length > 3:
@@ -234,7 +236,9 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         self.nMotor = length
 
     def cb_refreshMain( self):
-
+        '''
+        this function receives data from the door
+        '''
         #print "pyspMonitor.cb_refreshMain", self.refreshCount
         #
         # without stop() the timer continues

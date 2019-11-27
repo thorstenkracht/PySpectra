@@ -58,8 +58,8 @@ def createPDF( printer = None, fileName = None, flagPrint = False, format = 'DIN
     - returns the name of the output file
     '''
 
-    scanList = _pysp.getScanList()
-    if len( scanList) == 0:
+    gqeList = _pysp.getGqeList()
+    if len( gqeList) == 0:
         return None
 
     flag = False
@@ -212,12 +212,13 @@ def cls():
     #
     # clear the plotItems
     #
-    scanList = _pysp.getScanList()
+    gqeList = _pysp.getGqeList()
 
-    for scan in scanList:
+    for scan in gqeList:
         scan.plotItem = None
-        scan.plotDataItem = None
-        scan.lastIndex = 0
+        if type( scan) == _pysp.dMgt.GQE.Scan:
+            scan.plotDataItem = None
+            scan.lastIndex = 0
 
 def clear( scan): 
     '''
@@ -305,29 +306,29 @@ def _doty2datetime(doty, year = None):
     #print "doty2datatime doty", doty, "to", repr( tmp)
     return tmp
 
-def _setTitle( scan, nameList): 
+def _setTitle( gqe, nameList): 
 
-    if scan.textOnly:
+    if type( gqe) == _pysp.dMgt.GQE.Scan and gqe.textOnly:
         return 
     #
     # the length of the title has to be limited. Otherwise pg 
     # screws up. The plots will no longer fit into the workstation viewport
-    # and the following display command, even with less scans, will 
+    # and the following display command, even with less gqes, will 
     # also not fit into the graphics window
     #
-    if len( scan.name) > _pysp.definitions.LEN_MAX_TITLE:
-        tempName = "X_" + scan.name[-_pysp.definitions.LEN_MAX_TITLE:]
+    if len( gqe.name) > _pysp.definitions.LEN_MAX_TITLE:
+        tempName = "X_" + gqe.name[-_pysp.definitions.LEN_MAX_TITLE:]
     else: 
-        tempName = scan.name
+        tempName = gqe.name
 
     #fontSize = _pysp.getFontSize( nameList)
  
-    if _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp.definitions.MANY_SCANS:
-        scan.plotItem.set_title( tempName)
+    if _pysp.getNumberOfGqesToBeDisplayed( nameList) < _pysp.definitions.MANY_GQES:
+        gqe.plotItem.set_title( tempName)
         #scan.plotItem.set_title( tempName, fontsize = fontSize)
     else:
-        scan.plotItem.text( 0.95, 0.8, tempName, 
-                            transform = scan.plotItem.transAxes, 
+        gqe.plotItem.text( 0.95, 0.8, tempName, 
+                            transform = gqe.plotItem.transAxes, 
                             va = 'center', ha = 'right')
                             #fontsize = fontSize)
   
@@ -423,6 +424,9 @@ def _addTexts( scan, nameList):
 
     #fontSize = _pysp.getFontSize( nameList)
 
+    if type( scan) != _pysp.dMgt.GQE.Scan:
+        return 
+
     for elm in scan.textList:
 
         #if elm.fontSize is None:
@@ -475,8 +479,7 @@ def _createPlotItem( scan, nameList):
 
     try:
         scan.plotItem = Fig.add_subplot( scan.nrow, scan.ncol, scan.nplot)
-
-        if scan.textOnly: 
+        if type( scan) == _pysp.dMgt.GQE.Scan and scan.textOnly: 
             scan.plotItem.axis( 'off')
             _addTexts( scan, nameList)
             return 
@@ -487,53 +490,54 @@ def _createPlotItem( scan, nameList):
 
     #print "mpl_graphics.createPlotItem, autoscale", scan.autoscaleX, scan.autoscaleY
 
-    #
-    # log scale
-    #
-    if scan.xLog: 
-        scan.plotItem.set_xscale( "log")
-    if scan.yLog: 
-        scan.plotItem.set_yscale( "log")
+    if type( scan) == _pysp.dMgt.GQE.Scan: 
+        #
+        # log scale
+        #
+        if scan.xLog: 
+            scan.plotItem.set_xscale( "log")
+        if scan.yLog: 
+            scan.plotItem.set_yscale( "log")
 
-    #
-    # autoscale
-    #
-    arX = scan.autoscaleX
-    arY = scan.autoscaleY
+        #
+        # autoscale
+        #
+        arX = scan.autoscaleX
+        arY = scan.autoscaleY
 
-    if scan.yMin is None or scan.yMax is None:
-        arY = True
+        if scan.yMin is None or scan.yMax is None:
+            arY = True
 
-    if scan.doty: 
-        pass
+        if scan.doty: 
+            pass
         #scan.plotItem.set_autoscalex_on( True)
 
-    if not arX: 
-        if not scan.doty: 
-            scan.plotItem.set_xlim( scan.xMin, scan.xMax)
-    else: 
-        pass
+        if not arX: 
+            if not scan.doty: 
+                scan.plotItem.set_xlim( scan.xMin, scan.xMax)
+        else: 
+            pass
         #scan.plotItem.set_autoscalex_on( arX)
 
-    if not arY:
-        if scan.yMin == scan.yMax:
-            scan.plotItem.set_ylim( [scan.yMin - 1., scan.yMax + 1])
+        if not arY:
+            if scan.yMin == scan.yMax:
+                scan.plotItem.set_ylim( [scan.yMin - 1., scan.yMax + 1])
+            else:
+                scan.plotItem.set_ylim( [scan.yMin, scan.yMax])
         else:
-            scan.plotItem.set_ylim( [scan.yMin, scan.yMax])
-    else:
-        pass
+            pass
         #scan.plotItem.set_autoscaley_on( arY)
-    #
-    # grid
-    #
-    if scan.showGridX or scan.showGridY:
-        scan.plotItem.grid( True)
-    else:
-        scan.plotItem.grid( False)
+        #
+        # grid
+        #
+        if scan.showGridX or scan.showGridY:
+            scan.plotItem.grid( True)
+        else:
+            scan.plotItem.grid( False)
     
     _setTitle( scan, nameList)
 
-    if _pysp.getNumberOfScansToBeDisplayed( nameList) < _pysp.definitions.MANY_SCANS:
+    if _pysp.getNumberOfGqesToBeDisplayed( nameList) < _pysp.definitions.MANY_GQES:
         if hasattr( scan, 'xLabel') and scan.xLabel is not None:
             scan.plotItem.set_xlabel( scan.xLabel)
         if hasattr( scan, 'yLabel') and scan.yLabel is not None:
@@ -542,6 +546,40 @@ def _createPlotItem( scan, nameList):
     _addTexts( scan, nameList)
 
     return
+
+def _displayMeshes( nameList): 
+    '''
+    '''
+    gqeList = _pysp.getGqeList()
+    for mesh in gqeList:
+        if type( mesh) != _pysp.dMgt.GQE.Mesh: 
+            continue
+        if len( nameList) > 0: 
+            if mesh.name not in nameList:
+                continue
+        _createPlotItem( mesh, nameList)
+        mesh.img = mesh.plotItem.imshow( _np.rot90( _np.flipud( mesh.data), k = 3), origin = 'lower')
+        axes = mesh.plotItem.axes
+        Fig.canvas.draw()
+        labels = [item.get_text() for item in axes.get_xticklabels()]
+        labelsNew = []
+        for l in labels: 
+            if len( l) == 0:
+                labelsNew.append( '')
+                continue
+            x = float( l)/float( mesh.width)*( mesh.xMax - mesh.xMin) + mesh.xMin
+            labelsNew.append( '%g' % x)
+        axes.set_xticklabels( labelsNew)
+        labels = [item.get_text() for item in axes.get_yticklabels()]
+        labelsNew = []
+        for l in labels: 
+            if len( l) == 0:
+                labelsNew.append( '')
+                continue
+            y = int( l)/float( mesh.height)*( mesh.yMax - mesh.yMin) + mesh.yMin
+            labelsNew.append( '%g' % y)
+        axes.set_yticklabels( labelsNew)
+    return 
 
 def display( nameList = None):
     '''
@@ -579,24 +617,24 @@ def display( nameList = None):
     # Try /home/kracht/Misc/pySpectra/test/dMgt/testGQE.py testFillData
 
     #
-    # see if the members of nameList arr in the scanList
+    # see if the members of nameList arr in the gqeList
     #
     for nm in nameList:
-        if _pysp.getScan( nm) is None:
-            raise ValueError( "graphics.display: %s is not in the scanList" % nm)
+        if _pysp.getGqe( nm) is None:
+            raise ValueError( "graphics.display: %s is not in the gqeList" % nm)
 
-    scanList = _pysp.getScanList()
+    gqeList = _pysp.getGqeList()
     #
     # if there is only one scan to be displayed, there is no overlay
     #
     flagDisplaySingle = False
-    if len( nameList) == 1 or len( scanList) == 1:
+    if len( nameList) == 1 or len( gqeList) == 1:
         flagDisplaySingle = True
 
     #
     # adjust the graphics window to the number of displayed scans
     #
-    nDisplay = _pysp.getNumberOfScansToBeDisplayed( nameList)
+    nDisplay = _pysp.getNumberOfGqesToBeDisplayed( nameList)
     _setSizeGraphicsWindow( nDisplay)
 
     _adjustFigure( nDisplay)
@@ -604,14 +642,20 @@ def display( nameList = None):
     #
     # set scan.nrow, scan.ncol, scan.nplot
     #
-    _pysp.setScanVPs( nameList, flagDisplaySingle, cls)
+    _pysp.setGqeVPs( nameList, flagDisplaySingle, cls)
 
     _displayTitleComment( nameList)
+
+    _displayMeshes( nameList)
     #
-    # --- first pass: run through the scans in scanList and display 
+    # --- first pass: run through the scans in gqeList and display 
     #     non-overlaid scans
     #
-    for scan in scanList:
+    for scan in gqeList:
+        
+        if type(scan) != _pysp.dMgt.GQE.Scan:
+            continue
+
         #
         # overlay? - don't create a plot for this scan. Plot it
         # in the second pass. But it is displayed, if it is the only 
@@ -621,7 +665,7 @@ def display( nameList = None):
             #
             # maybe the scan.overlay has beed deleted
             #
-            if _pysp.getScan( scan.overlay) is None:
+            if _pysp.getGqe( scan.overlay) is None:
                 scan.overlay = None
             else:
                 continue
@@ -643,7 +687,7 @@ def display( nameList = None):
                 print "graphics.display", repr( e)
                 return 
 
-            if scan.textOnly: 
+            if type( scan) == _pysp.dMgt.GQE.Scan and scan.textOnly: 
                 continue
 
             if scan.doty:
@@ -677,7 +721,7 @@ def display( nameList = None):
             scan.plotDataItem.setData = scan.plotDataItem.set_data
             scan.lastIndex = scan.currentIndex
 
-        if scan.textOnly: 
+        if type( scan) == _pysp.dMgt.GQE.Scan and scan.textOnly: 
             continue
         #
         # modify the scan 
@@ -723,7 +767,10 @@ def display( nameList = None):
     # --- second pass: display overlaid scans
     # --- 
     #
-    for scan in scanList:
+    for scan in gqeList:
+        
+        if type(scan) != _pysp.dMgt.GQE.Scan:
+            continue
         #
         # if only one scan is displayed, there is no overlay
         #
@@ -740,7 +787,7 @@ def display( nameList = None):
         
         if len( nameList) > 0 and scan.name not in nameList:
             continue
-        target = _pysp.getScan( scan.overlay)
+        target = _pysp.getGqe( scan.overlay)
         if target is None or target.plotItem is None:
             raise ValueError( "mpl_graphics.display: %s tries to overlay to %s" %
                               (scan.name, scan.overlay))
@@ -754,7 +801,7 @@ def display( nameList = None):
         if scan.yLog: 
             scan.plotItem.set_yscale( "log")
         
-        if len( _pysp.getScanList()) >= _pysp.definitions.MANY_SCANS or \
+        if len( _pysp.getGqeList()) >= _pysp.definitions.MANY_GQES or \
            scan.yTicksVisible == False: 
             plt.setp( scan.plotItem.get_yticklabels(), visible=False)
 

@@ -22,6 +22,9 @@ python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2BothLog
 python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2FirstLog
 python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2SecondLog
 python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2SecondLog
+python ./test/graphics/testMplGraphics.py testMplGraphics.testMesh
+python ./test/graphics/testMplGraphics.py testMplGraphics.testMeshMB1
+python ./test/graphics/testMplGraphics.py testMplGraphics.testMeshMB2
 '''
 import sys, os
 #pySpectraPath = "/home/kracht/Misc/pySpectra/PySpectra"
@@ -34,6 +37,7 @@ import PySpectra
 #from mtpltlb.graphics import *
 #from pqtgrph.graphics import *
 
+import pyqtgraph as pg
 import numpy as np
 import unittest
 import time, sys
@@ -621,6 +625,85 @@ class testMplGraphics( unittest.TestCase):
         PySpectra.mtpltlb.graphics.procEventsLoop( 1)
 
         print "testGrphics.testOverly2SecondLog"
+
+
+    def testMesh( self): 
+        print "testGQE.testMesh"
+
+        PySpectra.mtpltlb.graphics.cls()
+        PySpectra.delete()
+
+        data = np.random.normal(size=(200, 100))
+        data[20:80, 20:80] += 2.
+        data = pg.gaussianFilter(data, (3, 3))
+        data += np.random.normal(size=(200, 100)) * 0.1
+
+        m = PySpectra.Mesh( name = "FirstMesh", data = data)
+
+        PySpectra.mtpltlb.graphics.display()
+        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+
+
+
+    def mandelbrot( self, c,maxiter):
+        z = c
+        for n in range(maxiter):
+            if abs(z) > 2:
+                return n
+            z = z*z + c
+        return 0
+
+    def testMeshMB1( self): 
+        print "testGQE.testMesh"
+
+
+        PySpectra.mtpltlb.graphics.cls()
+        PySpectra.delete()
+
+        (xmin, xmax) = (-2., 1)
+        (ymin, ymax) = (-1.5, 1.5)
+        (width, height) = (500, 500)
+        maxiter = 20
+
+        r1 = np.linspace(xmin, xmax, width)
+        r2 = np.linspace(ymin, ymax, height)
+        n3 = np.empty((width,height))
+        for i in range(width):
+            for j in range(height):
+                n3[i,j] = self.mandelbrot(r1[i] + 1j*r2[j],maxiter)
+            
+        # m = PySpectra.Mesh( name = "FirstMesh", startX = startX, stopX = stopX, startY = startY, stopY = stopY, nPts = nPts)
+        m = PySpectra.Mesh( name = "FirstMesh", data = n3)
+
+        PySpectra.mtpltlb.graphics.display()
+        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+
+    def testMeshMB2( self): 
+        print "testGQE.testMesh"
+
+        PySpectra.setWsViewport( 'DINA5S')
+
+        PySpectra.mtpltlb.graphics.cls()
+        PySpectra.delete()
+
+        (xmin, xmax) = (-2., 1)
+        (ymin, ymax) = (-1.5, 1.5)
+        (width, height) = (500, 500)
+        maxiter = 20
+
+        m = PySpectra.Mesh( name = "FirstMesh", xMin = xmin, xMax = xmax, width = width,  
+                            yMin = ymin, yMax = ymax, height = height)
+
+        r1 = np.linspace(xmin, xmax, width)
+        r2 = np.linspace(ymin, ymax, height)
+        for i in range(width):
+            for j in range(height):
+                res = self.mandelbrot(r1[i] + 1j*r2[j],maxiter)
+                m.setPixel( x = r1[i], y = r2[j], value = res)
+
+            PySpectra.mtpltlb.graphics.cls()
+            PySpectra.mtpltlb.graphics.display()
+        PySpectra.mtpltlb.graphics.procEventsLoop( 1.)
 
 if __name__ == "__main__":
     unittest.main()

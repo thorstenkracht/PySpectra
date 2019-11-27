@@ -1,7 +1,7 @@
 #!/bin/env python
 '''
 GQE - contains the Scan() class and functions to handle scans: 
-      delete(), getScan(), getScanList(), info(), overlay(), show()
+      delete(), getGqe(), getGqeList(), info(), overlay(), show()
 '''
 # 1.8.2
 
@@ -9,10 +9,11 @@ import numpy as _np
 import PySpectra as _pysp
 from PyQt4 import QtCore as _QtCore
 from PyQt4 import QtGui as _QtGui
+import math as _math
+import HasyUtils
 
-
-_scanList = []
-_scanIndex = None  # used by next/back
+_gqeList = []
+_gqeIndex = None  # used by next/back
 _title = None
 _comment = None
 #
@@ -37,6 +38,12 @@ _ScanAttrsPublic = [ 'at', 'autoscaleX', 'autoscaleY', 'colSpan', 'currentIndex'
 
 _ScanAttrsPrivate = [ 'infLineLeft', 'infLineRight', 'mouseClick', 'mouseLabel', 'mouseProxy', 
                       'plotItem', 'plotDataItem', 'scene', 'xDateMpl']
+
+_MeshAttrsPublic = [ 'at', 'colSpan', 'data', 'log', 'logWidget', 
+                     'name', 'ncol', 'nplot', 'nrow', 'overlay', 'xMin', 'xMax',
+                     'yMin', 'yMax', 'width', 'height', 'viewBox', 'xLabel', 'yLabel']
+
+_MeshAttrsPrivate = [ 'img', 'plotItem', 'mouseClick', 'mouseLabel', 'mouseProxy']
 
 class Text(): 
     '''
@@ -70,7 +77,22 @@ A value of (0,0) sets the upper-left corner
                      of the text box to be at the position specified by setPos(), while a value of (1,1)
                      sets the lower-right corner.        
 '''
-class Scan( object):
+
+class GQE( object): 
+    monitorGui = None
+
+    def __init__( self):
+        pass
+    #
+    # called from pyspMonitorClass, if scanInfo is received
+    #
+    @staticmethod
+    def setMonitorGui( monitorGui): 
+        GQE.monitorGui = monitorGui
+        return 
+
+
+class Scan( GQE):
     '''
     A Scan contains 2 arrays, x and y, and graphics attributes
 
@@ -119,13 +141,12 @@ class Scan( object):
     # this class variable stores the Gui, needed to configure the motorsWidget, 
     # which happens for each new scan
     #
-    monitorGui = None
 
     def __init__( self, name = None, **kwargs):
-        global _scanList
+        global _gqeList
 
         #print "GQE.Scan: ", repr( kwargs)
-
+        super( Scan, self).__init__()
         if name is None:
             raise ValueError( "GQE.Scan: 'name' is missing")
         #
@@ -135,18 +156,18 @@ class Scan( object):
         #
         # We 'reUse' e.g. MCA scans
         #
-        for i in range( len( _scanList)): 
-            if name == _scanList[i].name:
+        for i in range( len( _gqeList)): 
+            if name == _gqeList[i].name:
                 if 'reUse' in kwargs: 
-                    if len( _scanList[i].x) != len( kwargs['x']):
+                    if len( _gqeList[i].x) != len( kwargs['x']):
                         raise ValueError( "GQE.Scan: len( scan.x) %d != len( kwargs[ 'x']) %d" % \
-                                          ( len( _scanList[i].x), len( kwargs['x'])))
-                    if len( _scanList[i].y) != len( kwargs['y']):
+                                          ( len( _gqeList[i].x), len( kwargs['x'])))
+                    if len( _gqeList[i].y) != len( kwargs['y']):
                         raise ValueError( "GQE.Scan: len( scan.y) %d != len( kwargs[ 'y']) %d" % \
-                                          ( len( _scanList[i].y), len( kwargs['y'])))
-                    _scanList[i].x = kwargs['x']
-                    _scanList[i].y = kwargs['y']
-                    _scanList[i].lastIndex = 0
+                                          ( len( _gqeList[i].y), len( kwargs['y'])))
+                    _gqeList[i].x = kwargs['x']
+                    _gqeList[i].y = kwargs['y']
+                    _gqeList[i].lastIndex = 0
                     return
                 else:
                     raise ValueError( "GQE.Scan: %s exists already" % name)
@@ -197,7 +218,7 @@ class Scan( object):
         
         self.textList = []
 
-        _scanList.append( self)
+        _gqeList.append( self)
 
     def __setattr__( self, name, value): 
         #print "GQE.Scan.__setattr__: name %s, value %s" % (name, value)
@@ -205,15 +226,15 @@ class Scan( object):
            name in _ScanAttrsPrivate: 
             super(Scan, self).__setattr__(name, value)
         else: 
-            raise ValueError( "GQE.Scan.__setattr__: %s wrong attribute %s" % ( self.name, name))
+            raise ValueError( "GQE.Scan.__setattr__: %s unknown attribute %s" % ( self.name, name))
 
     def __getattr__( self, name): 
-        raise ValueError( "GQE.Scan.__getattr__: %s wrong attribute %s" % ( self.name, name))
+        raise ValueError( "GQE.Scan.__getattr__: %s unknown attribute %s" % ( self.name, name))
         #if name in _ScanAttrsPublic or \
         #   name in _ScanAttrsPrivate: 
         #    return super(Scan, self).__getattr__(name)
         #else: 
-        #    raise ValueError( "GQE.Scan.__getattr__: Scan %s wrong attribute name %s" % ( self.name, name))
+        #    raise ValueError( "GQE.Scan.__getattr__: Scan %s unknown attribute name %s" % ( self.name, name))
         
     def __del__( self): 
         pass
@@ -230,7 +251,7 @@ class Scan( object):
         import time as _time
 
 
-        if Scan.monitorGui is None:
+        if GQE.monitorGui is None:
             if self.logWidget is not None:
                 self.logWidget.append( "GQE.Scan.move: not called from pyspMonitor") 
             else:
@@ -241,10 +262,10 @@ class Scan( object):
         # don't use MCA data to move motors
         #
         if self.flagMCA:
-            self.monitorGui.logWidget.append( "GQE.Scan.move: don't use MCAs to move motors") 
+            GQE.monitorGui.logWidget.append( "GQE.Scan.move: don't use MCAs to move motors") 
             return 
 
-        #print "GQE.Scan.move: to", target, "using", Scan.monitorGui.scanInfo
+        #print "GQE.Scan.move: to", target, "using", GQE.monitorGui.scanInfo
 
         #
         # from moveMotor widget
@@ -285,16 +306,16 @@ class Scan( object):
         #
         # move() has to be called from the pyspMonitor application
         #
-        if Scan.monitorGui is None or Scan.monitorGui.scanInfo is None: 
+        if GQE.monitorGui is None or GQE.monitorGui.scanInfo is None: 
             return
 
-        motorArr = Scan.monitorGui.scanInfo['motors']        
+        motorArr = GQE.monitorGui.scanInfo['motors']        
         length = len( motorArr)
         if  length == 0 or length > 3:
             _QtGui.QMessageBox.about( None, 'Info Box', "no. of motors == 0 or > 3") 
             return
 
-        motorIndex = Scan.monitorGui.scanInfo['motorIndex']
+        motorIndex = GQE.monitorGui.scanInfo['motorIndex']
 
         if motorIndex >= length:
             _QtGui.QMessageBox.about( None, 'Info Box', "motorIndex %d >= no. of motors %d" % (motorIndex, length))
@@ -343,12 +364,12 @@ class Scan( object):
             reply = _QtGui.QMessageBox.question( None, 'YesNo', msg, _QtGui.QMessageBox.Yes, _QtGui.QMessageBox.No)
 
         if not reply == _QtGui.QMessageBox.Yes:
-            Scan.monitorGui.logWidget.append( "Move: move not confirmed")
+            GQE.monitorGui.logWidget.append( "Move: move not confirmed")
             return
 
-        if Scan.monitorGui.scanInfo['title'].find( "hklscan") == 0:
-            Scan.monitorGui.logWidget.append( "br %g %g %g" % (motorArr[0]['targetPos'],motorArr[1]['targetPos'],motorArr[2]['targetPos']))
-            Scan.monitorGui.door.RunMacro( ["br",  
+        if GQE.monitorGui.scanInfo['title'].find( "hklscan") == 0:
+            GQE.monitorGui.logWidget.append( "br %g %g %g" % (motorArr[0]['targetPos'],motorArr[1]['targetPos'],motorArr[2]['targetPos']))
+            GQE.monitorGui.door.RunMacro( ["br",  
                                  "%g" %  motorArr[0]['targetPos'], 
                                  "%g" %  motorArr[1]['targetPos'], 
                                  "%g" %  motorArr[2]['targetPos']])
@@ -357,18 +378,10 @@ class Scan( object):
             for hsh in motorArr:
                 lst.append( "%s" % (hsh['name']))
                 lst.append( "%g" % (hsh['targetPos']))
-                Scan.monitorGui.logWidget.append( "%s to %g" % (hsh['name'], hsh['targetPos']))
-            Scan.monitorGui.door.RunMacro( lst)
+                GQE.monitorGui.logWidget.append( "%s to %g" % (hsh['name'], hsh['targetPos']))
+            GQE.monitorGui.door.RunMacro( lst)
         return 
 
-    #
-    # called from pyspMonitorClass, if scanInfo is received
-    #
-    @staticmethod
-    def setMonitorGui( monitorGui): 
-        Scan.monitorGui = monitorGui
-        return 
-    
     def _createScanFromData( self, kwargs):
         '''
         creates a scan using x, y
@@ -492,7 +505,6 @@ class Scan( object):
         self.symbol = 'o'
         self.symbolColor = 'NONE'
         self.symbolSize = 10
-        self.viewBox = None
         self.xLabel = None
         self.yLabel = None
         self.xLog = False
@@ -554,7 +566,7 @@ class Scan( object):
                 raise ValueError( "GQE.Scan.setAttr: %s, 'at(%s,%s,%s)' is wrong, nplot > nrow*ncol" % 
                                   (self.name, self.at[0], self.at[1], self.at[2]))
                 
-            for scan in _scanList: 
+            for scan in _gqeList: 
                 if scan is self:
                     continue
                 if self.at is None or scan.at is None: 
@@ -793,7 +805,7 @@ class Scan( object):
 
         ssaName = '%s_ssa' % self.name
         count = 1
-        while getScan( ssaName): 
+        while getGqe( ssaName): 
             ssaName = '%s_ssa_%-d' % (self.name, count)
             count += 1
             
@@ -810,11 +822,70 @@ class Scan( object):
         res.useTargetWindow = True
         return 
 
-def getScanList():
+    def fsa( self, logWidget = None):
+        '''
+
+        '''
+        #
+        # 'peak','cms','cen',  'dip','dipm','dipc',  'slit', 'slitm', 'slitc',   'step','stepm' and 'stepc'
+        #
+        mode = 'peak'
+
+
+        lstX = []
+        lstY = []
+
+        if self.flagDisplayVLines: 
+            xi = self.infLineLeft.getPos()[0]
+            xa = self.infLineRight.getPos()[0]
+            if xa < xi: 
+                temp = xa
+                xa = xi
+                xi = temp
+            for i in range( self.currentIndex + 1):
+                #
+                # sorted normally
+                #
+                if self.x[i] >= xi and self.x[i] <= xa: 
+                    lstX.append( self.x[i])
+                    lstY.append( self.y[i])
+            if logWidget is not None:
+                logWidget.append( "fsa: %s limits: %g, %g" % (self.name, xi, xa))
+        else: 
+            lstX = self.x[:self.currentIndex]
+            lstY = self.y[:self.currentIndex]
+            if logWidget is not None:
+                logWidget.append( "fsa: %s total x-range" % (self.name))
+        #
+        # reversed x-values?
+        #
+        if lstX[0] > lstX[-1]:
+            lstX = list( reversed( lstX))
+            lstY = list( reversed( lstY))
+                
+        try: 
+            message, xpos, xpeak, xcms, xcen = _pysp.fastscananalysis( lstX, lstY, mode)
+        except Exception, e:
+            print "GQE.fsa: trouble with", self.name
+            print repr( e)
+            
+
+        if logWidget is not None: 
+            logWidget.append( " message:  %s" % message)
+            logWidget.append( " xpos:     %g" % xpos)
+            logWidget.append( " xpeak:    %g" % xpeak)
+            logWidget.append( " xcms:     %g" % xcms)
+            logWidget.append( " xcen:     %g" % xcen)
+        else:
+            print "GQE.fsa: message", message, "xpos", xpos, "xpeak", xpeak, "xcms", xcms, "xcen", xcen
+
+        return 
+
+def getGqeList():
     '''
     returns the list of scans
     '''
-    return _scanList
+    return _gqeList
 
 def getDisplayList(): 
     '''
@@ -822,18 +893,18 @@ def getDisplayList():
     '''
 
     argout = []
-    for scan in _scanList: 
+    for scan in _gqeList: 
         if scan.plotItem is not None:
             argout.append( scan)
 
     return argout
 
-def getScan( name):
+def getGqe( name):
     '''
     return the scan object with obj.name == name, 
     otherwise return None
     '''
-    for scan in _scanList:
+    for scan in _gqeList:
         if str( name).upper() == scan.name.upper():
             return scan
     return None
@@ -879,7 +950,7 @@ def getComment():
 
 def delete( nameLst = None):
     '''
-    if nameLst is supplied, delete the specified scans from the scanList
+    if nameLst is supplied, delete the specified scans from the gqeList
     otherwise delete all scans
 
     PySpectra.delete( ["t1"])
@@ -894,53 +965,54 @@ def delete( nameLst = None):
     PySpectra.delete()
       delete all scans
     '''
-    global _scanIndex
+    global _gqeIndex
 
     #print "GQE.delete, nameList:", repr( nameLst)
-    
+    #print "GQE.delete: %s" % repr( HasyUtils.getTraceBackList())
+
     if not nameLst:    
-        while len( _scanList) > 0:
-            tmp = _scanList.pop()
+        while len( _gqeList) > 0:
+            tmp = _gqeList.pop()
             if tmp.plotItem is not None:
                 #
                 # clear.__doc__: 'Remove all items from the ViewBox'
                 #
                 _pysp.clear( tmp)
                 #tmp.plotItem.clear()
-            _scanIndex = None
+            _gqeIndex = None
         setTitle( None)
         setComment( None)
         return 
 
     if type( nameLst) is not list:
         name = nameLst
-        for i in range( len( _scanList)):
-            if name.upper() == _scanList[i].name.upper():
+        for i in range( len( _gqeList)):
+            if name.upper() == _gqeList[i].name.upper():
                 #
                 # we had many MCA spectra displayed on top of each other
                 #
-                if _scanList[i].plotItem is not None:
-                    _pysp.clear( _scanList[i])
-                    #_scanList[i].plotItem.clear()
-                del _scanList[i]
+                if _gqeList[i].plotItem is not None:
+                    _pysp.clear( _gqeList[i])
+                    #_gqeList[i].plotItem.clear()
+                del _gqeList[i]
                 break
         else:
             raise ValueError( "GQE.delete: not found %s" % name)
         return 
 
     for name in nameLst:
-        for i in range( len( _scanList)):
-            if name.upper() == _scanList[i].name.upper():
+        for i in range( len( _gqeList)):
+            if name.upper() == _gqeList[i].name.upper():
                 #
                 # we had many MCA spectra displayed on top of each other
                 #
-                if _scanList[i].plotItem is not None:
+                if _gqeList[i].plotItem is not None:
                     #
                     # clear.__doc__: 'Remove all items from the ViewBox'
                     #
-                    _pysp.clear( _scanList[i])
-                    #_scanList[i].plotItem.clear()
-                del _scanList[i]
+                    _pysp.clear( _gqeList[i])
+                    #_gqeList[i].plotItem.clear()
+                del _gqeList[i]
                 break
         else:
             print "GQE.delete: not found", name
@@ -963,36 +1035,36 @@ def overlay( src, trgt):
 
     Module: PySpectra.dMgt.GQE.py
     '''
-    scanSrc = getScan( src)
-    scanTrgt = getScan( trgt)
+    scanSrc = getGqe( src)
+    scanTrgt = getGqe( trgt)
     scanSrc.overlay = scanTrgt.name
     return 
     
-def info( scanList = None):
+def info( gqeList = None):
     '''
-    prints some information about scans in scanList.
-    if scanList is not supplied, info is displayed for all scans
+    prints some information about scans in gqeList.
+    if gqeList is not supplied, info is displayed for all scans
     '''
 
-    if scanList is not None:
-        if type(scanList) is not list:
-            scan = getScan( scanList)
+    if gqeList is not None:
+        if type(gqeList) is not list:
+            scan = getGqe( gqeList)
             _infoScan( scan)
             return 1
 
-        for scn in scanList:
-            scan = getScan( scn)
+        for scn in gqeList:
+            scan = getGqe( scn)
             _infoScan( scan)
-        return len( scanList)
+        return len( gqeList)
 
     argout = 0
 
-    if _scanList:
+    if _gqeList:
         print "The List of Scans:"
-        for scan in _scanList:
+        for scan in _gqeList:
             _infoScan( scan)
-        print "\n--- %s scans" % len( _scanList)
-        argout += len( _scanList)
+        print "\n--- %s scans" % len( _gqeList)
+        argout += len( _gqeList)
     else: 
         print "scan list is empty"
 
@@ -1085,73 +1157,147 @@ def show():
     '''
     lists all scans, one line per scan
     '''
-    if _scanList is None: 
+    if _gqeList is None: 
         print "scan list is empty"
 
     print "The List of Scans:"
-    for scan in _scanList:
+    for scan in _gqeList:
         print "%s, nPts %d, xMin %g, xMax %g" % (scan.name, scan.nPts, scan.xMin, scan.xMax)
 
 def nextScan( name = None):
     '''
     nextScan/prevScan return the next/previous scan object
     '''
-    global _scanIndex
+    global _gqeIndex
 
-    if len( _scanList) == 0:
+    if len( _gqeList) == 0:
         raise ValueError( "GQE.nextScan: scan list empty")
 
     if name is not None:
-        for i in range( len(_scanList)): 
-            if _scanList[i].name == name:
-                _scanIndex = i + 1
+        for i in range( len(_gqeList)): 
+            if _gqeList[i].name == name:
+                _gqeIndex = i + 1
                 break
     else:
-        if _scanIndex is None:
-            _scanIndex = 0
+        if _gqeIndex is None:
+            _gqeIndex = 0
         else:
-            _scanIndex += 1
+            _gqeIndex += 1
         
-    if _scanIndex >= len( _scanList) :
-        _scanIndex = 0
+    if _gqeIndex >= len( _gqeList) :
+        _gqeIndex = 0
 
-    return _scanList[ _scanIndex]
+    while type( _gqeList[ _gqeIndex]) != Scan:
+        _gqeIndex += 1
+        if _gqeIndex >= len( _gqeList): 
+            raise ValueError( "GQE.nextScan: failed to find the next Scan")
+
+    return _gqeList[ _gqeIndex]
 
 def prevScan( name = None):
     '''
     nextScan/prevScan return the next/previous scan object
     '''
-    global _scanIndex
+    global _gqeIndex
 
-    if len( _scanList) == 0:
+    if len( _gqeList) == 0:
         raise ValueError( "GQE.prevScan: scan list empty")
 
     if name is not None:
-        for i in range( len(_scanList)): 
-            if _scanList[i].name == name:
-                _scanIndex = i + 1
+        for i in range( len(_gqeList)): 
+            if _gqeList[i].name == name:
+                _gqeIndex = i + 1
                 break
     else:
-        if _scanIndex is None:
-            _scanIndex = 0
+        if _gqeIndex is None:
+            _gqeIndex = 0
         else:
-            _scanIndex -= 1
+            _gqeIndex -= 1
 
-    if _scanIndex < 0:
-        _scanIndex = len( _scanList) - 1
+    if _gqeIndex < 0:
+        _gqeIndex = len( _gqeList) - 1
 
-    if _scanIndex >= len( _scanList):
-        _scanIndex = 0
+    if _gqeIndex >= len( _gqeList):
+        _gqeIndex = 0
 
-    return _scanList[ _scanIndex]
+
+    while type( _gqeList[ _gqeIndex]) != Scan:
+        _gqeIndex += 1
+        if _gqeIndex >= len( _gqeList): 
+            raise ValueError( "GQE.nextMesh: failed to find the previous Scan")
+
+    return _gqeList[ _gqeIndex]
+
+def nextMesh( name = None):
+    '''
+    nextMesh/prevMesh return the next/previous scan object
+    '''
+    global _gqeIndex
+
+    if len( _gqeList) == 0:
+        raise ValueError( "GQE.nextScan: gqe list empty")
+
+    if name is not None:
+        for i in range( len(_gqeList)): 
+            if _gqeList[i].name == name:
+                _gqeIndex = i + 1
+                break
+    else:
+        if _gqeIndex is None:
+            _gqeIndex = 0
+        else:
+            _gqeIndex += 1
+            
+    if _gqeIndex >= len( _gqeList) :
+        _gqeIndex = 0
+
+    while type( _gqeList[ _gqeIndex]) != Mesh:
+        _gqeIndex += 1
+        if _gqeIndex >= len( _gqeList): 
+            raise ValueError( "GQE.nextMesh: failed to find the next Mesh")
+
+    return _gqeList[ _gqeIndex]
+
+def prevMesh( name = None):
+    '''
+    nextScan/prevScan return the next/previous scan object
+    '''
+    global _gqeIndex
+
+    if len( _gqeList) == 0:
+        raise ValueError( "GQE.prevScan: scan list empty")
+
+    if name is not None:
+        for i in range( len(_gqeList)): 
+            if _gqeList[i].name == name:
+                _gqeIndex = i + 1
+                break
+    else:
+        if _gqeIndex is None:
+            _gqeIndex = 0
+        else:
+            _gqeIndex -= 1
+
+    if _gqeIndex < 0:
+        _gqeIndex = len( _gqeList) - 1
+
+    if _gqeIndex >= len( _gqeList):
+        _gqeIndex = 0
+
+    while type( _gqeList[ _gqeIndex]) != Mesh:
+        _gqeIndex -= 1
+        if _gqeIndex < 0:
+            raise ValueError( "GQE.nextMesh: failed to find the previous Mesh")
+
+    return _gqeList[ _gqeIndex]
 
 def getIndex( name): 
     '''
-    returns the position of a scan in the scanList, 
+    returns the position of a scan in the gqeList, 
     the first index is 0.
     '''
     index = 0
-    for scan in _scanList:
+    for scan in _gqeList:
         if scan.name == name:
             return index
         index += 1
@@ -1175,12 +1321,12 @@ def read( fileName, x = 1, y = None, flagMCA = False):
 
     if flagMCA, the input file contains MCA data, no x-axis
     '''
-    #print "+++GQE.read: %s, x %s, y %s, flagMCA %s" % ( fileName, repr( x), repr( y), repr( flagMCA))
     #
     # fioReader may throw an exception, e.g. if the file does not exist.
     # Do not catch it here, leave it to the application
     #
     import HasyUtils as _HasyUtils
+
     fioObj = _HasyUtils.fioReader( fileName, flagMCA)
 
     if y is not None:
@@ -1189,7 +1335,7 @@ def read( fileName, x = 1, y = None, flagMCA = False):
         return fioObj.columns[ y - 2]
 
     for elm in fioObj.columns:
-        scn =  Scan( name = elm.name, x = elm.x, y = elm.y, fileName = fileName)
+        scn =  Scan( name = elm.name, x = elm.x, y = elm.y, fileName = fileName, xLabel = fioObj.motorName)
 
     return None
     
@@ -1205,14 +1351,14 @@ def write( lst = None):
       write selected scans
     '''
     import HasyUtils as _HasyUtils
-    if len(_scanList) == 0: 
+    if len(_gqeList) == 0: 
         raise ValueError( "GQE.write: scan list is empty")
 
     #
     # check if all scans have the same length
     #
     length = None
-    for scan in _scanList:
+    for scan in _gqeList:
         if scan.textOnly: 
             continue
         if lst is not None:
@@ -1225,7 +1371,7 @@ def write( lst = None):
             raise ValueError( "GQE.write: output GQEs differ in length")
     
     obj = _HasyUtils.fioObj( namePrefix = "pysp")
-    for scan in _scanList:
+    for scan in _gqeList:
         if scan.textOnly: 
             continue
         if lst is not None:
@@ -1243,7 +1389,7 @@ def write( lst = None):
     #print "created", fileName
     return fileName
     
-def getNumberOfScansToBeDisplayed( nameList): 
+def getNumberOfGqesToBeDisplayed( nameList): 
     '''
     return the number of scans to be displayed.
     Scans that are overlaid do not require extra space
@@ -1251,34 +1397,34 @@ def getNumberOfScansToBeDisplayed( nameList):
     '''
     if len( nameList) == 0:
         nOverlay = 0
-        for scan in _scanList:
-            if scan.overlay is not None:
+        for gqe in _gqeList:
+            if gqe.overlay is not None:
                 nOverlay += 1
-        nScan = len( _scanList) - nOverlay
-        if nScan < 1:
-            nScan = 1
+        nGqe = len( _gqeList) - nOverlay
+        if nGqe < 1:
+            nGqe = 1
     else:
         nOverlay = 0
         for name in nameList:
-            if getScan( name).overlay is not None:
+            if getGqe( name).overlay is not None:
                 nOverlay += 1
-        nScan = len( nameList) - nOverlay
-        if nScan < 1:
-            nScan = 1
-    #print "graphics.getNoOfScansToBeDisplayed: nScan %d" %(nScan)
-    return nScan
+        nGqe = len( nameList) - nOverlay
+        if nGqe < 1:
+            nGqe = 1
+    #print "graphics.getNoOfGqesToBeDisplayed: nGqe %d" %(nGqe)
+    return nGqe
 
 def _getNumberOfOverlaid( nameList = None):
     '''
-    returns the number of scans which are overlaid to another, 
+    returns the number of gqes which are overlaid to another, 
     used by e.g. graphics.display()
     '''
     count = 0
-    for scan in _scanList:
+    for gqe in _gqeList:
         if nameList is not None: 
-            if scan.name not in nameList:
+            if gqe.name not in nameList:
                 continue
-        if scan.overlay is not None:
+        if gqe.overlay is not None:
             count += 1
 
     return count
@@ -1288,7 +1434,7 @@ def setWsViewportFixed( flag):
     flag: True or False
     
     if True, the wsViewport is not changed automatically 
-             to take many scans into account
+             to take many gqes into account
     '''
     global _wsViewportFixed 
     _wsViewportFixed = flag
@@ -1308,11 +1454,11 @@ def _isArrayLike( x):
 
 def getFontSize( nameList): 
     '''
-    depending on how many scans are displayed the font size is adjusted
+    depending on how many gqes are displayed the font size is adjusted
     '''
-    if getNumberOfScansToBeDisplayed( nameList) < _pysp.definitions.MANY_SCANS:
+    if getNumberOfGqesToBeDisplayed( nameList) < _pysp.definitions.MANY_GQES:
         fontSize = _pysp.definitions.FONT_SIZE_NORMAL
-    elif getNumberOfScansToBeDisplayed( nameList) <= _pysp.definitions.VERY_MANY_SCANS:
+    elif getNumberOfGqesToBeDisplayed( nameList) <= _pysp.definitions.VERY_MANY_GQES:
         fontSize = _pysp.definitions.FONT_SIZE_SMALL
     else: 
         fontSize = _pysp.definitions.FONT_SIZE_VERY_SMALL
@@ -1325,24 +1471,67 @@ def getData():
     created by the pyspMonitor into a dictionary. 
     '''
     hsh = {}
-    for scan in _scanList:
-        name = scan.name
+    for gqe in _gqeList:
+        if type( gqe) != Scan: 
+            continue
+        name = gqe.name.upper() # needed by MVSA
         hsh[ name] = {}
         #
         # numpy array cannot be json-encoded
         #
-        if scan.currentIndex >= 0:
-            hsh[ name]['x'] = list( scan.x[:(scan.currentIndex + 1)])
-            hsh[ name]['y'] = list( scan.y[:(scan.currentIndex + 1)])
+        if gqe.currentIndex >= 0:
+            hsh[ name]['x'] = list( gqe.x[:(gqe.currentIndex + 1)])
+            hsh[ name]['y'] = list( gqe.y[:(gqe.currentIndex + 1)])
         else:
             hsh[ name]['x'] = []
             hsh[ name]['y'] = []
+    # just to make mvsa happy
 
+    if GQE.monitorGui is not None and GQE.monitorGui.scanInfo is not None: 
+        hsh[ 'symbols'] = {}
+        temp = GQE.monitorGui.scanInfo[ 'filename']
+        if type( temp) is list:
+            hsh[ 'symbols'][ 'file_name_'] = temp[0]
+        else:
+            hsh[ 'symbols'][ 'file_name_'] = temp
     return hsh
 
+def fillDataMesh( hsh): 
+    '''
+    hsh = { 'putData': 
+    {'mesh': { 'name': 'meshName', 
+               'xMin': xmin, 'xMax': xmax, 'width': width,
+               'yMin': ymin, 'yMax': ymax, 'height': height,}}}
+
+    hsh = { 'putData': 
+    {'mesh': { 'name': 'meshName', 
+               'setPixel': (x, y, value)}}}
+    '''
+
+    dct = hsh[ 'mesh']
+
+    if dct.has_key( 'xMin'): 
+        print "GQE.fillDataMesh: creating %s" % dct[ 'name']
+        m = _pysp.Mesh( name = dct[ 'name'],  
+                        xMin = dct[ 'xMin'], xMax = dct[ 'xMax'], width = dct[ 'width'],
+                        yMin = dct[ 'yMin'], yMax = dct[ 'yMax'], height = dct[ 'height'])
+        o = getGqe( dct[ 'name'])
+    elif dct.has_key( 'setPixel'): 
+        o = getGqe( dct[ 'name'])
+        o.setPixel( x = dct[ 'setPixel'][0],
+                    y = dct[ 'setPixel'][1],
+                    value = dct[ 'setPixel'][2])
+        _pysp.cls()
+        _pysp.display()
+
+    else: 
+        raise ValueError( "GQE.fillDataMesh: dictionary unexpected")
+
+    return "done"
+    
 def fillDataByColumns( hsh):
     if len( hsh[ 'columns']) < 2: 
-        raise Exception( "gra_ifc.putData", "less than 2 columns")
+        raise Exception( "GQE.fillDataByColumns", "less than 2 columns")
 
     columns = []
     xcol = hsh[ 'columns'][0]
@@ -1443,24 +1632,287 @@ def fillDataByGqes( hsh):
 
     return 
 
-    
 def putData( hsh):
     '''
     a plot is created based on a dictionary 
     the use case: some data are sent pyspMonitor
     '''
-    delete()
-    _pysp.cls()
 
+    argout = 'n.n.'
     if not hsh.has_key( 'title'):
         setTitle( "NoTitle")
     else:
         setTitle( hsh[ 'title'])
 
     if hsh.has_key( 'columns'):
-        fillDataByColumns( hsh)
+        delete()
+        _pysp.cls()
+        argout = fillDataByColumns( hsh)
     elif hsh.has_key( 'gqes'):
-        fillDataByGqes( hsh)
+        delete()
+        _pysp.cls()
+        argout = fillDataByGqes( hsh)
+    elif hsh.has_key( 'mesh'):
+        argout = fillDataMesh( hsh)
     else:
         raise Exception( "GQE.putData", "expecting 'columns' or 'gqes'")
-    return 
+
+    return argout
+
+def commandIfc( hsh): 
+    '''
+    passes commands to pysp.ipython.ifc.command()
+
+    called from /home/kracht/Misc/pySpectra/PySpectra/pyspMonitorClass.py
+    
+    List of commands: 
+      hsh = { 'command': ['cls', 'display']}
+    Single commands
+    hsh = { 'command': 'display'}
+    '''
+    argout = "n.n."
+    if type( hsh[ 'command']) == list:
+        for cmd in hsh[ 'command']: 
+            ret = _pysp.ipython.ifc.command( cmd)
+            argout += "%s -> %s;" % (cmd, repr( ret))
+
+        return "done"
+
+    ret = _pysp.ipython.ifc.command( hsh[ 'command'])
+    argout = "%s -> %s" % (hsh[ 'command'], repr( ret))
+    return argout
+
+class Mesh( GQE):
+    '''
+    a Mesh a 2D data array
+
+    PySpectra.Mesh( name = 'name', data = data)
+
+    The attributes: 
+        autoscale   default: True
+        log:        bool, def. false
+    '''
+    def __init__( self, name = None, **kwargs):
+        global _gqeList
+
+        super( Mesh, self).__init__()
+
+        #print "GQE.Mesh: ", repr( kwargs)
+
+        if name is None:
+            raise ValueError( "GQE.Mesh: 'name' is missing")
+            
+        self.name = name
+
+        self.setAttr( kwargs)
+
+        if 'data' in kwargs: 
+            self._createMeshFromData( kwargs)
+        elif 'xMin' in kwargs: 
+            self._createMeshFromLimits( kwargs)
+
+
+        if kwargs:
+            raise ValueError( "GQE.Mesh: dct not empty %s" % str( kwargs))
+
+        _gqeList.append( self)
+
+    def __setattr__( self, name, value): 
+        #print "GQE.Mesh.__setattr__: name %s, value %s" % (name, value)
+        if name in _MeshAttrsPublic or \
+           name in _MeshAttrsPrivate: 
+            super(Mesh, self).__setattr__(name, value)
+        else: 
+            raise ValueError( "GQE.Mesh.__setattr__: %s unknown attribute %s" % ( self.name, name))
+
+    def __getattr__( self, name): 
+        raise ValueError( "GQE.Mesh.__getattr__: %s unknown attribute %s" % ( self.name, name))
+        
+    def __del__( self): 
+        pass
+
+    def setAttr( self, kwargs):
+        '''
+        set the graphics attributes of a Mesh, see docu in Mesh()
+
+        Returns None
+        '''
+
+        self.at = None
+        self.colSpan = 1
+        self.log = False
+        self.ncol = None
+        self.nrow = None
+        self.nplot = None
+        self.overlay = None
+        self.img = None
+        self.logWidget = None
+        self.mouseProxy = None
+        self.mouseClick = None
+        self.mouseLabel = None
+        self.viewBox = None
+        self.xLabel = None
+        self.yLabel = None
+        #
+        # the attributes plot and mouseLabel are created by graphics.display(). 
+        # However, it is initialized here to help cls()
+        #
+        self.plotItem = None
+
+        for attr in [ 'at', 'log']:
+            if attr in kwargs:
+                setattr( self, attr, kwargs[ attr])
+                del kwargs[ attr]
+
+        
+    def _createMeshFromData( self, kwargs): 
+
+        if not kwargs.has_key( 'data'): 
+            raise ValueError( "GQE.Mesh.createMeshFromData: %s no 'data'" % ( self.name))
+
+        self.data = kwargs[ 'data'][:]
+        del kwargs[ 'data']
+
+        self.width = self.data.shape[0]
+        self.height = self.data.shape[1]
+
+        self.xMin = 0
+        self.xMax = self.width
+        self.yMin = 0
+        self.yMax = self.height
+
+        self.xLabel = "xLabel"
+        self.yLabel = "yLabel"
+
+
+        for kw in [ 'xMin', 'xMax', 'yMin', 'yMax', 'width', 'height', 'xLabel', 'yLabel']: 
+            if not kwargs.has_key( kw): 
+                continue
+            setattr( self, kw, kwargs[ kw])
+            del kwargs[ kw]
+
+        return 
+
+    def _createMeshFromLimits( self, kwargs): 
+
+        for kw in [ 'xMin', 'xMax', 'yMin', 'yMax', 'width', 'height']: 
+            if not kwargs.has_key( kw): 
+                raise ValueError( "GQE.Mesh.createMeshFromLimits: %s no %s" % ( self.name, kw))
+
+        for kw in [ 'xMin', 'xMax', 'yMin', 'yMax', 'width', 'height', 'xLabel', 'yLabel']: 
+            if not kwargs.has_key( kw): 
+                continue
+            setattr( self, kw, kwargs[ kw])
+            del kwargs[ kw]
+
+        #
+        # consider this: x [-2, 1], width 100
+        #  if x == 1 -> ix == 100, so we need '+ 1'
+        #
+        self.data  = _np.zeros( ( self.width + 1, self.height + 1))
+            
+        return 
+
+    def setPixel( self, x = None, y = None, value = None):
+        '''
+        x and y are in physical coordinates
+        '''
+
+        if x < self.xMin or x > self.xMax:
+            raise( ValueError( "GQE.Mesh.setXY: out of x-bounds %g [%g, %g]" % ( x, self.xMin, self.xMax)))
+        if y < self.yMin or y > self.yMax:
+            raise( ValueError( "GQE.Mesh.setXY: out of y-bounds %g [%g, %g]" % ( y, self.yMin, self.yMax)))
+
+        ix = int( _math.floor((x - self.xMin)/(self.xMax - self.xMin)*(self.width)))
+        iy = int( _math.floor((y - self.yMin)/(self.yMax - self.yMin)*(self.height)))
+
+        if ix < 0 or ix > self.width:
+            raise ValueError( "GQE.Mesh.setPixel: ix %d not in [%d, %d], %g [%g, %g]" % \
+                              (ix, 0, self.width, 
+                               x, self.xMin, self.xMax))
+        if iy < 0 or iy > self.height:
+            raise ValueError( "GQE.Mesh.setPixel: iy %d not in [%d, %d], %g [%g, %g]" % \
+                              (iy, 0, self.height,
+                               y, self.yMin, self.yMax))
+
+        self.data[ix][iy] = value
+
+        return 
+
+    #
+    # why do we need a class function for move()
+    #
+    def move( self, targetIX, targetIY): 
+        '''
+        this function is invoked by a mouse click from pqtgrph/graphics.py
+        '''
+        import PyTango as _PyTango
+        import time as _time
+
+        if not hasattr( self, 'xMin'):
+            print "Gqe.Mesh.move: %s no attribute xMin" % self.name
+            return 
+
+        if type( self) != Mesh:
+            print "Gqe.Mesh.move: %s is not a Mesh" % self.name
+            return 
+            
+        targetX = float( targetIX)/float( self.width)*( self.xMax - self.xMin) + self.xMin
+        targetY = float( targetIY)/float( self.height)*( self.yMax - self.yMin) + self.yMin
+        print "GQE.Mesh.move x %g, y %g" % (targetX, targetY)
+
+        if GQE.monitorGui is None:
+            if self.logWidget is not None:
+                self.logWidget.append( "GQE.Mesh.move: not called from pyspMonitor") 
+            else:
+                print "GQE.Mesh.move: not called from pyspMonitor"
+            return 
+
+        try: 
+            proxyX = _PyTango.DeviceProxy( self.xLabel)
+        except Exception, e:
+            print "Mesh.move: no proxy to %s" % self.xLabel
+            print repr( e)
+            return 
+
+        try: 
+            proxyY = _PyTango.DeviceProxy( self.yLabel)
+        except Exception, e:
+            print "Mesh.move: no proxy to %s" % self.yLabel
+            print repr( e)
+            return 
+
+        #
+        # stop the motors, if they is moving
+        #
+        if proxyX.state() == _PyTango.DevState.MOVING:
+            if self.logWidget is not None:
+                self.logWidget.append( "Mesh.Move: stopping %s" % proxyX.name()) 
+            proxyX.stopMove()
+        while proxyX.state() == _PyTango.DevState.MOVING:
+            _time.sleep(0.01)
+        if proxyY.state() == _PyTango.DevState.MOVING:
+            if self.logWidget is not None:
+                self.logWidget.append( "Mesh.Move: stopping %s" % proxyY.name()) 
+            proxyY.stopMove()
+        while proxyY.state() == _PyTango.DevState.MOVING:
+            _time.sleep(0.01)
+
+        msg = "Move\n  %s from %g to %g\n  %s from %g to %g " % \
+              (proxyX.name(), proxyX.read_attribute( 'Position').value, targetX,
+               proxyY.name(), proxyY.read_attribute( 'Position').value, targetY)
+        reply = _QtGui.QMessageBox.question( None, 'YesNo', msg, _QtGui.QMessageBox.Yes, _QtGui.QMessageBox.No)
+        
+        if not reply == _QtGui.QMessageBox.Yes:
+            if self.logWidget is not None:
+                GQE.monitorGui.logWidget.append( "Mesh.Move: move not confirmed")
+            return
+
+        lst = [ "umv %s %g %s %g" % (proxyX.name(), targetX, proxyY.name(), targetY)]
+        
+        if self.logWidget is not None:
+                GQE.monitorGui.logWidget.append( "%s" % (lst[0]))
+
+        GQE.monitorGui.door.RunMacro( lst)
+        return 
+

@@ -26,12 +26,15 @@ python ./test/graphics/testGraphics.py testGraphics.testLissajous
 python ./test/graphics/testGraphics.py testGraphics.testOverlay2BothLog
 python ./test/graphics/testGraphics.py testGraphics.testOverlay2FirstLog
 python ./test/graphics/testGraphics.py testGraphics.testOverlay2SecondLog
+python ./test/graphics/testGraphics.py testGraphics.testMeshMB1
+python ./test/graphics/testGraphics.py testGraphics.testMeshMB2
 '''
 import sys
 pySpectraPath = "/home/kracht/Misc/pySpectra"
 sys.path.append( pySpectraPath)
 
 import PySpectra
+import pyqtgraph as pg
 import numpy as np
 import unittest
 import time, sys
@@ -640,5 +643,112 @@ class testGraphics( unittest.TestCase):
 
         print "testGraphics.testOverly2SecondLog"
 
+    def testMesh( self): 
+        print "testGQE.testMesh"
+
+        PySpectra.cls()
+        PySpectra.delete()
+        data = np.random.normal(size=(200, 100))
+        data[20:80, 20:80] += 2.
+        data = pg.gaussianFilter(data, (3, 3))
+        data += np.random.normal(size=(200, 100)) * 0.1
+
+        m = PySpectra.Mesh( name = "FirstMesh", data = data)
+
+        PySpectra.display()
+
+        PySpectra.procEventsLoop( 1)
+
+    def mandelbrot( self, c,maxiter):
+        z = c
+        for n in range(maxiter):
+            if abs(z) > 2:
+                return n
+            z = z*z + c
+        return 0
+
+    def testMeshMB1( self): 
+        print "testGQE.testMeshMB1"
+
+        PySpectra.setWsViewport( 'DINA5S')
+
+        PySpectra.cls()
+        PySpectra.delete()
+
+        (xmin, xmax) = (-2., 1)
+        (ymin, ymax) = (-1.5, 1.5)
+        (width, height) = (500, 500)
+        maxiter = 20
+
+        r1 = np.linspace(xmin, xmax, width + 1)
+        r2 = np.linspace(ymin, ymax, height + 1)
+        n3 = np.empty((width + 1,height + 1))
+        for i in range(width):
+            for j in range(height):
+                n3[i,j] = self.mandelbrot(r1[i] + 1j*r2[j],maxiter)
+            
+        m = PySpectra.Mesh( name = "MandelbrotSet1", data = n3,
+                            xMin = xmin, xMax = xmax, width = width,  
+                            yMin = ymin, yMax = ymax, height = height, 
+                            xLabel = "eh_mot01", yLabel = "eh_mot02")
+
+        PySpectra.display()
+
+        self.assertEqual( m.xMin, xmin)
+        self.assertEqual( m.xMax, xmax)
+        self.assertEqual( m.yMin, ymin)
+        self.assertEqual( m.yMax, ymax)
+        self.assertEqual( m.height, height)
+        self.assertEqual( m.width, width)
+        #
+        # to understand '+ 1'consider : x [-2, 1], width 100
+        #  if x == 1 -> ix == 100, so we need '+ 1'
+        #
+        self.assertEqual( m.data.shape[0], width + 1)
+        self.assertEqual( m.data.shape[1], height + 1)
+
+        PySpectra.procEventsLoop( 2)
+
+    def testMeshMB2( self): 
+        print "testGQE.testMeshMB2"
+
+        PySpectra.setWsViewport( 'DINA5S')
+
+        PySpectra.cls()
+        PySpectra.delete()
+
+        (xmin, xmax) = (-2., 1)
+        (ymin, ymax) = (-1.5, 1.5)
+        (width, height) = (300, 300)
+        maxiter = 20
+
+        m = PySpectra.Mesh( name = "MandelbrotSet2", xMin = xmin, xMax = xmax, width = width,  
+                            yMin = ymin, yMax = ymax, height = height, 
+                            xLabel = "eh_mot01", yLabel = "eh_mot02")
+
+        r1 = np.linspace(xmin, xmax, width)
+        r2 = np.linspace(ymin, ymax, height)
+        for i in range(width):
+            for j in range(height):
+                res = self.mandelbrot(r1[i] + 1j*r2[j],maxiter)
+                m.setPixel( x = r1[i], y = r2[j], value = res)
+
+            PySpectra.cls()
+            PySpectra.display()
+        PySpectra.procEventsLoop(1)
+
+        self.assertEqual( m.xMin, xmin)
+        self.assertEqual( m.xMax, xmax)
+        self.assertEqual( m.yMin, ymin)
+        self.assertEqual( m.yMax, ymax)
+        self.assertEqual( m.height, height)
+        self.assertEqual( m.width, width)
+        #
+        # to understand '+ 1'consider : x [-2, 1], width 100
+        #  if x == 1 -> ix == 100, so we need '+ 1'
+        #
+        self.assertEqual( m.data.shape[0], width + 1)
+        self.assertEqual( m.data.shape[1], height + 1)
+        
 if __name__ == "__main__":
     unittest.main()
