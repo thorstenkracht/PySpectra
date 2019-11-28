@@ -28,6 +28,7 @@ python ./test/graphics/testGraphics.py testGraphics.testOverlay2FirstLog
 python ./test/graphics/testGraphics.py testGraphics.testOverlay2SecondLog
 python ./test/graphics/testGraphics.py testGraphics.testMeshMB1
 python ./test/graphics/testGraphics.py testGraphics.testMeshMB2
+python ./test/graphics/testGraphics.py testGraphics.testToPysp1
 '''
 import sys
 pySpectraPath = "/home/kracht/Misc/pySpectra"
@@ -643,22 +644,6 @@ class testGraphics( unittest.TestCase):
 
         print "testGraphics.testOverly2SecondLog"
 
-    def testMesh( self): 
-        print "testGQE.testMesh"
-
-        PySpectra.cls()
-        PySpectra.delete()
-        data = np.random.normal(size=(200, 100))
-        data[20:80, 20:80] += 2.
-        data = pg.gaussianFilter(data, (3, 3))
-        data += np.random.normal(size=(200, 100)) * 0.1
-
-        m = PySpectra.Mesh( name = "FirstMesh", data = data)
-
-        PySpectra.display()
-
-        PySpectra.procEventsLoop( 1)
-
     def mandelbrot( self, c,maxiter):
         z = c
         for n in range(maxiter):
@@ -749,6 +734,60 @@ class testGraphics( unittest.TestCase):
         #
         self.assertEqual( m.data.shape[0], width + 1)
         self.assertEqual( m.data.shape[1], height + 1)
+
+
+    def mandelbrot( self,  c, maxiter):
+        z = c
+        for n in range(maxiter):
+            if abs(z) > 2:
+                return n
+            z = z*z + c
+        return 0
+
+    def testToPysp1( self): 
+        print "testGQE.testToPysp1"
+
+        PySpectra.cls()
+        PySpectra.delete()
+        (xmin, xmax) = (-2.,-0.5)
+        (ymin, ymax) = (0, 1.5)
+        (width, height) = (100, 100)
+        maxiter = 25
+        #
+        # do the clean-up before we start
+        #
+        hsh = PySpectra.toPysp( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        if hsh[ 'result'] != "done":
+            print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
+            return 
+        
+        hsh = { 'putData': 
+                { 'name': "MandelBrot",
+                  'type': 'mesh', 
+                  'xMin': xmin, 'xMax': xmax, 'width': width, 
+                  'yMin': ymin, 'yMax': ymax, 'height': height}}
+        hsh = PySpectra.toPysp( hsh)
+        if hsh[ 'result'] != "done":
+            print "error from putData"
+            return 
+        
+        r1 = np.linspace(xmin, xmax, width)
+        r2 = np.linspace(ymin, ymax, height)
+        for i in range(width):
+            for j in range(height):
+                res = self.mandelbrot(r1[i] + 1j*r2[j],maxiter)
+                hsh = { 'putData': 
+                        { 'name': "MandelBrot",
+                          'noDisplay': True, 
+                          'setPixel': ( r1[i], r2[j], res)}}
+                hsh = PySpectra.toPysp( hsh)
+                if hsh[ 'result'] != "done":
+                    print "error from setPixel"
+                    return
+            PySpectra.cls()
+            PySpectra.display()
+
+        return 
         
 if __name__ == "__main__":
     unittest.main()

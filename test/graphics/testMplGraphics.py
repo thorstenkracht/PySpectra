@@ -626,25 +626,6 @@ class testMplGraphics( unittest.TestCase):
 
         print "testGrphics.testOverly2SecondLog"
 
-
-    def testMesh( self): 
-        print "testGQE.testMesh"
-
-        PySpectra.mtpltlb.graphics.cls()
-        PySpectra.delete()
-
-        data = np.random.normal(size=(200, 100))
-        data[20:80, 20:80] += 2.
-        data = pg.gaussianFilter(data, (3, 3))
-        data += np.random.normal(size=(200, 100)) * 0.1
-
-        m = PySpectra.Mesh( name = "FirstMesh", data = data)
-
-        PySpectra.mtpltlb.graphics.display()
-        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
-
-
-
     def mandelbrot( self, c,maxiter):
         z = c
         for n in range(maxiter):
@@ -681,14 +662,14 @@ class testMplGraphics( unittest.TestCase):
     def testMeshMB2( self): 
         print "testGQE.testMesh"
 
-        PySpectra.setWsViewport( 'DINA5S')
 
         PySpectra.mtpltlb.graphics.cls()
+        PySpectra.mtpltlb.graphics.setWsViewport( 'DINA5S')
         PySpectra.delete()
 
         (xmin, xmax) = (-2., 1)
         (ymin, ymax) = (-1.5, 1.5)
-        (width, height) = (500, 500)
+        (width, height) = (50, 50)
         maxiter = 20
 
         m = PySpectra.Mesh( name = "FirstMesh", xMin = xmin, xMax = xmax, width = width,  

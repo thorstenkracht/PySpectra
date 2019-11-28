@@ -104,25 +104,9 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         if self.sckt in lst[0]:
             msg = self.sckt.recv()
             hsh = json.loads( msg)
-            if hsh.has_key( 'command'):
-                argout[ 'result'] = pysp.commandIfc( hsh)
-            elif hsh.has_key( 'putData'):
-                if self.flagIsBusy:
-                    return "pyspMonitor: rejecting dct while scanning"
-                argout[ 'result'] = pysp.putData( hsh[ 'putData'])
-            elif hsh.has_key( 'getData'):
-                try:
-                    argout[ 'getData'] = pysp.getData()
-                    argout[ 'result'] = 'done'
-                except Exception, e:
-                    argout[ 'getData'] = {}
-                    argout[ 'result'] = repr( e)
-            elif hsh.has_key( 'command'):
-                argout[ 'result'] = pysp.command( hsh[ 'command'])
-            elif hsh.has_key( 'isAlive'):
-                argout[ 'result'] = 'done'
-            else:
-                argout[ 'result'] = "pyspMonitorClass.cb_timerZMG: something is wrong"
+            if self.flagIsBusy:
+                return "pyspMonitor: rejecting dct while scanning"
+            argout = pysp.toPysp( hsh)
             msg = json.dumps( argout)
             self.sckt.send( msg)
         #

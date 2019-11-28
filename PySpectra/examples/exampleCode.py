@@ -632,40 +632,173 @@ def exampleMeshMandelbrot3():
     _pysp.display()
     return 
 
+def exampleMeshMandelbrotViaToPysp(): 
+    '''
+    this examples simulates the toPyspMonitor() interface
+    '''
+    _pysp.setWsViewport( 'DINA5S')
+
+    _pysp.cls()
+    _pysp.delete()
+
+    (xmin, xmax) = (-2.,-0.5)
+    (ymin, ymax) = (0, 1.5)
+    (width, height) = (100, 100)
+    maxiter = 25
+
+    #
+    # do the clean-up before we start
+    #
+    hsh =  _pysp.toPysp( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+    if hsh[ 'result'] != "done":
+        print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
+        return 
+    
+    hsh = { 'putData': 
+            { 'name': "MandelBrot",
+              'type': 'mesh', 
+              'xMin': xmin, 'xMax': xmax, 'width': width, 
+              'yMin': ymin, 'yMax': ymax, 'height': height}}
+
+    hsh = _pysp.toPysp( hsh)
+    if hsh[ 'result'] != "done":
+        print "error from putData"
+        return 
+
+    r1 = _np.linspace(xmin, xmax, width)
+    r2 = _np.linspace(ymin, ymax, height)
+    for i in range(width):
+        for j in range(height):
+            res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
+            hsh = { 'putData': 
+                     { 'name': "MandelBrot",
+                       'noDisplay': True, 
+                       'setPixel': ( r1[i], r2[j], res)}}
+            hsh = _pysp.toPysp( hsh)
+            if hsh[ 'result'] != "done":
+                print "error from setPixel"
+                return
+        _pysp.cls()
+        _pysp.display()
+
+    return 
+
 '''
+#!/usr/bin/env python
+
+# 
+# this piece of code can only be executed, if the pyspMonitor.py is running
+# some date are sent to the pyspMonitor where they are displayed
+# then data are retrieved from pyspMonitor and compared with the originals
+#
+import PySpectra as pysp
+import random
+
+def main():
+    MAX = 5
+    #
+    # create some data
+    #
+    pos = [float(n)/MAX for n in range( MAX)]
+    d1 = [random.random() for n in range( MAX)]
+    d2 = [random.random() for n in range( MAX)]
+    
+    print "pos", repr( pos)
+    print "d1:", repr( d1)
+    #
+    # send the data to pyspMonitor
+    #
+    hsh = { 'putData': 
+            {'title': "Important Data", 
+             'columns': 
+             [ { 'name': "eh_mot01", 'data' : pos},
+               { 'name': "eh_c01", 'data' : d1},
+               { 'name': "eh_c02", 'data' : d2},
+             ]}}
+
+    hsh = pysp.toPyspMonitor( hsh)
+    print "return values of putData:", repr( hsh) 
+
+    #
+    # retrieve the data from pyspMonitor
+    #
+    hsh = pysp.toPyspMonitor( { 'getData': True})
+    #
+    # ... and compare.
+    #
+    for i in range( MAX):
+        if pos[i] != hsh[ 'getData']['EH_C01']['x'][i]:
+            print "error: pos[i] != x[i]"
+        if d1[i] != hsh[ 'getData'][ 'EH_C01'][ 'y'][i]:
+            print "error: d1[i] != y[i]"
+        
+    print "getData, pos:", hsh[ 'getData']['EH_C01']['x']
+    print "getData, pos:", hsh[ 'getData']['EH_C01']['y']
+    return 
+
+if __name__ == "__main__":
+    main()
+
+----- cut here
+
+#!/usr/bin/env python
 # 
 # this piece of code can only be executed,   
 # if the pyspMonitor.py is running
 #
 import PySpectra as pysp
 import random
-MAX = 5
-pos = [float(n)/MAX for n in range( MAX)]
-d1 = [random.random() for n in range( MAX)]
-d2 = [random.random() for n in range( MAX)]
+import numpy as np
+import time
 
-print "pos", repr( pos)
-print "d1:", repr( d1)
+def mandelbrot( c, maxiter):
+    z = c
+    for n in range(maxiter):
+        if abs(z) > 2:
+            return n
+        z = z*z + c
+    return 0
 
-hsh = { 'putData': 
-           {'title': "Important Data", 
-            'columns': 
-            [ { 'name': "d1_mot01", 'data' : pos},
-              { 'name': "d1_c01", 'data' : d1},
-              { 'name': "d1_c02", 'data' : d2},
-           ]}}
+def main():
+  
+    (xmin, xmax) = (-2.,-0.5)
+    (ymin, ymax) = (0, 1.5)
+    (width, height) = (20, 20)
+    maxiter = 15
+    #
+    # do the clean-up before we start
+    #
+    hsh = pysp.toPyspMonitor( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+    if hsh[ 'result'] != "done":
+        print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
+        return 
+    
+    hsh = { 'putData': 
+            { 'mesh':
+             { 'name': "MandelBrot",
+               'xMin': xmin, 'xMax': xmax, 'width': width, 
+               'yMin': ymin, 'yMax': ymax, 'height': height}}}
+    hsh = pysp.toPyspMonitor( hsh)
+    if hsh[ 'result'] != "done":
+        print "error from putData"
+        return 
 
-hsh = pysp.toPyspMonitor( hsh)
-print "return values of putData:", repr( hsh) 
+    r1 = np.linspace(xmin, xmax, width)
+    r2 = np.linspace(ymin, ymax, height)
+    for i in range(width):
+        for j in range(height):
+            res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
+            hsh = { 'putData': 
+                    {'mesh':
+                     { 'name': "MandelBrot",
+                       'setPixel': ( r1[i], r2[j], res)}}}
+            hsh = pysp.toPyspMonitor( hsh)
+            if hsh[ 'result'] != "done":
+                print "error from setPixel"
+                return 
+    return 
 
-hsh = pysp.toPyspMonitor( { 'getData': True})
-for i in range( MAX):
-    if pos[i] != hsh[ 'getData']['d1_c01']['x'][i]:
-        print "error: pos[i] != x[i]"
-    if d1[i] != hsh[ 'getData'][ 'd1_c01'][ 'y'][i]:
-        print "error: d1[i] != y[i]"
-        
-print "getData, pos:", hsh[ 'getData']['d1_c01']['x']
-print "getData, pos:", hsh[ 'getData']['d1_c01']['y']
-return 
+if __name__ == "__main__":
+    main()
+
 '''

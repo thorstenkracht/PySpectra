@@ -141,7 +141,6 @@ class Scan( GQE):
     # this class variable stores the Gui, needed to configure the motorsWidget, 
     # which happens for each new scan
     #
-
     def __init__( self, name = None, **kwargs):
         global _gqeList
 
@@ -170,14 +169,14 @@ class Scan( GQE):
                     _gqeList[i].lastIndex = 0
                     return
                 else:
-                    raise ValueError( "GQE.Scan: %s exists already" % name)
+                    raise ValueError( "GQE.Scan.__init__(): %s exists already" % name)
         if 'reUse' in kwargs:
             del kwargs[ 'reUse'] 
             
         self.name = name
         if 'x' in kwargs and 'y' not in kwargs or \
            'x' not in kwargs and 'y' in kwargs:
-            raise ValueError( "GQE.Scan.__init__: if 'x' or 'y' then both have to be supplied")
+            raise ValueError( "GQE.Scan.__init__(): if 'x' or 'y' then both have to be supplied")
         #
         # textOnly scans have no data, consist of Texts( in textList) only
         #
@@ -214,7 +213,7 @@ class Scan( GQE):
         self.setAttr( kwargs)
 
         if kwargs:
-            raise ValueError( "GQE.Scan: dct not empty %s" % str( kwargs))
+            raise ValueError( "GQE.Scan.__init__(): dct not empty %s" % str( kwargs))
         
         self.textList = []
 
@@ -524,7 +523,7 @@ class Scan( GQE):
                       'ncol', 'nrow', 'nplot', 'overlay', 'showGridX', 'showGridY', 
                       'lineColor', 'lineStyle', 
                       'symbol', 'symbolColor', 'symbolSize', 
-                      'xLabel', 'yLabel', 'yMin', 'yMax']:
+                      'xLabel', 'xMin', 'xMax', 'yLabel', 'yMin', 'yMax']:
             if attr in kwargs:
                 setattr( self, attr, kwargs[ attr])
                 del kwargs[ attr]
@@ -1499,30 +1498,29 @@ def getData():
 def fillDataMesh( hsh): 
     '''
     hsh = { 'putData': 
-    {'mesh': { 'name': 'meshName', 
-               'xMin': xmin, 'xMax': xmax, 'width': width,
-               'yMin': ymin, 'yMax': ymax, 'height': height,}}}
+    { 'name': 'meshName', 
+      'type': 'mesh', 
+      'xMin': xmin, 'xMax': xmax, 'width': width,
+      'yMin': ymin, 'yMax': ymax, 'height': height,}}
 
     hsh = { 'putData': 
-    {'mesh': { 'name': 'meshName', 
-               'setPixel': (x, y, value)}}}
+    { 'name': 'meshName', 
+      'setPixel': (x, y, value)}}
     '''
 
-    dct = hsh[ 'mesh']
-
-    if dct.has_key( 'xMin'): 
-        print "GQE.fillDataMesh: creating %s" % dct[ 'name']
-        m = _pysp.Mesh( name = dct[ 'name'],  
-                        xMin = dct[ 'xMin'], xMax = dct[ 'xMax'], width = dct[ 'width'],
-                        yMin = dct[ 'yMin'], yMax = dct[ 'yMax'], height = dct[ 'height'])
-        o = getGqe( dct[ 'name'])
-    elif dct.has_key( 'setPixel'): 
-        o = getGqe( dct[ 'name'])
-        o.setPixel( x = dct[ 'setPixel'][0],
-                    y = dct[ 'setPixel'][1],
-                    value = dct[ 'setPixel'][2])
-        _pysp.cls()
-        _pysp.display()
+    if hsh.has_key( 'xMin'): 
+        m = _pysp.Mesh( name = hsh[ 'name'],  
+                        xMin = hsh[ 'xMin'], xMax = hsh[ 'xMax'], width = hsh[ 'width'],
+                        yMin = hsh[ 'yMin'], yMax = hsh[ 'yMax'], height = hsh[ 'height'])
+        o = getGqe( hsh[ 'name'])
+    elif hsh.has_key( 'setPixel'): 
+        o = getGqe( hsh[ 'name'])
+        o.setPixel( x = hsh[ 'setPixel'][0],
+                    y = hsh[ 'setPixel'][1],
+                    value = hsh[ 'setPixel'][2])
+        if not hsh.has_key( 'noDisplay') or not hsh[ 'noDisplay']: 
+            _pysp.cls()
+            _pysp.display()
 
     else: 
         raise ValueError( "GQE.fillDataMesh: dictionary unexpected")
@@ -1594,8 +1592,8 @@ def fillDataByGqes( hsh):
         if not elm.has_key( 'y'):
             raise Exception( "GQE.fillDataByGqes", "missing 'y' for %s" % elm[ 'name'])
         if len( elm[ 'x']) != len( elm[ 'y']):
-            raise Exception( "GQE.fillDataByGqes", "%s, x and y have different length %d != %d" % (elm[ 'name'], 
-                                                                                                   len( elm[ 'x']), len( elm[ 'y'])))
+            raise Exception( "GQE.fillDataByGqes", "%s, x and y have different length %d != %d" % \
+                             (elm[ 'name'], len( elm[ 'x']), len( elm[ 'y'])))
         at = '(1,1,1)'
         if elm.has_key( 'at'):
             flagAtFound = True
@@ -1632,6 +1630,32 @@ def fillDataByGqes( hsh):
 
     return 
 
+def toPysp( hsh): 
+    '''
+    this function is used by the ZMQ receiver and it can also be 
+    called directly to simulate the toPyspMonitor() interface
+    '''
+    argout = {}
+    if hsh.has_key( 'command'):
+        argout[ 'result'] = _pysp.commandIfc( hsh)
+    elif hsh.has_key( 'putData'):
+        argout[ 'result'] = putData( hsh[ 'putData'])
+    elif hsh.has_key( 'getData'):
+        try:
+            argout[ 'getData'] = getData()
+            argout[ 'result'] = 'done'
+        except Exception, e:
+            argout[ 'getData'] = {}
+            argout[ 'result'] = repr( e)
+    elif hsh.has_key( 'command'):
+        argout[ 'result'] = _pysp.command( hsh[ 'command'])
+    elif hsh.has_key( 'isAlive'):
+        argout[ 'result'] = 'done'
+    else:
+        argout[ 'result'] = "pyspMonitorClass.cb_timerZMG: something is wrong"
+
+    return argout
+
 def putData( hsh):
     '''
     a plot is created based on a dictionary 
@@ -1652,7 +1676,9 @@ def putData( hsh):
         delete()
         _pysp.cls()
         argout = fillDataByGqes( hsh)
-    elif hsh.has_key( 'mesh'):
+    elif hsh.has_key( 'type') and hsh[ 'type'] == 'mesh':
+        argout = fillDataMesh( hsh)
+    elif hsh.has_key( 'setPixel'):
         argout = fillDataMesh( hsh)
     else:
         raise Exception( "GQE.putData", "expecting 'columns' or 'gqes'")
@@ -1701,7 +1727,11 @@ class Mesh( GQE):
 
         if name is None:
             raise ValueError( "GQE.Mesh: 'name' is missing")
-            
+
+        for i in range( len( _gqeList)):
+            if name == _gqeList[i].name:
+                raise ValueError( "GQE.Mesh.__init__(): %s exists already" % name)
+   
         self.name = name
 
         self.setAttr( kwargs)

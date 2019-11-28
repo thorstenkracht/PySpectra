@@ -15,6 +15,7 @@ python ./test/dMgt/testGQE.py testGQE.testSetXY
 python ./test/dMgt/testGQE.py testGQE.testGetXY
 python ./test/dMgt/testGQE.py testGQE.testExceptions
 python ./test/dMgt/testGQE.py testGQE.testMisc
+python ./test/dMgt/testGQE.py testGQE.testDoubles
 '''
 import sys
 #pySpectraPath = "/home/kracht/Misc/pySpectra"
@@ -218,11 +219,11 @@ class testGQE( unittest.TestCase):
         try:
             scan = PySpectra.Scan( name = 't1', x = [0, 1, 2, 3, 4])
         except ValueError, e:
-            self.assertEqual( str( e), "GQE.Scan.__init__: if 'x' or 'y' then both have to be supplied")
+            self.assertEqual( str( e), "GQE.Scan.__init__(): if 'x' or 'y' then both have to be supplied")
         try:
             scan = PySpectra.Scan( name = 't1', y = [0, 1, 2, 3, 4])
         except ValueError, e:
-            self.assertEqual( str( e), "GQE.Scan.__init__: if 'x' or 'y' then both have to be supplied")
+            self.assertEqual( str( e), "GQE.Scan.__init__(): if 'x' or 'y' then both have to be supplied")
 
         lst = PySpectra.getGqeList()
         self.assertEqual( len( lst), 0)
@@ -479,20 +480,20 @@ class testGQE( unittest.TestCase):
             scan = PySpectra.Scan( 't1')
             scan = PySpectra.Scan( 't1')
         #print repr( context.exception)
-        self.assertTrue( "GQE.Scan: t1 exists already" in context.exception)
+        self.assertTrue( "GQE.Scan.__init__(): t1 exists already" in context.exception)
 
         with self.assertRaises( ValueError) as context:
             PySpectra.delete()
             scan = PySpectra.Scan( 't1')
             scan = PySpectra.Scan( 't1')
         #print repr( context.exception)
-        self.assertTrue( "GQE.Scan: t1 exists already" in context.exception)
+        self.assertTrue( "GQE.Scan.__init__(): t1 exists already" in context.exception)
 
         with self.assertRaises( ValueError) as context:
             PySpectra.delete()
             scan = PySpectra.Scan( 't1', y = None)
         #print repr( context.exception)
-        self.assertTrue( "GQE.Scan.__init__: if 'x' or 'y' then both have to be supplied"
+        self.assertTrue( "GQE.Scan.__init__(): if 'x' or 'y' then both have to be supplied"
                          in context.exception)
 
         with self.assertRaises( ValueError) as context:
@@ -506,7 +507,7 @@ class testGQE( unittest.TestCase):
             PySpectra.delete()
             scan = PySpectra.Scan( 't1', unknown = 't1')
         #print repr( context.exception)
-        self.assertTrue( "GQE.Scan: dct not empty {'unknown': 't1'}"
+        self.assertTrue( "GQE.Scan.__init__(): dct not empty {'unknown': 't1'}"
                          in context.exception)
 
         with self.assertRaises( ValueError) as context:
@@ -565,7 +566,7 @@ class testGQE( unittest.TestCase):
             scan = PySpectra.Scan( 't1', x = x1, y = y1)
             scan.attrNotExist = 12
         #print repr( context.exception)
-        self.assertTrue( "GQE.Scan.__setattr__: t1 wrong attribute attrNotExist"
+        self.assertTrue( "GQE.Scan.__setattr__: t1 unknown attribute attrNotExist"
                          in context.exception)
 
 
@@ -576,7 +577,7 @@ class testGQE( unittest.TestCase):
             scan = PySpectra.Scan( 't1', x = x1, y = y1)
             temp = scan.attrNotExist
         #print repr( context.exception)
-        self.assertTrue( "GQE.Scan.__getattr__: t1 wrong attribute attrNotExist"
+        self.assertTrue( "GQE.Scan.__getattr__: t1 unknown attribute attrNotExist"
                          in context.exception)
 
     def testSSA( self) : 
@@ -630,6 +631,29 @@ class testGQE( unittest.TestCase):
         self.assertTrue( PySpectra.dMgt.GQE.info() == 2)
 
         self.assertTrue( PySpectra.dMgt.GQE.getIndex( 't1') == 0)
+
+        
+    def testDoubles( self) : 
+
+        print "testGQE.testDoubles"
+
+        PySpectra.delete()
+
+        with self.assertRaises( ValueError) as context:
+            t1 = PySpectra.Scan( name = "t1", xMin = -5., xMax = 5., nPts = 101)
+            t2 = PySpectra.Scan( name = "t1", xMin = -5., xMax = 5., nPts = 101)
+
+        #print repr( context.exception)
+        self.assertTrue( "GQE.Scan.__init__(): t1 exists already"
+                         in context.exception)
+        PySpectra.delete()
+        with self.assertRaises( ValueError) as context:
+            t1 = PySpectra.Mesh( name = "t1", data = np.empty((100, 100)))
+            t1 = PySpectra.Mesh( name = "t1", data = np.empty((100, 100)))
+
+        #print repr( context.exception)
+        self.assertTrue( "GQE.Mesh.__init__(): t1 exists already"
+                         in context.exception)
 
 if __name__ == "__main__":
     unittest.main()
