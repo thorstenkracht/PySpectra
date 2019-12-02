@@ -22,9 +22,9 @@ python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2BothLog
 python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2FirstLog
 python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2SecondLog
 python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2SecondLog
-python ./test/graphics/testMplGraphics.py testMplGraphics.testMesh
-python ./test/graphics/testMplGraphics.py testMplGraphics.testMeshMB1
-python ./test/graphics/testMplGraphics.py testMplGraphics.testMeshMB2
+python ./test/graphics/testMplGraphics.py testMplGraphics.testImage
+python ./test/graphics/testMplGraphics.py testMplGraphics.testImageMB1
+python ./test/graphics/testMplGraphics.py testMplGraphics.testImageMB2
 '''
 import sys, os
 #pySpectraPath = "/home/kracht/Misc/pySpectra/PySpectra"
@@ -634,8 +634,8 @@ class testMplGraphics( unittest.TestCase):
             z = z*z + c
         return 0
 
-    def testMeshMB1( self): 
-        print "testGQE.testMesh"
+    def testImageMB1( self): 
+        print "testGQE.testImage"
 
 
         PySpectra.mtpltlb.graphics.cls()
@@ -653,14 +653,14 @@ class testMplGraphics( unittest.TestCase):
             for j in range(height):
                 n3[i,j] = self.mandelbrot(r1[i] + 1j*r2[j],maxiter)
             
-        # m = PySpectra.Mesh( name = "FirstMesh", startX = startX, stopX = stopX, startY = startY, stopY = stopY, nPts = nPts)
-        m = PySpectra.Mesh( name = "FirstMesh", data = n3)
+        # m = PySpectra.Image( name = "FirstImage", startX = startX, stopX = stopX, startY = startY, stopY = stopY, nPts = nPts)
+        m = PySpectra.Image( name = "FirstImage", data = n3)
 
         PySpectra.mtpltlb.graphics.display()
         PySpectra.mtpltlb.graphics.procEventsLoop( 1)
 
-    def testMeshMB2( self): 
-        print "testGQE.testMesh"
+    def testImageMB2( self): 
+        print "testGQE.testImage"
 
 
         PySpectra.mtpltlb.graphics.cls()
@@ -672,7 +672,7 @@ class testMplGraphics( unittest.TestCase):
         (width, height) = (50, 50)
         maxiter = 20
 
-        m = PySpectra.Mesh( name = "FirstMesh", xMin = xmin, xMax = xmax, width = width,  
+        m = PySpectra.Image( name = "FirstImage", xMin = xmin, xMax = xmax, width = width,  
                             yMin = ymin, yMax = ymax, height = height)
 
         r1 = np.linspace(xmin, xmax, width)

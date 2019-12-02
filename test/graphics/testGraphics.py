@@ -763,7 +763,7 @@ class testGraphics( unittest.TestCase):
         
         hsh = { 'putData': 
                 { 'name': "MandelBrot",
-                  'type': 'mesh', 
+                  'type': 'image', 
                   'xMin': xmin, 'xMax': xmax, 'width': width, 
                   'yMin': ymin, 'yMax': ymax, 'height': height}}
         hsh = PySpectra.toPysp( hsh)
