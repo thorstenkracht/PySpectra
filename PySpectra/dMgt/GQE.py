@@ -1334,6 +1334,7 @@ def read( fileName, x = 1, y = None, flagMCA = False):
         return fioObj.columns[ y - 2]
 
     for elm in fioObj.columns:
+        print "+++GQE: motorName", fioObj.motorName
         scn =  Scan( name = elm.name, x = elm.x, y = elm.y, fileName = fileName, xLabel = fioObj.motorName)
 
     return None

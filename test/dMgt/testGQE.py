@@ -8,6 +8,7 @@ python ./test/dMgt/testGQE.py testGQE.testFillData
 python ./test/dMgt/testGQE.py testGQE.testCreateDelete
 python ./test/dMgt/testGQE.py testGQE.testWrite
 python ./test/dMgt/testGQE.py testGQE.testRead
+python ./test/dMgt/testGQE.py testGQE.test_read_
 python ./test/dMgt/testGQE.py testGQE.testReuse
 python ./test/dMgt/testGQE.py testGQE.testYGreaterThanZero
 python ./test/dMgt/testGQE.py testGQE.testSetLimits
