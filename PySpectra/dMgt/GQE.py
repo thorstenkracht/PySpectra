@@ -39,11 +39,11 @@ _ScanAttrsPublic = [ 'at', 'autoscaleX', 'autoscaleY', 'colSpan', 'currentIndex'
 _ScanAttrsPrivate = [ 'infLineLeft', 'infLineRight', 'mouseClick', 'mouseLabel', 'mouseProxy', 
                       'plotItem', 'plotDataItem', 'scene', 'xDateMpl']
 
-_MeshAttrsPublic = [ 'at', 'colSpan', 'data', 'log', 'logWidget', 
+_ImageAttrsPublic = [ 'at', 'colorMap', 'colSpan', 'data', 'flagAxes', 'flagZoom', 'log', 'logWidget', 'maxIter', 'modulo', 
                      'name', 'ncol', 'nplot', 'nrow', 'overlay', 'xMin', 'xMax',
                      'yMin', 'yMax', 'width', 'height', 'viewBox', 'xLabel', 'yLabel']
 
-_MeshAttrsPrivate = [ 'img', 'plotItem', 'mouseClick', 'mouseLabel', 'mouseProxy']
+_ImageAttrsPrivate = [ 'img', 'plotItem', 'mouseClick', 'mouseLabel', 'mouseProxy']
 
 class Text(): 
     '''
@@ -1223,13 +1223,13 @@ def prevScan( name = None):
     while type( _gqeList[ _gqeIndex]) != Scan:
         _gqeIndex += 1
         if _gqeIndex >= len( _gqeList): 
-            raise ValueError( "GQE.nextMesh: failed to find the previous Scan")
+            raise ValueError( "GQE.nextImage: failed to find the previous Scan")
 
     return _gqeList[ _gqeIndex]
 
-def nextMesh( name = None):
+def nextImage( name = None):
     '''
-    nextMesh/prevMesh return the next/previous scan object
+    nextImage/prevImage return the next/previous scan object
     '''
     global _gqeIndex
 
@@ -1250,14 +1250,14 @@ def nextMesh( name = None):
     if _gqeIndex >= len( _gqeList) :
         _gqeIndex = 0
 
-    while type( _gqeList[ _gqeIndex]) != Mesh:
+    while type( _gqeList[ _gqeIndex]) != Image:
         _gqeIndex += 1
         if _gqeIndex >= len( _gqeList): 
-            raise ValueError( "GQE.nextMesh: failed to find the next Mesh")
+            raise ValueError( "GQE.nextImage: failed to find the next Image")
 
     return _gqeList[ _gqeIndex]
 
-def prevMesh( name = None):
+def prevImage( name = None):
     '''
     nextScan/prevScan return the next/previous scan object
     '''
@@ -1283,10 +1283,10 @@ def prevMesh( name = None):
     if _gqeIndex >= len( _gqeList):
         _gqeIndex = 0
 
-    while type( _gqeList[ _gqeIndex]) != Mesh:
+    while type( _gqeList[ _gqeIndex]) != Image:
         _gqeIndex -= 1
         if _gqeIndex < 0:
-            raise ValueError( "GQE.nextMesh: failed to find the previous Mesh")
+            raise ValueError( "GQE.nextImage: failed to find the previous Image")
 
     return _gqeList[ _gqeIndex]
 
@@ -1495,21 +1495,21 @@ def getData():
             hsh[ 'symbols'][ 'file_name_'] = temp
     return hsh
 
-def fillDataMesh( hsh): 
+def fillDataImage( hsh): 
     '''
     hsh = { 'putData': 
-    { 'name': 'meshName', 
-      'type': 'mesh', 
+    { 'name': 'imageName', 
+      'type': 'image', 
       'xMin': xmin, 'xMax': xmax, 'width': width,
       'yMin': ymin, 'yMax': ymax, 'height': height,}}
 
     hsh = { 'putData': 
-    { 'name': 'meshName', 
+    { 'name': 'imageName', 
       'setPixel': (x, y, value)}}
     '''
 
     if hsh.has_key( 'xMin'): 
-        m = _pysp.Mesh( name = hsh[ 'name'],  
+        m = _pysp.Image( name = hsh[ 'name'],  
                         xMin = hsh[ 'xMin'], xMax = hsh[ 'xMax'], width = hsh[ 'width'],
                         yMin = hsh[ 'yMin'], yMax = hsh[ 'yMax'], height = hsh[ 'height'])
         o = getGqe( hsh[ 'name'])
@@ -1523,7 +1523,7 @@ def fillDataMesh( hsh):
             _pysp.display()
 
     else: 
-        raise ValueError( "GQE.fillDataMesh: dictionary unexpected")
+        raise ValueError( "GQE.fillDataImage: dictionary unexpected")
 
     return "done"
     
@@ -1676,10 +1676,10 @@ def putData( hsh):
         delete()
         _pysp.cls()
         argout = fillDataByGqes( hsh)
-    elif hsh.has_key( 'type') and hsh[ 'type'] == 'mesh':
-        argout = fillDataMesh( hsh)
+    elif hsh.has_key( 'type') and hsh[ 'type'] == 'image':
+        argout = fillDataImage( hsh)
     elif hsh.has_key( 'setPixel'):
-        argout = fillDataMesh( hsh)
+        argout = fillDataImage( hsh)
     else:
         raise Exception( "GQE.putData", "expecting 'columns' or 'gqes'")
 
@@ -1708,11 +1708,11 @@ def commandIfc( hsh):
     argout = "%s -> %s" % (hsh[ 'command'], repr( ret))
     return argout
 
-class Mesh( GQE):
+class Image( GQE):
     '''
-    a Mesh a 2D data array
+    a Image a 2D data array
 
-    PySpectra.Mesh( name = 'name', data = data)
+    PySpectra.Image( name = 'name', data = data)
 
     The attributes: 
         autoscale   default: True
@@ -1721,62 +1721,67 @@ class Mesh( GQE):
     def __init__( self, name = None, **kwargs):
         global _gqeList
 
-        super( Mesh, self).__init__()
+        super( Image, self).__init__()
 
-        #print "GQE.Mesh: ", repr( kwargs)
+        #print "GQE.Image: ", repr( kwargs)
 
         if name is None:
-            raise ValueError( "GQE.Mesh: 'name' is missing")
+            raise ValueError( "GQE.Image: 'name' is missing")
 
         for i in range( len( _gqeList)):
             if name == _gqeList[i].name:
-                raise ValueError( "GQE.Mesh.__init__(): %s exists already" % name)
+                raise ValueError( "GQE.Image.__init__(): %s exists already" % name)
    
         self.name = name
 
         self.setAttr( kwargs)
 
         if 'data' in kwargs: 
-            self._createMeshFromData( kwargs)
+            self._createImageFromData( kwargs)
         elif 'xMin' in kwargs: 
-            self._createMeshFromLimits( kwargs)
+            self._createImageFromLimits( kwargs)
 
 
         if kwargs:
-            raise ValueError( "GQE.Mesh: dct not empty %s" % str( kwargs))
+            raise ValueError( "GQE.Image: dct not empty %s" % str( kwargs))
 
         _gqeList.append( self)
 
     def __setattr__( self, name, value): 
-        #print "GQE.Mesh.__setattr__: name %s, value %s" % (name, value)
-        if name in _MeshAttrsPublic or \
-           name in _MeshAttrsPrivate: 
-            super(Mesh, self).__setattr__(name, value)
+        #print "GQE.Image.__setattr__: name %s, value %s" % (name, value)
+        if name in _ImageAttrsPublic or \
+           name in _ImageAttrsPrivate: 
+            super(Image, self).__setattr__(name, value)
         else: 
-            raise ValueError( "GQE.Mesh.__setattr__: %s unknown attribute %s" % ( self.name, name))
+            raise ValueError( "GQE.Image.__setattr__: %s unknown attribute %s" % ( self.name, name))
 
     def __getattr__( self, name): 
-        raise ValueError( "GQE.Mesh.__getattr__: %s unknown attribute %s" % ( self.name, name))
+        raise ValueError( "GQE.Image.__getattr__: %s unknown attribute %s" % ( self.name, name))
         
     def __del__( self): 
         pass
 
     def setAttr( self, kwargs):
         '''
-        set the graphics attributes of a Mesh, see docu in Mesh()
+        set the graphics attributes of a Image, see docu in Image()
 
         Returns None
         '''
 
         self.at = None
+        self.colorMap = "nipy_spectral"
         self.colSpan = 1
+        self.flagAxes = True  # 
+        self.flagZoom = True # MB-1: move or zoom
         self.log = False
+        self.modulo = -1   # -1: disable modulo
         self.ncol = None
         self.nrow = None
         self.nplot = None
         self.overlay = None
         self.img = None
         self.logWidget = None
+        self.maxIter = 100 # Mandelbrot fun
         self.mouseProxy = None
         self.mouseClick = None
         self.mouseLabel = None
@@ -1795,10 +1800,10 @@ class Mesh( GQE):
                 del kwargs[ attr]
 
         
-    def _createMeshFromData( self, kwargs): 
+    def _createImageFromData( self, kwargs): 
 
         if not kwargs.has_key( 'data'): 
-            raise ValueError( "GQE.Mesh.createMeshFromData: %s no 'data'" % ( self.name))
+            raise ValueError( "GQE.Image.createImageFromData: %s no 'data'" % ( self.name))
 
         self.data = kwargs[ 'data'][:]
         del kwargs[ 'data']
@@ -1823,11 +1828,11 @@ class Mesh( GQE):
 
         return 
 
-    def _createMeshFromLimits( self, kwargs): 
+    def _createImageFromLimits( self, kwargs): 
 
         for kw in [ 'xMin', 'xMax', 'yMin', 'yMax', 'width', 'height']: 
             if not kwargs.has_key( kw): 
-                raise ValueError( "GQE.Mesh.createMeshFromLimits: %s no %s" % ( self.name, kw))
+                raise ValueError( "GQE.Image.createImageFromLimits: %s no %s" % ( self.name, kw))
 
         for kw in [ 'xMin', 'xMax', 'yMin', 'yMax', 'width', 'height', 'xLabel', 'yLabel']: 
             if not kwargs.has_key( kw): 
@@ -1849,19 +1854,19 @@ class Mesh( GQE):
         '''
 
         if x < self.xMin or x > self.xMax:
-            raise( ValueError( "GQE.Mesh.setXY: out of x-bounds %g [%g, %g]" % ( x, self.xMin, self.xMax)))
+            raise( ValueError( "GQE.Image.setXY: out of x-bounds %g [%g, %g]" % ( x, self.xMin, self.xMax)))
         if y < self.yMin or y > self.yMax:
-            raise( ValueError( "GQE.Mesh.setXY: out of y-bounds %g [%g, %g]" % ( y, self.yMin, self.yMax)))
+            raise( ValueError( "GQE.Image.setXY: out of y-bounds %g [%g, %g]" % ( y, self.yMin, self.yMax)))
 
         ix = int( _math.floor((x - self.xMin)/(self.xMax - self.xMin)*(self.width)))
         iy = int( _math.floor((y - self.yMin)/(self.yMax - self.yMin)*(self.height)))
 
         if ix < 0 or ix > self.width:
-            raise ValueError( "GQE.Mesh.setPixel: ix %d not in [%d, %d], %g [%g, %g]" % \
+            raise ValueError( "GQE.Image.setPixel: ix %d not in [%d, %d], %g [%g, %g]" % \
                               (ix, 0, self.width, 
                                x, self.xMin, self.xMax))
         if iy < 0 or iy > self.height:
-            raise ValueError( "GQE.Mesh.setPixel: iy %d not in [%d, %d], %g [%g, %g]" % \
+            raise ValueError( "GQE.Image.setPixel: iy %d not in [%d, %d], %g [%g, %g]" % \
                               (iy, 0, self.height,
                                y, self.yMin, self.yMax))
 
@@ -1879,36 +1884,39 @@ class Mesh( GQE):
         import PyTango as _PyTango
         import time as _time
 
+        if self.flagZoom:
+            return self.zoom( targetIX, targetIY)
+
         if not hasattr( self, 'xMin'):
-            print "Gqe.Mesh.move: %s no attribute xMin" % self.name
+            print "Gqe.Image.move: %s no attribute xMin" % self.name
             return 
 
-        if type( self) != Mesh:
-            print "Gqe.Mesh.move: %s is not a Mesh" % self.name
+        if type( self) != Image:
+            print "Gqe.Image.move: %s is not a Image" % self.name
             return 
             
         targetX = float( targetIX)/float( self.width)*( self.xMax - self.xMin) + self.xMin
         targetY = float( targetIY)/float( self.height)*( self.yMax - self.yMin) + self.yMin
-        print "GQE.Mesh.move x %g, y %g" % (targetX, targetY)
+        print "GQE.Image.move x %g, y %g" % (targetX, targetY)
 
         if GQE.monitorGui is None:
             if self.logWidget is not None:
-                self.logWidget.append( "GQE.Mesh.move: not called from pyspMonitor") 
+                self.logWidget.append( "GQE.Image.move: not called from pyspMonitor") 
             else:
-                print "GQE.Mesh.move: not called from pyspMonitor"
+                print "GQE.Image.move: not called from pyspMonitor"
             return 
 
         try: 
             proxyX = _PyTango.DeviceProxy( self.xLabel)
         except Exception, e:
-            print "Mesh.move: no proxy to %s" % self.xLabel
+            print "Image.move: no proxy to %s" % self.xLabel
             print repr( e)
             return 
 
         try: 
             proxyY = _PyTango.DeviceProxy( self.yLabel)
         except Exception, e:
-            print "Mesh.move: no proxy to %s" % self.yLabel
+            print "Image.move: no proxy to %s" % self.yLabel
             print repr( e)
             return 
 
@@ -1917,13 +1925,13 @@ class Mesh( GQE):
         #
         if proxyX.state() == _PyTango.DevState.MOVING:
             if self.logWidget is not None:
-                self.logWidget.append( "Mesh.Move: stopping %s" % proxyX.name()) 
+                self.logWidget.append( "Image.Move: stopping %s" % proxyX.name()) 
             proxyX.stopMove()
         while proxyX.state() == _PyTango.DevState.MOVING:
             _time.sleep(0.01)
         if proxyY.state() == _PyTango.DevState.MOVING:
             if self.logWidget is not None:
-                self.logWidget.append( "Mesh.Move: stopping %s" % proxyY.name()) 
+                self.logWidget.append( "Image.Move: stopping %s" % proxyY.name()) 
             proxyY.stopMove()
         while proxyY.state() == _PyTango.DevState.MOVING:
             _time.sleep(0.01)
@@ -1935,7 +1943,7 @@ class Mesh( GQE):
         
         if not reply == _QtGui.QMessageBox.Yes:
             if self.logWidget is not None:
-                GQE.monitorGui.logWidget.append( "Mesh.Move: move not confirmed")
+                GQE.monitorGui.logWidget.append( "Image.Move: move not confirmed")
             return
 
         lst = [ "umv %s %g %s %g" % (proxyX.name(), targetX, proxyY.name(), targetY)]
@@ -1945,4 +1953,50 @@ class Mesh( GQE):
 
         GQE.monitorGui.door.RunMacro( lst)
         return 
+
+    def mandelbrot( self, c, maxiter):
+        z = c
+        for n in range(maxiter):
+            if abs(z) > 2:
+                return n
+            z = z*z + c
+        return 0
+
+    def zoom( self, targetIX = None, targetIY = None): 
+        
+        if targetIX is not None and targetIY is not None: 
+            targetX = float( targetIX)/float( self.width)*( self.xMax - self.xMin) + self.xMin
+            targetY = float( targetIY)/float( self.height)*( self.yMax - self.yMin) + self.yMin
+            #print "GQE.Image.zoom x %g, y %g" % (targetX, targetY)
+
+            deltaX = self.xMax - self.xMin
+            deltaY = self.yMax - self.yMin
+
+            self.xMin = targetX - deltaX/8.
+            self.xMax = targetX + deltaX/8.
+
+            self.yMin = targetY - deltaY/8.
+            self.yMax = targetY + deltaX/8.
+
+        r1 = _np.linspace( self.xMin, self.xMax, self.width)
+        r2 = _np.linspace( self.yMin, self.yMax, self.height)
+        for i in range( self.width - 1):
+            for j in range( self.height - 1):
+                res = self.mandelbrot(r1[i] + 1j*r2[j], self.maxIter)
+                #res = res % int( self.modulo)
+                self.setPixel( x = r1[i], y = r2[j], value = res)
+
+            if (i % 10) == 0:
+                #_pysp.cls()
+                _pysp.display()
+
+        _pysp.cls()
+        _pysp.display()
+
+
+        #if targetIX is not None:
+        #    print "GQE.Image.zoom x %d, y %d, DONE" % (targetIX, targetIY)
+        
+        return 
+
 

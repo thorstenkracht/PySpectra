@@ -113,8 +113,8 @@ class QListWidgetTK( QtGui.QListWidget):
                     self.logWidget.append( "%s is textOnly" % item.text())
                     return 
                 self.scanAttributes = ScanAttributes( self.parent, item.text(), self.logWidget)
-            elif type( gqe) == pysp.dMgt.GQE.Mesh:
-                self.meshAttributes = MeshAttributes( self.parent, item.text(), self.logWidget)
+            elif type( gqe) == pysp.dMgt.GQE.Image:
+                self.imageAttributes = ImageAttributes( self.parent, item.text(), self.logWidget)
         return 
 #
 #
@@ -165,28 +165,28 @@ class PyQtConfig( QtGui.QMainWindow):
         self.marginLeft = QtGui.QLabel( "%g" % pysp.definitions.marginLeft)
         self.layout_grid.addWidget( self.marginLeft, row, 2)
         self.marginLeftLineEdit = QtGui.QLineEdit()
-        self.marginLeftLineEdit.setMaximumWidth( 50)
+        self.marginLeftLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.marginLeftLineEdit, row, 3)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "Top:"), row, 1)
         self.marginTop = QtGui.QLabel( "%g" % pysp.definitions.marginTop)
         self.layout_grid.addWidget( self.marginTop, row, 2)
         self.marginTopLineEdit = QtGui.QLineEdit()
-        self.marginTopLineEdit.setMaximumWidth( 50)
+        self.marginTopLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.marginTopLineEdit, row, 3)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "Right:"), row, 1)
         self.marginRight = QtGui.QLabel( "%g" % pysp.definitions.marginRight)
         self.layout_grid.addWidget( self.marginRight, row, 2)
         self.marginRightLineEdit = QtGui.QLineEdit()
-        self.marginRightLineEdit.setMaximumWidth( 50)
+        self.marginRightLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.marginRightLineEdit, row, 3)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "Bottom:"), row, 1)
         self.marginBottom = QtGui.QLabel( "%g" % pysp.definitions.marginBottom)
         self.layout_grid.addWidget( self.marginBottom, row, 2)
         self.marginBottomLineEdit = QtGui.QLineEdit()
-        self.marginBottomLineEdit.setMaximumWidth( 50)
+        self.marginBottomLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.marginBottomLineEdit, row, 3)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "Spacing:"), row, 0)
@@ -195,14 +195,14 @@ class PyQtConfig( QtGui.QMainWindow):
         self.spacingHorizontal = QtGui.QLabel( "%g" % pysp.definitions.spacingHorizontal)
         self.layout_grid.addWidget( self.spacingHorizontal, row, 2)
         self.spacingHorizontalLineEdit = QtGui.QLineEdit()
-        self.spacingHorizontalLineEdit.setMaximumWidth( 50)
+        self.spacingHorizontalLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.spacingHorizontalLineEdit, row, 3)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "Vertical:"), row, 1)
         self.spacingVertical = QtGui.QLabel( "%g" % pysp.definitions.spacingVertical)
         self.layout_grid.addWidget( self.spacingVertical, row, 2)
         self.spacingVerticalLineEdit = QtGui.QLineEdit()
-        self.spacingVerticalLineEdit.setMaximumWidth( 50)
+        self.spacingVerticalLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.spacingVerticalLineEdit, row, 3)
 
     #
@@ -365,21 +365,21 @@ class Config( QtGui.QMainWindow):
         self.fontNormal = QtGui.QLabel( "%d" % pysp.definitions.FONT_SIZE_NORMAL)
         self.layout_grid.addWidget( self.fontNormal, row, 2)
         self.fontNormalLineEdit = QtGui.QLineEdit()
-        self.fontNormalLineEdit.setMaximumWidth( 50)
+        self.fontNormalLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.fontNormalLineEdit, row, 3)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "Small:"), row, 1)
         self.fontSmall = QtGui.QLabel( "%d" % pysp.definitions.FONT_SIZE_SMALL)
         self.layout_grid.addWidget( self.fontSmall, row, 2)
         self.fontSmallLineEdit = QtGui.QLineEdit()
-        self.fontSmallLineEdit.setMaximumWidth( 50)
+        self.fontSmallLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.fontSmallLineEdit, row, 3)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "VerySmall:"), row, 1)
         self.fontVerySmall = QtGui.QLabel( "%d" % pysp.definitions.FONT_SIZE_VERY_SMALL)
         self.layout_grid.addWidget( self.fontVerySmall, row, 2)
         self.fontVerySmallLineEdit = QtGui.QLineEdit()
-        self.fontVerySmallLineEdit.setMaximumWidth( 50)
+        self.fontVerySmallLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.fontVerySmallLineEdit, row, 3)
 
         row += 1
@@ -389,21 +389,21 @@ class Config( QtGui.QMainWindow):
         self.tickFontNormal = QtGui.QLabel( "%d" % pysp.definitions.TICK_FONT_SIZE_NORMAL)
         self.layout_grid.addWidget( self.tickFontNormal, row, 2)
         self.tickFontNormalLineEdit = QtGui.QLineEdit()
-        self.tickFontNormalLineEdit.setMaximumWidth( 50)
+        self.tickFontNormalLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.tickFontNormalLineEdit, row, 3)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "Small:"), row, 1)
         self.tickFontSmall = QtGui.QLabel( "%d" % pysp.definitions.TICK_FONT_SIZE_SMALL)
         self.layout_grid.addWidget( self.tickFontSmall, row, 2)
         self.tickFontSmallLineEdit = QtGui.QLineEdit()
-        self.tickFontSmallLineEdit.setMaximumWidth( 50)
+        self.tickFontSmallLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.tickFontSmallLineEdit, row, 3)
         row += 1
         self.layout_grid.addWidget( QtGui.QLabel( "VerySmall:"), row, 1)
         self.tickFontVerySmall = QtGui.QLabel( "%d" % pysp.definitions.TICK_FONT_SIZE_VERY_SMALL)
         self.layout_grid.addWidget( self.tickFontVerySmall, row, 2)
         self.tickFontVerySmallLineEdit = QtGui.QLineEdit()
-        self.tickFontVerySmallLineEdit.setMaximumWidth( 50)
+        self.tickFontVerySmallLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.tickFontVerySmallLineEdit, row, 3)
 
     #
@@ -617,7 +617,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.xMinValue = QtGui.QLabel( "%g" % (self.scan.xMin))
         self.layout_grid.addWidget( self.xMinValue, row, 1)
         self.xMinLineEdit = QtGui.QLineEdit()
-        self.xMinLineEdit.setMaximumWidth( 70)
+        self.xMinLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.xMinLineEdit, row, 2)
         #
         # xMax
@@ -627,7 +627,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.xMaxValue = QtGui.QLabel( "%g" % (self.scan.xMax))
         self.layout_grid.addWidget( self.xMaxValue, row, 4)
         self.xMaxLineEdit = QtGui.QLineEdit()
-        self.xMaxLineEdit.setMaximumWidth( 70)
+        self.xMaxLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.xMaxLineEdit, row, 5)
         #
         # yMin
@@ -641,7 +641,7 @@ class ScanAttributes( QtGui.QMainWindow):
             self.yMinValue = QtGui.QLabel( "%g" % (self.scan.yMin))
         self.layout_grid.addWidget( self.yMinValue, row, 1)
         self.yMinLineEdit = QtGui.QLineEdit()
-        self.yMinLineEdit.setMaximumWidth( 70)
+        self.yMinLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.yMinLineEdit, row, 2)
         #
         # yMax
@@ -654,7 +654,7 @@ class ScanAttributes( QtGui.QMainWindow):
             self.yMaxValue = QtGui.QLabel( "%g" % (self.scan.yMax))
         self.layout_grid.addWidget( self.yMaxValue, row, 4)
         self.yMaxLineEdit = QtGui.QLineEdit()
-        self.yMaxLineEdit.setMaximumWidth( 70)
+        self.yMaxLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.yMaxLineEdit, row, 5)
         #
         # autoscaleX
@@ -713,7 +713,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.atValue = QtGui.QLabel( "%s" % (str(self.scan.at)))
         self.layout_grid.addWidget( self.atValue, row, 4)
         self.atLineEdit = QtGui.QLineEdit()
-        self.atLineEdit.setMaximumWidth( 70)
+        self.atLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.atLineEdit, row, 5)
         #
         # GridX
@@ -1234,23 +1234,23 @@ class ScanAttributes( QtGui.QMainWindow):
 #
 #
 #
-class MeshAttributes( QtGui.QMainWindow):
+class ImageAttributes( QtGui.QMainWindow):
 
     objectCounter = 0
     def __init__( self, parent = None, name = None, logWidget = None):
-        super( MeshAttributes, self).__init__( parent)
-        MeshAttributes.objectCounter += 1
+        super( ImageAttributes, self).__init__( parent)
+        ImageAttributes.objectCounter += 1
         self.parent = parent
 
         if name is None:
-            raise ValueError( "pyspFio.MeshAttributes: name not specified")
+            raise ValueError( "pyspFio.ImageAttributes: name not specified")
         self.name = name
         self.logWidget = logWidget
-        self.mesh = pysp.getGqe( self.name)
+        self.image = pysp.getGqe( self.name)
 
         pysp.cls()
         pysp.display( [self.name])
-        #self.setWindowTitle( "MeshAttributes")
+        #self.setWindowTitle( "ImageAttributes")
         self.setWindowTitle( name)
 
         self.prepareWidgets()
@@ -1261,7 +1261,7 @@ class MeshAttributes( QtGui.QMainWindow):
         #
         # we cannot set the geometry because we can have multiple 
         #
-        if MeshAttributes.objectCounter == 1: 
+        if ImageAttributes.objectCounter == 1: 
             geoWin = self.geometry()
             geo = QtGui.QDesktopWidget().screenGeometry(-1)
             self.setGeometry( geo.width() - 710, 600, geoWin.width(), geoWin.height())
@@ -1304,14 +1304,14 @@ class MeshAttributes( QtGui.QMainWindow):
         #
         self.xLabel = QtGui.QLabel( "xLabel:")
         self.layout_grid.addWidget( self.xLabel, row, 0)
-        self.xValue = QtGui.QLabel( self.mesh.xLabel)
+        self.xValue = QtGui.QLabel( self.image.xLabel)
         self.layout_grid.addWidget( self.xValue, row, 1)
         #
         # yLabel
         #
         self.yLabel = QtGui.QLabel( "yLabel:")
         self.layout_grid.addWidget( self.yLabel, row, 3)
-        self.yValue = QtGui.QLabel( self.mesh.yLabel)
+        self.yValue = QtGui.QLabel( self.image.yLabel)
         self.layout_grid.addWidget( self.yValue, row, 4)
         #
         # shape
@@ -1319,7 +1319,7 @@ class MeshAttributes( QtGui.QMainWindow):
         row += 1
         self.shapeLabel = QtGui.QLabel( "Shape:")
         self.layout_grid.addWidget( self.shapeLabel, row, 0)
-        self.shapeValue = QtGui.QLabel( "%s" % repr( self.mesh.data.shape))
+        self.shapeValue = QtGui.QLabel( "%s" % repr( self.image.data.shape))
         self.layout_grid.addWidget( self.shapeValue, row, 1)
         #
         # xMin
@@ -1327,20 +1327,20 @@ class MeshAttributes( QtGui.QMainWindow):
         row += 1
         self.xMinLabel = QtGui.QLabel( "xMin:")
         self.layout_grid.addWidget( self.xMinLabel, row, 0)
-        self.xMinValue = QtGui.QLabel( "%g" % (self.mesh.xMin))
+        self.xMinValue = QtGui.QLabel( "%g" % (self.image.xMin))
         self.layout_grid.addWidget( self.xMinValue, row, 1)
         self.xMinLineEdit = QtGui.QLineEdit()
-        self.xMinLineEdit.setMaximumWidth( 70)
+        self.xMinLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.xMinLineEdit, row, 2)
         #
         # xMax
         #
         self.xMaxLabel = QtGui.QLabel( "xMax:")
         self.layout_grid.addWidget( self.xMaxLabel, row, 3)
-        self.xMaxValue = QtGui.QLabel( "%g" % (self.mesh.xMax))
+        self.xMaxValue = QtGui.QLabel( "%g" % (self.image.xMax))
         self.layout_grid.addWidget( self.xMaxValue, row, 4)
         self.xMaxLineEdit = QtGui.QLineEdit()
-        self.xMaxLineEdit.setMaximumWidth( 70)
+        self.xMaxLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.xMaxLineEdit, row, 5)
         #
         # yMin
@@ -1348,26 +1348,26 @@ class MeshAttributes( QtGui.QMainWindow):
         row += 1
         self.yMinLabel = QtGui.QLabel( "yMin:")
         self.layout_grid.addWidget( self.yMinLabel, row, 0)
-        if self.mesh.yMin is None:
+        if self.image.yMin is None:
             self.yMinValue = QtGui.QLabel( "None")
         else:
-            self.yMinValue = QtGui.QLabel( "%g" % (self.mesh.yMin))
+            self.yMinValue = QtGui.QLabel( "%g" % (self.image.yMin))
         self.layout_grid.addWidget( self.yMinValue, row, 1)
         self.yMinLineEdit = QtGui.QLineEdit()
-        self.yMinLineEdit.setMaximumWidth( 70)
+        self.yMinLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.yMinLineEdit, row, 2)
         #
         # yMax
         #
         self.yMaxLabel = QtGui.QLabel( "yMax:")
         self.layout_grid.addWidget( self.yMaxLabel, row, 3)
-        if self.mesh.yMax is None:
+        if self.image.yMax is None:
             self.yMaxValue = QtGui.QLabel( "None")
         else:
-            self.yMaxValue = QtGui.QLabel( "%g" % (self.mesh.yMax))
+            self.yMaxValue = QtGui.QLabel( "%g" % (self.image.yMax))
         self.layout_grid.addWidget( self.yMaxValue, row, 4)
         self.yMaxLineEdit = QtGui.QLineEdit()
-        self.yMaxLineEdit.setMaximumWidth( 70)
+        self.yMaxLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.yMaxLineEdit, row, 5)
         #
         # Log
@@ -1376,7 +1376,8 @@ class MeshAttributes( QtGui.QMainWindow):
         self.logLabel = QtGui.QLabel( "log:")
         self.layout_grid.addWidget( self.logLabel, row, 0)
         self.logCheckBox = QtGui.QCheckBox()
-        self.logCheckBox.setChecked( self.mesh.log)
+        self.logCheckBox.setToolTip( "log base e")
+        self.logCheckBox.setChecked( self.image.log)
         self.layout_grid.addWidget( self.logCheckBox, row, 1)
         self.logCheckBox.stateChanged.connect( self.cb_logChanged)
         #
@@ -1384,11 +1385,68 @@ class MeshAttributes( QtGui.QMainWindow):
         #
         self.atLabel = QtGui.QLabel( "at:")
         self.layout_grid.addWidget( self.atLabel, row, 3)
-        self.atValue = QtGui.QLabel( "%s" % (str(self.mesh.at)))
+        self.atValue = QtGui.QLabel( "%s" % (str(self.image.at)))
         self.layout_grid.addWidget( self.atValue, row, 4)
         self.atLineEdit = QtGui.QLineEdit()
-        self.atLineEdit.setMaximumWidth( 70)
+        self.atLineEdit.setMinimumWidth( 50)
         self.layout_grid.addWidget( self.atLineEdit, row, 5)
+        #
+        # flagAxes
+        #
+        row += 1
+        self.flagAxesLabel = QtGui.QLabel( "flagAxes:")
+        self.flagAxesLabel.setStatusTip('MB-1 flagAxess')
+        self.layout_grid.addWidget( self.flagAxesLabel, row, 0)
+        self.flagAxesCheckBox = QtGui.QCheckBox()
+        self.flagAxesCheckBox.setChecked( self.image.flagAxes)
+        self.layout_grid.addWidget( self.flagAxesCheckBox, row, 1)
+        self.flagAxesCheckBox.stateChanged.connect( self.cb_flagAxesChanged)
+
+        self.moduloLabel = QtGui.QLabel( "Modulo")
+        self.layout_grid.addWidget( self.moduloLabel, row, 3)
+        self.w_moduloComboBox = QtGui.QComboBox()
+        self.w_moduloComboBox.setToolTip( "-1: disable modulo")
+        for modulo in pysp.definitions.moduloList:
+            self.w_moduloComboBox.addItem( "%d" % modulo)
+        self.w_moduloComboBox.setCurrentIndex( 
+            pysp.definitions.moduloList.index( self.image.modulo))
+        self.w_moduloComboBox.currentIndexChanged.connect( self.cb_modulo)
+        self.layout_grid.addWidget( self.w_moduloComboBox, row, 4) 
+        #
+        # cmap, color map
+        #
+        row += 1
+        self.colorMapLabel = QtGui.QLabel( "ColorMaps")
+        self.layout_grid.addWidget( self.colorMapLabel, row, 0)
+        self.w_colorMapComboBox = QtGui.QComboBox()
+        for colorMap in sorted( pysp.definitions.colorMaps):
+            self.w_colorMapComboBox.addItem( colorMap)
+        self.w_colorMapComboBox.setCurrentIndex( pysp.definitions.colorMaps.index(self.image.colorMap))
+        self.w_colorMapComboBox.currentIndexChanged.connect( self.cb_colorMap)
+        self.layout_grid.addWidget( self.w_colorMapComboBox, row, 1) 
+
+        if str(self.name).upper().find( "MANDELBROT") != -1:
+            #
+            # zoom
+            #
+            row += 1
+            self.zoomLabel = QtGui.QLabel( "zoom:")
+            self.zoomLabel.setStatusTip('MB-1 zooms')
+            self.layout_grid.addWidget( self.zoomLabel, row, 0)
+            self.zoomCheckBox = QtGui.QCheckBox()
+            self.zoomCheckBox.setChecked( self.image.flagZoom)
+            self.layout_grid.addWidget( self.zoomCheckBox, row, 1)
+            self.zoomCheckBox.stateChanged.connect( self.cb_zoomChanged)
+            #
+            # maxIter
+            #
+            self.maxIterLabel = QtGui.QLabel( "maxIter:")
+            self.layout_grid.addWidget( self.maxIterLabel, row, 3)
+            self.maxIterValue = QtGui.QLabel( "%g" % (self.image.maxIter))
+            self.layout_grid.addWidget( self.maxIterValue, row, 4)
+            self.maxIterLineEdit = QtGui.QLineEdit()
+            self.maxIterLineEdit.setMinimumWidth( 50)
+            self.layout_grid.addWidget( self.maxIterLineEdit, row, 5)
 
     #
     # the menu bar
@@ -1426,8 +1484,8 @@ class MeshAttributes( QtGui.QMainWindow):
         #
         self.helpMenu = self.menuBarActivity.addMenu('Help')
 
-        self.helpMeshAttributesAction = self.helpMenu.addAction(self.tr("Mesh Attributes"))
-        self.helpMeshAttributesAction.triggered.connect( self.cb_helpMeshAttributes)
+        self.helpImageAttributesAction = self.helpMenu.addAction(self.tr("Image Attributes"))
+        self.helpImageAttributesAction.triggered.connect( self.cb_helpImageAttributes)
 
         self.activityIndex = 0
         self.activity = self.menuBarActivity.addMenu( "_")
@@ -1438,15 +1496,22 @@ class MeshAttributes( QtGui.QMainWindow):
     def prepareStatusBar( self): 
 
 
-        self.back = QtGui.QPushButton(self.tr("&Back")) 
-        self.statusBar.addPermanentWidget( self.back) # 'permanent' to shift it right
-        self.back.clicked.connect( self.cb_back)
-        self.back.setShortcut( "Alt+b")
 
-        self.next = QtGui.QPushButton(self.tr("&Next")) 
-        self.statusBar.addPermanentWidget( self.next) # 'permanent' to shift it right
-        self.next.clicked.connect( self.cb_next)
-        self.next.setShortcut( "Alt+n")
+        if str(self.name).upper().find( "MANDELBROT") != -1:
+            self.reset = QtGui.QPushButton(self.tr("Reset")) 
+            self.statusBar.addPermanentWidget( self.reset) # 'permanent' to shift it right
+            self.reset.clicked.connect( self.cb_reset)
+            self.reset.setShortcut( "Alt+r")
+        else:
+            self.back = QtGui.QPushButton(self.tr("&Back")) 
+            self.statusBar.addPermanentWidget( self.back) # 'permanent' to shift it right
+            self.back.clicked.connect( self.cb_back)
+            self.back.setShortcut( "Alt+b")
+
+            self.next = QtGui.QPushButton(self.tr("&Next")) 
+            self.statusBar.addPermanentWidget( self.next) # 'permanent' to shift it right
+            self.next.clicked.connect( self.cb_next)
+            self.next.setShortcut( "Alt+n")
 
         self.display = QtGui.QPushButton(self.tr("&Display")) 
         self.statusBar.addPermanentWidget( self.display) # 'permanent' to shift it right
@@ -1463,42 +1528,51 @@ class MeshAttributes( QtGui.QMainWindow):
         self.exit.clicked.connect( self.cb_close)
         self.exit.setShortcut( "Alt+x")
 
+    def cb_modulo( self): 
+        temp = self.w_moduloComboBox.currentText()
+        self.image.modulo = int( temp)
+        pysp.cls()
+        pysp.display( [ self.name])
+        return
+
+    def cb_colorMap( self): 
+        temp = self.w_colorMapComboBox.currentText()
+        self.image.colorMap = str( temp)
+        pysp.cls()
+        pysp.display( [ self.name])
+        return
 
     def cb_next( self): 
-        nextMesh = pysp.dMgt.GQE.nextMesh( self.name)
-        index = pysp.dMgt.GQE.getIndex( nextMesh.name)
-        self.name = nextMesh.name
-        self.mesh = nextMesh
+        nextImage = pysp.dMgt.GQE.nextImage( self.name)
+        index = pysp.dMgt.GQE.getIndex( nextImage.name)
+        self.name = nextImage.name
+        self.image = nextImage
         pysp.cls()
         pysp.display( [ self.name])
         self.parent.gqesListWidget.setCurrentRow( index)
         return 
 
     def cb_back( self): 
-        prevMesh = pysp.dMgt.GQE.prevMesh( self.name)
-        index = pysp.dMgt.GQE.getIndex( prevMesh.name)
-        self.name = prevMesh.name
-        self.mesh = prevMesh
+        prevImage = pysp.dMgt.GQE.prevImage( self.name)
+        index = pysp.dMgt.GQE.getIndex( prevImage.name)
+        self.name = prevImage.name
+        self.image = prevImage
         pysp.cls()
         pysp.display( [ self.name])
         self.parent.gqesListWidget.setCurrentRow( index)
 
-    def cb_vlines( self): 
-        if self.scan.flagDisplayVLines: 
-            self.scan.flagDisplayVLines = False
-        else:
-            self.scan.flagDisplayVLines = True
-        pysp.cls()
-        pysp.display( [self.scan.name])
 
-    def cb_derivative( self):
-        pysp.derivative( self.scan.name)
+    def cb_reset( self): 
+        self.image.xMin = -2
+        self.image.xMax = 1
+        self.image.yMin = -1.5
+        self.image.yMax = 1.5
+        self.image.maxIter = 100
+        self.image.modulo = 50
+        
+        self.image.zoom()
 
-    def cb_antiderivative( self):
-        pysp.antiderivative( self.scan.name)
-
-    def cb_y2my( self):
-        pysp.yToMinusY( self.scan.name)
+        return 
 
     def cb_showTexts( self): 
         if len( self.scan.textList) == 0:
@@ -1515,56 +1589,71 @@ class MeshAttributes( QtGui.QMainWindow):
         return
 
     def cb_logChanged( self): 
-        self.mesh.log = self.logCheckBox.isChecked()
+        self.image.log = self.logCheckBox.isChecked()
         pysp.cls()
         pysp.display( [self.name])
+
+    def cb_zoomChanged( self): 
+        self.image.flagZoom = self.zoomCheckBox.isChecked()
+
+    def cb_flagAxesChanged( self): 
+        self.image.flagAxes = self.flagAxesCheckBox.isChecked()
 
     def cb_apply( self):
         line = str(self.xMinLineEdit.text())
         if len(line.strip()) > 0: 
-            self.scan.xMin = float( line.strip())
-            self.xMinValue.setText( "%g" % self.scan.xMin)
+            self.image.xMin = float( line.strip())
+            self.xMinValue.setText( "%g" % self.image.xMin)
             self.xMinLineEdit.clear()
 
         line = str(self.xMaxLineEdit.text())
         if len(line.strip()) > 0: 
-            self.scan.xMax = float( line.strip())
-            self.xMaxValue.setText( "%g" % self.scan.xMax)
+            self.image.xMax = float( line.strip())
+            self.xMaxValue.setText( "%g" % self.image.xMax)
             self.xMaxLineEdit.clear()
 
         line = str(self.yMinLineEdit.text()).strip()
         if len(line) > 0: 
             if line.upper() == 'NONE':
-                self.scan.yMin = None
+                self.image.yMin = None
                 self.yMinValue.setText( "None")
             else:
-                self.scan.yMin = float( line.strip())
-                self.yMinValue.setText( "%g" % self.scan.yMin)
+                self.image.yMin = float( line.strip())
+                self.yMinValue.setText( "%g" % self.image.yMin)
             self.yMinLineEdit.clear()
 
         line = str(self.yMaxLineEdit.text()).strip()
         if len(line) > 0: 
             if line.upper() == 'NONE':
-                self.scan.yMax = None
+                self.image.yMax = None
                 self.yMaxValue.setText( "None")
             else:
-                self.scan.yMax = float( line.strip())
-                self.yMaxValue.setText( "%g" % self.scan.yMax)
+                self.image.yMax = float( line.strip())
+                self.yMaxValue.setText( "%g" % self.image.yMax)
             self.yMaxLineEdit.clear()
 
         line = str(self.atLineEdit.text())
         if len(line.strip()) > 0: 
             line = line.strip()
             if line == 'None':
-                self.scan.at = None
+                self.image.at = None
             else:
                 lstStr = line[1:-1].split( ',')
                 if len( lstStr) == 3:
-                    self.scan.at = [int( i) for i in lstStr]
+                    self.image.at = [int( i) for i in lstStr]
                 else: 
-                    self.scan.at = [1, 1, 1]
-                    self.atValue.setText( "[%d, %d, %d]" % (self.scan.at[0], self.scan.at[1], self.scan.at[2]))
+                    self.image.at = [1, 1, 1]
+                    self.atValue.setText( "[%d, %d, %d]" % (self.image.at[0], self.image.at[1], self.image.at[2]))
         self.atLineEdit.clear()
+
+        if str(self.name).upper().find( "MANDELBROT") != -1:
+            line = str(self.maxIterLineEdit.text()).strip()
+            if len(line) > 0: 
+                self.image.maxIter = int( line.strip())
+                self.maxIterValue.setText( "%d" % self.image.maxIter)
+                self.maxIterLineEdit.clear()
+                self.image.zoom()
+
         pysp.cls()
         pysp.display( self.parent.getCheckedNameList())
         
@@ -1580,23 +1669,26 @@ class MeshAttributes( QtGui.QMainWindow):
         self.updateTimer.stop()
 
         self.nameValue.setText( self.name)
-        self.xValue.setText( self.mesh.xLabel)
-        self.yValue.setText( self.mesh.yLabel)
-        self.shapeValue.setText( "%s" % repr( self.mesh.data.shape))
-        self.xMinValue.setText( "%g" % self.mesh.xMin)
-        self.xMaxValue.setText( "%g" % self.mesh.xMax)
-        if self.mesh.yMin is None:
+        self.xValue.setText( self.image.xLabel)
+        self.yValue.setText( self.image.yLabel)
+        self.shapeValue.setText( "%s" % repr( self.image.data.shape))
+        self.xMinValue.setText( "%g" % self.image.xMin)
+        self.xMaxValue.setText( "%g" % self.image.xMax)
+        if self.image.yMin is None:
             self.yMinValue.setText( "None")
         else:
-            self.yMinValue.setText( "%g" % self.mesh.yMin)
-        if self.mesh.yMax is None:
+            self.yMinValue.setText( "%g" % self.image.yMin)
+        if self.image.yMax is None:
             self.yMaxValue.setText( "None")
         else:
-            self.yMaxValue.setText( "%g" % self.mesh.yMax)
+            self.yMaxValue.setText( "%g" % self.image.yMax)
 
-        self.logCheckBox.setChecked( self.mesh.log)
+        self.maxIterValue.setText( "%d" % self.image.maxIter)
+        self.w_moduloComboBox.setCurrentIndex( 
+            pysp.definitions.moduloList.index( self.image.modulo))
+        self.logCheckBox.setChecked( self.image.log)
 
-        self.atValue.setText( "%s" % (str(self.mesh.at)))
+        self.atValue.setText( "%s" % (str(self.image.at)))
 
         self.updateTimer.start( int( updateTime*1000))
 
@@ -1604,9 +1696,9 @@ class MeshAttributes( QtGui.QMainWindow):
         pysp.cls()
         pysp.display()
 
-    def cb_helpMeshAttributes(self):
-        QtGui.QMessageBox.about(self, self.tr("Help Mesh Attributes"), self.tr(
-                "<h3> Mesh Attributes </h3>"
+    def cb_helpImageAttributes(self):
+        QtGui.QMessageBox.about(self, self.tr("Help Image Attributes"), self.tr(
+                "<h3> Image Attributes </h3>"
                 "<ul>"
                 "<li> n.n.</li>"
                 "</ul>"
@@ -1716,12 +1808,6 @@ class MplWidget( QtGui.QMainWindow):
             os.system( "evince %s &" % fileName)
         else:
             self.logWidget.append( "failed to create PDF file")
-
-        
-    def cb_dotyChanged( self):
-        self.scan.doty = self.w_dotyCheckBox.isChecked()
-
-        return 
 #
 # ===
 #
@@ -1862,7 +1948,7 @@ class pySpectraGui( QtGui.QMainWindow):
         # the log widget, has been created a few lines up
         #
         #self.logWidget = QtGui.QTextEdit()
-        self.logWidget.setMaximumHeight( 100)
+        self.logWidget.setMaximumHeight( 50)
         self.logWidget.setReadOnly( 1)
         self.layout_v.addWidget( self.logWidget)
         #
@@ -1907,7 +1993,7 @@ class pySpectraGui( QtGui.QMainWindow):
             w.hide()
 
             w = QtGui.QLabel( "pos")
-            w.setMinimumWidth( 70)
+            w.setMinimumWidth( 50)
 
             self.motPosLabels.append( w)
             hBox.addWidget( w)

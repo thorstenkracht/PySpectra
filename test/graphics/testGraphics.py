@@ -26,8 +26,8 @@ python ./test/graphics/testGraphics.py testGraphics.testLissajous
 python ./test/graphics/testGraphics.py testGraphics.testOverlay2BothLog
 python ./test/graphics/testGraphics.py testGraphics.testOverlay2FirstLog
 python ./test/graphics/testGraphics.py testGraphics.testOverlay2SecondLog
-python ./test/graphics/testGraphics.py testGraphics.testMeshMB1
-python ./test/graphics/testGraphics.py testGraphics.testMeshMB2
+python ./test/graphics/testGraphics.py testGraphics.testImageMB1
+python ./test/graphics/testGraphics.py testGraphics.testImageMB2
 python ./test/graphics/testGraphics.py testGraphics.testToPysp1
 '''
 import sys
@@ -652,8 +652,8 @@ class testGraphics( unittest.TestCase):
             z = z*z + c
         return 0
 
-    def testMeshMB1( self): 
-        print "testGQE.testMeshMB1"
+    def testImageMB1( self): 
+        print "testGQE.testImageMB1"
 
         PySpectra.setWsViewport( 'DINA5S')
 
@@ -672,7 +672,7 @@ class testGraphics( unittest.TestCase):
             for j in range(height):
                 n3[i,j] = self.mandelbrot(r1[i] + 1j*r2[j],maxiter)
             
-        m = PySpectra.Mesh( name = "MandelbrotSet1", data = n3,
+        m = PySpectra.Image( name = "MandelbrotSet1", data = n3,
                             xMin = xmin, xMax = xmax, width = width,  
                             yMin = ymin, yMax = ymax, height = height, 
                             xLabel = "eh_mot01", yLabel = "eh_mot02")
@@ -694,8 +694,8 @@ class testGraphics( unittest.TestCase):
 
         PySpectra.procEventsLoop( 2)
 
-    def testMeshMB2( self): 
-        print "testGQE.testMeshMB2"
+    def testImageMB2( self): 
+        print "testGQE.testImageMB2"
 
         PySpectra.setWsViewport( 'DINA5S')
 
@@ -707,7 +707,7 @@ class testGraphics( unittest.TestCase):
         (width, height) = (300, 300)
         maxiter = 20
 
-        m = PySpectra.Mesh( name = "MandelbrotSet2", xMin = xmin, xMax = xmax, width = width,  
+        m = PySpectra.Image( name = "MandelbrotSet2", xMin = xmin, xMax = xmax, width = width,  
                             yMin = ymin, yMax = ymax, height = height, 
                             xLabel = "eh_mot01", yLabel = "eh_mot02")
 

@@ -648,11 +648,11 @@ class testGQE( unittest.TestCase):
                          in context.exception)
         PySpectra.delete()
         with self.assertRaises( ValueError) as context:
-            t1 = PySpectra.Mesh( name = "t1", data = np.empty((100, 100)))
-            t1 = PySpectra.Mesh( name = "t1", data = np.empty((100, 100)))
+            t1 = PySpectra.Image( name = "t1", data = np.empty((100, 100)))
+            t1 = PySpectra.Image( name = "t1", data = np.empty((100, 100)))
 
         #print repr( context.exception)
-        self.assertTrue( "GQE.Mesh.__init__(): t1 exists already"
+        self.assertTrue( "GQE.Image.__init__(): t1 exists already"
                          in context.exception)
 
 if __name__ == "__main__":

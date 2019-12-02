@@ -547,19 +547,39 @@ def _createPlotItem( scan, nameList):
 
     return
 
-def _displayMeshes( nameList): 
+def _displayImages( nameList): 
     '''
     '''
     gqeList = _pysp.getGqeList()
-    for mesh in gqeList:
-        if type( mesh) != _pysp.dMgt.GQE.Mesh: 
+    for image in gqeList:
+        if type( image) != _pysp.dMgt.GQE.Image: 
             continue
         if len( nameList) > 0: 
-            if mesh.name not in nameList:
+            if image.name not in nameList:
                 continue
-        _createPlotItem( mesh, nameList)
-        mesh.img = mesh.plotItem.imshow( _np.rot90( _np.flipud( mesh.data), k = 3), origin = 'lower')
-        axes = mesh.plotItem.axes
+        _createPlotItem( image, nameList)
+        if image.log: 
+            try: 
+                image.img = image.plotItem.imshow( _np.rot90( _np.flipud( _np.log( image.data)), k = 3), 
+                                                   origin = 'lower',
+                                                   cmap=plt.get_cmap( image.colorMap))
+            except Exception, e: 
+                image.log = False
+                print "mpl_graphics: log failed"
+                print repr( e)
+                return 
+            
+        else:
+            if image.modulo != -1:
+                image.img = image.plotItem.imshow( _np.rot90( _np.flipud( image.data % image.modulo), k = 3), 
+                                                   origin = 'lower',
+                                                   cmap=plt.get_cmap( image.colorMap))
+            else: 
+                image.img = image.plotItem.imshow( _np.rot90( _np.flipud( image.data), k = 3), 
+                                                   origin = 'lower',
+                                                   cmap=plt.get_cmap( image.colorMap))
+        
+        axes = image.plotItem.axes
         Fig.canvas.draw()
         labels = [item.get_text() for item in axes.get_xticklabels()]
         labelsNew = []
@@ -567,7 +587,7 @@ def _displayMeshes( nameList):
             if len( l) == 0:
                 labelsNew.append( '')
                 continue
-            x = float( l)/float( mesh.width)*( mesh.xMax - mesh.xMin) + mesh.xMin
+            x = float( l)/float( image.width)*( image.xMax - image.xMin) + image.xMin
             labelsNew.append( '%g' % x)
         axes.set_xticklabels( labelsNew)
         labels = [item.get_text() for item in axes.get_yticklabels()]
@@ -576,7 +596,7 @@ def _displayMeshes( nameList):
             if len( l) == 0:
                 labelsNew.append( '')
                 continue
-            y = int( l)/float( mesh.height)*( mesh.yMax - mesh.yMin) + mesh.yMin
+            y = int( l)/float( image.height)*( image.yMax - image.yMin) + image.yMin
             labelsNew.append( '%g' % y)
         axes.set_yticklabels( labelsNew)
     return 
@@ -646,7 +666,7 @@ def display( nameList = None):
 
     _displayTitleComment( nameList)
 
-    _displayMeshes( nameList)
+    _displayImages( nameList)
     #
     # --- first pass: run through the scans in gqeList and display 
     #     non-overlaid scans

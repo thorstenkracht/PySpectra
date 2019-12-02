@@ -200,3 +200,13 @@ lineStylePQT = {
     'DASHDOTTED': _QtCore.Qt.DashDotLine,
 }
 
+colorMaps = [ 
+    'Greys', 'Greys_r', 'Blues', 'Greens', 'Reds',
+    'prism', 'gist_earth', 'terrain',
+    'gnuplot2', 'CMRmap',
+    'rainbow', 'jet', 'nipy_spectral', 
+    'hsv',
+    'Spectral', 
+] 
+
+moduloList = [ -1, 1, 2, 5, 10, 20, 50, 100, 200, 500]

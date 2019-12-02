@@ -10,7 +10,7 @@ import os as _os
 import math as _math
 import numpy as _np
 import PySpectra as _pysp
-
+from matplotlib import cm
 import datetime as _datetime
 import types as _types
 import psutil as _psutil
@@ -201,6 +201,8 @@ def cls():
         if type( gqe) == _pysp.dMgt.GQE.Scan:
             gqe.plotDataItem = None
             gqe.lastIndex = 0
+        if type( gqe) == _pysp.dMgt.GQE.Image:
+            gqe.img = None
 
     #
     # _QApp.processEvents() must not follow a _win.clear(). 
@@ -296,7 +298,7 @@ class _CAxisTime( _pg.AxisItem):
                 strns.append('')
         return strns
 
-class _CAxisMeshX( _pg.AxisItem):
+class _CAxisImageX( _pg.AxisItem):
     ''' 
     Formats axis label to human readable time.
     '''
@@ -312,9 +314,9 @@ class _CAxisMeshX( _pg.AxisItem):
 
         return strns
 
-class _CAxisMeshY( _pg.AxisItem):
+class _CAxisImageY( _pg.AxisItem):
     ''' 
-    Formats axis label for a mesh
+    Formats axis label for a image
     '''
     def tickStrings(self, values, scale, spacing):
         strns = []
@@ -369,12 +371,16 @@ def _make_cb_mouseMoved( gqe):
 
         mousePoint = gqe.plotItem.vb.mapSceneToView(evt[0])
 
-        if type( gqe) == _pysp.dMgt.GQE.Mesh: 
+        if type( gqe) == _pysp.dMgt.GQE.Image: 
             mY = mousePoint.y()
             mX = mousePoint.x()
+            if mY >= gqe.height: 
+                mY = gqe.height - 1
+            if mX >= gqe.width: 
+                mX = gqe.width - 1
             tX = mX/float( gqe.width)*(gqe.xMax - gqe.xMin) + gqe.xMin
             tY = mY/float( gqe.height)*(gqe.yMax - gqe.yMin) + gqe.yMin
-            gqe.mouseLabel.setText( "x %g, y %g" % (tX, tY), color = 'w')
+            gqe.mouseLabel.setText( "x %g, y %g, val %g " % (tX, tY, gqe.data[int(mX)][int(mY)]), color = 'w')
             gqe.mouseLabel.setPos( mousePoint.x(), mousePoint.y())
             gqe.mouseLabel.show()
             return 
@@ -428,7 +434,7 @@ def _make_cb_mouseClicked( gqe):
             mousePoint = gqe.plotItem.vb.mapSceneToView(evt[0].scenePos())
             if type( gqe) == _pysp.dMgt.GQE.Scan:
                 gqe.move( mousePoint.x())
-            elif type( gqe) == _pysp.dMgt.GQE.Mesh:
+            elif type( gqe) == _pysp.dMgt.GQE.Image:
                 gqe.move( mousePoint.x(), mousePoint.y())
         # middle mouse button
         #elif evt[0].button() == 4:
@@ -458,7 +464,7 @@ def _prepareMouse( gqe):
     gqe.mouseLabel = _pg.TextItem( ".", color='b', anchor = (0.5, 0.5))
     if type(gqe) == _pysp.dMgt.GQE.Scan:
         gqe.mouseLabel.setPos( gqe.x[0], gqe.y[0])
-    elif type(gqe) == _pysp.dMgt.GQE.Mesh:
+    elif type(gqe) == _pysp.dMgt.GQE.Image:
         gqe.mouseLabel.setPos( 0., 0.,)
     gqe.plotItem.addItem( gqe.mouseLabel, ignoreBounds = True)
     gqe.mouseLabel.hide()
@@ -854,15 +860,18 @@ def _createPlotItem( gqe, nameList):
             #
             # <class 'pyqtgraph.graphicsItems.PlotItem.PlotItem.PlotItem'>
             #
-            if type( gqe) == _pysp.dMgt.GQE.Mesh:
-                l = _CAxisMeshY( orientation='left')
-                b = _CAxisMeshX( orientation='bottom')
+            if type( gqe) == _pysp.dMgt.GQE.Image:
+                l = _CAxisImageY( orientation='left')
+                b = _CAxisImageX( orientation='bottom')
                 l.gqe = gqe
                 b.gqe = gqe
-                plotItem = _win.addPlot( row = row, col = col, colspan = gqe.colSpan,
-                                         axisItems = { 'left': l, 
-                                                       'right': SmartFormat(orientation='right'),  # if overlay
-                                                       'bottom': b})
+                if gqe.flagAxes:
+                    plotItem = _win.addPlot( row = row, col = col, colspan = gqe.colSpan,
+                                             axisItems = { 'left': l, 
+                                                           'right': SmartFormat(orientation='right'),  # if overlay
+                                                           'bottom': b})
+                else: 
+                    plotItem = _win.addPlot( row = row, col = col, colspan = gqe.colSpan)
             else:
                 plotItem = _win.addPlot( row = row, col = col, colspan = gqe.colSpan,
                                          axisItems = { 'left': SmartFormat(orientation='left'), 
@@ -1051,22 +1060,63 @@ def display( nameList = None):
     #
     _displayTitleComment()
 
-    for mesh in gqeList:
-        if type( mesh) != _pysp.dMgt.GQE.Mesh: 
-            continue
-        if mesh.plotItem is  not None: 
+    for image in gqeList:
+        if type( image) != _pysp.dMgt.GQE.Image: 
             continue
         if len( nameList) > 0: 
-            if mesh.name not in nameList:
+            if image.name not in nameList:
                 continue
-        _createPlotItem( mesh, nameList)
-        #mesh.plotItem = _win.addPlot( row = mesh.row, col = mesh.col)
-        mesh.img = _pg.ImageItem()
-        mesh.plotItem.addItem( mesh.img)
-        mesh.img.setImage( mesh.data)
+        if image.plotItem is None: 
+            _createPlotItem( image, nameList)
+        #image.plotItem = _win.addPlot( row = image.row, col = image.col)
+        if image.img is None:
+            image.img = _pg.ImageItem()
+            image.plotItem.addItem( image.img)
+            if image.log:
+                try:
+                    image.img.setImage( _np.log( image.data))
+                except Exception, e: 
+                    image.log = False
+                    print "pqt_graphics: log failed"
+                    print repr( e)
+                    return 
+            else:
+                if image.modulo != -1:
+                    image.img.setImage( image.data % image.modulo)
+                else: 
+                    image.img.setImage( image.data)
+        else: 
+            if image.log:
+                try:
+                    image.img.updateImage( image = _np.log( image.data))
+                except Exception, e: 
+                    image.log = False
+                    print "pqt_graphics: log failed"
+                    print repr( e)
+                    return 
+            else:
+                if image.modulo != -1:
+                    image.img.updateImage( image = image.data % image.modulo)
+                    #image.img.updateImage( image = image.data % image.modulo, levels = (0, 1))
+                else: 
+                    image.img.updateImage( image = image.data)
+
+        try: 
+            colormap = cm.get_cmap( image.colorMap)
+            colormap._init()
+            lut = (colormap._lut * 255).view( _np.ndarray)  # Convert matplotlib colormap from 0-1 to 0-255 for Qt
+            image.img.setLookupTable(lut)
+        except Exception, e: 
+            print "pqt_graphics: problem accessing color map, using default"
+            print repr( e)
+            lut = _np.zeros((256,3), dtype=_np.ubyte)
+            lut[:128,0] = _np.arange(0,255,2)
+            lut[128:,0] = 255
+            lut[:,1] = _np.arange(256)
+            image.img.setLookupTable(lut)
 
         if flagDisplaySingle:
-            _prepareMouse( mesh)
+            _prepareMouse( image)
     
     #_allocateViewBox()
     #
