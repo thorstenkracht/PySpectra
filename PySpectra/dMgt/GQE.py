@@ -40,7 +40,7 @@ _ScanAttrsPrivate = [ 'infLineLeft', 'infLineRight', 'mouseClick', 'mouseLabel',
                       'plotItem', 'plotDataItem', 'scene', 'xDateMpl']
 
 _ImageAttrsPublic = [ 'at', 'colorMap', 'colSpan', 'data', 'flagAxes', 'flagZoom', 'log', 'logWidget', 'maxIter', 'modulo', 
-                     'name', 'ncol', 'nplot', 'nrow', 'overlay', 'xMin', 'xMax',
+                      'name', 'ncol', 'nplot', 'nrow', 'overlay', 'xMin', 'xMax',
                      'yMin', 'yMax', 'width', 'height', 'viewBox', 'xLabel', 'yLabel']
 
 _ImageAttrsPrivate = [ 'img', 'plotItem', 'mouseClick', 'mouseLabel', 'mouseProxy']
@@ -1334,7 +1334,6 @@ def read( fileName, x = 1, y = None, flagMCA = False):
         return fioObj.columns[ y - 2]
 
     for elm in fioObj.columns:
-        print "+++GQE: motorName", fioObj.motorName
         scn =  Scan( name = elm.name, x = elm.x, y = elm.y, fileName = fileName, xLabel = fioObj.motorName)
 
     return None
@@ -1540,14 +1539,73 @@ def fillDataByColumns( hsh):
         if not elm.has_key( 'data'):
             raise Exception( "GQE.fillDataByGqes", "missing 'data'")
         data = elm[ 'data']
+        del elm[ 'data']
         if len( data) != len( xcol[ 'data']):
             raise Exception( "GQE.fillDataByGqes", 
                              "column length differ %s: %d, %s: %d" % ( xcol[ 'name'], len( xcol[ 'data']),
                                                                        elm[ 'name'], len(elm[ 'data'])))
-        scan = Scan( name = elm[ 'name'], 
-                    xMin = data[0], xMax = data[-1], nPts = len(data),
-                    xLabel = xcol[ 'name'], yLabel = elm[ 'name'],
-                    lineColor = 'red',
+
+        lineColor = 'red'
+        if elm.has_key( 'lineColor'):
+            lineColor = elm[ 'lineColor']
+            del elm[ 'lineColor'] 
+            symbolColor = 'NONE'
+        elif not elm.has_key( 'symbolColor'):
+            lineColor = 'red'
+            symbolColor = 'NONE'
+        else: 
+            symbolColor= 'red'
+            lineColor = 'NONE'
+            if elm.has_key( 'symbolColor'):
+                symbolColor = elm[ 'symbolColor']
+                del elm[ 'symbolColor'] 
+
+        lineWidth = 1
+        if elm.has_key( 'lineWidth'):
+            lineWidth = elm[ 'lineWidth']
+            del elm[ 'lineWidth'] 
+        lineStyle = 'SOLID'
+        if elm.has_key( 'lineStyle'):
+            lineStyle = elm[ 'lineStyle']
+            del elm[ 'lineStyle'] 
+        showGridX = False
+        if elm.has_key( 'showGridX'):
+            showGridX = elm[ 'showGridX']
+            del elm[ 'showGridX'] 
+        showGridY = False
+        if elm.has_key( 'showGridY'):
+            showGridY = elm[ 'showGridY']
+            del elm[ 'showGridY'] 
+        xLog = False
+        if elm.has_key( 'xLog'):
+            xLog = elm[ 'xLog']
+            del elm[ 'xLog'] 
+        yLog = False
+        if elm.has_key( 'yLog'):
+            yLog = elm[ 'yLog']
+            del elm[ 'yLog'] 
+        symbol = '+'
+        if elm.has_key( 'symbol'):
+            symbol = elm[ 'symbol']
+            del elm[ 'symbol'] 
+        symbolSize= 10
+        if elm.has_key( 'symbolSize'):
+            symbolSize = elm[ 'symbolSize']
+            del elm[ 'symbolSize'] 
+
+        name = elm['name']
+        del elm[ 'name']
+
+        if len( elm.keys()) > 0: 
+            raise ValueError( "GQE.fillDataByColumns: dct not empty %s" % repr( elm))
+
+        scan = Scan( name = name, 
+                     xMin = data[0], xMax = data[-1], nPts = len(data),
+                     xLabel = xcol[ 'name'], yLabel = name,
+                     lineColor = lineColor, lineWidth = lineWidth, lineStyle = lineStyle,
+                     showGridX = showGridX, showGridY = showGridY, 
+                     xLog = xLog, yLog = yLog, 
+                     symbol = symbol, symbolColor = symbolColor, symbolSize = symbolSize, 
                 )
         for i in range(len(data)):
             scan.setX( i, xcol[ 'data'][i])
@@ -1773,7 +1831,7 @@ class Image( GQE):
         self.colorMap = "nipy_spectral"
         self.colSpan = 1
         self.flagAxes = True  # 
-        self.flagZoom = True # MB-1: move or zoom
+        self.flagZoom = False # MB-1: move or zoom
         self.log = False
         self.modulo = -1   # -1: disable modulo
         self.ncol = None

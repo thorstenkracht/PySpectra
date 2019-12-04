@@ -16,8 +16,119 @@ import numpy as _np
 import math as _math
 import os as _os
 import time as _time
+import pyqtgraph as _pg
 
-def exampleLogPlotWithText():
+
+def exampleDataVia_toPysp(): 
+    '''
+    replace toPysp() with toPyspMonitor() to connect to pyspMonitor.py
+    '''
+    import random
+    MAX = 25
+    #
+    # create some data
+    #
+    pos = [float(n)/MAX for n in range( MAX)]
+    d1 = [random.random() for n in range( MAX)]
+    d2 = [random.random() for n in range( MAX)]
+    #
+    # colors: 'RED', 'GREEN', 'BLUE','YELLOW', 'CYAN', 'MAGENTA', 'BLACK', 'WHITE', 'NONE', 
+    # lineStyles: 'SOLID', 'DASHED', 'DOTTED', 'DASHDOTTED'
+    # symbols: 'o', 's', 'd', '+'
+    #
+    #
+    # send the data 
+    #
+    hsh = { 'putData': 
+            {'title': "Important Data", 
+             'columns': 
+             [ { 'name': "eh_mot01", 'data' : pos},
+               { 'name': "eh_c01", 'data' : d1},
+               { 'name': "eh_c02", 'data' : d2, 
+                 'symbolColor': 'blue', 'symbol': '+', 'symbolSize': 5, 
+                 'xLog': False, 'yLog': False, 
+                 'showGridX': False, 'showGridY': False},
+             ]}}
+
+    hsh = _pysp.toPysp( hsh)
+    print "return values of putData:", repr( hsh) 
+
+    #
+    # retrieve the data 
+    #
+    hsh = _pysp.toPysp( { 'getData': True})
+    #
+    # ... and compare.
+    #
+    for i in range( MAX):
+        if pos[i] != hsh[ 'getData']['EH_C01']['x'][i]:
+            print "error: pos[i] != x[i]"
+        if d1[i] != hsh[ 'getData'][ 'EH_C01'][ 'y'][i]:
+            print "error: d1[i] != y[i]"
+        
+    print "getData, pos:", hsh[ 'getData']['EH_C01']['x']
+    print "getData, pos:", hsh[ 'getData']['EH_C01']['y']
+    return 
+
+def exampleImageMBVia_toPysp(): 
+    '''
+    this examples simulates the toPyspMonitor() interface
+
+    replace toPysp() by toPyspMonitor() to connect to pyspMonitor.py 
+    '''
+    _pysp.setWsViewport( 'DINA5S')
+
+    _pysp.cls()
+    _pysp.delete()
+
+    (xmin, xmax) = (-2.,-0.5)
+    (ymin, ymax) = (0, 1.5)
+    (width, height) = (100, 100)
+    maxiter = 25
+
+    #
+    # do the clean-up before we start
+    #
+    hsh =  _pysp.toPysp( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+    if hsh[ 'result'] != "done":
+        print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
+        return 
+    #
+    # create the image
+    #
+    hsh = { 'putData': 
+            { 'name': "MandelBrot",
+              'type': 'image', 
+              'xMin': xmin, 'xMax': xmax, 'width': width, 
+              'yMin': ymin, 'yMax': ymax, 'height': height}}
+
+    hsh = _pysp.toPysp( hsh)
+    if hsh[ 'result'] != "done":
+        print "error from putData"
+        return 
+    #
+    # fill the image, pixel by pixel
+    #
+    r1 = _np.linspace(xmin, xmax, width)
+    r2 = _np.linspace(ymin, ymax, height)
+    for i in range(width):
+        for j in range(height):
+            res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
+            hsh = { 'putData': 
+                     { 'name': "MandelBrot",
+                       'noDisplay': True, 
+                       'setPixel': ( r1[i], r2[j], res)}}
+            hsh = _pysp.toPysp( hsh)
+            if hsh[ 'result'] != "done":
+                print "error from setPixel"
+                return
+        _pysp.cls()
+        _pysp.display()
+
+    return 
+
+
+def example_LogPlotWithText():
     '''
     create 1 scan, y-log scale, one text
     '''
@@ -31,7 +142,7 @@ def exampleLogPlotWithText():
                 x = 0.05, y = 0.5, hAlign = 'left', vAlign = 'center')
     _pysp.display()
 
-def exampleLogXScale():
+def example_LogXScale():
     _pysp.cls()
     _pysp.delete()
     _pysp.setWsViewport( "DINA5")
@@ -42,7 +153,7 @@ def exampleLogXScale():
     _pysp.display()
 
 
-def examplePlotWithSeveralTexts():
+def example_PlotWithSeveralTexts():
     '''
     create 1 scan with several texts
     '''
@@ -67,7 +178,7 @@ def examplePlotWithSeveralTexts():
     t1.y = _np.sin( t1.x) + 1.001
     _pysp.display()
 
-def exampleOverlay2():
+def example_Overlay2():
     '''
     create 2 overlaid scans
     '''
@@ -87,7 +198,7 @@ def exampleOverlay2():
     _pysp.overlay( "sinus", "gauss")
     _pysp.display()
 
-def exampleOverlayDoty():
+def example_OverlayDoty():
     '''
     create 2 overlaid scans
     '''
@@ -106,7 +217,7 @@ def exampleOverlayDoty():
     t2.overlay = "t1"
     _pysp.display()
 
-def examplePlotsWithTextContainer():
+def example_PlotsWithTextContainer():
     '''
     create 3 scans and a text container
     '''
@@ -132,7 +243,7 @@ def examplePlotsWithTextContainer():
     t3.y = _np.tan( t3.x)
     _pysp.display()
 
-def exampleCreate5Plots():
+def example_Create5Plots():
     '''
     create 5 scans, different colors, demonstrate overlay feature
     '''
@@ -157,7 +268,7 @@ def exampleCreate5Plots():
     _pysp.overlay( 't5', 't3')
     _pysp.display()
 
-def exampleCreate22Plots():
+def example_Create22Plots():
     '''
     create 22 plots
     '''
@@ -172,7 +283,7 @@ def exampleCreate22Plots():
         t.y = _np.random.random_sample( (len( t.x), ))*1000.
     _pysp.display()
 
-def exampleCreate56x3Plots():
+def example_Create56x3Plots():
     '''
     create 56x3 plots
     '''
@@ -194,7 +305,7 @@ def exampleCreate56x3Plots():
     _pysp.display()
     return 
 
-def exampleCreatePDF():
+def example_CreatePDF():
     '''
     create a pdf file
     '''
@@ -219,7 +330,7 @@ def exampleCreatePDF():
     _pysp.createPDF( flagPrint = True)
     return 
 
-def exampleGaussAndSinusOverlay():
+def example_GaussAndSinusOverlay():
     '''
     overlay 2 scans
     '''
@@ -238,7 +349,7 @@ def exampleGaussAndSinusOverlay():
     _pysp.overlay( "sinus", "gauss")
     _pysp.display()
 
-def exampleGauss():
+def example_Gauss():
     '''
     gauss plot
     '''
@@ -254,7 +365,7 @@ def exampleGauss():
     _pysp.display()
     return 
 
-def exampleGaussManyOverlay():
+def example_GaussManyOverlay():
     '''
     gauss plot
     '''
@@ -288,7 +399,7 @@ def exampleGaussManyOverlay():
     _pysp.display()
     return 
 
-def exampleGaussNoisy():
+def example_GaussNoisy():
     '''
     gauss plot
     '''
@@ -305,7 +416,7 @@ def exampleGaussNoisy():
     _pysp.display()
     return 
 
-def exampleGauss2():
+def example_Gauss2():
     ''' 
     2 gauss plot
     '''
@@ -324,13 +435,13 @@ def exampleGauss2():
     _pysp.display()
     return 
 
-def exampleScanning():
+def example_Scanning():
     '''    
     '''
     _pysp.cls()
     _pysp.delete()
     
-    _pysp.setTitle( "scanning")
+    _pysp.setTitle( "scanning, x-axis is fixed")
     _pysp.setWsViewport( "DINA5")
     sinus = _pysp.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, 
                         autoscaleX = False, lineColor = 'red')
@@ -341,7 +452,7 @@ def exampleScanning():
         _time.sleep( 0.01)
     return 
 
-def exampleScanningAutoscaleX():
+def example_ScanningAutoscaleX():
     '''    
     '''
     _pysp.cls()
@@ -358,13 +469,13 @@ def exampleScanningAutoscaleX():
         _time.sleep( 0.01)
     return 
 
-def exampleScanningReverse():
+def example_ScanningReverse():
     '''    
     '''
     _pysp.cls()
     _pysp.delete()
     
-    _pysp.setTitle( "scanning in reverse direction, no re-scale of the x-axis")
+    _pysp.setTitle( "scanning in reverse direction, x-axis is fixed")
     _pysp.setWsViewport( "DINA5")
     sinus = _pysp.Scan( name = 'sinus', 
                         xMin = 0., xMax = 6.0, nPts = 101, 
@@ -379,7 +490,7 @@ def exampleScanningReverse():
         _time.sleep( 0.05)
     return 
 
-def exampleScanningReverseAutoscaleX():
+def example_ScanningReverseAutoscaleX():
     '''    
     '''
     _pysp.cls()
@@ -398,7 +509,7 @@ def exampleScanningReverseAutoscaleX():
         _pysp.display( ['sinus'])
         _time.sleep( 0.02)
 
-def exampleLissajous(): 
+def example_Lissajous(): 
     '''
     plots and updates a Lissajous figure
     '''
@@ -421,7 +532,7 @@ def exampleLissajous():
         scan.plotDataItem.setData(_np.cos( x), _np.sin( y))
         _pysp.processEvents()
 
-def exampleOverlay2BothLog(): 
+def example_Overlay2BothLog(): 
     _pysp.cls()
     _pysp.delete()
     _pysp.setTitle( "2 Overlay Scans, both with log scale")
@@ -442,7 +553,7 @@ def exampleOverlay2BothLog():
 
     _pysp.display()
 
-def exampleOverlay2FirstLog(): 
+def example_Overlay2FirstLog(): 
     _pysp.cls()
     _pysp.delete()
     _pysp.setTitle( "2 Overlay Scans, first (red) has log scale")
@@ -463,7 +574,7 @@ def exampleOverlay2FirstLog():
 
     _pysp.display()
 
-def exampleOverlay2SecondLog(): 
+def example_Overlay2SecondLog(): 
     _pysp.cls()
     _pysp.delete()
     _pysp.setTitle( "2 Overlay Scans, 2nd (green) has log scale")
@@ -492,7 +603,7 @@ def mandelbrot( c, maxiter):
         z = z*z + c
     return 0
 
-def exampleImage(): 
+def example_ImageMB(): 
 
     _pysp.setWsViewport( 'DINA5S')
 
@@ -520,105 +631,35 @@ def exampleImage():
     _pysp.display()
     return 
 
-def exampleImageMandelbrotViaToPysp(): 
-    '''
-    this examples simulates the toPyspMonitor() interface
+def example_ImageRandom(): 
 
-    replace toPysp() by toPyspMonitor() to connect to pyspMonitor.py 
-    '''
+    import random
+    
     _pysp.setWsViewport( 'DINA5S')
 
     _pysp.cls()
     _pysp.delete()
 
-    (xmin, xmax) = (-2.,-0.5)
-    (ymin, ymax) = (0, 1.5)
-    (width, height) = (100, 100)
-    maxiter = 25
 
-    #
-    # do the clean-up before we start
-    #
-    hsh =  _pysp.toPysp( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
-    if hsh[ 'result'] != "done":
-        print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
-        return 
+    (xmin, xmax) = (-2., 1)
+    (ymin, ymax) = (-1.5, 1.5)
+    (width, height) = (500, 500)
     
-    hsh = { 'putData': 
-            { 'name': "MandelBrot",
-              'type': 'image', 
-              'xMin': xmin, 'xMax': xmax, 'width': width, 
-              'yMin': ymin, 'yMax': ymax, 'height': height}}
-
-    hsh = _pysp.toPysp( hsh)
-    if hsh[ 'result'] != "done":
-        print "error from putData"
-        return 
-
     r1 = _np.linspace(xmin, xmax, width)
     r2 = _np.linspace(ymin, ymax, height)
+    n3 = _np.empty((width,height))
     for i in range(width):
         for j in range(height):
-            res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
-            hsh = { 'putData': 
-                     { 'name': "MandelBrot",
-                       'noDisplay': True, 
-                       'setPixel': ( r1[i], r2[j], res)}}
-            hsh = _pysp.toPysp( hsh)
-            if hsh[ 'result'] != "done":
-                print "error from setPixel"
-                return
-        _pysp.cls()
-        _pysp.display()
+            n3[i,j] = i + random.random()*j + 100.
+            
+    m = _pysp.Image( name = "ImageRandom", data = n3, 
+                    xMin = xmin, xMax = xmax, width = width, 
+                    yMin = ymin, yMax = ymax, height = height, 
+                    xLabel = "x-Axis", yLabel = "y-Axis")
 
+    _pysp.cls()
+    _pysp.display()
     return 
-
-def exampleDataViaToPysp(): 
-    '''
-    replace toPysp() with toPyspMonitor() to connect to pyspMonitor.py
-    '''
-    import random
-    MAX = 5
-    #
-    # create some data
-    #
-    pos = [float(n)/MAX for n in range( MAX)]
-    d1 = [random.random() for n in range( MAX)]
-    d2 = [random.random() for n in range( MAX)]
-    
-    print "pos", repr( pos)
-    print "d1:", repr( d1)
-    #
-    # send the data 
-    #
-    hsh = { 'putData': 
-            {'title': "Important Data", 
-             'columns': 
-             [ { 'name': "eh_mot01", 'data' : pos},
-               { 'name': "eh_c01", 'data' : d1},
-               { 'name': "eh_c02", 'data' : d2},
-             ]}}
-
-    hsh = _pysp.toPysp( hsh)
-    print "return values of putData:", repr( hsh) 
-
-    #
-    # retrieve the data 
-    #
-    hsh = _pysp.toPysp( { 'getData': True})
-    #
-    # ... and compare.
-    #
-    for i in range( MAX):
-        if pos[i] != hsh[ 'getData']['EH_C01']['x'][i]:
-            print "error: pos[i] != x[i]"
-        if d1[i] != hsh[ 'getData'][ 'EH_C01'][ 'y'][i]:
-            print "error: d1[i] != y[i]"
-        
-    print "getData, pos:", hsh[ 'getData']['EH_C01']['x']
-    print "getData, pos:", hsh[ 'getData']['EH_C01']['y']
-    return 
-
 
 '''
 #!/usr/bin/env python
@@ -643,6 +684,11 @@ def main():
     print "pos", repr( pos)
     print "d1:", repr( d1)
     #
+    # colors: 'RED', 'GREEN', 'BLUE','YELLOW', 'CYAN', 'MAGENTA', 'BLACK', 'WHITE', 'NONE', 
+    # lineStyles: 'SOLID', 'DASHED', 'DOTTED', 'DASHDOTTED'
+    # symbols: 'o', 's', 'd', '+'
+    #
+    #
     # send the data to pyspMonitor
     #
     hsh = { 'putData': 
@@ -650,7 +696,10 @@ def main():
              'columns': 
              [ { 'name': "eh_mot01", 'data' : pos},
                { 'name': "eh_c01", 'data' : d1},
-               { 'name': "eh_c02", 'data' : d2},
+               { 'name': "eh_c02", 'data' : d2, 
+                 'symbolColor': 'blue', 'symbol': '+', 'symbolSize': 5, 
+                 'xLog': False, 'yLog': False, 
+                 'showGridX': False, 'showGridY': False},
              ]}}
 
     hsh = pysp.toPyspMonitor( hsh)

@@ -517,7 +517,7 @@ class testGraphics( unittest.TestCase):
         diffTime = time.time() - startTime
 
         self.assertLess( diffTime, 7.)
-        self.assertGreater( diffTime, 2.0)
+        self.assertGreater( diffTime, 1.5)
         print "testGraphics.testDisplay_v2, DONE"
 
     def testWsViewport( self):
@@ -568,7 +568,7 @@ class testGraphics( unittest.TestCase):
 
         diffTime = time.time() - startTime
 
-        self.assertLess( diffTime, 12.)
+        self.assertLess( diffTime, 15.)
         print "testGraphics.testLissajous, DONE"
 
     def testOverlay2BothLog( self):

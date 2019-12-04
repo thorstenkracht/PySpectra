@@ -346,7 +346,6 @@ def _getPen( scan):
         stl = _QtCore.Qt.DashLine
 
     return _pg.mkPen( color = clr, width = scan.lineWidth, style = stl)
-
 def _make_cb_mouseMoved( gqe):
     '''
     return a callback function for the moveMouse signal
@@ -977,7 +976,7 @@ def _createPlotItem( gqe, nameList):
     _addTexts( gqe, nameList)
 
     return
-    
+
 def display( nameList = None):
     '''
     display one or more or all scans
@@ -1105,7 +1104,7 @@ def display( nameList = None):
             colormap = cm.get_cmap( image.colorMap)
             colormap._init()
             lut = (colormap._lut * 255).view( _np.ndarray)  # Convert matplotlib colormap from 0-1 to 0-255 for Qt
-            image.img.setLookupTable(lut)
+            image.img.setLookupTable( lut)
         except Exception, e: 
             print "pqt_graphics: problem accessing color map, using default"
             print repr( e)

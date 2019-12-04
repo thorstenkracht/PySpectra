@@ -1419,6 +1419,7 @@ class ImageAttributes( QtGui.QMainWindow):
         self.colorMapLabel = QtGui.QLabel( "ColorMaps")
         self.layout_grid.addWidget( self.colorMapLabel, row, 0)
         self.w_colorMapComboBox = QtGui.QComboBox()
+        self.w_colorMapComboBox.setToolTip( "Chose a color map")
         for colorMap in sorted( pysp.definitions.colorMaps):
             self.w_colorMapComboBox.addItem( colorMap)
         self.w_colorMapComboBox.setCurrentIndex( pysp.definitions.colorMaps.index(self.image.colorMap))
@@ -1430,8 +1431,9 @@ class ImageAttributes( QtGui.QMainWindow):
             # zoom
             #
             row += 1
+            self.image.flagZoom = True
             self.zoomLabel = QtGui.QLabel( "zoom:")
-            self.zoomLabel.setStatusTip('MB-1 zooms')
+            self.zoomLabel.setStatusTip('MB-1 zooms into the Mandelbrot set')
             self.layout_grid.addWidget( self.zoomLabel, row, 0)
             self.zoomCheckBox = QtGui.QCheckBox()
             self.zoomCheckBox.setChecked( self.image.flagZoom)
@@ -1569,7 +1571,6 @@ class ImageAttributes( QtGui.QMainWindow):
         self.image.yMax = 1.5
         self.image.maxIter = 100
         self.image.modulo = 50
-        
         self.image.zoom()
 
         return 
@@ -1683,7 +1684,8 @@ class ImageAttributes( QtGui.QMainWindow):
         else:
             self.yMaxValue.setText( "%g" % self.image.yMax)
 
-        self.maxIterValue.setText( "%d" % self.image.maxIter)
+        if str(self.name).upper().find( "MANDELBROT") != -1:
+            self.maxIterValue.setText( "%d" % self.image.maxIter)
         self.w_moduloComboBox.setCurrentIndex( 
             pysp.definitions.moduloList.index( self.image.modulo))
         self.logCheckBox.setChecked( self.image.log)
