@@ -24,7 +24,8 @@ def main():
                        autoscaleX = True, autoscaleY = True)
         t.y = np.random.random_sample( (len( t.x), ))
     pysp.display()
-    print "Prtc ",
+    sys.stdout.write( "Prtc")
+    sys.stdout.flush()
     sys.stdin.readline()
 
 if __name__ == '__main__': 

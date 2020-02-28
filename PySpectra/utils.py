@@ -251,8 +251,13 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
     clsFunc is specified to be able to distinguish between mpl and pqt
     '''
     global _lenPlotted
+    debug = False
 
     gqeList = _GQE.getGqeList()
+
+    if debug:
+        print( "utils.setGqeVPs.BEGIN: gqeList %s, nameList %s" % \
+            ( repr(  [ gqe.name for gqe in gqeList]), repr(  nameList)))
 
     if len( nameList) == 0:
         #
@@ -306,6 +311,9 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
             nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
         nplot = 1 
 
+    if debug:
+        print( "utils.setGqeVPs: after first pass: nrow %d, ncol %d nplot %d" % ( nrow, ncol, nplot))
+
     for gqe in gqeList:
         #
         # overlay? - don't create a viewport gqe.
@@ -335,8 +343,41 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
             if gqe.nrow*gqe.ncol < gqe.nplot:
                 raise ValueError( "utils.setGqeVPs: nrow %d * ncol %d < nplot %d, atr %s" % \
                                   (gqe.nrow, gqe.ncol, gqe.nplot, gqe.at))
-            nplot += 1
+        nplot += 1
+    #
+    # see if 2 GQEs occupie the same cell
+    #
+    for first in gqeList: 
+        if first.overlay:
+            continue
 
+        if len( nameList) > 0:
+            if first.name not in nameList:
+                continue
+
+        for second in gqeList: 
+            if first.name == second.name: 
+                continue
+
+            if len( nameList) > 0:
+                if second.name not in nameList:
+                    continue
+            if first.nrow == second.nrow and \
+               first.ncol == second.ncol and \
+               first.nplot == second.nplot:
+                raise ValueError( "utils.setGqeVPs: %s and %s in the same cell row, col, nplot: %d %d %d, nameList %s" % \
+                    (first.name, second.name, first.nrow, first.ncol, first.nplot, repr( nameList)))
+
+    
+    if debug:
+        for gqe in gqeList: 
+            if gqe.overlay is None:
+                print( "utils.setGqeVPs.END: %s row, col, nplot: %d %d %d" % \
+                    (gqe.name, gqe.nrow, gqe.ncol, gqe.nplot))
+            else: 
+                print( "utils.setGqeVPs.END: %s overlaid to %s" % \
+                    (gqe.name, gqe.overlay))
+    return 
 _initInkey = False
 _initInkeyOldTermAttr = None
 
@@ -445,11 +486,11 @@ def launchGui():
 #        if key == 32:
 #            return 32
 #        if key == 112: # 'p'
-#            print "paused, press 'p' to resume"
+#            print( "paused, press 'p' to resume")
 #            while True:
 #                pysp.processEvents()
 #                if inkey() == 112:
-#                    print "unpaused, press 'p' to pause"
+#                    print( "unpaused, press 'p' to pause")
 #                    break
 #                time.sleep(0.01)
 #        time.sleep(0.01)
@@ -462,18 +503,19 @@ def launchGui():
 #        if key == 32:
 #            return 32
 #        if key == 112: # 'p'
-#            print "paused, press 'p' to resume"
+#            print( "paused, press 'p' to resume")
 #            while True:
 #                _pysp.processEvents()
 #                if inkey() == 112:
-#                    print "unpaused, press 'p' to pause"
+#                    print( "unpaused, press 'p' to pause")
 #                    break
 #                _time.sleep(0.01)
 #        _time.sleep(0.01)
 #    return True
 
 def prtc(): 
-    print "Prtc ",
+    _sys.stdout.write( "Prtc ")
+    _sys.stdout.flush()
     _sys.stdin.readline()
 
 def xMax( scan):
@@ -542,8 +584,8 @@ pos = [float(n)/MAX for n in range( MAX)]
 d1 = [random.random() for n in range( MAX)]
 d2 = [random.random() for n in range( MAX)]
 
-print "pos", repr( pos)
-print "d1:", repr( d1)
+print( "pos %s" % repr( pos))
+print( "d1: %s" % repr( d1))
 
 hsh = { 'putData': 
            {'title': "Important Data", 
@@ -554,17 +596,17 @@ hsh = { 'putData':
            ]}}
 
 hsh = pysp.toPyspMonitor( hsh)
-print "return values of putData:", repr( hsh) 
+print( "return values of putData: %s" % repr( hsh) )
 
 hsh = pysp.toPyspMonitor( { 'getData': True})
 for i in range( MAX):
     if pos[i] != hsh[ 'getData']['d1_c01']['x'][i]:
-        print "error: pos[i] != x[i]"
+        print( "error: pos[i] != x[i]")
     if d1[i] != hsh[ 'getData'][ 'd1_c01'][ 'y'][i]:
-        print "error: d1[i] != y[i]"
+        print( "error: d1[i] != y[i]")
         
-print "getData, pos:", hsh[ 'getData']['d1_c01']['x']
-print "getData, pos:", hsh[ 'getData']['d1_c01']['y']
+print( "getData, pos: %g" % hsh[ 'getData']['d1_c01']['x'])
+print( "getData, pos: %g" % hsh[ 'getData']['d1_c01']['y'])
 return
 
     """
@@ -582,14 +624,14 @@ return
     sckt.setsockopt(zmq.LINGER, 1)
     try:
         sckt.connect('tcp://%s:7778' % node)
-    except Exception, e:
+    except Exception as e:
         sckt.close()
         return { 'result': "utils.toPyspMonitor: failed to connect to %s" % node}
 
     hshEnc = json.dumps( hsh)
     try:
         res = sckt.send( hshEnc)
-    except Exception, e:
+    except Exception as e:
         sckt.close()
         return { 'result': "TgUtils.toPyspMonitor: exception by send() %s" % repr(e)}
     #
@@ -597,7 +639,7 @@ return
     # returns the message. This may take some time. To pass
     # 4 arrays, each with 10000 pts takes 2.3s
     #
-    if hsh.has_key( 'isAlive'):
+    if 'isAlive' in hsh:
         lst = zmq.select([sckt], [], [], 0.5)
         if sckt in lst[0]:
             hshEnc = sckt.recv() 
@@ -674,7 +716,7 @@ def fastscananalysis(x,y,mode):
     if not mode.lower() in [ "peak", "cen", "cms", "dip", "dipc", "dipm",
                              "step", "stepc", "stepm", "slit", "slitc", "slitm"]:
         if debug == 1:    
-            print "Scan analysis MODE not specified!\n Possible modes: peak, cen, cms, dip, dipc, dipm, step, stepc and stepm, slit, slitc and slitm!"        
+            print( "Scan analysis MODE not specified!\n Possible modes: peak, cen, cms, dip, dipc, dipm, step, stepc and stepm, slit, slitc and slitm!")
             return message, xpos, xpeak, xcen, xcms
         mode = "peak"            
 
@@ -727,7 +769,7 @@ def fastscananalysis(x,y,mode):
     imax  = _np.argmax(y)                   # --- index of maximum value (for peak, dip, step)
     ip    = peaki
     if debug == 1:
-        print 'Indices: ', imax, ip
+        print( 'Indices: %d %d' % ( imax, ip))
     yl    = y[:ip+1]                       # --- Intensity left  side
     yr    = y[ip:]                         # --- Intensity right side
     hl    = _np.amax(yl)- _np.amin(yl)       # --- Intensity difference left  side
@@ -772,7 +814,7 @@ def fastscananalysis(x,y,mode):
             if ind < 0 or ind > len(xm):
                 ind = 0
             if debug == 1:
-                print hl, hr, len(xm), imax, ind
+                print( "%s %s %s %s %s" % (repr(hl), repr( hr), repr( len(xm)), repr( imax), repr( ind)))
             xm = x[ind:]
             ym = y[ind:]
         else:
@@ -783,7 +825,7 @@ def fastscananalysis(x,y,mode):
             if ind < 0 or ind > len(xm):
                 ind = len(xm)
             if debug == 1:
-                print hl, hr, len(xm), imax, ind
+                print( "%s %s %s %s %s" % (repr(hl), repr( hr), repr( len(xm)), repr( imax), repr( ind)))
             xm = x[:ind]
             ym = y[:ind]
 
@@ -791,7 +833,7 @@ def fastscananalysis(x,y,mode):
     xpeak = x[imax]
     xcms  = _center_of_mass(xm,ym)
     if debug == 2:
-        print xcms
+        print( "%s" % repr( xcms))
     p0    = [yfmin, yfmax-yfmin, x[imax], sigma_start]
     npara = len(p0)
     #
@@ -810,25 +852,25 @@ def fastscananalysis(x,y,mode):
     if debug == 1:
         # --- Positive signals
         if mode.lower() == "peak" or mode.lower() == "cms" or mode.lower() == "cen":
-            print 'Position of Peak: ', xpeak
-            print 'Position of CMS : ', xcms
-            print 'Position of CEN : %.7f' %xcen
+            print( "Position of Peak: %s" % xpeak)
+            print( "Position of CMS : %s" % xcms)
+            print( "Position of CEN : %.7f" % xcen)
         # --- Negative signals
         if mode.lower() == "dip" or mode.lower() == "dipm" or mode.lower() == "dipc":
-            print 'Position of DIP : ', xpeak
-            print 'Position of DIPM: ', xcms
-            print 'Position of DIPC: ', xcen
+            print( "Position of DIP : %s" % xpeak)
+            print( "Position of DIPM: %s" % xcms)
+            print( "Position of DIPC: %s" % xcen)
         # --- Step-like signals
         if mode.lower() == "step" or mode.lower() == "stepm" or mode.lower() == "stepc":
-            print 'Position of STEP : ', xpeak
-            print 'Position of STEPM: ', xcms
-            print 'Position of STEPC: ', xcen
+            print( "Position of STEP : %s" % xpeak)
+            print( "Position of STEPM: %s" % xcms)
+            print( "Position of STEPC: %s" % xcen)
         # --- Step-like signals
         if mode.lower() == "slit" or mode.lower() == "slitm" or mode.lower() == "slitc":
-            print 'Position of SLIT : ', xpeak
-            print 'Position of SLITM: ', xcms
-            print 'Position of SLITC: ', xcen
-        print 'Chi^2 value of Gaussian fit: %.7f' %chi_2
+            print( "Position of SLIT : %s" % xpeak)
+            print( "Position of SLITM: %s" % xcms)
+            print( "Position of SLITC: %s" % xcen)
+        print( "Chi^2 value of Gaussian fit: %.7f" % chi_2)
 
     # --- Assign the correct value to the goal motor position
     if mode.lower() == "peak" or mode.lower() == "dip" or mode.lower() == "step" or mode.lower() == "slit":
@@ -863,7 +905,7 @@ def _check4peak(x,y):
     sdy = _fastsmooth( _deriv(y), SmoothWidth, SmoothType, Ends)
     if debug == 1:
         _plt.figure(102)
-        xval = range(1,len(y)+1)
+        xval = list( range(1,len(y)+1))
         _plt.plot(xval, _deriv(y), 'ro-')
         _plt.plot(xval, sdy     , 'bo-')
         _plt.show()
@@ -936,7 +978,7 @@ def _fastsmooth(y, SmoothWidth, SmoothType, Ends):
         SmoothWidth = 2
     # ---
     if debug == 1:
-        print SmoothWidth, SmoothType, Ends
+        print( "%s %s %s " % (repr( SmoothWidth), repr( SmoothType), repr( Ends)))
     # --- call the actual smoothing function
     if SmoothType == 1:
         sy = _smoothy(y , SmoothWidth, Ends)
@@ -950,7 +992,7 @@ def _fastsmooth(y, SmoothWidth, SmoothType, Ends):
 
     if debug == 1:
         _plt.figure(101)
-        xval = range(1,len(y)+1)
+        xval = list( range(1,len(y)+1))
         _plt.plot(xval,  y, 'ro-')
         _plt.plot(xval, sy, 'bo-')
         if SmoothType >= 2:

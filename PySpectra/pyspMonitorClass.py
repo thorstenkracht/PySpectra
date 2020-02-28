@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 '''
 the monitor (this file) and the door (pyspDoor) communicate through
-a Queue() for 2 reasons: 
+a queue() for 2 reasons: 
 (1) the queue is thread-safe and 
 (2) the door class does no graphics itself (which would mean that it
     needs a QAppl).
@@ -10,12 +10,12 @@ we need to put the pyspMonitor class into a separate file to
 make it run-time importable. The selection pyqtgraph/matplotlib
 has to be done in advance.
 '''
-import __builtin__
+import builtins
 import pySpectraGuiClass
 import PySpectra as pysp
 import HasyUtils 
 
-import Queue, argparse, sys, os
+import queue, argparse, sys, os
 
 from PyQt4 import QtCore 
 from PyQt4 import QtGui 
@@ -42,8 +42,8 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
     def __init__( self, flagNoDoor = None, parent = None):
         super( pyspMonitor, self).__init__( parent, calledFromSardanaMonitor = True)
 
-        self.queue = Queue.Queue()
-        __builtin__.__dict__[ 'queue'] = self.queue
+        self.queue = queue.Queue()
+        builtins.__dict__[ 'queue'] = self.queue
 
         self.refreshCount = 0
         self.flagIsBusy = False
@@ -57,12 +57,12 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             self.updateTimer.start( int( updateTime*1000))
             try: 
                 if len( HasyUtils.getDoorNames()) == 0:
-                    print "pyspMonitor.__init__: no doors"
+                    print( "pyspMonitor.__init__: no doors")
                     sys.exit( 255)
                     
                 self.door = _PyTango.DeviceProxy( HasyUtils.getDoorNames()[0])
-            except Exception, e:
-                print "pyspMonitor.__init__: failed to get Door proxy", HasyUtils.getDoorNames()[0]
+            except Exception as e:
+                print( "pyspMonitor.__init__: failed to get Door proxy %s" % repr(HasyUtils.getDoorNames()[0]))
 
         self.helpMoveAction = self.helpMenu.addAction(self.tr("Move"))
         self.helpMoveAction.triggered.connect( self.cb_helpMove)
@@ -84,10 +84,10 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             self.timerZMQ = QtCore.QTimer( self)
             self.timerZMQ.timeout.connect( self.cb_timerZMQ)
             self.timerZMQ.start(100)
-        except Exception, e:
-            print "pyspMonitorMain.__init__(): ZMQ error (json-dict receiver)"
-            print "message:", repr( e)
-            print "assuming another pyspMonitor is ready to receive json-dcts"
+        except Exception as e:
+            print( "pyspMonitorMain.__init__(): ZMQ error (json-dict receiver)")
+            print( "message: %s" % repr( e))
+            print( "assuming another pyspMonitor is ready to receive json-dcts")
             pass
         return 
 
@@ -152,46 +152,22 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         '''
         data come from the door
         '''
-        #print "pyspMonitorClass.queueSM.execHsh", repr( hsh)
+        #print( "pyspMonitorClass.queueSM.execHsh %s " % repr( hsh))
 
-        if hsh.has_key( 'cls'):
-            pysp.cls()
-        elif hsh.has_key( 'delete'):
-            if hsh[ 'delete'] is None:
-                pysp.delete()
-            else: 
-                pysp.delete( hsh[ 'delete'])
-        elif hsh.has_key( 'display'):
-            if hsh[ 'display'] is None:
-                pysp.display()
-            else: 
-                pysp.display( hsh[ 'display'])
-        elif hsh.has_key( 'newScan') and hsh[ 'newScan']: 
+        if 'newScan' in hsh and hsh[ 'newScan']: 
             self.setCertainWidgetEnabled( False)
             self.flagIsBusy = True
-        elif hsh.has_key( 'endScan') and hsh[ 'endScan']: 
+        elif 'endScan' in hsh and hsh[ 'endScan']: 
             self.setCertainWidgetEnabled( True)
             self.flagIsBusy = False
-        elif hsh.has_key( 'setTitle'):
-            pysp.setTitle( hsh[ 'setTitle'])
-        elif hsh.has_key( 'setComment'):
-            pysp.setComment( hsh[ 'setComment'])
-        elif hsh.has_key( 'Scan'):
-            pysp.Scan( **hsh[ 'Scan']) 
         #
         # the scanInfo dictionary is sent when a new scan starts
         #
-        elif hsh.has_key( 'ScanInfo'):
+        elif 'ScanInfo' in hsh:
             self.scanInfo = hsh[ 'ScanInfo']
             self.configureMotorsWidget()
-        elif hsh.has_key( 'setX'):
-            scan = pysp.getGqe( hsh[ 'setX'][ 'name'])
-            scan.setX(  hsh[ 'setX'][ 'index'], hsh[ 'setX'][ 'x'])
-        elif hsh.has_key( 'setY'):
-            scan = pysp.getGqe( hsh[ 'setY'][ 'name'])
-            scan.setY(  hsh[ 'setY'][ 'index'], hsh[ 'setY'][ 'y'])
         else: 
-            raise ValueError( "queueSM.execHsh: failed to identify key %s" % repr( hsh))
+            pysp.toPysp( hsh)
         
     def configureMotorsWidget( self): 
         '''
@@ -223,7 +199,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         '''
         this function receives data from the door
         '''
-        #print "pyspMonitor.cb_refreshMain", self.refreshCount
+        #print( "pyspMonitor.cb_refreshMain %d" % self.refreshCount)
         #
         # without stop() the timer continues
         #
@@ -238,7 +214,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
                 self.execHsh( hsh)
                 self.queue.task_done()
                 cnt += 1
-        except Queue.Empty, e:
+        except queue.Empty as e:
             pass
 
         self.updateTimer.start( int( updateTime*1000))

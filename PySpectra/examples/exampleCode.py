@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 '''
-the functions in this module are automatically inserted into the 'Examples'
-menu of 
+the functions in this module are automatically inserted into the 'Examples' menu of 
   /home/kracht/Misc/pySpectra/PySpectra/pySpectraGuiClass.py 
 and they are unittest-executed by
   /home/kracht/Misc/pySpectra/test/examples/testExamples.py
@@ -41,6 +40,7 @@ def exampleDataVia_toPysp():
     #
     hsh = { 'putData': 
             {'title': "Important Data", 
+             'comment': "a comment", 
              'columns': 
              [ { 'name': "eh_mot01", 'data' : pos},
                { 'name': "eh_c01", 'data' : d1},
@@ -51,7 +51,7 @@ def exampleDataVia_toPysp():
              ]}}
 
     hsh = _pysp.toPysp( hsh)
-    print "return values of putData:", repr( hsh) 
+    print( "exampleDataVia_toPysp: putData returns %s" % repr( hsh) )
 
     #
     # retrieve the data 
@@ -62,13 +62,24 @@ def exampleDataVia_toPysp():
     #
     for i in range( MAX):
         if pos[i] != hsh[ 'getData']['EH_C01']['x'][i]:
-            print "error: pos[i] != x[i]"
+            print( "error: pos[i] != x[i]")
         if d1[i] != hsh[ 'getData'][ 'EH_C01'][ 'y'][i]:
-            print "error: d1[i] != y[i]"
+            print( "error: d1[i] != y[i]")
         
-    print "getData, pos:", hsh[ 'getData']['EH_C01']['x']
-    print "getData, pos:", hsh[ 'getData']['EH_C01']['y']
+    print( "exampleDataVia_toPysp: getData returns x(EH_C01) %s " % hsh[ 'getData']['EH_C01']['x'])
+    print( "exampleDataVia_toPysp: getData returns y(EH_C01) %s" % hsh[ 'getData']['EH_C01']['y'])
     return 
+
+def mandelbrot( c, maxiter):
+    '''
+    needed for the testing procedures
+    '''
+    z = c
+    for n in range(maxiter):
+        if abs(z) > 2:
+            return n
+        z = z*z + c
+    return 0
 
 def exampleImageMBVia_toPysp(): 
     '''
@@ -83,7 +94,7 @@ def exampleImageMBVia_toPysp():
 
     (xmin, xmax) = (-2.,-0.5)
     (ymin, ymax) = (0, 1.5)
-    (width, height) = (100, 100)
+    (width, height) = (10, 10)
     maxiter = 25
 
     #
@@ -91,20 +102,19 @@ def exampleImageMBVia_toPysp():
     #
     hsh =  _pysp.toPysp( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
     if hsh[ 'result'] != "done":
-        print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
+        print( "error from ['delete', 'setWsViewport DINA5S', 'cls']")
         return 
     #
     # create the image
     #
-    hsh = { 'putData': 
-            { 'name': "MandelBrot",
-              'type': 'image', 
+    hsh = { 'Image': 
+            { 'name': "Mandelbrot",
               'xMin': xmin, 'xMax': xmax, 'width': width, 
               'yMin': ymin, 'yMax': ymax, 'height': height}}
 
     hsh = _pysp.toPysp( hsh)
     if hsh[ 'result'] != "done":
-        print "error from putData"
+        print( "error from putData")
         return 
     #
     # fill the image, pixel by pixel
@@ -114,16 +124,61 @@ def exampleImageMBVia_toPysp():
     for i in range(width):
         for j in range(height):
             res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
-            hsh = { 'putData': 
-                     { 'name': "MandelBrot",
-                       'noDisplay': True, 
-                       'setPixel': ( r1[i], r2[j], res)}}
+            #hsh = { 'putData': 
+            #         { 'name': "Mandelbrot",
+            #           'noDisplay': True, 
+            #           'setPixelWorld': ( r1[i], r2[j], res)}}
+            #hsh = { 'command': [ 'setPixelWorld Mandelbrot %g %g %g' % ( r1[i], r2[j], res)]}
+            hsh = { 'command': [ 'setPixelImage Mandelbrot %d %d %g' % ( i, j, res)]}
             hsh = _pysp.toPysp( hsh)
             if hsh[ 'result'] != "done":
-                print "error from setPixel"
+                print( "error from setPixel")
                 return
         _pysp.cls()
         _pysp.display()
+
+    return 
+
+def exampleImageMBVia_toPysp_OneChunk(): 
+    '''
+    this examples simulates the toPyspMonitor() interface
+
+    replace toPysp() by toPyspMonitor() to connect to pyspMonitor.py 
+    '''
+    _pysp.setWsViewport( 'DINA5S')
+
+    _pysp.cls()
+    _pysp.delete()
+
+    (xmin, xmax) = (-2., 1.0)
+    (ymin, ymax) = ( -1.5, 1.5)
+    (width, height) = (500, 500)
+    maxiter = 128
+
+    #
+    # do the clean-up before we start
+    #
+    hsh =  _pysp.toPysp( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+    if hsh[ 'result'] != "done":
+        print( "error from ['delete', 'setWsViewport DINA5S', 'cls']")
+        return 
+    #
+    # fill the image, pixel by pixel
+    #
+    r1 = _np.linspace(xmin, xmax, width)
+    r2 = _np.linspace(ymin, ymax, height)
+    data = _np.ndarray( (width, height), _np.int32)
+    for i in range(width):
+        for j in range(height):
+            res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
+            data[i][j] = int( res)
+
+    _pysp.toPysp( { 'putData': 
+                    { 'images': [{'name': "Mandelbrot", 'data': data,
+                                  'xMin': xmin, 'xMax': xmax, 
+                                  'yMin': ymin, 'yMax': ymax}]}})
+    _pysp.cls()
+    _pysp.display()
 
     return 
 
@@ -311,7 +366,7 @@ def example_CreatePDF():
     '''
     printer = _os.getenv( "PRINTER")
     if printer is None: 
-        print "examplecreatePDF: environment variable PRINTER not defined, returning"
+        print( "examplecreatePDF: environment variable PRINTER not defined, returning")
         return 
 
     _pysp.cls()
@@ -440,16 +495,65 @@ def example_Scanning():
     '''
     _pysp.cls()
     _pysp.delete()
-    
+
     _pysp.setTitle( "scanning, x-axis is fixed")
     _pysp.setWsViewport( "DINA5")
     sinus = _pysp.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, 
                         autoscaleX = False, lineColor = 'red')
+
+
     for i in range( sinus.nPts): 
         sinus.setX( i, i/10. + 0.01)
         sinus.setY( i, _math.sin( i/10.))
         _pysp.display( ['sinus'])
         _time.sleep( 0.01)
+    return 
+
+def example_ScanningMesh():
+    '''    
+    '''
+    _pysp.cls()
+    _pysp.delete()
+
+    (xmin, xmax) = (-2., 1)
+    (ymin, ymax) = (-1.5, 1.5)
+    (width, height) = (20, 20)
+    maxiter = 20
+    
+    r1 = _np.linspace(xmin, xmax, width)
+    r2 = _np.linspace(ymin, ymax, height)
+    n3 = _np.zeros((width,height))
+            
+    m = _pysp.Image( name = "MandelbrotSet", colorMap = 'Greys', 
+                     estimatedMax = 20, 
+                     xMin = xmin, xMax = xmax, width = width, 
+                     yMin = ymin, yMax = ymax, height = height)
+    
+    _pysp.setTitle( "Simulate a mesh scan")
+    _pysp.setWsViewport( "DINA5")
+    sinus = _pysp.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = width*height, 
+                        autoscaleX = False, lineColor = 'red')
+    cosinus = _pysp.Scan( name = 'cosinus', xMin = 0., xMax = 6.0, nPts = width*height, 
+                        autoscaleX = False, lineColor = 'red')
+
+    _pysp.display()
+
+    (iI, jI) = (0, 0)
+    for i in range( sinus.nPts): 
+        x = float(i)*6.28/float(sinus.nPts)
+        sinus.setX( i, x)
+        cosinus.setX( i, x)
+        sinus.setY( i, _math.sin( x))
+        cosinus.setY( i, _math.cos( x))
+        res = mandelbrot(r1[iI] + 1j*r2[jI],maxiter)
+        m.data[iI][jI] = res 
+        iI += 1
+        if iI == width: 
+            iI = 0
+            jI += 1
+        _pysp.display()
+    _pysp.cls()
+    _pysp.display()
     return 
 
 def example_ScanningAutoscaleX():
@@ -595,14 +699,6 @@ def example_Overlay2SecondLog():
 
     _pysp.display()
 
-def mandelbrot( c, maxiter):
-    z = c
-    for n in range(maxiter):
-        if abs(z) > 2:
-            return n
-        z = z*z + c
-    return 0
-
 def example_ImageMB(): 
 
     _pysp.setWsViewport( 'DINA5S')
@@ -610,27 +706,44 @@ def example_ImageMB():
     _pysp.cls()
     _pysp.delete()
 
-    (xmin, xmax) = (-2., 1)
-    (ymin, ymax) = (-1.5, 1.5)
+    (xmin, xmax) = (-2., 0.5)
+    (ymin, ymax) = (-1.25, 1.25)
     (width, height) = (500, 500)
-    maxiter = 20
+    maxiter = 512
     
-    r1 = _np.linspace(xmin, xmax, width)
-    r2 = _np.linspace(ymin, ymax, height)
-    n3 = _np.empty((width,height))
-    for i in range(width):
-        for j in range(height):
-            n3[i,j] = mandelbrot(r1[i] + 1j*r2[j],maxiter)
-            
-    m = _pysp.Image( name = "MandelbrotSet", data = n3, 
-                    xMin = xmin, xMax = xmax, width = width, 
-                    yMin = ymin, yMax = ymax, height = height, 
-                    xLabel = "eh_mot01", yLabel = "eh_mot02")
-
+    m = _pysp.Image( name = "MandelbrotSet",
+                     flagAxes = True, 
+                     maxIter = maxiter, 
+                     xMin = xmin, xMax = xmax, width = width, 
+                     yMin = ymin, yMax = ymax, height = height)
+    m.flagZoomSlow = False
+    m.zoom()
     _pysp.cls()
     _pysp.display()
     return 
+"""
+def example_ImageMBSlow(): 
 
+    _pysp.setWsViewport( 'DINA5S')
+
+    _pysp.cls()
+    _pysp.delete()
+
+    (xmin, xmax) = (-2., 0.5)
+    (ymin, ymax) = (-1.25, 1.25)
+    (width, height) = (500, 500)
+    maxiter = 256
+    
+    m = _pysp.Image( name = "MandelbrotSet",
+                    xMin = xmin, xMax = xmax, width = width, 
+                    yMin = ymin, yMax = ymax, height = height)
+
+    m.flagZoomSlow = True
+    m.zoom()
+    _pysp.cls()
+    _pysp.display()
+    return 
+"""
 def example_ImageRandom(): 
 
     import random
@@ -639,7 +752,6 @@ def example_ImageRandom():
 
     _pysp.cls()
     _pysp.delete()
-
 
     (xmin, xmax) = (-2., 1)
     (ymin, ymax) = (-1.5, 1.5)
@@ -681,8 +793,8 @@ def main():
     d1 = [random.random() for n in range( MAX)]
     d2 = [random.random() for n in range( MAX)]
     
-    print "pos", repr( pos)
-    print "d1:", repr( d1)
+    print( "pos %s" % repr( pos))
+    print( "d1: %s" % repr( d1))
     #
     # colors: 'RED', 'GREEN', 'BLUE','YELLOW', 'CYAN', 'MAGENTA', 'BLACK', 'WHITE', 'NONE', 
     # lineStyles: 'SOLID', 'DASHED', 'DOTTED', 'DASHDOTTED'
@@ -703,7 +815,7 @@ def main():
              ]}}
 
     hsh = pysp.toPyspMonitor( hsh)
-    print "return values of putData:", repr( hsh) 
+    print( "return values of putData: %s" % repr( hsh) )
 
     #
     # retrieve the data from pyspMonitor
@@ -714,12 +826,12 @@ def main():
     #
     for i in range( MAX):
         if pos[i] != hsh[ 'getData']['EH_C01']['x'][i]:
-            print "error: pos[i] != x[i]"
+            print( "error: pos[i] != x[i]")
         if d1[i] != hsh[ 'getData'][ 'EH_C01'][ 'y'][i]:
-            print "error: d1[i] != y[i]"
+            print( "error: d1[i] != y[i]")
         
-    print "getData, pos:", hsh[ 'getData']['EH_C01']['x']
-    print "getData, pos:", hsh[ 'getData']['EH_C01']['y']
+    print( "getData, pos: %s" % hsh[ 'getData']['EH_C01']['x'])
+    print( "getData, pos: %s" % hsh[ 'getData']['EH_C01']['y'])
     return 
 
 if __name__ == "__main__":
@@ -756,17 +868,17 @@ def main():
     #
     hsh = pysp.toPyspMonitor( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
     if hsh[ 'result'] != "done":
-        print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
+        print( "error from ['delete', 'setWsViewport DINA5S', 'cls']")
         return 
     
     hsh = { 'putData': 
-             { 'name': "MandelBrot",
+             { 'name': "Mandelbrot",
                'type': 'image', 
                'xMin': xmin, 'xMax': xmax, 'width': width, 
                'yMin': ymin, 'yMax': ymax, 'height': height}}
     hsh = pysp.toPyspMonitor( hsh)
     if hsh[ 'result'] != "done":
-        print "error from putData"
+        print( "error from putData")
         return 
 
     r1 = np.linspace(xmin, xmax, width)
@@ -775,11 +887,11 @@ def main():
         for j in range(height):
             res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
             hsh = { 'putData': 
-                     { 'name': "MandelBrot",
-                       'setPixel': ( r1[i], r2[j], res)}}
+                     { 'name': "Mandelbrot",
+                       'setPixelWorld': ( r1[i], r2[j], res)}}
             hsh = pysp.toPyspMonitor( hsh)
             if hsh[ 'result'] != "done":
-                print "error from setPixel"
+                print( "error from setPixel")
                 return 
     return 
 

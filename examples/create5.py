@@ -4,8 +4,10 @@ import PySpectra as pysp
 import sys
 
 def main():
-    pysp.exampleCreate5Plots()
-    print "Prtc ",
+    pysp.example_Create5Plots()
+    sys.stdout.write( "Prtc")
+    sys.stdout.flush()
+
     sys.stdin.readline()
 
 if __name__ == '__main__': 

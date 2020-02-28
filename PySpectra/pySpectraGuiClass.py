@@ -10,7 +10,7 @@ from PyQt4 import QtGui, QtCore
 import numpy as np
 
 import PySpectra as pysp
-import mtpltlb.graphics as mpl_graphics # to create pdf
+import mtpltlb.graphics as mpl_graphics # for pdf output
 
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
@@ -19,6 +19,7 @@ from matplotlib.figure import Figure
 win = None
 ACTIVITY_SYMBOLS = ['|', '/', '-', '\\', '|', '/', '-', '\\'] 
 updateTime = 0.5
+SLIDER_RESOLUTION = 256
 
 HISTORY_MAX = 100
 
@@ -57,14 +58,18 @@ class QListWidgetTK( QtGui.QListWidget):
             pass
         elif key == QtCore.Qt.Key_Return or key == 32:
             item = self.currentItem()
-            if item.checkState() == QtCore.Qt.Checked:
-                item.setCheckState(QtCore.Qt.Unchecked)       
-            else:
-                item.setCheckState(QtCore.Qt.Checked)       
+            #
+            # the files list widget has no check boxes
+            #
+            if self.name == "gqesListWidget":
+                if item.checkState() == QtCore.Qt.Checked:
+                    item.setCheckState(QtCore.Qt.Unchecked)       
+                else:
+                    item.setCheckState(QtCore.Qt.Checked)       
             self.newItemSelected( str(item.text()))
             return 
         else: 
-            print "keyPressEvent, key", key
+            print( "keyPressEvent, key %s" % repr(key))
 
         return QtGui.QListWidget.keyPressEvent(self, eventQKeyEvent)
 
@@ -97,7 +102,7 @@ class QListWidgetTK( QtGui.QListWidget):
         if event.button() == QtCore.Qt.LeftButton:
             item = self.currentItem()
             if item is None: 
-                print "mouseReleaseEvent: click on the name"
+                print( "mouseReleaseEvent: click on the name")
                 return 
             if item.checkState() == QtCore.Qt.Checked:
                 item.setCheckState(QtCore.Qt.Unchecked)       
@@ -567,7 +572,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.show()
         
     def __del__( self): 
-        print "the destructor"
+        print( "the destructor")
         return 
 
     def prepareWidgets( self):
@@ -763,7 +768,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.lineWidthLabel = QtGui.QLabel( "LineWidth")
         self.layout_grid.addWidget( self.lineWidthLabel, row, 4)
         self.w_lineWidthComboBox = QtGui.QComboBox()
-        if str( self.scan.lineWidth) not in pysp.definitions.lineWidthDct.keys():
+        if str( self.scan.lineWidth) not in list( pysp.definitions.lineWidthDct.keys()):
             self.scan.lineWidth = 1.0
         for lineWidth in pysp.definitions.lineWidthArr:
             self.w_lineWidthComboBox.addItem( lineWidth)
@@ -778,7 +783,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.symbolColorLabel = QtGui.QLabel( "SymbolColor")
         self.layout_grid.addWidget( self.symbolColorLabel, row, 0)
         self.w_symbolColorComboBox = QtGui.QComboBox()
-        if str( self.scan.symbolColor).upper() not in pysp.definitions.lineColorDct.keys():
+        if str( self.scan.symbolColor).upper() not in list(pysp.definitions.lineColorDct.keys()):
             self.scan.symbolColor = 'black'
         for symbolColor in pysp.definitions.lineColorArr:
             self.w_symbolColorComboBox.addItem( symbolColor)
@@ -805,7 +810,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.symbolSizeLabel = QtGui.QLabel( "SymbolSize")
         self.layout_grid.addWidget( self.symbolSizeLabel, row, 4)
         self.w_symbolSizeComboBox = QtGui.QComboBox()
-        if str( self.scan.symbolSize) not in pysp.definitions.symbolSizeDct.keys():
+        if str( self.scan.symbolSize) not in list( pysp.definitions.symbolSizeDct.keys()):
             self.scan.symbolSize = 5
         for symbolSize in pysp.definitions.symbolSizeArr:
             self.w_symbolSizeComboBox.addItem( symbolSize)
@@ -911,7 +916,6 @@ class ScanAttributes( QtGui.QMainWindow):
     # the status bar
     #
     def prepareStatusBar( self): 
-
 
         self.back = QtGui.QPushButton(self.tr("&Back")) 
         self.statusBar.addPermanentWidget( self.back) # 'permanent' to shift it right
@@ -1104,7 +1108,7 @@ class ScanAttributes( QtGui.QMainWindow):
 
     def cb_symbol( self): 
         temp = self.w_symbolComboBox.currentText()
-        for k, v in pysp.definitions.symbolDctFullName.items():
+        for k, v in list( pysp.definitions.symbolDctFullName.items()):
             if v == temp:
                 temp = k
         self.scan.symbol = str( temp)
@@ -1279,7 +1283,7 @@ class ImageAttributes( QtGui.QMainWindow):
         self.show()
         
     def __del__( self): 
-        print "the destructor"
+        print( "the destructor")
         return 
 
     def prepareWidgets( self):
@@ -1420,35 +1424,50 @@ class ImageAttributes( QtGui.QMainWindow):
         self.layout_grid.addWidget( self.colorMapLabel, row, 0)
         self.w_colorMapComboBox = QtGui.QComboBox()
         self.w_colorMapComboBox.setToolTip( "Chose a color map")
-        for colorMap in sorted( pysp.definitions.colorMaps):
+        for colorMap in pysp.definitions.colorMaps:
             self.w_colorMapComboBox.addItem( colorMap)
-        self.w_colorMapComboBox.setCurrentIndex( pysp.definitions.colorMaps.index(self.image.colorMap))
         self.w_colorMapComboBox.currentIndexChanged.connect( self.cb_colorMap)
+        ind = pysp.definitions.colorMaps.index(self.image.colorMap)
+        self.w_colorMapComboBox.setCurrentIndex( ind)
         self.layout_grid.addWidget( self.w_colorMapComboBox, row, 1) 
 
         if str(self.name).upper().find( "MANDELBROT") != -1:
             #
-            # zoom
-            #
-            row += 1
-            self.image.flagZoom = True
-            self.zoomLabel = QtGui.QLabel( "zoom:")
-            self.zoomLabel.setStatusTip('MB-1 zooms into the Mandelbrot set')
-            self.layout_grid.addWidget( self.zoomLabel, row, 0)
-            self.zoomCheckBox = QtGui.QCheckBox()
-            self.zoomCheckBox.setChecked( self.image.flagZoom)
-            self.layout_grid.addWidget( self.zoomCheckBox, row, 1)
-            self.zoomCheckBox.stateChanged.connect( self.cb_zoomChanged)
-            #
             # maxIter
             #
-            self.maxIterLabel = QtGui.QLabel( "maxIter:")
-            self.layout_grid.addWidget( self.maxIterLabel, row, 3)
-            self.maxIterValue = QtGui.QLabel( "%g" % (self.image.maxIter))
-            self.layout_grid.addWidget( self.maxIterValue, row, 4)
-            self.maxIterLineEdit = QtGui.QLineEdit()
-            self.maxIterLineEdit.setMinimumWidth( 50)
-            self.layout_grid.addWidget( self.maxIterLineEdit, row, 5)
+            row += 1
+            self.maxIterLabel = QtGui.QLabel( "MaxIter")
+            self.layout_grid.addWidget( self.maxIterLabel, row, 0)
+            self.w_maxIterComboBox = QtGui.QComboBox()
+            self.w_maxIterComboBox.setToolTip( "-1: disable maxIter")
+            for maxIter in pysp.definitions.maxIterList:
+                self.w_maxIterComboBox.addItem( "%d" % maxIter)
+            self.w_maxIterComboBox.setCurrentIndex( 
+                pysp.definitions.maxIterList.index( self.image.maxIter))
+            self.w_maxIterComboBox.currentIndexChanged.connect( self.cb_maxIter)
+            self.layout_grid.addWidget( self.w_maxIterComboBox, row, 1) 
+
+            self.progressLabel = QtGui.QLabel( "Progress: ")
+            self.layout_grid.addWidget( self.progressLabel, row, 3)
+            self.image.cbZoomProgress = self.cb_zoomProgress
+
+            row += 1
+
+            self.w_indexRotate = QtGui.QSlider()
+            self.w_indexRotate.valueChanged.connect( self.cb_indexRotateValueChanged)
+            self.w_indexRotate.setMinimum( 0)
+            self.w_indexRotate.setMaximum( int(SLIDER_RESOLUTION))
+            self.w_indexRotate.setOrientation( 1) # 1 horizontal, 2 vertical
+            self.layout_grid.addWidget( self.w_indexRotate, row, 0, 1, 6)
+
+            row += 1
+            self.w_indexRotateLabel = QtGui.QLabel( "indexRotate")
+            self.layout_grid.addWidget( self.w_indexRotateLabel, row, 1)
+            self.w_indexRotatePosition = QtGui.QLabel()
+            self.layout_grid.addWidget( self.w_indexRotatePosition, row, 2, 1, 2)
+
+        else:
+            self.w_indexRotatePosition = None
 
     #
     # the menu bar
@@ -1497,13 +1516,17 @@ class ImageAttributes( QtGui.QMainWindow):
     #
     def prepareStatusBar( self): 
 
-
-
         if str(self.name).upper().find( "MANDELBROT") != -1:
+
+            self.zoomOut = QtGui.QPushButton(self.tr("Zoom out")) 
+            self.zoomOut.setToolTip( "Increase the limits")
+            self.statusBar.addPermanentWidget( self.zoomOut) # 'permanent' to shift it right
+            self.zoomOut.clicked.connect( self.cb_zoomOut)
+
             self.reset = QtGui.QPushButton(self.tr("Reset")) 
+            self.reset.setToolTip( "Reset the limits to max.")
             self.statusBar.addPermanentWidget( self.reset) # 'permanent' to shift it right
             self.reset.clicked.connect( self.cb_reset)
-            self.reset.setShortcut( "Alt+r")
         else:
             self.back = QtGui.QPushButton(self.tr("&Back")) 
             self.statusBar.addPermanentWidget( self.back) # 'permanent' to shift it right
@@ -1537,10 +1560,25 @@ class ImageAttributes( QtGui.QMainWindow):
         pysp.display( [ self.name])
         return
 
+    def cb_maxIter( self): 
+        temp = self.w_maxIterComboBox.currentText()
+        self.image.maxIter = int( temp)
+        self.image.zoom()
+        pysp.cls()
+        pysp.display( [ self.name])
+        return
+
+    def cb_zoomProgress( self, line): 
+        '''
+        called from image.zoom() to display the progress
+        '''
+        self.progressLabel.setText( "Progress: %s" % line)
+        return 
+
     def cb_colorMap( self): 
         temp = self.w_colorMapComboBox.currentText()
         self.image.colorMap = str( temp)
-        pysp.cls()
+        #pysp.cls()
         pysp.display( [ self.name])
         return
 
@@ -1566,13 +1604,44 @@ class ImageAttributes( QtGui.QMainWindow):
 
     def cb_reset( self): 
         self.image.xMin = -2
-        self.image.xMax = 1
-        self.image.yMin = -1.5
-        self.image.yMax = 1.5
-        self.image.maxIter = 100
-        self.image.modulo = 50
+        self.image.xMax = 0.5
+        self.image.yMin = -1.25
+        self.image.yMax = 1.25
+        self.image.maxIter = 512
+        self.image.modulo = 512
+        self.image.indexRotate = 0
         self.image.zoom()
 
+        return 
+
+    def cb_zoomOut( self): 
+        delta = self.image.xMax - self.image.xMin
+        cx = (self.image.xMax + self.image.xMin)/2.
+        cy = (self.image.yMax + self.image.yMin)/2.
+
+        self.image.xMin = cx - 2.*delta
+        self.image.xMax = cx + 2.*delta
+        self.image.yMin = cy - 2.*delta
+        self.image.yMax = cy + 2.*delta
+        if self.image.xMin < -2: 
+            self.image.xMin = -2
+        if self.image.xMax > 1: 
+            self.image.xMax = 1
+        if self.image.yMin < -1.5: 
+            self.image.yMin = -1.5
+        if self.image.yMax > 1.5: 
+            self.image.yMax = 1.5
+        self.image.maxIter = 256
+        self.image.modulo = -1
+        self.image.indexRotate = 0
+        self.image.zoom()
+
+        return 
+
+    def cb_indexRotateValueChanged( self, value): 
+        self.image.indexRotate = value
+        pysp.display( [ self.name])
+        self.w_indexRotatePosition.setText( "%d" % value)
         return 
 
     def cb_showTexts( self): 
@@ -1593,9 +1662,6 @@ class ImageAttributes( QtGui.QMainWindow):
         self.image.log = self.logCheckBox.isChecked()
         pysp.cls()
         pysp.display( [self.name])
-
-    def cb_zoomChanged( self): 
-        self.image.flagZoom = self.zoomCheckBox.isChecked()
 
     def cb_flagAxesChanged( self): 
         self.image.flagAxes = self.flagAxesCheckBox.isChecked()
@@ -1670,8 +1736,10 @@ class ImageAttributes( QtGui.QMainWindow):
         self.updateTimer.stop()
 
         self.nameValue.setText( self.name)
-        self.xValue.setText( self.image.xLabel)
-        self.yValue.setText( self.image.yLabel)
+        if self.image.xLabel is not None:
+            self.xValue.setText( self.image.xLabel)
+        if self.image.yLabel is not None:
+            self.yValue.setText( self.image.yLabel)
         self.shapeValue.setText( "%s" % repr( self.image.data.shape))
         self.xMinValue.setText( "%g" % self.image.xMin)
         self.xMaxValue.setText( "%g" % self.image.xMax)
@@ -1685,12 +1753,17 @@ class ImageAttributes( QtGui.QMainWindow):
             self.yMaxValue.setText( "%g" % self.image.yMax)
 
         if str(self.name).upper().find( "MANDELBROT") != -1:
-            self.maxIterValue.setText( "%d" % self.image.maxIter)
+            self.w_maxIterComboBox.setCurrentIndex( 
+                pysp.definitions.maxIterList.index( self.image.maxIter))
+
         self.w_moduloComboBox.setCurrentIndex( 
             pysp.definitions.moduloList.index( self.image.modulo))
         self.logCheckBox.setChecked( self.image.log)
 
         self.atValue.setText( "%s" % (str(self.image.at)))
+
+        if self.w_indexRotatePosition is not None:
+            self.w_indexRotatePosition.setText( "%d" % self.image.indexRotate)
 
         self.updateTimer.start( int( updateTime*1000))
 
@@ -1819,7 +1892,7 @@ class pySpectraGui( QtGui.QMainWindow):
     def __init__( self, files = None, parent = None, 
                   calledFromSardanaMonitor = False, 
                   flagExitOnClose = False):
-        #print "pySpectraGui.__init__"
+        #print( "pySpectraGui.__init__")
         super( pySpectraGui, self).__init__( parent)
         #
         # called from SardanaMonitor? If so, do not show motor list
@@ -2106,8 +2179,8 @@ class pySpectraGui( QtGui.QMainWindow):
         if self.proxyDoor is None:
             try:
                 self.proxyDoor = PyTango.DeviceProxy( HasyUtils.getDoorNames()[0])
-            except Exception, e: 
-                print "pySpectraGui.cb_abort: failed to create proxy to door", HasyUtils.getDoorNames()[0]
+            except Exception as e : 
+                print( "pySpectraGui.cb_abort: failed to create proxy to door %s" % HasyUtils.getDoorNames()[0])
                 return 
             self.proxyDoor = PyTango.DeviceProxy( HasyUtils.getDoorNames()[0])
         self.proxyDoor.AbortMacro()
@@ -2121,8 +2194,8 @@ class pySpectraGui( QtGui.QMainWindow):
         if self.proxyDoor is None:
             try:
                 self.proxyDoor = PyTango.DeviceProxy( HasyUtils.getDoorNames()[0])
-            except Exception, e: 
-                print "pySpectraGui.cb_stop: failed to create proxy to door", HasyUtils.getDoorNames()[0]
+            except Exception as e : 
+                print( "pySpectraGui.cb_stop: failed to create proxy to door %s " % HasyUtils.getDoorNames()[0])
                 return 
         if self.proxyDoor.State() != PyTango.DevState.ON:        
             self.proxyDoor.StopMacro()
@@ -2161,10 +2234,10 @@ class pySpectraGui( QtGui.QMainWindow):
             pysp.cls()
             pysp.dMgt.GQE.delete()
             try: 
-                pysp.read( pathName)
-            except Exception, e:
-                print "pySpectraGui.newPathSelected: trouble reading", pathName
-                print repr( e)
+                pysp.read( pathName, flagMCA = self.mcaAction.isChecked())
+            except Exception as e :
+                print( "pySpectraGui.newPathSelected: trouble reading %s" % pathName)
+                print( repr( e))
                 return 
 
             pysp.setTitle( pathName)
@@ -2247,7 +2320,7 @@ class pySpectraGui( QtGui.QMainWindow):
             if type( self.gqeList[0]) == pysp.dMgt.GQE.Scan:
                 if self.gqeList[0].fileName is not None:
                     self.fileNameLabel.setText( self.gqeList[0].fileName)
-        # +++
+
         for scan in self.gqeList:
             item = QtGui.QListWidgetItem( scan.name)
             item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
@@ -2282,7 +2355,7 @@ class pySpectraGui( QtGui.QMainWindow):
                 continue
             elif self.files is None and os.path.isdir( file):
                 self.filesListWidget.addItem( file)
-        #print "updateFilesList DONE"
+        #print( "updateFilesList DONE")
         #self.scrollAreaFiles.setFocusPolicy( QtCore.Qt.StrongFocus)
 
     def getMatchingFiles( self, patternList):
@@ -2394,29 +2467,10 @@ class pySpectraGui( QtGui.QMainWindow):
         self.gridAction.triggered.connect( self.cb_grid)
         self.optionsMenu.addAction( self.gridAction)
 
-        self.dina4Action = QtGui.QAction('DINA4', self)        
-        self.dina4Action.triggered.connect( lambda : pysp.setWsViewport( 'dina4'))
-        self.optionsMenu.addAction( self.dina4Action)
-
-        self.dina4sAction = QtGui.QAction('DINA4S', self)        
-        self.dina4sAction.triggered.connect( lambda : pysp.setWsViewport( 'dina4s'))
-        self.optionsMenu.addAction( self.dina4sAction)
-
-        self.dina5Action = QtGui.QAction('DINA5', self)        
-        self.dina5Action.triggered.connect( lambda : pysp.setWsViewport( 'dina5'))
-        self.optionsMenu.addAction( self.dina5Action)
-
-        self.dina5sAction = QtGui.QAction('DINA5S', self)        
-        self.dina5sAction.triggered.connect( lambda : pysp.setWsViewport( 'dina5s'))
-        self.optionsMenu.addAction( self.dina5sAction)
-
-        self.dina6Action = QtGui.QAction('DINA6', self)        
-        self.dina6Action.triggered.connect( lambda : pysp.setWsViewport( 'dina6'))
-        self.optionsMenu.addAction( self.dina6Action)
-
-        self.dina6sAction = QtGui.QAction('DINA6S', self)        
-        self.dina6sAction.triggered.connect( lambda : pysp.setWsViewport( 'dina6s'))
-        self.optionsMenu.addAction( self.dina6sAction)
+        self.mcaAction = QtGui.QAction('MCA File', self, checkable = True)        
+        self.mcaAction.setStatusTip('The input files contain MCA data (no x-position column)')
+        self.mcaAction.triggered.connect( self.cb_mca)
+        self.optionsMenu.addAction( self.mcaAction)
 
 
         self.exitAction = QtGui.QAction('E&xit', self)        
@@ -2434,6 +2488,32 @@ class pySpectraGui( QtGui.QMainWindow):
         self.configAction = QtGui.QAction('Config', self)        
         self.configAction.triggered.connect( self.cb_config)
         self.configMenu.addAction( self.configAction)
+
+
+        self.dina4Action = QtGui.QAction('DINA4', self)        
+        self.dina4Action.triggered.connect( lambda : pysp.setWsViewport( 'dina4'))
+        self.configMenu.addAction( self.dina4Action)
+
+        self.dina4sAction = QtGui.QAction('DINA4S', self)        
+        self.dina4sAction.triggered.connect( lambda : pysp.setWsViewport( 'dina4s'))
+        self.configMenu.addAction( self.dina4sAction)
+
+        self.dina5Action = QtGui.QAction('DINA5', self)        
+        self.dina5Action.triggered.connect( lambda : pysp.setWsViewport( 'dina5'))
+        self.configMenu.addAction( self.dina5Action)
+
+        self.dina5sAction = QtGui.QAction('DINA5S', self)        
+        self.dina5sAction.triggered.connect( lambda : pysp.setWsViewport( 'dina5s'))
+        self.configMenu.addAction( self.dina5sAction)
+
+        self.dina6Action = QtGui.QAction('DINA6', self)        
+        self.dina6Action.triggered.connect( lambda : pysp.setWsViewport( 'dina6'))
+        self.configMenu.addAction( self.dina6Action)
+
+        self.dina6sAction = QtGui.QAction('DINA6S', self)        
+        self.dina6sAction.triggered.connect( lambda : pysp.setWsViewport( 'dina6s'))
+        self.configMenu.addAction( self.dina6sAction)
+
 
         #
         # the activity menubar: help and activity
@@ -2523,7 +2603,7 @@ class pySpectraGui( QtGui.QMainWindow):
             if callable( f):
                 f()
             else: 
-                print "pySpectraGuiClass.make_example: problem with %s" % funcName
+                print( "pySpectraGuiClass.make_example: problem with %s" % funcName)
             return 
         return func
         
@@ -2671,6 +2751,9 @@ class pySpectraGui( QtGui.QMainWindow):
                 scan.showGridY = False
         pysp.cls()
         pysp.display()
+
+    def cb_mca( self): 
+        self.mcaAction.isChecked() # +++
 
     def cb_edit( self):
         item = self.filesListWidget.currentItem()

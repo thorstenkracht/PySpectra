@@ -12,7 +12,7 @@ pyqtgraph/matplotlib in advance
 '''
 
 import HasyUtils
-import Queue, argparse, sys, os
+import argparse, sys, os
 
 from PyQt4 import QtCore
 from PyQt4 import QtGui
@@ -54,15 +54,15 @@ def main( flagNoDoor):
 
     try:
         door = taurus.Device( HasyUtils.getLocalDoorNames()[0])
-    except Exception, e:
-        print "SardanaMonitor.main: trouble connecting to door", HasyUtils.getLocalDoorNames()[0]
-        print repr( e)
+    except Exception as e:
+        print( "SardanaMonitor.main: trouble connecting to door %s" % repr( HasyUtils.getLocalDoorNames()[0]))
+        print( repr( e))
         sys.exit(255)
 
     try:
         sys.exit( app.exec_())
-    except Exception, e:
-        print repr( e)
+    except Exception as e:
+        print( repr( e))
 
 if __name__ == "__main__":
     args = parseCLI()

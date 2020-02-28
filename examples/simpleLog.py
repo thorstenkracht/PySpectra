@@ -4,8 +4,9 @@ import PySpectra as pysp
 import sys
 
 def main():
-    pysp.exampleSimpleLog()
-    print "Prtc ",
+    pysp.example_SimpleLog()
+    sys.stdout.write( "Prtc")
+    sys.stdout.flush()
     sys.stdin.readline()
 
 if __name__ == '__main__': 

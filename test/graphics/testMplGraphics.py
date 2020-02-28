@@ -22,7 +22,6 @@ python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2BothLog
 python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2FirstLog
 python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2SecondLog
 python ./test/graphics/testMplGraphics.py testMplGraphics.testOverlay2SecondLog
-python ./test/graphics/testMplGraphics.py testMplGraphics.testImage
 python ./test/graphics/testMplGraphics.py testMplGraphics.testImageMB1
 python ./test/graphics/testMplGraphics.py testMplGraphics.testImageMB2
 '''
@@ -635,8 +634,7 @@ class testMplGraphics( unittest.TestCase):
         return 0
 
     def testImageMB1( self): 
-        print "testGQE.testImage"
-
+        print "testGQE.testImageMB1"
 
         PySpectra.mtpltlb.graphics.cls()
         PySpectra.delete()
@@ -653,15 +651,26 @@ class testMplGraphics( unittest.TestCase):
             for j in range(height):
                 n3[i,j] = self.mandelbrot(r1[i] + 1j*r2[j],maxiter)
             
-        # m = PySpectra.Image( name = "FirstImage", startX = startX, stopX = stopX, startY = startY, stopY = stopY, nPts = nPts)
-        m = PySpectra.Image( name = "FirstImage", data = n3)
+        m = PySpectra.Image( name = "FirstImage", data = n3, 
+                             xMin = xmin, xMax = xmax, width = width,  
+                             yMin = ymin, yMax = ymax, height = height, 
+                             xLabel = "eh_mot01", yLabel = "eh_mot02")
+
+        self.assertEqual( m.xMin, xmin)
+        self.assertEqual( m.xMax, xmax)
+        self.assertEqual( m.yMin, ymin)
+        self.assertEqual( m.yMax, ymax)
+        self.assertEqual( m.height, height)
+        self.assertEqual( m.width, width)
+
+        self.assertEqual( m.data.shape[0], width)
+        self.assertEqual( m.data.shape[1], height)
 
         PySpectra.mtpltlb.graphics.display()
         PySpectra.mtpltlb.graphics.procEventsLoop( 1)
 
     def testImageMB2( self): 
-        print "testGQE.testImage"
-
+        print "testGQE.testImageMB2"
 
         PySpectra.mtpltlb.graphics.cls()
         PySpectra.mtpltlb.graphics.setWsViewport( 'DINA5S')
@@ -669,8 +678,8 @@ class testMplGraphics( unittest.TestCase):
 
         (xmin, xmax) = (-2., 1)
         (ymin, ymax) = (-1.5, 1.5)
-        (width, height) = (50, 50)
-        maxiter = 20
+        (width, height) = (20, 20)
+        maxiter = 50
 
         m = PySpectra.Image( name = "FirstImage", xMin = xmin, xMax = xmax, width = width,  
                             yMin = ymin, yMax = ymax, height = height)
@@ -680,8 +689,7 @@ class testMplGraphics( unittest.TestCase):
         for i in range(width):
             for j in range(height):
                 res = self.mandelbrot(r1[i] + 1j*r2[j],maxiter)
-                m.setPixel( x = r1[i], y = r2[j], value = res)
-
+                m.setPixelWorld( x = r1[i], y = r2[j], value = res)
             PySpectra.mtpltlb.graphics.cls()
             PySpectra.mtpltlb.graphics.display()
         PySpectra.mtpltlb.graphics.procEventsLoop( 1.)

@@ -568,7 +568,7 @@ class testGraphics( unittest.TestCase):
 
         diffTime = time.time() - startTime
 
-        self.assertLess( diffTime, 15.)
+        self.assertLess( diffTime, 20.)
         print "testGraphics.testLissajous, DONE"
 
     def testOverlay2BothLog( self):
@@ -665,17 +665,19 @@ class testGraphics( unittest.TestCase):
         (width, height) = (500, 500)
         maxiter = 20
 
-        r1 = np.linspace(xmin, xmax, width + 1)
-        r2 = np.linspace(ymin, ymax, height + 1)
-        n3 = np.empty((width + 1,height + 1))
+        r1 = np.linspace(xmin, xmax, width)
+        r2 = np.linspace(ymin, ymax, height)
+        n3 = np.empty((width, height))
         for i in range(width):
             for j in range(height):
                 n3[i,j] = self.mandelbrot(r1[i] + 1j*r2[j],maxiter)
-            
+        #
+        # create the image by supplying data
+        #
         m = PySpectra.Image( name = "MandelbrotSet1", data = n3,
-                            xMin = xmin, xMax = xmax, width = width,  
-                            yMin = ymin, yMax = ymax, height = height, 
-                            xLabel = "eh_mot01", yLabel = "eh_mot02")
+                             xMin = xmin, xMax = xmax, width = width,  
+                             yMin = ymin, yMax = ymax, height = height, 
+                             xLabel = "eh_mot01", yLabel = "eh_mot02")
 
         PySpectra.display()
 
@@ -689,8 +691,8 @@ class testGraphics( unittest.TestCase):
         # to understand '+ 1'consider : x [-2, 1], width 100
         #  if x == 1 -> ix == 100, so we need '+ 1'
         #
-        self.assertEqual( m.data.shape[0], width + 1)
-        self.assertEqual( m.data.shape[1], height + 1)
+        self.assertEqual( m.data.shape[0], width)
+        self.assertEqual( m.data.shape[1], height)
 
         PySpectra.procEventsLoop( 2)
 
@@ -706,17 +708,20 @@ class testGraphics( unittest.TestCase):
         (ymin, ymax) = (-1.5, 1.5)
         (width, height) = (300, 300)
         maxiter = 20
-
-        m = PySpectra.Image( name = "MandelbrotSet2", xMin = xmin, xMax = xmax, width = width,  
-                            yMin = ymin, yMax = ymax, height = height, 
-                            xLabel = "eh_mot01", yLabel = "eh_mot02")
+        #
+        # create the image by supplying the limits
+        #
+        m = PySpectra.Image( name = "MandelbrotSet2", 
+                             xMin = xmin, xMax = xmax, width = width,  
+                             yMin = ymin, yMax = ymax, height = height, 
+                             xLabel = "eh_mot01", yLabel = "eh_mot02")
 
         r1 = np.linspace(xmin, xmax, width)
         r2 = np.linspace(ymin, ymax, height)
         for i in range(width):
             for j in range(height):
                 res = self.mandelbrot(r1[i] + 1j*r2[j],maxiter)
-                m.setPixel( x = r1[i], y = r2[j], value = res)
+                m.setPixelWorld( x = r1[i], y = r2[j], value = res)
 
             PySpectra.cls()
             PySpectra.display()
@@ -732,8 +737,8 @@ class testGraphics( unittest.TestCase):
         # to understand '+ 1'consider : x [-2, 1], width 100
         #  if x == 1 -> ix == 100, so we need '+ 1'
         #
-        self.assertEqual( m.data.shape[0], width + 1)
-        self.assertEqual( m.data.shape[1], height + 1)
+        self.assertEqual( m.data.shape[0], width)
+        self.assertEqual( m.data.shape[1], height)
 
 
     def mandelbrot( self,  c, maxiter):
@@ -779,7 +784,7 @@ class testGraphics( unittest.TestCase):
                 hsh = { 'putData': 
                         { 'name': "MandelBrot",
                           'noDisplay': True, 
-                          'setPixel': ( r1[i], r2[j], res)}}
+                          'setPixelWorld': ( r1[i], r2[j], res)}}
                 hsh = PySpectra.toPysp( hsh)
                 if hsh[ 'result'] != "done":
                     print "error from setPixel"

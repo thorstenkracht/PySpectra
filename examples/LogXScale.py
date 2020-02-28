@@ -4,7 +4,9 @@ import PySpectra as pysp
 import sys
 
 def main():
-    pysp.exampleLogXScale()
+    pysp.example_LogXScale()
+    sys.stdout.write( "Prtc")
+    sys.stdout.flush()
     print "Prtc ",
     sys.stdin.readline()
 

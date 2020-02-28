@@ -17,6 +17,15 @@ python ./test/dMgt/testGQE.py testGQE.testGetXY
 python ./test/dMgt/testGQE.py testGQE.testExceptions
 python ./test/dMgt/testGQE.py testGQE.testMisc
 python ./test/dMgt/testGQE.py testGQE.testDoubles
+python ./test/dMgt/testGQE.py testGQE.testToPysp1
+python ./test/dMgt/testGQE.py testGQE.testToPysp2
+python ./test/dMgt/testGQE.py testGQE.testToPysp3
+python ./test/dMgt/testGQE.py testGQE.testToPysp4
+python ./test/dMgt/testGQE.py testGQE.testToPysp5
+python ./test/dMgt/testGQE.py testGQE.testToPysp6
+python ./test/dMgt/testGQE.py testGQE.testToPysp7
+python ./test/dMgt/testGQE.py testGQE.test_titleAndComment
+python ./test/dMgt/testGQE.py testGQE.testSSA
 '''
 import sys
 #pySpectraPath = "/home/kracht/Misc/pySpectra"
@@ -31,6 +40,16 @@ import time, sys, os
 import math 
 import pyqtgraph as pg
 
+
+
+def mandelbrot( c, maxiter):
+    z = c
+    for n in range(maxiter):
+        if abs(z) > 2:
+            return n
+        z = z*z + c
+    return 0
+
 class testGQE( unittest.TestCase):
 
     @classmethod
@@ -43,7 +62,6 @@ class testGQE( unittest.TestCase):
 
     def test_titleAndComment( self):
 
-        print "testGQE.test_titleAndComment"
         PySpectra.cls()
 
         PySpectra.delete()
@@ -655,6 +673,311 @@ class testGQE( unittest.TestCase):
         #print repr( context.exception)
         self.assertTrue( "GQE.Image.__init__(): t1 exists already"
                          in context.exception)
+
+        
+    def testToPysp1( self) : 
+        import random
+        print "testGQE.testToPysp1"
+
+        PySpectra.toPysp( { 'command': ['cls', 'delete']})
+        MAX = 25
+        pos = [float(n)/MAX for n in range( MAX)]
+        d1 = [random.random() for n in range( MAX)]
+        d2 = [random.random() for n in range( MAX)]
+        hsh = PySpectra.toPysp( { 'putData': {'title': "Important Data", 
+                                              'comment': "a comment", 
+                                              'columns': 
+                                              [ { 'name': "eh_mot01", 'data' : pos},
+                                                { 'name': "eh_c01", 'data' : d1},
+                                                { 'name': "eh_c02", 'data' : d2, 
+                                                  'symbolColor': 'blue', 'symbol': '+', 'symbolSize': 5, 
+                                                  'xLog': False, 'yLog': False, 
+                                                  'showGridX': False, 'showGridY': False}]}})
+        PySpectra.toPysp( { 'command': ['display']})
+        PySpectra.procEventsLoop( 1)
+        lst = PySpectra.getGqeList()
+        self.assertEqual( len( lst), 2)
+        self.assertEqual( lst[0].name, "eh_c01")
+        self.assertEqual( lst[1].name, "eh_c02")
+        
+        #
+        # retrieve the data 
+        #
+        hsh = PySpectra.toPysp( { 'getData': True})
+        #
+        # ... and compare.
+        #
+        for i in range( MAX):
+            self.assertEqual( pos[i], hsh[ 'getData']['EH_C01']['x'][i])
+            self.assertEqual( d1[i], hsh[ 'getData']['EH_C01']['y'][i])
+            self.assertEqual( d2[i], hsh[ 'getData']['EH_C02']['y'][i])
+        print "testGQE.testToPysp1 DONE"
+        return 
+        
+    def testToPysp2( self) : 
+        import random
+        print "testGQE.testToPysp1"
+
+        PySpectra.toPysp( { 'command': ['cls', 'delete']})
+        MAX = 25
+        pos = [float(n)/MAX for n in range( MAX)]
+        d1 = [random.random() for n in range( MAX)]
+        d2 = [random.random() for n in range( MAX)]
+        hsh = PySpectra.toPysp( { 'Scan': { 'name': "d1", 'x': pos, 'y': d1}})
+        hsh = PySpectra.toPysp( { 'Scan': { 'name': "d2", 'x': pos, 'y': d2}})
+
+        PySpectra.toPysp( { 'command': ['setTitle \"a title\"']})
+        PySpectra.toPysp( { 'command': ['setComment \"a comment\"']})
+        PySpectra.toPysp( { 'command': ['display']})
+        PySpectra.procEventsLoop( 1)
+        lst = PySpectra.getGqeList()
+        self.assertEqual( len( lst), 2)
+        self.assertEqual( lst[0].name, "d1")
+        self.assertEqual( lst[1].name, "d2")
+
+        #
+        # retrieve the data and compare
+        #
+        hsh = PySpectra.toPysp( { 'getData': True})
+        for i in range( MAX):
+            self.assertEqual( pos[i], hsh[ 'getData']['D1']['x'][i])
+            self.assertEqual( d1[i], hsh[ 'getData']['D1']['y'][i])
+            self.assertEqual( d2[i], hsh[ 'getData']['D2']['y'][i])
+        #
+        # set y-values 
+        #
+        for i in range( MAX):
+            PySpectra.toPysp( { 'command': ['setY d1 %d %g' % (i, float(i)/10.)]})
+        #
+        # and compare
+        #
+        o = PySpectra.getGqe( 'd1')
+        for i in range( MAX):
+            self.assertEqual( o.y[i], float(i)/10.)
+        
+        PySpectra.toPysp( { 'command': ['cls', 'display']})
+        PySpectra.procEventsLoop( 1)
+
+        
+        print "testGQE.testToPysp2 DONE"
+        return 
+
+    def testToPysp3( self) : 
+        PySpectra.toPysp( { 'command': ['cls', 'delete']})
+        PySpectra.toPysp( { 'command': ['setWsViewport dina5s']})
+
+        (xmin, xmax) = (-2.,-0.5)
+        (ymin, ymax) = (0, 1.5)
+        (width, height) = (100, 100)
+        maxiter = 25
+
+        #
+        # do the clean-up before we start
+        #
+        hsh =  PySpectra.toPysp( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        self.assertEqual( hsh[ 'result'], 'done')
+
+        #
+        # create the image
+        #
+        hsh = { 'Image': 
+                { 'name': "MandelBrot",
+                  'xMin': xmin, 'xMax': xmax, 'width': width, 
+                  'yMin': ymin, 'yMax': ymax, 'height': height}}
+
+        hsh = PySpectra.toPysp( hsh)
+        self.assertEqual( hsh[ 'result'], 'done')
+        #
+        # fill the image, pixel by pixel
+        #
+        r1 = np.linspace(xmin, xmax, width)
+        r2 = np.linspace(ymin, ymax, height)
+        for i in range(width):
+            for j in range(height):
+                res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
+                #hsh = { 'putData': 
+                #         { 'name': "MandelBrot",
+                #           'noDisplay': True, 
+                #           'setPixelWorld': ( r1[i], r2[j], res)}}
+                #hsh = { 'command': [ 'setPixelWorld MandelBrot %g %g %g' % ( r1[i], r2[j], res)]}
+                hsh = { 'command': [ 'setPixelImage MandelBrot %d %d %g' % ( i, j, res)]}
+                hsh = PySpectra.toPysp( hsh)
+                self.assertEqual( hsh[ 'result'], 'done')
+            hsh =  PySpectra.toPysp( { 'command': ['cls', 'display']})
+            self.assertEqual( hsh[ 'result'], 'done')
+        PySpectra.procEventsLoop( 1)
+
+    def testToPysp4( self) : 
+        PySpectra.toPysp( { 'command': ['cls', 'delete']})
+        PySpectra.toPysp( { 'command': ['setWsViewport dina5s']})
+
+        (xmin, xmax) = (-2.,-0.5)
+        (ymin, ymax) = (0, 1.5)
+        (width, height) = (100, 100)
+        maxiter = 25
+
+        #
+        # do the clean-up before we start
+        #
+        hsh =  PySpectra.toPysp( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        self.assertEqual( hsh[ 'result'], 'done')
+
+        #
+        # create the image
+        #
+        hsh = { 'Image': 
+                { 'name': "MandelBrot",
+                  'xMin': xmin, 'xMax': xmax, 'width': width, 
+                  'yMin': ymin, 'yMax': ymax, 'height': height}}
+
+        hsh = PySpectra.toPysp( hsh)
+        self.assertEqual( hsh[ 'result'], 'done')
+        #
+        # fill the image, pixel by pixel
+        #
+        r1 = np.linspace(xmin, xmax, width)
+        r2 = np.linspace(ymin, ymax, height)
+        for i in range(width):
+            for j in range(height):
+                res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
+                #hsh = { 'putData': 
+                #         { 'name': "MandelBrot",
+                #           'noDisplay': True, 
+                #           'setPixelWorld': ( r1[i], r2[j], res)}}
+                hsh = { 'command': [ 'setPixelWorld MandelBrot %g %g %g' % ( r1[i], r2[j], res)]}
+                hsh = PySpectra.toPysp( hsh)
+                self.assertEqual( hsh[ 'result'], 'done')
+            hsh =  PySpectra.toPysp( { 'command': ['cls', 'display']})
+            self.assertEqual( hsh[ 'result'], 'done')
+        PySpectra.procEventsLoop( 1)
+
+    def testToPysp5( self) : 
+        PySpectra.toPysp( { 'command': ['cls', 'delete']})
+        PySpectra.toPysp( { 'command': ['setWsViewport dina5s']})
+
+        (xmin, xmax) = (-2.,-0.5)
+        (ymin, ymax) = (0, 1.5)
+        (width, height) = (100, 100)
+        maxiter = 25
+
+        #
+        # do the clean-up before we start
+        #
+        hsh =  PySpectra.toPysp( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        self.assertEqual( hsh[ 'result'], 'done')
+
+        #
+        # create the image
+        #
+        hsh = { 'Image': 
+                { 'name': "MandelBrot",
+                  'xMin': xmin, 'xMax': xmax, 'width': width, 
+                  'yMin': ymin, 'yMax': ymax, 'height': height}}
+
+        hsh = PySpectra.toPysp( hsh)
+        self.assertEqual( hsh[ 'result'], 'done')
+        #
+        # fill the image, pixel by pixel
+        #
+        r1 = np.linspace(xmin, xmax, width)
+        r2 = np.linspace(ymin, ymax, height)
+        for i in range(width):
+            for j in range(height):
+                res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
+                hsh = { 'putData': 
+                         { 'name': "MandelBrot",
+                           'noDisplay': True, 
+                           'setPixelWorld': ( r1[i], r2[j], res)}}
+                hsh = PySpectra.toPysp( hsh)
+                self.assertEqual( hsh[ 'result'], 'done')
+            hsh =  PySpectra.toPysp( { 'command': ['cls', 'display']})
+            self.assertEqual( hsh[ 'result'], 'done')
+        PySpectra.procEventsLoop( 1)
+
+    def testToPysp6( self) : 
+        '''
+        use putData to transfer a complete image at once
+        '''
+        PySpectra.toPysp( { 'command': ['cls', 'delete']})
+        PySpectra.toPysp( { 'command': ['setWsViewport dina5s']})
+
+        (xmin, xmax) = (-2.,-0.5)
+        (ymin, ymax) = (0, 1.5)
+        (width, height) = (100, 100)
+        maxiter = 25
+
+        #
+        # do the clean-up before we start
+        #
+        hsh =  PySpectra.toPysp( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        self.assertEqual( hsh[ 'result'], 'done')
+
+        #
+        # fill the image, pixel by pixel
+        #
+        r1 = np.linspace(xmin, xmax, width)
+        r2 = np.linspace(ymin, ymax, height)
+        data = np.ndarray( (width, height), np.int32)
+        for i in range(width):
+            for j in range(height):
+                res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
+                data[i][j] = int( res)
+
+        PySpectra.toPysp( { 'putData': 
+                        { 'images': [{'name': "MandelBrot", 'data': data,
+                                      'xMin': xmin, 'xMax': xmax, 
+                                      'yMin': ymin, 'yMax': ymax}]}})
+
+        hsh =  PySpectra.toPysp( { 'command': ['cls', 'display']})
+        self.assertEqual( hsh[ 'result'], 'done')
+        PySpectra.procEventsLoop( 1)
+
+    def testToPysp7( self) : 
+        '''
+        use Image to transfer a complete image at once
+        '''
+        PySpectra.toPysp( { 'command': ['cls', 'delete']})
+        PySpectra.toPysp( { 'command': ['setWsViewport dina5s']})
+
+        (xmin, xmax) = (-2.,-0.5)
+        (ymin, ymax) = (0, 1.5)
+        (width, height) = (100, 100)
+        maxiter = 25
+
+        #
+        # do the clean-up before we start
+        #
+        hsh =  PySpectra.toPysp( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        self.assertEqual( hsh[ 'result'], 'done')
+
+        #
+        # fill the image, pixel by pixel
+        #
+        r1 = np.linspace(xmin, xmax, width)
+        r2 = np.linspace(ymin, ymax, height)
+        data = np.ndarray( (width, height), np.int32)
+        for i in range(width):
+            for j in range(height):
+                res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
+                data[i][j] = int( res)
+
+        PySpectra.toPysp( { 'Image': 
+                            { 'name': "MandelBrot", 'data': data, 
+                              'xMin': xmin, 'xMax': xmax, 
+                              'yMin': ymin, 'yMax': ymax, 
+                            }})
+
+        hsh =  PySpectra.toPysp( { 'command': ['cls', 'display']})
+        self.assertEqual( hsh[ 'result'], 'done')
+        o = PySpectra.getGqe( "Mandelbrot")
+        self.assertEqual( o.height, 100)
+        self.assertEqual( o.width, 100)
+        self.assertEqual( o.xMin, xmin)
+        self.assertEqual( o.xMax, xmax)
+        self.assertEqual( o.yMin, ymin)
+        self.assertEqual( o.yMax, ymax)
+        print dir(o)
+        PySpectra.procEventsLoop( 1)
 
 if __name__ == "__main__":
     unittest.main()

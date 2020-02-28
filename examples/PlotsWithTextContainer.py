@@ -5,8 +5,10 @@ import numpy as np
 import sys
 
 def main():
-    pysp.examplePlotsWithTextContainer()
-    print "Prtc ",
+    pysp.example_PlotsWithTextContainer()
+    sys.stdout.write( "Prtc")
+    sys.stdout.flush()
+
     sys.stdin.readline()
 
 if __name__ == '__main__': 

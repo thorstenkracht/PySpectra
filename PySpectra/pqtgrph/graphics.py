@@ -17,7 +17,7 @@ import psutil as _psutil
 
 _QApp = None
 _win = None
-
+_myScene = None
 _clsFunctions = []
 
 def _initGraphic():
@@ -60,21 +60,15 @@ def clear( scan):
 def close(): 
     global _win
     global _clsFunctions
+    global _myScene
 
     if _win is None: 
         return
 
-    gqeList = _pysp.getGqeList()
-    for gqe in gqeList:
-        if gqe.mouseProxy is not None: 
-            gqe.mouseProxy.disconnect()
-            gqe.mouseProxy = None
-        if gqe.mouseClick is not None: 
-            gqe.mouseClick.disconnect()
-            gqe.mouseClick = None
-
     _win.destroy()
     _win = None
+
+    _myScene = None
 
     _clsFunctions = []
 
@@ -164,7 +158,7 @@ def cls():
     clear screen: allow for a new plot
     '''
     global _clsFunctions
-    #print "pqt_graphics.cls"
+    global _myScene
 
     if _QApp is None or _win is None: 
         _initGraphic()
@@ -176,9 +170,23 @@ def cls():
     # pyspViewer examples
     #
     for f in _clsFunctions: 
-        f()
+        try: 
+            f()
+        except Exception as e: 
+            print( "+++ pqtgraphics.cls, error %s" % repr( e))
     _clsFunctions = []
+    #
+    # gqe.mousePrepared: needed because we can have several display() 
+    # calls without cls()
+    #
+    gqeList = _pysp.getGqeList()
+    for gqe in gqeList:
+        gqe.mousePrepared = False
 
+    if _myScene is not None: 
+        _myScene.sigMouseClicked.disconnect()
+        _myScene.sigMouseMoved.disconnect()
+        _myScene = None
     #
     # the clear() statement cuts down this list:_win.items() to 
     # one element, <class 'pyqtgraph.graphicsItems.GraphicsLayout.GraphicsLayout'>
@@ -192,10 +200,6 @@ def cls():
     #
     gqeList = _pysp.getGqeList()
     for gqe in gqeList:
-        if gqe.mouseProxy is not None: 
-            gqe.mouseProxy.disconnect()
-        if gqe.mouseClick is not None: 
-            gqe.mouseClick.disconnect()
         gqe.viewBox = None
         gqe.plotItem = None
         if type( gqe) == _pysp.dMgt.GQE.Scan:
@@ -346,6 +350,7 @@ def _getPen( scan):
         stl = _QtCore.Qt.DashLine
 
     return _pg.mkPen( color = clr, width = scan.lineWidth, style = stl)
+
 def _make_cb_mouseMoved( gqe):
     '''
     return a callback function for the moveMouse signal
@@ -368,7 +373,7 @@ def _make_cb_mouseMoved( gqe):
         if gqe.plotItem.__class__.__name__ != 'PlotItem':
             return 
 
-        mousePoint = gqe.plotItem.vb.mapSceneToView(evt[0])
+        mousePoint = gqe.plotItem.vb.mapSceneToView(evt)
 
         if type( gqe) == _pysp.dMgt.GQE.Image: 
             mY = mousePoint.y()
@@ -425,41 +430,41 @@ def _make_cb_mouseClicked( gqe):
     '''
     def mouseClicked(evt):
 
-        if len( evt) != 1:
-            raise ValueError( "pqt_graphics.mouseClicked: len( evt-tuple) != 1, %s" % gqe.name)
-            
+        #if len( evt) != 1:
+        #    raise ValueError( "pqt_graphics.mouseClicked: len( evt-tuple) != 1, %s" % gqe.name)
+
         # left mouse button
-        if evt[0].button() == 1: 
-            mousePoint = gqe.plotItem.vb.mapSceneToView(evt[0].scenePos())
+        if evt.button() == 1: 
+            mousePoint = gqe.plotItem.vb.mapSceneToView(evt.scenePos())
             if type( gqe) == _pysp.dMgt.GQE.Scan:
                 gqe.move( mousePoint.x())
             elif type( gqe) == _pysp.dMgt.GQE.Image:
                 gqe.move( mousePoint.x(), mousePoint.y())
-        # middle mouse button
-        #elif evt[0].button() == 4:
-        #    mousePoint = gqe.plotItem.vb.mapSceneToView(evt[0].scenePos())
-        #    gqe.autoscaleX = False
-        #    if not gqe.flagSetXMin: 
-        #        gqe.xMin = mousePoint.x()
-        #        gqe.flagSetXMin = True
-        #        gqe.flagSetXMax = False
-        #    elif not gqe.flagSetXMax: 
-        #        gqe.xMax = mousePoint.x()
-        #        gqe.flagSetXMin = False
-        #        scan.flagSetXMax = True
+
     return mouseClicked
 
 def _prepareMouse( gqe):
     '''
     see display() for some remarks about setting of the mouse/cursor
     '''
-    gqe.mouseProxy = _pg.SignalProxy( gqe.plotItem.scene().sigMouseMoved, 
-                                       rateLimit=60, slot=_make_cb_mouseMoved( gqe))
-    gqe.mouseClick = _pg.SignalProxy( gqe.plotItem.scene().sigMouseClicked, 
-                                       rateLimit=60, slot=_make_cb_mouseClicked( gqe))
+    global _myScene
+
+    if gqe.mousePrepared: 
+        return 
+
+    if _myScene is None: 
+        _myScene = gqe.plotItem.scene()
+        _myScene.sigMouseMoved.connect( _make_cb_mouseMoved( gqe))
+        _myScene.sigMouseClicked.connect( _make_cb_mouseClicked( gqe))
+    #
+    # the scene object seems to be fixed for an entrire session
+    #
+    #_clsFunctions.append( gqe.plotItem.scene().sigMouseClicked.disconnect)
+    #_clsFunctions.append( gqe.plotItem.scene().sigMouseMoved.disconnect)
     #
     # the mouseLabel.hide() call messes up the x-scale, so we plot only a ' '
     #
+
     gqe.mouseLabel = _pg.TextItem( ".", color='b', anchor = (0.5, 0.5))
     if type(gqe) == _pysp.dMgt.GQE.Scan:
         gqe.mouseLabel.setPos( gqe.x[0], gqe.y[0])
@@ -467,6 +472,11 @@ def _prepareMouse( gqe):
         gqe.mouseLabel.setPos( 0., 0.,)
     gqe.plotItem.addItem( gqe.mouseLabel, ignoreBounds = True)
     gqe.mouseLabel.hide()
+    #
+    # gqe.mousePrepared: needed because we can have several display() 
+    # calls without cls()
+    #
+    gqe.mousePrepared = True
     return 
 
 def _addInfiniteLines( gqe): 
@@ -609,9 +619,9 @@ def _addTexts( scan, nameList):
     for elm in scan.textList:
 
         if elm.fontSize is None:
-            sz = fontSize
+            elm.fontSizeTemp = fontSize
         else:
-            sz = elm.fontSize
+            elm.fontSizeTemp = elm.fontSize
 
         if elm.hAlign == 'left':
             anchorX = 0
@@ -627,10 +637,10 @@ def _addTexts( scan, nameList):
             anchorY = 0.5
         if elm.color.lower() in _pysp.definitions.colorCode:
             textItem = _pg.TextItem( color=_pysp.definitions.colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
-            textItem.setHtml( '<div style="font-size:%dpx;">%s</div>' % (sz, elm.text))
+            textItem.setHtml( '<div style="font-size:%dpx;">%s</div>' % ( elm.fontSizeTemp, elm.text))
         else:
             textItem = _pg.TextItem( color='k', anchor = ( anchorX, anchorY))
-            textItem.setHtml( '<div style="font-size:%dpx;">%s</div>' % ( sz, elm.text))
+            textItem.setHtml( '<div style="font-size:%dpx;">%s</div>' % ( elm.fontSizeTemp, elm.text))
 
         if scan.textOnly:
             x = elm.x
@@ -661,6 +671,7 @@ def _updateTextPosition( scan):
         else:
             (x, y) = _calcTextPosition( scan, elm.x, elm.y)
         elm.textItem.setPos( x, y)
+        elm.textItem.setHtml( '<div style="font-size:%dpx;">%s</div>' % ( elm.fontSizeTemp, elm.text))
     return 
 
 def _setTitle( scan, nameList): 
@@ -977,6 +988,111 @@ def _createPlotItem( gqe, nameList):
 
     return
 
+def _cmap_xmap(function, cmap):
+    """ Applies function, on the indices of colormap cmap. Beware, function
+    should map the [0, 1] segment to itself, or you are in for surprises.
+
+    See also cmap_xmap.
+    """
+    cdict = cmap._segmentdata
+    function_to_map = lambda x : (function(x[0]), x[1], x[2])
+    for key in ('red','green','blue'):
+        cdict[key] = map(function_to_map, cdict[key])
+        cdict[key].sort()
+        assert (cdict[key][0]<0 or cdict[key][-1]>1), "Resulting indices extend out of the [0, 1] segment."
+
+    return _mpl.colors.LinearSegmentedColormap('colormap',cdict,1024)
+
+def _displayImages( flagDisplaySingle, nameList = None):
+
+    gqeList = _pysp.getGqeList()
+
+    for imageGqe in gqeList:
+        if type( imageGqe) != _pysp.dMgt.GQE.Image: 
+            continue
+        if len( nameList) > 0: 
+            if imageGqe.name not in nameList:
+                continue
+        if imageGqe.plotItem is None: 
+            _createPlotItem( imageGqe, nameList)
+        #imageGqe.plotItem = _win.addPlot( row = imageGqe.row, col = imageGqe.col)
+        if imageGqe.img is None:
+            imageGqe.img = _pg.ImageItem()
+            imageGqe.plotItem.addItem( imageGqe.img)
+            if imageGqe.log:
+                try:
+                    imageGqe.img.setImage( _np.log( imageGqe.data))
+                except Exception, e: 
+                    imageGqe.log = False
+                    print "pqt_graphics: log failed"
+                    print repr( e)
+                    return 
+            else:
+                if imageGqe.modulo != -1:
+                    imageGqe.img.setImage( imageGqe.data % imageGqe.modulo)
+                else: 
+                    imageGqe.img.setImage( imageGqe.data)
+        else: 
+            if imageGqe.log:
+                try:
+                    imageGqe.img.setImage( _np.log( imageGqe.data))
+                except Exception, e: 
+                    imageGqe.log = False
+                    print "pqt_graphics: log failed"
+                    print repr( e)
+                    return 
+            else:
+                if imageGqe.modulo != -1:
+                    imageGqe.img.setImage( imageGqe.data % imageGqe.modulo)
+                else: 
+                    imageGqe.img.setImage( imageGqe.data)
+        try: 
+            #
+            # matplotlib.colors.LinearSegmentedColormap
+            #
+            if imageGqe.colorMap == 'blackwhite':
+                import matplotlib.colors as clr
+                colormap = clr.LinearSegmentedColormap.from_list('blackwhite',     ['#000000','#ffffff'], N=256)
+                colormap._init()
+                lut = (colormap._lut * 255).view( _np.ndarray)  # Convert matplotlib colormap from 0-1 to 0-255 for Qt
+                length = lut.shape[0] - 3
+                lutTemp = _np.copy( lut)
+                for i in range( length):
+                    if (i%2) == 0:
+                        lutTemp[i] = [0., 0., 0., 255.] 
+                    else:
+                        lutTemp[i] = [255., 255., 255., 255.] 
+                lut = _np.copy( lutTemp)
+            else:
+                colormap = cm.get_cmap( imageGqe.colorMap)
+                colormap._init()
+                lut = (colormap._lut * 255).view( _np.ndarray)  # Convert matplotlib colormap from 0-1 to 0-255 for Qt
+                length = lut.shape[0] - 3
+                lutTemp = _np.copy( lut)
+
+            for i in range( length):
+                j = i - (imageGqe.indexRotate % length)
+                if j < 0: 
+                    j = j + length
+                lutTemp[j] = lut[i]
+
+            lut = _np.copy( lutTemp)
+
+            imageGqe.img.setLookupTable( lut)
+        except Exception, e: 
+            print "pqt_graphics: problem accessing color map, using default"
+            print repr( e)
+            lut = _np.zeros((256,3), dtype=_np.ubyte)
+            lut[:128,0] = _np.arange(0,255,2)
+            lut[128:,0] = 255
+            lut[:,1] = _np.arange(256)
+            imageGqe.img.setLookupTable(lut)
+
+        if flagDisplaySingle:
+            _prepareMouse( imageGqe)
+
+    return 
+
 def display( nameList = None):
     '''
     display one or more or all scans
@@ -1026,13 +1142,6 @@ def display( nameList = None):
 
     gqeList = _pysp.getGqeList()
     #
-    # clear the mouse things in the scan
-    #
-    for gqe in gqeList:
-        if gqe.mouseProxy is not None:
-            gqe.mouseProxy = None
-            gqe.mouseLabel = None
-    #
     # find out whether only one gqe will be displayed 
     # in this case the mouse-cursor will be activated
     #
@@ -1058,64 +1167,10 @@ def display( nameList = None):
     # might execute a cls()
     #
     _displayTitleComment()
-
-    for image in gqeList:
-        if type( image) != _pysp.dMgt.GQE.Image: 
-            continue
-        if len( nameList) > 0: 
-            if image.name not in nameList:
-                continue
-        if image.plotItem is None: 
-            _createPlotItem( image, nameList)
-        #image.plotItem = _win.addPlot( row = image.row, col = image.col)
-        if image.img is None:
-            image.img = _pg.ImageItem()
-            image.plotItem.addItem( image.img)
-            if image.log:
-                try:
-                    image.img.setImage( _np.log( image.data))
-                except Exception, e: 
-                    image.log = False
-                    print "pqt_graphics: log failed"
-                    print repr( e)
-                    return 
-            else:
-                if image.modulo != -1:
-                    image.img.setImage( image.data % image.modulo)
-                else: 
-                    image.img.setImage( image.data)
-        else: 
-            if image.log:
-                try:
-                    image.img.updateImage( image = _np.log( image.data))
-                except Exception, e: 
-                    image.log = False
-                    print "pqt_graphics: log failed"
-                    print repr( e)
-                    return 
-            else:
-                if image.modulo != -1:
-                    image.img.updateImage( image = image.data % image.modulo)
-                    #image.img.updateImage( image = image.data % image.modulo, levels = (0, 1))
-                else: 
-                    image.img.updateImage( image = image.data)
-
-        try: 
-            colormap = cm.get_cmap( image.colorMap)
-            colormap._init()
-            lut = (colormap._lut * 255).view( _np.ndarray)  # Convert matplotlib colormap from 0-1 to 0-255 for Qt
-            image.img.setLookupTable( lut)
-        except Exception, e: 
-            print "pqt_graphics: problem accessing color map, using default"
-            print repr( e)
-            lut = _np.zeros((256,3), dtype=_np.ubyte)
-            lut[:128,0] = _np.arange(0,255,2)
-            lut[128:,0] = 255
-            lut[:,1] = _np.arange(256)
-            image.img.setLookupTable(lut)
-
-        if flagDisplaySingle:
-            _prepareMouse( image)
+    #
+    # images
+    #
+    _displayImages( flagDisplaySingle, nameList)
     
     #_allocateViewBox()
     #

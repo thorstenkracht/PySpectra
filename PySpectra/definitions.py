@@ -201,7 +201,7 @@ lineStylePQT = {
 }
 
 colorMaps = [ 
-    'Greys', 'Greys_r', 'Blues', 'Greens', 'Reds',
+    'binary', 'blackwhite', 'flag', 'Greys', 'Greys_r', 'Blues', 'Greens', 'Reds',
     'prism', 'gist_earth', 'terrain',
     'gnuplot2', 'CMRmap',
     'rainbow', 'jet', 'nipy_spectral', 
@@ -209,4 +209,5 @@ colorMaps = [
     'Spectral', 
 ] 
 
-moduloList = [ -1, 1, 2, 5, 10, 20, 50, 100, 200, 500]
+moduloList = [ -1, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
+maxIterList = [ 32, 64, 128, 256, 512, 1024, 2048, 4096]

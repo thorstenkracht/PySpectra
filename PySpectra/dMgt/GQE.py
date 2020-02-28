@@ -36,14 +36,17 @@ _ScanAttrsPublic = [ 'at', 'autoscaleX', 'autoscaleY', 'colSpan', 'currentIndex'
                      'xLabel', 'y', 'yLabel', 'yLog', 'yMin', 'yMax',
                      'yTicksVisible'] 
 
-_ScanAttrsPrivate = [ 'infLineLeft', 'infLineRight', 'mouseClick', 'mouseLabel', 'mouseProxy', 
+_ScanAttrsPrivate = [ 'infLineLeft', 'infLineRight', 'mousePrepared', 'mouseLabel',  
                       'plotItem', 'plotDataItem', 'scene', 'xDateMpl']
 
-_ImageAttrsPublic = [ 'at', 'colorMap', 'colSpan', 'data', 'flagAxes', 'flagZoom', 'log', 'logWidget', 'maxIter', 'modulo', 
-                      'name', 'ncol', 'nplot', 'nrow', 'overlay', 'xMin', 'xMax',
+_ImageAttrsPublic = [ 'at', 'colorMap', 'colSpan', 'data', 'estimatedMax', 'flagAxes', 'indexRotate', 
+                      'log', 'logWidget', 'maxIter', 'modulo', 
+                      'name', 'ncol', 'nplot', 'nrow', 'overlay', 'textOnly', 'xMin', 'xMax',
                      'yMin', 'yMax', 'width', 'height', 'viewBox', 'xLabel', 'yLabel']
-
-_ImageAttrsPrivate = [ 'img', 'plotItem', 'mouseClick', 'mouseLabel', 'mouseProxy']
+#
+# img is used in pqt_graphics
+#
+_ImageAttrsPrivate = [ 'cbZoomProgress', 'flagZoomSlow', 'img', 'plotItem', 'mousePrepared', 'mouseLabel']
 
 class Text(): 
     '''
@@ -59,10 +62,11 @@ class Text():
     NDC: True, normalized device coordinates
     tag = 'n.n.', e.g. 'ssa_result'
     '''
-    def __init__( self, text = 'Empty', x = 0.5, y = 0.5, 
+    def __init__( self, name = "NoName", text = 'Empty', x = 0.5, y = 0.5, 
                   hAlign = 'left', vAlign = 'top', color = 'black', fontSize = None,
                   NDC = True, tag = 'n.n.'): 
 
+        self.name = name
         self.text = text
         self.x = x
         self.y = y
@@ -144,7 +148,7 @@ class Scan( GQE):
     def __init__( self, name = None, **kwargs):
         global _gqeList
 
-        #print "GQE.Scan: ", repr( kwargs)
+        #print( "GQE.Scan: %s" % repr( kwargs))
         super( Scan, self).__init__()
         if name is None:
             raise ValueError( "GQE.Scan: 'name' is missing")
@@ -220,7 +224,7 @@ class Scan( GQE):
         _gqeList.append( self)
 
     def __setattr__( self, name, value): 
-        #print "GQE.Scan.__setattr__: name %s, value %s" % (name, value)
+        #print( "GQE.Scan.__setattr__: name %s, value %s" % (name, value))
         if name in _ScanAttrsPublic or \
            name in _ScanAttrsPrivate: 
             super(Scan, self).__setattr__(name, value)
@@ -238,6 +242,42 @@ class Scan( GQE):
     def __del__( self): 
         pass
 
+    def _checkTargetWithinLimits( self, name, target, proxy): 
+        '''
+        return False, if the target position is outside the limits
+        '''
+        #
+        # tango servers have UnitLimitMin/Max
+        #
+        if hasattr( proxy, "UnitLimitMin"): 
+            try: 
+                if target < proxy.UnitLimitMin: 
+                    _QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g < unitLimitMin %g" % 
+                                              ( name, target, proxy.UnitLimitMin))
+                    return False
+                if target > proxy.UnitLimitMax: 
+                    _QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g > unitLimitMax %g" % 
+                                              ( name, target, proxy.UnitLimitMax))
+                    return False
+            except Exception as e: 
+                _QtGui.QMessageBox.about( None, 'Info Box', "CheckTargetWithinLimits: %s %s" % 
+                                          ( name, repr( e)))
+                return False
+        #
+        # pool motors: need to check the attribute configuration
+        #
+        else: 
+            attrConfig = proxy.get_attribute_config_ex( "Position")
+            if target < float( attrConfig[0].min_value): 
+                _QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g < attrConf.min_value %g" % 
+                                          ( name, target, float( attrConfig[0].min_value)))
+                return False
+            if target > float( attrConfig[0].max_value): 
+                _QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g > attrConf.max_value %g" % 
+                                          ( name, target, float( attrConfig[0].max_value)))
+                return False
+        return True
+                
     #@staticmethod
     #
     # why do we need a class function for move()
@@ -249,29 +289,41 @@ class Scan( GQE):
         import PyTango as _PyTango
         import time as _time
 
-
         if GQE.monitorGui is None:
             if self.logWidget is not None:
                 self.logWidget.append( "GQE.Scan.move: not called from pyspMonitor") 
             else:
-                print "GQE.Scan.move: not called from pyspMonitor"
+                print( "GQE.Scan.move: not called from pyspMonitor")
             return 
-
+        #
+        # make sure the target is inside the x-range of the plot
+        #
+        if target < self.xMin or target > self.xMax:
+            _QtGui.QMessageBox.about( None, "Info Box", 
+                                      "GQE.Move: target %g outside %s x-axis %g %g" % (target, self.name, self.xMin, self.xMax))
+            return
+            
         #
         # don't use MCA data to move motors
         #
         if self.flagMCA:
-            GQE.monitorGui.logWidget.append( "GQE.Scan.move: don't use MCAs to move motors") 
+            if self.logWidget is not None:
+                self.logWidget.append( "GQE.Scan.move: error, don't use MCAs to move motors") 
             return 
 
-        #print "GQE.Scan.move: to", target, "using", GQE.monitorGui.scanInfo
+        #print( "GQE.Scan.move: to", target, "using %s" % GQE.monitorGui.scanInfo)
 
         #
+        # ---
         # from moveMotor widget
+        # ---
         #
         if self.motorList is not None:
             if len( self.motorList) != 1:
-                print "GQE.Scan.move: len != 1"
+                if self.logWidget is not None:
+                    self.logWidget.append( "GQE.Scan.move: error, len( motorList) != 1") 
+                else: 
+                    print( "GQE.Scan.move: error, len( motorList) != 1") 
                 return 
 
             proxy = self.motorList[0]
@@ -293,7 +345,7 @@ class Scan( GQE):
                 if self.logWidget is not None:
                     self.logWidget.append( "Move: move not confirmed") 
                 else:
-                    print "Move: move not confirmed"
+                    print( "Move: move not confirmed")
                 return
             if self.logWidget is not None:
                 self.logWidget.append( "Moving %s from %g to %g" % ( proxy.name(), 
@@ -301,11 +353,15 @@ class Scan( GQE):
                                                                     target))
             self.motorList[0].Position = target
             return 
-
+        
         #
-        # move() has to be called from the pyspMonitor application
+        # ---
+        # from the pyspMonitor application
+        # ---
         #
         if GQE.monitorGui is None or GQE.monitorGui.scanInfo is None: 
+            _QtGui.QMessageBox.about( None, "Info Box", 
+                                      "GQE.Move: GQE.monitorGui is None or GQE.monitorGui.scanInfo is None")
             return
 
         motorArr = GQE.monitorGui.scanInfo['motors']        
@@ -326,6 +382,9 @@ class Scan( GQE):
 
         if length == 1:
             p0 = _PyTango.DeviceProxy( motorArr[0]['name'])
+            if not self._checkTargetWithinLimits( motorArr[0]['name'], float( motorArr[0]['targetPos']), p0): 
+                return 
+                
             msg = "Move %s from %g to %g" % (motorArr[0]['name'], 
                                              float(p0.read_attribute( 'Position').value), 
                                              float( motorArr[0]['targetPos']))
@@ -339,6 +398,10 @@ class Scan( GQE):
             motorArr[1]['targetPos'] = (motorArr[1]['stop'] - motorArr[1]['start'])*r + motorArr[1]['start']
             p0 = _PyTango.DeviceProxy( motorArr[0]['name'])
             p1 = _PyTango.DeviceProxy( motorArr[1]['name'])
+            if not self._checkTargetWithinLimits( motorArr[0]['name'], float( motorArr[0]['targetPos']), p0): 
+                return 
+            if not self._checkTargetWithinLimits( motorArr[1]['name'], float( motorArr[1]['targetPos']), p1): 
+                return 
             msg = "Move\n  %s from %g to %g\n  %s from %g to %g " % \
                   (motorArr[0]['name'], p0.read_attribute( 'Position').value, motorArr[0]['targetPos'],
                    motorArr[1]['name'], p1.read_attribute( 'Position').value, motorArr[1]['targetPos'])
@@ -356,6 +419,12 @@ class Scan( GQE):
             p0 = _PyTango.DeviceProxy( motorArr[0]['name'])
             p1 = _PyTango.DeviceProxy( motorArr[1]['name'])
             p2 = _PyTango.DeviceProxy( motorArr[2]['name'])
+            if not self._checkTargetWithinLimits( motorArr[0]['name'], float( motorArr[0]['targetPos']), p0): 
+                return 
+            if not self._checkTargetWithinLimits( motorArr[1]['name'], float( motorArr[1]['targetPos']), p1): 
+                return 
+            if not self._checkTargetWithinLimits( motorArr[2]['name'], float( motorArr[2]['targetPos']), p2): 
+                return 
             msg = "Move\n  %s from %g to %g\n  %s from %g to %g\n  %s from %g to %g " % \
                   (motorArr[0]['name'], p0.read_attribute( 'Position').value, motorArr[0]['targetPos'],
                    motorArr[1]['name'], p1.read_attribute( 'Position').value, motorArr[1]['targetPos'],
@@ -367,7 +436,8 @@ class Scan( GQE):
             return
 
         if GQE.monitorGui.scanInfo['title'].find( "hklscan") == 0:
-            GQE.monitorGui.logWidget.append( "br %g %g %g" % (motorArr[0]['targetPos'],motorArr[1]['targetPos'],motorArr[2]['targetPos']))
+            GQE.monitorGui.logWidget.append( "br %g %g %g" % 
+                                             (motorArr[0]['targetPos'],motorArr[1]['targetPos'],motorArr[2]['targetPos']))
             GQE.monitorGui.door.RunMacro( ["br",  
                                  "%g" %  motorArr[0]['targetPos'], 
                                  "%g" %  motorArr[1]['targetPos'], 
@@ -499,8 +569,7 @@ class Scan( GQE):
         self.lineWidth = 1.
         self.logWidget = None
         self.motorList = None
-        self.mouseProxy = None
-        self.mouseClick = None
+        self.mousePrepared = False
         self.symbol = 'o'
         self.symbolColor = 'NONE'
         self.symbolSize = 10
@@ -515,7 +584,6 @@ class Scan( GQE):
         #
         self.plotItem = None
         self.mouseLabel = None
-        self.mouseProxy = None
 
         for attr in [ 'autoscaleX', 'autoscaleY', 'colSpan', 'doty', 'fileName',  
                       'flagMCA', 
@@ -592,13 +660,13 @@ class Scan( GQE):
         self.yMax += (self.yMax - self.yMin)*0.05
         return 
 
-    def addText( self, text = 'Empty', x = 0.5, y = 0.5, 
+    def addText( self, name = 'NoName', text = 'Empty', x = 0.5, y = 0.5, 
                  hAlign = 'left', vAlign = 'top', 
                  color = 'black', fontSize = None, NDC = True, tag = 'n.n.'):
         '''
         Docu can found in Text()
         '''
-        txt = Text( text, x, y, hAlign, vAlign, color, fontSize, NDC, tag)
+        txt = Text( name, text, x, y, hAlign, vAlign, color, fontSize, NDC, tag)
         self.textList.append( txt)
 
     def setY( self, index, yValue):
@@ -864,9 +932,9 @@ class Scan( GQE):
                 
         try: 
             message, xpos, xpeak, xcms, xcen = _pysp.fastscananalysis( lstX, lstY, mode)
-        except Exception, e:
-            print "GQE.fsa: trouble with", self.name
-            print repr( e)
+        except Exception as e:
+            print( "GQE.fsa: trouble with %s" % self.name)
+            print( repr( e))
             
 
         if logWidget is not None: 
@@ -876,7 +944,7 @@ class Scan( GQE):
             logWidget.append( " xcms:     %g" % xcms)
             logWidget.append( " xcen:     %g" % xcen)
         else:
-            print "GQE.fsa: message", message, "xpos", xpos, "xpeak", xpeak, "xcms", xcms, "xcen", xcen
+            print( "GQE.fsa: message %s xpos %g xpeak %g xmcs %g xcen %g" % (message, xpos, xpeak, xcms, xcen))
 
         return 
 
@@ -966,8 +1034,8 @@ def delete( nameLst = None):
     '''
     global _gqeIndex
 
-    #print "GQE.delete, nameList:", repr( nameLst)
-    #print "GQE.delete: %s" % repr( HasyUtils.getTraceBackList())
+    #print( "GQE.delete, nameList: %s" % repr( nameLst))
+    #print( "GQE.delete: %s" % repr( HasyUtils.getTraceBackList()))
 
     if not nameLst:    
         while len( _gqeList) > 0:
@@ -1014,7 +1082,7 @@ def delete( nameLst = None):
                 del _gqeList[i]
                 break
         else:
-            print "GQE.delete: not found", name
+            print( "GQE.delete: not found %s" % name)
     return 
 
 def overlay( src, trgt):
@@ -1059,27 +1127,27 @@ def info( gqeList = None):
     argout = 0
 
     if _gqeList:
-        print "The List of Scans:"
+        print( "The List of Scans:")
         for scan in _gqeList:
             _infoScan( scan)
-        print "\n--- %s scans" % len( _gqeList)
+        print( "\n--- %s scans" % len( _gqeList))
         argout += len( _gqeList)
     else: 
-        print "scan list is empty"
+        print( "scan list is empty")
 
     if _title: 
-        print "Title:  ", _title
+        print( "Title:  %s" % _title)
     if _comment: 
-        print "Comment:", _comment
+        print( "Comment: %s" % _comment)
 
     return argout
 
 def _displayTextList( scan): 
     for text in scan.textList:
-        print "  text:", text.text
-        print "    x: %g, y: %g" % (text.x, text.y)
-        print "    hAlign: %s, vAlign: %s" % ( str(text.hAlign), str(text.vAlign))
-        print "    color: %s" % str( text.color)
+        print( "  text: %s" % text.text)
+        print( "    x: %g, y: %g" % (text.x, text.y))
+        print( "    hAlign: %s, vAlign: %s" % ( str(text.hAlign), str(text.vAlign)))
+        print( "    color: %s" % str( text.color))
     return 
 
 def _infoScan( scan): 
@@ -1087,7 +1155,7 @@ def _infoScan( scan):
     
     '''
     if scan.textOnly: 
-        print "--- GQE._infoScan \n", scan.name, "(textOnly)"
+        print( "--- GQE._infoScan %s (textonly) \n" % scan.name)
         _displayTextList( scan)
         return 
     #
@@ -1095,39 +1163,39 @@ def _infoScan( scan):
     # are already shown
     #
     scanAttrsPrinted = []
-    print "--- \n", scan.name
+    print( "--- \n %s" % scan.name)
     scanAttrsPrinted.append( 'name')
-    print "  currentIndex: %d, lastIndex: %d, Pts: %d" % (scan.currentIndex, scan.lastIndex, scan.nPts)
+    print( "  currentIndex: %d, lastIndex: %d, Pts: %d" % (scan.currentIndex, scan.lastIndex, scan.nPts))
     scanAttrsPrinted.append( 'currentIndex')
     scanAttrsPrinted.append( 'lastIndex')
     scanAttrsPrinted.append( 'nPts')
-    print "  nrow: %s, ncol: %s, nplot: %s" % ( str(scan.nrow), str(scan.ncol), str(scan.nplot))
+    print( "  nrow: %s, ncol: %s, nplot: %s" % ( str(scan.nrow), str(scan.ncol), str(scan.nplot)))
     scanAttrsPrinted.append( 'nrow')
     scanAttrsPrinted.append( 'ncol')
     scanAttrsPrinted.append( 'nplot')
-    print "  showGridX: %s, showGridY: %s" % ( str(scan.showGridX), str(scan.showGridY))
+    print( "  showGridX: %s, showGridY: %s" % ( str(scan.showGridX), str(scan.showGridY)))
     scanAttrsPrinted.append( 'showGridX')
     scanAttrsPrinted.append( 'showGridY')
-    print "  xMin: %s, xMax: %s" % ( str(scan.xMin), str(scan.xMax))
+    print( "  xMin: %s, xMax: %s" % ( str(scan.xMin), str(scan.xMax)))
     scanAttrsPrinted.append( 'xMin')
     scanAttrsPrinted.append( 'xMax')
-    print "  yMin: %s, yMax: %s" % ( str(scan.yMin), str(scan.yMax))
+    print( "  yMin: %s, yMax: %s" % ( str(scan.yMin), str(scan.yMax)))
     scanAttrsPrinted.append( 'yMin')
     scanAttrsPrinted.append( 'yMax')
-    print "  xLabel: %s, yLabel: %s" % ( str(scan.xLabel), str(scan.yLabel))
+    print( "  xLabel: %s, yLabel: %s" % ( str(scan.xLabel), str(scan.yLabel)))
     scanAttrsPrinted.append( 'xLabel')
     scanAttrsPrinted.append( 'yLabel')
-    print "  autoscaleX: %s, autoscaleY: %s" % ( str(scan.autoscaleX), str(scan.autoscaleY))
+    print( "  autoscaleX: %s, autoscaleY: %s" % ( str(scan.autoscaleX), str(scan.autoscaleY)))
     scanAttrsPrinted.append( 'autoscaleX')
     scanAttrsPrinted.append( 'autoscaleY')
-    print "  at: %s, colSpan: %s" % ( str(scan.at), str(scan.colSpan))
+    print( "  at: %s, colSpan: %s" % ( str(scan.at), str(scan.colSpan)))
     scanAttrsPrinted.append( 'at')
     scanAttrsPrinted.append( 'colSpan')
-    print "  lineColor: %s, lineWidth: %s, lineStyle: %s" % ( str(scan.lineColor), str(scan.lineWidth), str( scan.lineStyle))
+    print( "  lineColor: %s, lineWidth: %s, lineStyle: %s" % ( str(scan.lineColor), str(scan.lineWidth), str( scan.lineStyle)))
     scanAttrsPrinted.append( 'lineColor')
     scanAttrsPrinted.append( 'lineWidth')
     scanAttrsPrinted.append( 'lineStyle')
-    print "  symbolColor: %s, symbolWidth: %s, symbol: %s" % ( str(scan.symbolColor), str(scan.symbolSize), str( scan.symbol))
+    print( "  symbolColor: %s, symbolWidth: %s, symbol: %s" % ( str(scan.symbolColor), str(scan.symbolSize), str( scan.symbol)))
     scanAttrsPrinted.append( 'symbolColor')
     scanAttrsPrinted.append( 'symbolSize')
     scanAttrsPrinted.append( 'symbol')
@@ -1137,15 +1205,15 @@ def _infoScan( scan):
             continue
         if attr == 'x' or attr == 'y':
             if len( getattr( scan, attr)) <= 10: 
-                print "  %s: %s" % ( attr, repr( getattr( scan, attr)))
+                print( "  %s: %s" % ( attr, repr( getattr( scan, attr))))
             else:
-                print "  %s[:10]: %s" % ( attr, repr( getattr( scan, attr)[:10]))
+                print( "  %s[:10]: %s" % ( attr, repr( getattr( scan, attr)[:10])))
             continue
         try:
-            print "  %s: %s" % ( attr, repr( getattr( scan, attr)))
-        except Exception, e:
-            print "GQE._showScan: trouble with", scan.name
-            print repr( e)
+            print( "  %s: %s" % ( attr, repr( getattr( scan, attr))))
+        except Exception as e:
+            print( "GQE._showScan: trouble with %s" % scan.name)
+            print( repr( e))
 
     if len( scan.textList) > 0:
         _displayTextList( scan)
@@ -1157,11 +1225,11 @@ def show():
     lists all scans, one line per scan
     '''
     if _gqeList is None: 
-        print "scan list is empty"
+        print( "scan list is empty")
 
-    print "The List of Scans:"
+    print( "The List of Scans:")
     for scan in _gqeList:
-        print "%s, nPts %d, xMin %g, xMax %g" % (scan.name, scan.nPts, scan.xMin, scan.xMax)
+        print( "%s, nPts %d, xMin %g, xMax %g" % (scan.name, scan.nPts, scan.xMin, scan.xMax))
 
 def nextScan( name = None):
     '''
@@ -1301,9 +1369,39 @@ def getIndex( name):
             return index
         index += 1
     raise ValueError( "GQE.getIndex: not found %s" % name)
-    
+
+def _insertImage( fioObj):
+    '''
+    fioObj contains an image
+    '''
+    if 'xMin' not in fioObj.parameters:
+        fioObj.parameters[ 'xMin'] = 0
+    if 'xMax' not in fioObj.parameters:
+        fioObj.parameters[ 'xMax'] = 1
+    if 'yMin' not in fioObj.parameters:
+        fioObj.parameters[ 'yMin'] = 0
+    if 'yMax' not in fioObj.parameters:
+        fioObj.parameters[ 'yMax'] = 1
+    #
+    # the parameters as the come from the file are strings
+    #
+    for elm in [ 'width', 'height']: 
+        fioObj.parameters[ elm] = int( fioObj.parameters[ elm])
+    for elm in [ 'xMin', 'xMax', 'yMin', 'yMax']: 
+        fioObj.parameters[ elm] = float( fioObj.parameters[ elm])
+
+    data = _np.array( fioObj.columns[0].x).reshape(  fioObj.parameters[ 'width'],  fioObj.parameters[ 'height'])
+    Image( name = fioObj.motorName, data = data, 
+           width = fioObj.parameters[ 'width'], height = fioObj.parameters[ 'height'], 
+           xMin = fioObj.parameters[ 'xMin'], xMax = fioObj.parameters[ 'xMax'], 
+           yMin = fioObj.parameters[ 'yMin'], yMax = fioObj.parameters[ 'yMax'])
+
+    return True
+
 def read( fileName, x = 1, y = None, flagMCA = False):
     '''    
+    this function reads files and creates Scans or Images
+
     if y is None: 
       read all columns from a file
       creating many scans
@@ -1328,15 +1426,24 @@ def read( fileName, x = 1, y = None, flagMCA = False):
 
     fioObj = _HasyUtils.fioReader( fileName, flagMCA)
 
+    if fioObj.isImage:
+        return _insertImage( fioObj); 
+
+    if len( fioObj.columns) == 0:
+        raise ValueError( "GQE.read: %s, len( columns) == 0" % ( fileName))
+
     if y is not None:
         if y > (len( fioObj.columns) + 1): 
-            raise ValueError( "GQE.read: %s, y: %d > (len( columns) + 1): %d" % ( fileName, y, len( fioObj.columns)))
+            raise ValueError( "GQE.read: %s, y: %d > (len( columns) + 1): %d" % ( fileName, y, (len( fioObj.columns) + 1)))
         return fioObj.columns[ y - 2]
-
+    #
+    # be sure not to call Scan() with fileName. Otherwise
+    # you create a loop.
+    #
     for elm in fioObj.columns:
-        scn =  Scan( name = elm.name, x = elm.x, y = elm.y, fileName = fileName, xLabel = fioObj.motorName)
+        scn =  Scan( name = elm.name, x = elm.x, y = elm.y, xLabel = fioObj.motorName)
 
-    return None
+    return True
     
 def write( lst = None): 
     '''
@@ -1352,40 +1459,72 @@ def write( lst = None):
     import HasyUtils as _HasyUtils
     if len(_gqeList) == 0: 
         raise ValueError( "GQE.write: scan list is empty")
-
     #
     # check if all scans have the same length
     #
     length = None
-    for scan in _gqeList:
-        if scan.textOnly: 
+    #
+    # store those GQEs that are to be written
+    #
+    outLst = []
+    flagImage = False
+    for gqe in _gqeList:
+        if gqe.textOnly: 
             continue
         if lst is not None:
-            if scan.name not in lst:
+            if gqe.name not in lst:
                 continue
-        if length is None:
-            length = len( scan.x)
-            continue
-        if length != len( scan.x):
-            raise ValueError( "GQE.write: output GQEs differ in length")
-    
+        if type( gqe) is _pysp.dMgt.GQE.Scan: 
+            if length is None:
+                length = len( gqe.x)
+            if length != len( gqe.x):
+                raise ValueError( "GQE.write: output GQEs differ in length")
+        if type( gqe) is _pysp.dMgt.GQE.Image: 
+            flagImage = True
+        outLst.append( gqe)
+    #
+    # if we write an image, allow just one
+    #
+    if flagImage is True and len( outLst) > 1: 
+        raise ValueError( "GQE.write: len( lst) > 0 and flagImage")
+
+    #
+    # complain, if len( outLst ) == 0
+    #
+    if len( outLst) == 0:
+        raise ValueError( "GQE.write: len( outLst) == 0")
+    #
+    # create an empty object
+    #
     obj = _HasyUtils.fioObj( namePrefix = "pysp")
-    for scan in _gqeList:
-        if scan.textOnly: 
-            continue
-        if lst is not None:
-            if scan.name not in lst:
-                continue
-        col = _HasyUtils.fioColumn( scan.name)
-        #
-        # Mind currentIndex starts at 0. So, if currentIndex == 100, 
-        # we have 101 list elements
-        #
-        col.x = scan.x[:scan.currentIndex + 1]
-        col.y = scan.y[:scan.currentIndex + 1]
+    if flagImage: 
+        ima = outLst[0]
+        obj.motorName = ima.name
+        obj.parameters[ 'name'] = ima.name
+        obj.parameters[ 'width'] = ima.width
+        obj.parameters[ 'height'] = ima.height
+        obj.parameters[ 'xMin'] = ima.xMin
+        obj.parameters[ 'xMax'] = ima.xMax
+        obj.parameters[ 'yMin'] = ima.yMin
+        obj.parameters[ 'yMax'] = ima.yMax
+        col = _HasyUtils.fioColumn( gqe.name)
+        col.x = gqe.data.flatten()
+        col.y = None
         obj.columns.append( col)
+    else: 
+        for gqe in outLst:
+            col = _HasyUtils.fioColumn( gqe.name)
+            if type( gqe) is _pysp.dMgt.GQE.Scan: 
+                #
+                # Mind currentIndex starts at 0. So, if currentIndex == 100, 
+                # we have 101 list elements
+                #
+                col.x = gqe.x[:gqe.currentIndex + 1]
+                col.y = gqe.y[:gqe.currentIndex + 1]
+                obj.columns.append( col)
+
     fileName = obj.write()
-    #print "created", fileName
+    print( "GQE.write: created %s" % fileName)
     return fileName
     
 def getNumberOfGqesToBeDisplayed( nameList): 
@@ -1410,7 +1549,7 @@ def getNumberOfGqesToBeDisplayed( nameList):
         nGqe = len( nameList) - nOverlay
         if nGqe < 1:
             nGqe = 1
-    #print "graphics.getNoOfGqesToBeDisplayed: nGqe %d" %(nGqe)
+    #print( "graphics.getNoOfGqesToBeDisplayed: nGqe %d" %(nGqe))
     return nGqe
 
 def _getNumberOfOverlaid( nameList = None):
@@ -1440,6 +1579,12 @@ def setWsViewportFixed( flag):
     return 
     
 def getWsViewportFixed():
+    '''
+    flag: True or False
+    
+    if True, the wsViewport is not changed automatically 
+             to take many gqes into account
+    '''
     return _wsViewportFixed 
 
 def _isArrayLike( x): 
@@ -1498,27 +1643,60 @@ def getData():
 def fillDataImage( hsh): 
     '''
     hsh = { 'putData': 
-    { 'name': 'imageName', 
-      'type': 'image', 
-      'xMin': xmin, 'xMax': xmax, 'width': width,
-      'yMin': ymin, 'yMax': ymax, 'height': height,}}
-
-    hsh = { 'putData': 
-    { 'name': 'imageName', 
-      'setPixel': (x, y, value)}}
+            { 'name': 'imageName', 
+              'noDisplay': True, 
+              'setPixelWorld': (x, y, value)}}
     '''
 
-    if hsh.has_key( 'xMin'): 
-        m = _pysp.Image( name = hsh[ 'name'],  
-                        xMin = hsh[ 'xMin'], xMax = hsh[ 'xMax'], width = hsh[ 'width'],
-                        yMin = hsh[ 'yMin'], yMax = hsh[ 'yMax'], height = hsh[ 'height'])
+    if 'setPixelWorld' in hsh: 
         o = getGqe( hsh[ 'name'])
-    elif hsh.has_key( 'setPixel'): 
+        o.setPixelWorld( x = hsh[ 'setPixelWorld'][0],
+                         y = hsh[ 'setPixelWorld'][1],
+                         value = hsh[ 'setPixelWorld'][2])
+        if 'noDisplay' not in hsh or not hsh[ 'noDisplay']: 
+            _pysp.cls()
+            _pysp.display()
+    elif 'setPixelImage' in hsh: 
         o = getGqe( hsh[ 'name'])
-        o.setPixel( x = hsh[ 'setPixel'][0],
-                    y = hsh[ 'setPixel'][1],
-                    value = hsh[ 'setPixel'][2])
-        if not hsh.has_key( 'noDisplay') or not hsh[ 'noDisplay']: 
+        o.setPixelImage( x = hsh[ 'setPixelImage'][0],
+                         y = hsh[ 'setPixelImage'][1],
+                         value = hsh[ 'setPixelImage'][2])
+        if 'noDisplay' not in hsh or not hsh[ 'noDisplay']: 
+            _pysp.cls()
+            _pysp.display()
+
+    else: 
+        raise ValueError( "GQE.fillDataImage: dictionary unexpected")
+
+    return "done"
+
+def fillDataXY( hsh): 
+    '''
+    this function is mainly used during mesh scans
+
+    hsh = { 'putData': 
+    { 'name': 'MeshScan', 
+      'xMin': xmin, 'xMax': xmax, 
+      'yMin': ymin, 'yMax': ymax,
+      'nPts': nPts}}
+
+    hsh = { 'putData': 
+    { 'name': 'MeshScan', 
+      'setXY': (index, x, y)}}
+    '''
+
+    if 'xMin' in hsh: 
+        m = _pysp.Scan( name = hsh[ 'name'],  
+                        xMin = hsh[ 'xMin'], xMax = hsh[ 'xMax'], 
+                        yMin = hsh[ 'yMin'], yMax = hsh[ 'yMax'],
+                        nPts = hsh[ 'nPts'] )
+        o = getGqe( hsh[ 'name'])
+    elif 'setXY' in hsh: 
+        o = getGqe( hsh[ 'name'])
+        o.setXY( int( hsh[ 'setXY'][0]), 
+                 hsh[ 'setXY'][1],
+                 hsh[ 'setXY'][2])
+        if 'noDisplay' not in hsh or not hsh[ 'noDisplay']: 
             _pysp.cls()
             _pysp.display()
 
@@ -1531,12 +1709,18 @@ def fillDataByColumns( hsh):
     if len( hsh[ 'columns']) < 2: 
         raise Exception( "GQE.fillDataByColumns", "less than 2 columns")
 
+    if 'title' in hsh: 
+        setTitle( hsh[ 'title'])
+
+    if 'comment' in hsh: 
+        setComment( hsh[ 'comment'])
+
     columns = []
     xcol = hsh[ 'columns'][0]
     for elm in hsh[ 'columns'][1:]:
-        if not elm.has_key( 'name'):
+        if 'name' not in elm:
             raise Exception( "GQE.fillDataByGqes", "missing 'name'")
-        if not elm.has_key( 'data'):
+        if 'data' not in elm:
             raise Exception( "GQE.fillDataByGqes", "missing 'data'")
         data = elm[ 'data']
         del elm[ 'data']
@@ -1546,57 +1730,57 @@ def fillDataByColumns( hsh):
                                                                        elm[ 'name'], len(elm[ 'data'])))
 
         lineColor = 'red'
-        if elm.has_key( 'lineColor'):
+        if 'lineColor' in elm:
             lineColor = elm[ 'lineColor']
             del elm[ 'lineColor'] 
             symbolColor = 'NONE'
-        elif not elm.has_key( 'symbolColor'):
+        elif 'symbolColor' not in elm:
             lineColor = 'red'
             symbolColor = 'NONE'
         else: 
             symbolColor= 'red'
             lineColor = 'NONE'
-            if elm.has_key( 'symbolColor'):
+            if 'symbolColor' in elm:
                 symbolColor = elm[ 'symbolColor']
                 del elm[ 'symbolColor'] 
 
         lineWidth = 1
-        if elm.has_key( 'lineWidth'):
+        if 'lineWidth' in elm:
             lineWidth = elm[ 'lineWidth']
             del elm[ 'lineWidth'] 
         lineStyle = 'SOLID'
-        if elm.has_key( 'lineStyle'):
+        if 'lineStyle' in elm:
             lineStyle = elm[ 'lineStyle']
             del elm[ 'lineStyle'] 
         showGridX = False
-        if elm.has_key( 'showGridX'):
+        if 'showGridX' in elm:
             showGridX = elm[ 'showGridX']
             del elm[ 'showGridX'] 
         showGridY = False
-        if elm.has_key( 'showGridY'):
+        if 'showGridY' in elm:
             showGridY = elm[ 'showGridY']
             del elm[ 'showGridY'] 
         xLog = False
-        if elm.has_key( 'xLog'):
+        if 'xLog' in elm:
             xLog = elm[ 'xLog']
             del elm[ 'xLog'] 
         yLog = False
-        if elm.has_key( 'yLog'):
+        if 'yLog' in elm:
             yLog = elm[ 'yLog']
             del elm[ 'yLog'] 
         symbol = '+'
-        if elm.has_key( 'symbol'):
+        if 'symbol' in elm:
             symbol = elm[ 'symbol']
             del elm[ 'symbol'] 
         symbolSize= 10
-        if elm.has_key( 'symbolSize'):
+        if 'symbolSize' in elm:
             symbolSize = elm[ 'symbolSize']
             del elm[ 'symbolSize'] 
 
         name = elm['name']
         del elm[ 'name']
 
-        if len( elm.keys()) > 0: 
+        if len( list( elm.keys())) > 0: 
             raise ValueError( "GQE.fillDataByColumns: dct not empty %s" % repr( elm))
 
         scan = Scan( name = name, 
@@ -1616,7 +1800,7 @@ def fillDataByColumns( hsh):
 
 def colorSpectraToPysp( color): 
     '''
-    to be backwards compatible: allow the user to specify colors a la Spectra
+    to be backwards compatible: allow the user to specify colors by numbers (1 - 7), a la Spectra
     '''
     if color == 1:
         color = 'black'
@@ -1634,6 +1818,8 @@ def colorSpectraToPysp( color):
         color = 'yellow'
     elif color == 7:
         color = 'magenta'
+    else: 
+        color = 'black'
 
     return color
 
@@ -1644,31 +1830,27 @@ def fillDataByGqes( hsh):
     
     gqes = []
     for elm in hsh[ 'gqes']:
-        if not elm.has_key( 'name'):
+        if 'name' not in elm:
             raise Exception( "GQE.fillDataByGqes", "missing 'name'")
-        if not elm.has_key( 'x'):
+        if 'x' not in elm:
             raise Exception( "GQE.fillDataByGqes", "missing 'x' for %s" % elm[ 'name'])
-        if not elm.has_key( 'y'):
+        if 'y' not in elm:
             raise Exception( "GQE.fillDataByGqes", "missing 'y' for %s" % elm[ 'name'])
         if len( elm[ 'x']) != len( elm[ 'y']):
             raise Exception( "GQE.fillDataByGqes", "%s, x and y have different length %d != %d" % \
                              (elm[ 'name'], len( elm[ 'x']), len( elm[ 'y'])))
         at = '(1,1,1)'
-        if elm.has_key( 'at'):
+        if 'at' in elm:
             flagAtFound = True
             at = elm[ 'at']
         xLabel = 'x-axis'
-        if elm.has_key( 'xlabel'):
+        if 'xlabel' in elm:
             xLabel = elm[ 'xlabel']
-        if elm.has_key( 'xLabel'):
-            xLabel = elm[ 'xLabel']
         yLabel = 'y-axis'
-        if elm.has_key( 'ylabel'):
+        if 'ylabel' in elm:
             yLabel = elm[ 'ylabel']
-        if elm.has_key( 'yLabel'):
-            yLabel = elm[ 'yLabel']
         color = 'red'
-        if elm.has_key( 'color'):
+        if 'color' in elm:
             color = elm[ 'color']
             color = colorSpectraToPysp( color)
         
@@ -1691,56 +1873,165 @@ def fillDataByGqes( hsh):
 
 def toPysp( hsh): 
     '''
-    this function is used by the ZMQ receiver and it can also be 
-    called directly to simulate the toPyspMonitor() interface
+    this function executes dictionaries which are received from 
+      - ZMQ, from another client calling toPyspMonitor()
+      - Queue, from pyspDoor
+      - from an application directly (to simulate the to toPyspMonitor() interface
+
+     hsh: 
+       Misc
+         {'command': ['delete']}
+           delete all internal data
+         {'command': ['cls']}
+           clear the screen
+         {'command': ['delete', 'cls']}
+           deletes all internal data and clears the screen
+         {'command': ['display']}
+           a display command
+
+       Title and comment for the whole widget
+         {'command': [u'setTitle ascan exp_dmy01 0.0 1.0 3 0.2']}
+           set the title 
+         {'command': [u'setComment "tst_01366.fio, Wed Dec 18 10:02:09 2019"']}
+           set the comment
+
+       Scan
+         {'Scan': {'name': 'eh_c01', 'xMax': 1.0, 'autoscaleX': False, 'lineColor': 'red', 'xMin': 0.0, 'nPts': 6}}
+           create an empty scan. Notice, the inner dictionary is passed to the Scan constructor
+         {'Scan': {'yMax': 2.0, 'symbol': '+', 'autoscaleY': False, 'autoscaleX': False, 
+                   'xMax': 1.0, 'nPts': 24, 'symbolColor': 'red', 'name': 'MeshScan', 
+                   'symbolSize': 5, 'lineColor': 'None', 'xMin': 0.0, 'yMin': 1.0}}
+           create an empty scan setting more attributes.
+         {'Scan': {'name': 'eh_mca01', 'flagMCA': True, 'lineColor': 'blue', 
+                   'y': array([  0., ..., 35.,  30.]), 
+                   'x': array([  0.0, ..., 2.047e+03]), 'reUse': True}}
+           create an MCA scan, which is re-used
+         {'command': ['setY eh_c01 0 71.41']}
+           set a y-value of eh_c01, index 0
+         {'command': ['setX eh_c01 0 0.0']}
+           set a x-value of eh_c01, index 0
+         {'command': ['setXY MeshScan 0 0.0 1.0']}
+           set the x- and y-value by a single call, index is 0
+         {'putData': {'columns': [{'data': [0.0, ..., 0.96], 'name': 'eh_mot01'}, 
+                                  {'data': [0.39623, ... 0.01250], 'name': 'eh_c01'}, 
+                                  {'showGridY': False, 'symbolColor': 'blue', 'showGridX': False, 
+                                   'name': 'eh_c02', 'yLog': False, 'symbol': '+', 
+                                   'data': [0.1853, ... 0.611], 
+                                   'xLog': False, 'symbolSize': 5}], 
+                      'title': 'a title', 
+                      'comment': 'a comment'}}
+           create the scans eh_c01 and eh_c02. The common x-axis is given by eh_mot01
+
+       Image 
+         {'Image': {'name': 'MandelBrot', 
+                    'height': 5, 'width': 5, 
+                    'xMax': -0.5, 'xMin': -2.0, 
+                    'yMin': 0, 'yMax': 1.5}}
+           create an empty image
+         {'putData': {'images': [{'data': array([[0, 0, 0, ..., 0, 0, 0],
+                                                 [0, 0, 0, ..., 1, 1, 1]], dtype=int32), 
+                                  'name': 'MandelBrot'}]}
+           create an image from a 2D array
+         {'Image': {'data': data, 'name': "Mandelbrot"}}
+           create an image by sending the data, e.g. data = np.ndarray( (width, height), _np.int32)
+         {'command': ['setPixelImage Mandelbrot 1 3 200']}
+           set a pixel value. the position is specified by indices
+         {'command': ['setPixelWorld Mandelbrot 0.5 1.5 200']}
+           set a pixel value. the position is specified by world coordinate
+         Text
+         {'command': ['setText MeshScan comment string "Sweep: 1/4" x 0.05 y 0.95']}
+           create a text GQE for the scan MeshScan, the name of the text is comment
+
+       Retrieve data
+         {'getData': True}
+           {'getData': {'EH_C02': {'y': [0.3183, ... 0.6510], 'x': [0.0, ... 0.959]}, 
+                        'EH_C01': {'y': [0.0234, ... 0.4918], 'x': [0.0, ... 0.959]}}, 
+            'result': 'done'}
+
     '''
+    #print( "GQE.toPysp: %s" % repr( hsh))
     argout = {}
-    if hsh.has_key( 'command'):
+    if 'command' in hsh:
         argout[ 'result'] = _pysp.commandIfc( hsh)
-    elif hsh.has_key( 'putData'):
-        argout[ 'result'] = putData( hsh[ 'putData'])
-    elif hsh.has_key( 'getData'):
+    elif 'putData' in hsh:
+        argout[ 'result'] = _putData( hsh[ 'putData'])
+    elif 'getData' in hsh:
         try:
             argout[ 'getData'] = getData()
             argout[ 'result'] = 'done'
-        except Exception, e:
+        except Exception as e:
             argout[ 'getData'] = {}
-            argout[ 'result'] = repr( e)
-    elif hsh.has_key( 'command'):
-        argout[ 'result'] = _pysp.command( hsh[ 'command'])
-    elif hsh.has_key( 'isAlive'):
+            argout[ 'result'] = "GQE.toPysp: error, %s" % repr( e)
+    #
+    # the 'isAlive' question comes from a toPyspMonitor() client, not from the door
+    #
+    elif 'isAlive' in hsh:
         argout[ 'result'] = 'done'
+    elif 'Image' in hsh:
+        try: 
+            Image( **hsh[ 'Image']) 
+            argout[ 'result'] = 'done'
+        except Exception as e:
+            argout[ 'result'] = "GQE.toPysp: error, %s" % repr( e)
+    elif 'Scan' in hsh:
+        try: 
+            Scan( **hsh[ 'Scan']) 
+            argout[ 'result'] = 'done'
+        except Exception as e:
+            argout[ 'result'] = "GQE.toPysp: error, %s" % repr( e)
     else:
-        argout[ 'result'] = "pyspMonitorClass.cb_timerZMG: something is wrong"
+        argout[ 'result'] = "GQE.toPysp: error, failed to identify %s" % repr( hsh)
 
+    #print( "GQE.toPysp: return %s" % repr( argout))
     return argout
 
-def putData( hsh):
+def _putData( hsh):
     '''
     a plot is created based on a dictionary 
     the use case: some data are sent pyspMonitor
     '''
 
     argout = 'n.n.'
-    if not hsh.has_key( 'title'):
+    if 'title' not in hsh:
         setTitle( "NoTitle")
     else:
         setTitle( hsh[ 'title'])
 
-    if hsh.has_key( 'columns'):
+    if 'columns' in hsh:
         delete()
         _pysp.cls()
         argout = fillDataByColumns( hsh)
-    elif hsh.has_key( 'gqes'):
+    elif 'gqes' in hsh:
         delete()
         _pysp.cls()
         argout = fillDataByGqes( hsh)
-    elif hsh.has_key( 'type') and hsh[ 'type'] == 'image':
+    #
+    # hsh = { 'putData': 
+    #         { 'name': "MandelBrot",
+    #           'type': 'image', 
+    #           'xMin': xmin, 'xMax': xmax, 'width': width, 
+    #           'yMin': ymin, 'yMax': ymax, 'height': height}}
+    #
+    elif 'type' in hsh and hsh[ 'type'] == 'image':
+        del hsh[ 'type']
+        Image( **hsh)
+        argout = "done"
+    #
+    #_pysp.toPysp( { 'putData': 
+    #                { 'images': [{'name': "Mandelbrot", 'data': data,
+    #                              'xMin': xmin, 'xMax': xmax, 
+    #                              'yMin': ymin, 'yMax': ymax}]}})
+    #
+    elif 'images' in hsh:
+        for h in hsh[ 'images']: 
+            Image( **h)
+        argout = "done"
+    elif 'setPixelImage' in hsh or 'setPixelWorld' in hsh:
         argout = fillDataImage( hsh)
-    elif hsh.has_key( 'setPixel'):
-        argout = fillDataImage( hsh)
+    elif 'setXY' in hsh:
+        argout = fillDataXY( hsh)
     else:
-        raise Exception( "GQE.putData", "expecting 'columns' or 'gqes'")
+        raise Exception( "GQE.putData", "expecting 'columns', 'gqes', 'setPixelImage', 'setPixelWorld'")
 
     return argout
 
@@ -1771,18 +2062,34 @@ class Image( GQE):
     '''
     a Image a 2D data array
 
-    PySpectra.Image( name = 'name', data = data)
+    Constructors: 
+      PySpectra.Image( name = 'name', data = data)
+      PySpectra.Image( name = 'name', 
+                       xMin = xmin, xMax = xmax, 
+                       yMin = ymin, yMax = ymax, 
+                       width = width, height = height)
 
     The attributes: 
-        autoscale   default: True
-        log:        bool, def. false
+        autoscale     default: True
+        colorMap:     default: nipy_spectral
+        estimatedMax: make a guess about the values to be expectd, def.: 100
+        height
+        log:          bool, def. false
+        modulo:       def.: -1  (modulo disables)
+        width: 
+        xLabel
+        yLabel
+        xMin: 
+        xMax: 
+        yMin: 
+        yMax: 
     '''
     def __init__( self, name = None, **kwargs):
         global _gqeList
 
         super( Image, self).__init__()
 
-        #print "GQE.Image: ", repr( kwargs)
+        #print( "GQE.Image: %s" % repr( kwargs))
 
         if name is None:
             raise ValueError( "GQE.Image: 'name' is missing")
@@ -1792,14 +2099,21 @@ class Image( GQE):
                 raise ValueError( "GQE.Image.__init__(): %s exists already" % name)
    
         self.name = name
+        self.textOnly = False
+        #
+        # ccallback function to update the zoom progress in the menu
+        #
+        self.cbZoomProgress = None
+        self.flagZoomSlow = None
 
         self.setAttr( kwargs)
 
         if 'data' in kwargs: 
             self._createImageFromData( kwargs)
-        elif 'xMin' in kwargs: 
+        elif hasattr( self, 'xMin'):
             self._createImageFromLimits( kwargs)
-
+        else:
+            raise ValueError( "GQE.Image: neither data nor xMin found")
 
         if kwargs:
             raise ValueError( "GQE.Image: dct not empty %s" % str( kwargs))
@@ -1807,7 +2121,7 @@ class Image( GQE):
         _gqeList.append( self)
 
     def __setattr__( self, name, value): 
-        #print "GQE.Image.__setattr__: name %s, value %s" % (name, value)
+        #print( "GQE.Image.__setattr__: name %s, value %s" % (name, value))
         if name in _ImageAttrsPublic or \
            name in _ImageAttrsPrivate: 
             super(Image, self).__setattr__(name, value)
@@ -1830,8 +2144,10 @@ class Image( GQE):
         self.at = None
         self.colorMap = "nipy_spectral"
         self.colSpan = 1
+        self.estimatedMax = 100
         self.flagAxes = True  # 
-        self.flagZoom = False # MB-1: move or zoom
+        self.height = None
+        self.indexRotate = 0
         self.log = False
         self.modulo = -1   # -1: disable modulo
         self.ncol = None
@@ -1840,12 +2156,16 @@ class Image( GQE):
         self.overlay = None
         self.img = None
         self.logWidget = None
-        self.maxIter = 100 # Mandelbrot fun
-        self.mouseProxy = None
-        self.mouseClick = None
+        self.maxIter = 256
         self.mouseLabel = None
+        self.mousePrepared = False
         self.viewBox = None
+        self.width = None
         self.xLabel = None
+        self.xMin = None
+        self.xMax = None
+        self.yMin = None
+        self.yMax = None
         self.yLabel = None
         #
         # the attributes plot and mouseLabel are created by graphics.display(). 
@@ -1853,80 +2173,131 @@ class Image( GQE):
         #
         self.plotItem = None
 
-        for attr in [ 'at', 'log']:
+        for attr in [ 'at', 'colorMap', 'xLabel', 'yLabel']:
             if attr in kwargs:
                 setattr( self, attr, kwargs[ attr])
                 del kwargs[ attr]
 
-        
-    def _createImageFromData( self, kwargs): 
+        for attr in [ 'flagAxes', 'log']:
+            if attr in kwargs:
+                setattr( self, attr, bool(kwargs[ attr]))
+                del kwargs[ attr]
 
-        if not kwargs.has_key( 'data'): 
+        for attr in [ 'height', 'maxIter', 'modulo', 'width']:
+            if attr in kwargs:
+                setattr( self, attr, int(kwargs[ attr]))
+                del kwargs[ attr]
+
+        for attr in [ 'estimatedMax', 'xMin', 'xMax', 'yMin', 'yMax']:
+            if attr in kwargs:
+                setattr( self, attr, float(kwargs[ attr]))
+                del kwargs[ attr]
+
+        return 
+
+    def _createImageFromData( self, kwargs): 
+        '''
+        image data is passed through the keyword data. they are
+        copied to self.data as they are
+        '''
+        if 'data' not in kwargs: 
             raise ValueError( "GQE.Image.createImageFromData: %s no 'data'" % ( self.name))
 
         self.data = kwargs[ 'data'][:]
         del kwargs[ 'data']
 
+        #
+        # to understand '+ 1'consider : x [-2, 1], width 100
+        #  if x == 1 -> ix == 100, so we need '+ 1'
+        #
+        if self.width is not None and self.width != self.data.shape[0]: 
+            raise ValueError( "GQE.Image.createImageFromLimits: width %d != shape[0] %d" % 
+                              (self.width, self.data.shape[0]))
+        if self.height is not None and self.height != self.data.shape[1]: 
+            raise ValueError( "GQE.Image.createImageFromLimits: height %d != shape[1] %d" % 
+                              (self.height, self.data.shape[1]))
+
         self.width = self.data.shape[0]
         self.height = self.data.shape[1]
 
-        self.xMin = 0
-        self.xMax = self.width
-        self.yMin = 0
-        self.yMax = self.height
-
-        self.xLabel = "xLabel"
-        self.yLabel = "yLabel"
-
-
-        for kw in [ 'xMin', 'xMax', 'yMin', 'yMax', 'width', 'height', 'xLabel', 'yLabel']: 
-            if not kwargs.has_key( kw): 
-                continue
-            setattr( self, kw, kwargs[ kw])
-            del kwargs[ kw]
+        if self.xMin is None: 
+            self.xMin = 0
+        if self.xMax is None: 
+            self.xMax = float(self.width)
+        if self.yMin is None: 
+            self.yMin = 0
+        if self.yMax is None: 
+            self.yMax = float(self.height)
 
         return 
 
     def _createImageFromLimits( self, kwargs): 
 
         for kw in [ 'xMin', 'xMax', 'yMin', 'yMax', 'width', 'height']: 
-            if not kwargs.has_key( kw): 
+            if not hasattr( self, kw): 
                 raise ValueError( "GQE.Image.createImageFromLimits: %s no %s" % ( self.name, kw))
 
-        for kw in [ 'xMin', 'xMax', 'yMin', 'yMax', 'width', 'height', 'xLabel', 'yLabel']: 
-            if not kwargs.has_key( kw): 
-                continue
-            setattr( self, kw, kwargs[ kw])
-            del kwargs[ kw]
-
+        self.data  = _np.zeros( ( self.width, self.height))
         #
-        # consider this: x [-2, 1], width 100
-        #  if x == 1 -> ix == 100, so we need '+ 1'
+        # fill the righ column with a linear gradient, max: estimatedMax, to 
+        # create some dynamical range for the incoming data
         #
-        self.data  = _np.zeros( ( self.width + 1, self.height + 1))
+        for i in range( self.height): 
+            self.data[ self.width - 1][i] = float(self.estimatedMax)*float(i)/float( self.height)
             
         return 
 
-    def setPixel( self, x = None, y = None, value = None):
+    def setPixelImage( self, ix = None, iy = None, value = None):
+        '''
+        ix and iy are in image coordinates
+        '''
+
+        if ix < 0 or ix >= self.width:
+            raise ValueError( "GQE.Image.setPixelImage: ix %d not in [%d, %d]" % \
+                              (ix, 0, self.width))
+        if iy < 0 or iy >= self.height:
+            raise ValueError( "GQE.Image.setPixelImage: iy %d not in [%d, %d]" % \
+                              (iy, 0, self.height))
+
+        self.data[ix][iy] = value
+
+        return 
+
+    def setPixelWorld( self, x = None, y = None, value = None):
         '''
         x and y are in physical coordinates
-        '''
+
+        Consider this command: 
+          mesh exp_dmy01 0 1 5 exp_dmy02 1 2 4 0.1
+        it creates a 6x5 image  
+
+        x: [0, 0.2, 0.4, 0.6, 0.8, 1.0] -> ix [0, 1, 2, 3, 4, 5]
+      '''
+        debug = False
 
         if x < self.xMin or x > self.xMax:
-            raise( ValueError( "GQE.Image.setXY: out of x-bounds %g [%g, %g]" % ( x, self.xMin, self.xMax)))
+            raise ValueError( "GQE.Image.setXY: out of x-bounds %g [%g, %g]" % ( x, self.xMin, self.xMax))
         if y < self.yMin or y > self.yMax:
-            raise( ValueError( "GQE.Image.setXY: out of y-bounds %g [%g, %g]" % ( y, self.yMin, self.yMax)))
+            raise ValueError( "GQE.Image.setXY: out of y-bounds %g [%g, %g]" % ( y, self.yMin, self.yMax))
 
-        ix = int( _math.floor((x - self.xMin)/(self.xMax - self.xMin)*(self.width)))
-        iy = int( _math.floor((y - self.yMin)/(self.yMax - self.yMin)*(self.height)))
+        ix = int( round( (x - self.xMin)/(self.xMax - self.xMin)*(self.width - 1)))
+        iy = int( round( (y - self.yMin)/(self.yMax - self.yMin)*(self.height - 1)))
 
-        if ix < 0 or ix > self.width:
-            raise ValueError( "GQE.Image.setPixel: ix %d not in [%d, %d], %g [%g, %g]" % \
-                              (ix, 0, self.width, 
+        if debug: 
+            print( "GQE.Image.setPixelWorld: x %g, [%g, %g], ix %d [0, %d]" % (x, self.xMin, self.xMax, ix, self.width - 1))
+            print( "                         y %g, [%g, %g], iy %d [0, %d]" % (y, self.yMin, self.yMax, iy, self.height - 1))
+
+        #print( "GQE.Image.setPixelWorld: ix: %d  [%d, %d[, x: %g [%g, %g]" % \
+        #                      (ix, 0, self.width, 
+        #                       x, self.xMin, self.xMax))
+
+        if ix < 0 or ix >= self.width:
+            raise ValueError( "GQE.Image.setPixelWorld: ix %d not in [%d, %d], x: %g [%g, %g]" % \
+                              (ix, 0, self.width - 1, 
                                x, self.xMin, self.xMax))
-        if iy < 0 or iy > self.height:
-            raise ValueError( "GQE.Image.setPixel: iy %d not in [%d, %d], %g [%g, %g]" % \
-                              (iy, 0, self.height,
+        if iy < 0 or iy >= self.height:
+            raise ValueError( "GQE.Image.setPixelWorld: iy %d not in [%d, %d], y: %g [%g, %g]" % \
+                              (iy, 0, self.height - 1,
                                y, self.yMin, self.yMax))
 
         self.data[ix][iy] = value
@@ -1943,40 +2314,40 @@ class Image( GQE):
         import PyTango as _PyTango
         import time as _time
 
-        if self.flagZoom:
+        if str(self.name).upper().find( "MANDELBROT") != -1:
             return self.zoom( targetIX, targetIY)
 
         if not hasattr( self, 'xMin'):
-            print "Gqe.Image.move: %s no attribute xMin" % self.name
+            print( "Gqe.Image.move: %s no attribute xMin" % self.name)
             return 
 
         if type( self) != Image:
-            print "Gqe.Image.move: %s is not a Image" % self.name
+            print( "Gqe.Image.move: %s is not a Image" % self.name)
             return 
             
         targetX = float( targetIX)/float( self.width)*( self.xMax - self.xMin) + self.xMin
         targetY = float( targetIY)/float( self.height)*( self.yMax - self.yMin) + self.yMin
-        print "GQE.Image.move x %g, y %g" % (targetX, targetY)
+        print( "GQE.Image.move x %g, y %g" % (targetX, targetY))
 
         if GQE.monitorGui is None:
             if self.logWidget is not None:
                 self.logWidget.append( "GQE.Image.move: not called from pyspMonitor") 
             else:
-                print "GQE.Image.move: not called from pyspMonitor"
+                print( "GQE.Image.move: not called from pyspMonitor")
             return 
 
         try: 
             proxyX = _PyTango.DeviceProxy( self.xLabel)
-        except Exception, e:
-            print "Image.move: no proxy to %s" % self.xLabel
-            print repr( e)
+        except Exception as e:
+            print( "Image.move: no proxy to %s" % self.xLabel)
+            print( repr( e))
             return 
 
         try: 
             proxyY = _PyTango.DeviceProxy( self.yLabel)
-        except Exception, e:
-            print "Image.move: no proxy to %s" % self.yLabel
-            print repr( e)
+        except Exception as e:
+            print( "Image.move: no proxy to %s" % self.yLabel)
+            print( repr( e))
             return 
 
         #
@@ -2021,12 +2392,12 @@ class Image( GQE):
             z = z*z + c
         return 0
 
-    def zoom( self, targetIX = None, targetIY = None): 
-        
+    def zoomSlow( self, targetIX = None, targetIY = None): 
+        print( "GQE.zoom, starting")
         if targetIX is not None and targetIY is not None: 
             targetX = float( targetIX)/float( self.width)*( self.xMax - self.xMin) + self.xMin
             targetY = float( targetIY)/float( self.height)*( self.yMax - self.yMin) + self.yMin
-            #print "GQE.Image.zoom x %g, y %g" % (targetX, targetY)
+            #print( "GQE.Image.zoom x %g, y %g" % (targetX, targetY))
 
             deltaX = self.xMax - self.xMin
             deltaY = self.yMax - self.yMin
@@ -2039,23 +2410,71 @@ class Image( GQE):
 
         r1 = _np.linspace( self.xMin, self.xMax, self.width)
         r2 = _np.linspace( self.yMin, self.yMax, self.height)
-        for i in range( self.width - 1):
-            for j in range( self.height - 1):
+        for i in range( self.width):
+            for j in range( self.height):
                 res = self.mandelbrot(r1[i] + 1j*r2[j], self.maxIter)
-                #res = res % int( self.modulo)
-                self.setPixel( x = r1[i], y = r2[j], value = res)
+                self.setPixelWorld( x = r1[i], y = r2[j], value = res)
 
             if (i % 10) == 0:
-                #_pysp.cls()
                 _pysp.display()
 
         _pysp.cls()
         _pysp.display()
 
-
+        print( "GQE.zoom, DONE")
         #if targetIX is not None:
-        #    print "GQE.Image.zoom x %d, y %d, DONE" % (targetIX, targetIY)
+        #    print( "GQE.Image.zoom x %d, y %d, DONE" % (targetIX, targetIY))
         
         return 
 
+    def mandelbrot_numpy( self):
+        
+        #print( "GQE.mandelbrot_numpy: xMin %g, xMax %g, width %d" % (self.xMin, self.xMax, self.width))
+        #print( "GQE.mandelbrot_numpy: yMin %g, yMax %g, height %d" % (self.yMin, self.yMax, self.height))
+        r1 = _np.linspace( self.xMin, self.xMax, self.width, dtype=_np.float64)
+        r2 = _np.linspace( self.yMin, self.yMax, self.height, dtype=_np.float64)
+        c = r1 + r2[:,None]*1j
+
+        output = _np.zeros(c.shape)
+        z = _np.zeros(c.shape, _np.complex128)
+        for it in range( self.maxIter):
+            notdone = _np.less(z.real*z.real + z.imag*z.imag, 4.0)
+            output[notdone] = it
+            z[notdone] = z[notdone]**2 + c[notdone]
+            if (it % 50) == 0: 
+                self.data = output.transpose()
+                _pysp.display()
+                if self.cbZoomProgress is not None:
+                    self.cbZoomProgress( "%d/%d" % ( it, self.maxIter))
+        output[output == self.maxIter-1] = 0
+        self.data = output.transpose()
+        #print( "GQE.mandelbrot_numpy: data %s" % ( str(self.data.shape)))
+        
+        if self.cbZoomProgress is not None:
+            self.cbZoomProgress( "DONE")
+        _pysp.cls()
+        _pysp.display()
+        return 
+
+    def zoom( self, targetIX = None, targetIY = None): 
+
+        if self.flagZoomSlow:
+            self.zoomSlow( targetIX, targetIY)
+            return 
+
+        if targetIX is not None and targetIY is not None: 
+            targetX = float( targetIX)/float( self.width)*( self.xMax - self.xMin) + self.xMin
+            targetY = float( targetIY)/float( self.height)*( self.yMax - self.yMin) + self.yMin
+
+            deltaX = self.xMax - self.xMin
+            deltaY = self.yMax - self.yMin
+
+            self.xMin = targetX - deltaX/6.
+            self.xMax = targetX + deltaX/6.
+
+            self.yMin = targetY - deltaY/6.
+            self.yMax = targetY + deltaX/6.
+
+        self.mandelbrot_numpy()
+        return 
 

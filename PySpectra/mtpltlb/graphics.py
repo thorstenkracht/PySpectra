@@ -9,6 +9,7 @@ from PyQt4 import QtGui as _QtGui
 
 import time as _time
 import os as _os
+import sys as _sys
 import math as _math
 import numpy as _np
 import PySpectra as _pysp
@@ -80,7 +81,7 @@ def createPDF( printer = None, fileName = None, flagPrint = False, format = 'DIN
  
     if _os.path.exists( "/usr/local/bin/vrsn"):
         if _os.system( "/usr/local/bin/vrsn -s -nolog %s" % fileName):
-            print "graphics.createPDF: failed to save the current version of %s" % fileName
+            print( "graphics.createPDF: failed to save the current version of %s" % fileName)
     
     try:
         # 
@@ -89,9 +90,9 @@ def createPDF( printer = None, fileName = None, flagPrint = False, format = 'DIN
         # 
         #Fig.savefig( fileName, bbox_inches='tight')
         Fig.savefig( fileName)
-    except Exception, e:
-        print "graphics.createPDF: failed to create", fileName
-        print repr( e)
+    except Exception as e:
+        print( "graphics.createPDF: failed to create %s" % fileName)
+        print( repr( e))
         return None
 
     if flag:
@@ -104,13 +105,13 @@ def createPDF( printer = None, fileName = None, flagPrint = False, format = 'DIN
             if printer is None: 
                 raise ValueError( "mpl_graphics.createPDF: environment variable PRINTER not defined")
         if _os.system( "/usr/bin/lpr -P %s %s" % (printer, fileName)):
-            print "mpl_graphics.createPDF: failed to print %s on %s" % (fileName, printer)
+            print( "mpl_graphics.createPDF: failed to print %s on %s" % (fileName, printer))
         else:
             pass
             # 
             # it is not clear whether we should print a message here or in the application
             # 
-            # print "createPDF: printed %s on %s" % (fileName, printer)
+            # print( "createPDF: printed %s on %s" % (fileName, printer))
         
     return fileName
 
@@ -135,7 +136,7 @@ def _setSizeGraphicsWindow( nScan):
         w = 14.85
 
     h = w/1.414
-    #print "mpl_graphics.setSizeGraphicsWindow", w/2.54, h/2.54, Fig.get_figwidth(), Fig.get_figheight()
+    #print( "mpl_graphics.setSizeGraphicsWindow %g %g %s %s " % (w/2.54, h/2.54, repr( Fig.get_figwidth()), repr( Fig.get_figheight()))
 
     if w/2.54 > (Fig.get_figwidth() + 0.1) or h/2.54 > (Fig.get_figheight() + 0.1): 
         if w > 29.6:
@@ -195,7 +196,7 @@ def cls():
     '''
     clear screen: allow for a new plot
     '''
-    #print "mpl_graphics.cls"
+    #print( "mpl_graphics.cls")
 
     if Fig is None: 
         _initGraphic()
@@ -206,9 +207,9 @@ def cls():
     if Canvas is not None:
         try:
             Canvas.draw()
-        except Exception, e:
-            print "mpl_graphics.cls: caught exception from Canvas.draw"
-            print repr( e)
+        except Exception as e:
+            print( "mpl_graphics.cls: caught exception from Canvas.draw")
+            print( repr( e))
     #
     # clear the plotItems
     #
@@ -244,7 +245,8 @@ def procEventsLoop( timeOut = None):
     loops over QApp.processEvents until a <return> is entered
     '''
     if timeOut is None:
-        print "\nPress <return> to continue ",
+        _sys.stdout.write( "\nPress <return> to continue ")
+        _sys.stdout.flush()
     startTime = _time.time()
     while True:
         _time.sleep(0.001)
@@ -262,7 +264,7 @@ def procEventsLoop( timeOut = None):
             break
 
     if timeOut is None:
-        print ""
+        print( "")
 
 def processEvents(): 
 
@@ -278,7 +280,7 @@ def processEvents():
     
 
 def listGraphicsItems(): 
-    print "mtpltlb.graphics.listGraphicsItems"
+    print( "mtpltlb.graphics.listGraphicsItems")
     return
 
 def _doty2datetime(doty, year = None):
@@ -289,7 +291,7 @@ def _doty2datetime(doty, year = None):
     Example: 
       a = doty2datetime( 28.12)
       m = [ 'Jan', 'Feb', 'Mar', 'Aptr', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-      print "%s %d, %02d:%02d" % (m[ a.month - 1], a.day, a.hour, a.minute)
+      print( "%s %d, %02d:%02d" % (m[ a.month - 1], a.day, a.hour, a.minute))
       --> Jan 29, 02:52
     """
     if year is None:
@@ -303,7 +305,7 @@ def _doty2datetime(doty, year = None):
     # doty2datatime doty 4.8 to datetime.datetime(2019, 1, 5, 19, 12)
     # doty2datatime doty 5.0 to datetime.datetime(2019, 1, 6, 0, 0)
     #
-    #print "doty2datatime doty", doty, "to", repr( tmp)
+    #print( "doty2datatime doty %g to %s " % (doty, repr( tmp)))
     return tmp
 
 def _setTitle( gqe, nameList): 
@@ -420,7 +422,7 @@ def _displayTitleComment( nameList):
 
 
 def _addTexts( scan, nameList):
-    #print "mpl_graphics.addTexts"
+    #print( "mpl_graphics.addTexts")
 
     #fontSize = _pysp.getFontSize( nameList)
 
@@ -475,7 +477,7 @@ def _createPlotItem( scan, nameList):
     create a plotItem, aka viewport (?) with title, axis descriptions and texts
     '''
 
-    #print "mpl_graphics.createPlotItem: %s at nrow %d, ncol %d, nplot %d" % (scan.name, scan.nrow, scan.ncol, scan.nplot)
+    #print( "mpl_graphics.createPlotItem: %s at nrow %d, ncol %d, nplot %d" % (scan.name, scan.nrow, scan.ncol, scan.nplot))
 
     try:
         scan.plotItem = Fig.add_subplot( scan.nrow, scan.ncol, scan.nplot)
@@ -483,12 +485,12 @@ def _createPlotItem( scan, nameList):
             scan.plotItem.axis( 'off')
             _addTexts( scan, nameList)
             return 
-    except Exception, e:
-        print "graphics.createPlotItem: caught exception"
-        print repr( e)
+    except Exception as e:
+        print( "graphics.createPlotItem: caught exception")
+        print( repr( e))
         raise ValueError( "graphics.createPlotItem, throwing exception")
 
-    #print "mpl_graphics.createPlotItem, autoscale", scan.autoscaleX, scan.autoscaleY
+    #print( "mpl_graphics.createPlotItem, autoscale %s %s " % ( repr( scan.autoscaleX), repr( scan.autoscaleY)))
 
     if type( scan) == _pysp.dMgt.GQE.Scan: 
         #
@@ -563,10 +565,10 @@ def _displayImages( nameList):
                 image.img = image.plotItem.imshow( _np.rot90( _np.flipud( _np.log( image.data)), k = 3), 
                                                    origin = 'lower',
                                                    cmap=plt.get_cmap( image.colorMap))
-            except Exception, e: 
+            except Exception as e: 
                 image.log = False
-                print "mpl_graphics: log failed"
-                print repr( e)
+                print( "mpl_graphics: log failed")
+                print( repr( e))
                 return 
             
         else:
@@ -596,7 +598,12 @@ def _displayImages( nameList):
             if len( l) == 0:
                 labelsNew.append( '')
                 continue
-            y = int( l)/float( image.height)*( image.yMax - image.yMin) + image.yMin
+            #
+            # 14.1.2020
+            #   int( l) replaces by float( l)
+            #   problem was int( '0.0') caused an error
+            #
+            y = float( l)/float( image.height)*( image.yMax - image.yMin) + image.yMin
             labelsNew.append( '%g' % y)
         axes.set_yticklabels( labelsNew)
     return 
@@ -624,7 +631,7 @@ def display( nameList = None):
     #
     # don't want to check for nameList is None below
     #
-    #print "mpl_graphics.display, nameList", nameList
+    #print( "mpl_graphics.display, nameList %s" % repr( nameList))
     if nameList is None:
         nameList = []
 
@@ -699,12 +706,12 @@ def display( nameList = None):
         #
         if scan.plotItem is None:
             try:
-                #print "graphics.display: creating plot for", scan.name
+                #print( "graphics.display: creating plot for %s" % scan.name)
                 _createPlotItem( scan, nameList)
-            except ValueError, e:
-                print "graphics.display: exception from createPlotItem"
-                print "graphics.display: consider a 'cls'"
-                print "graphics.display", repr( e)
+            except ValueError as e:
+                print( "graphics.display: exception from createPlotItem")
+                print( "graphics.display: consider a 'cls'")
+                print( "graphics.display %s" % repr( e))
                 return 
 
             if type( scan) == _pysp.dMgt.GQE.Scan and scan.textOnly: 
@@ -753,7 +760,7 @@ def display( nameList = None):
         # 
         if scan.lastIndex == scan.currentIndex or \
            scan.currentIndex  == 0:
-            #print "mpl_display, currentIndex, lastIndex", scan.currentIndex, scan.lastIndex, "continue"
+            #print( "mpl_display, currentIndex %s, lastIndex %s, continue" % (scan.currentIndex, scan.lastIndex))
             continue
 
         if scan.doty:
@@ -865,7 +872,7 @@ def display( nameList = None):
     if Canvas is not None:
         try:
             Canvas.draw()
-        except Exception, e:
-            print "mpl_graphics.display: caught exception from Canvas.draw"
-            print repr( e)
+        except Exception as e:
+            print( "mpl_graphics.display: caught exception from Canvas.draw")
+            print( repr( e))
     return

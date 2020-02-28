@@ -117,7 +117,6 @@ def display(line):
     '''
     ifc.command( "display " + line)
 
-
 @register_line_magic
 def info(line):
     '''
@@ -140,16 +139,16 @@ def procEventsLoop(line):
 
 @register_line_magic
 def pysp_help( line):
-    print ""
-    print " The ipython - PySpectra interface"
-    print " ---------------------------------"
-    print " These are the available commands"
-    print "   antiderivative, cls, create, delete, derivative,"
-    print "   display, info, overlay, procEventsLoop, read, setTitle, "
-    print "   setComment, show, write, y2my"
-    print ""
-    print "  for more help use, e.g.: create?"
-    print ""
+    print( "")
+    print( " The ipython - PySpectra interface")
+    print( " ---------------------------------")
+    print( " These are the available commands")
+    print( "   antiderivative, cls, create, delete, derivative,")
+    print( "   display, info, overlay, procEventsLoop, read, setTitle, ")
+    print( "   setComment, show, write, y2my")
+    print( "")
+    print( "  for more help use, e.g.: create?")
+    print( "")
 
 @register_line_magic
 def read(line):
@@ -173,6 +172,13 @@ def setComment(line):
     ifc.command( "setComment " + line)
 
 @register_line_magic
+def setText(line):
+    '''
+    setText nameGqe nameText string SomeText x 0.1 y 0.9 hAlign left vAlign top color red 
+    '''
+    ifc.command( "setText " + line)
+
+@register_line_magic
 def setTitle(line):
     '''
     setTitle einTitel
@@ -185,6 +191,56 @@ def setWsViewport(line):
     setWsViewport DINA4
     '''
     ifc.command( "setWsViewport " + line)
+
+@register_line_magic
+def setPixelImage(line):
+    '''
+    setPixelImage nameGqe ix iy val
+      ix, iy in image coordinated
+        ix >= 0 and ix < width
+        iy >= 0 and iy < height
+    '''
+    ifc.command( "setPixelImage " + line)
+
+@register_line_magic
+def setPixelWorld(line):
+    '''
+    setPixelWorld nameGqe x y val
+      x, y in physical coordinated
+        x >= xMin and x <= xMax
+        y >= yMin and y <= yMax
+    '''
+    ifc.command( "setPixelWorld " + line)
+
+@register_line_magic
+def setX(line):
+    '''
+    setX nameGqe index x-value
+
+    index starts at 0
+    this function sets the currentIndex
+    '''
+    ifc.command( "setX " + line)
+
+@register_line_magic
+def setXY(line):
+    '''
+    setXY nameGqe index x-value y-value
+
+    index starts at 0
+    this function sets the currentIndex
+    '''
+    ifc.command( "setXY " + line)
+
+@register_line_magic
+def setY(line):
+    '''
+    setY nameGqe index y-value
+
+      index starts at 0
+      this function sets the currentIndex
+    '''
+    ifc.command( "setY " + line)
 
 @register_line_magic
 def show(line):
@@ -283,7 +339,13 @@ del pysp_help
 del read
 del show
 del setComment
+del setText
 del setTitle
+del setPixelImage
+del setPixelWorld
+del setX
+del setXY
+del setY
 del setWsViewport
 del write
 del y2my

@@ -6,9 +6,9 @@ PySpectra displays 1D data
 The module PySpectra is usually imported by 
 
   import PySpectra as pysp
-
 The interface
 Scan()              a class returning a scan object
+Image()             a class returning an image object
 antiderivative()    calculate the Stammfunktion
 cls()               clear the screen graphics window
 createPDF()         create a PDF file
@@ -123,5 +123,6 @@ except:
 
 from mtpltlb.graphics import createPDF
 from utils import *
-import ipython.ifc 
+import ipython.ifc
+from ipython.ifc import command
 import definitions

@@ -5,8 +5,9 @@ import numpy as np
 import sys
 
 def main():
-    pysp.exampleOverlay2BothLog()
-    print "Prtc ",
+    pysp.example_Overlay2BothLog()
+    sys.stdout.write( "Prtc")
+    sys.stdout.flush()
     sys.stdin.readline()
 
 if __name__ == '__main__': 

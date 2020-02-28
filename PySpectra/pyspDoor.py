@@ -2,7 +2,7 @@
 '''
 the Door which communicates to pyspMonitor via a queue
 
-the Door is the sender
+the Door is the sender using sendHsh()
 '''
 import PyTango
 import time, sys, os, math
@@ -14,44 +14,44 @@ except:
     try:
         import taurus.core.tango.sardana.macroserver as sms
     except:
-        print "spectraDoor.py: failed to import macroserver.py"
+        print( "pyspDoor.py: failed to import macroserver.py")
         sys.exit(255) 
 
-import Spectra
 import pprint, math
 import HasyUtils
-import PySpectra as pysp
-import __builtin__
+import builtins
 
 pp = pprint.PrettyPrinter()
 db = PyTango.Database()
 sms.registerExtensions()
 
 #
-# this global variable is supposed to store 'self' of the spectraDoor instance
+# this global variable is supposed to store 'self' of the pyspDoor instance
 # to be called, e.g. from SardanaMonitor to send some data
 #
-spectraDoorInstance = None
+pyspDoorInstance = None
 
-class spectraDoor( sms.BaseDoor):
+class pyspDoor( sms.BaseDoor):
 
     def __init__( self, name, **kw):
-        global spectraDoorInstance
+        global pyspDoorInstance
 
-        #print "spectraDoor.__init__()", name
+        #print( "pyspDoor.__init__() %s" %s name)
         #pysp.setWsViewport( "DINA4L")
-        self.queue = __builtin__.__dict__[ 'queue']
+        self.queue = builtins.__dict__[ 'queue']
         
         #self.counter_gqes = {}
+        self.posOld = []
         self.mcaAliases = []
         self.mcaProxies = []
         self.mcaArrays = []
-        self.mcaFileName = "/tmp/temp_MCA_spectraDoor.fio"
+        self.mcaFileName = "/tmp/temp_MCA_pyspDoor.fio"
         self.serialnoDumped = -1
         self.isMesh = False
         self.meshGoingUp = True 
         self.meshSweepCount = 1
         self.scanNo = 0
+        self.signalCounter = None
         #
         # Mind: sometimes we loose records
         #
@@ -60,9 +60,9 @@ class spectraDoor( sms.BaseDoor):
         # make sure that FlagDisplayAll exists
         #
         self.env = self.getEnvironment()
-        if not self.env.has_key( 'FlagDisplayAll'):
+        if 'FlagDisplayAll' not in self.env:
             self.setEnvironment( 'FlagDisplayAll', 'True')
-        spectraDoorInstance = self
+        pyspDoorInstance = self
         #
         # use this flag to determined whether we are currently inside a scan
         # that would mean that we cannot accept data from ZMQ
@@ -72,22 +72,6 @@ class spectraDoor( sms.BaseDoor):
         # this flag is for the CursorApp to decide whether a motor
         # may be moved
         #
-
-    def receiveDct( self, hsh):
-        #
-        # putData
-        #
-        if self.flagIsBusy:
-            return "spectraDoor: rejecting dct while scanning"
-        #
-        # this cleans the GQEs which have been created by a scan
-        #
-        self.cleanupSpectra()
-        try: 
-            Spectra.putData( hsh)
-        except Exception, e:
-            return "spectraDoor.receiveDct: caught %s" % repr( e)
-        return "done"
 
     def get_alias( self, argin):
         """
@@ -129,8 +113,8 @@ class spectraDoor( sms.BaseDoor):
         if argout.find( ".") > 0:
             lst = argout.split( '.')
             argout = "_".join( lst)
-        # +++
-        # print "get_alias: %s -> %s " % (argin, argout)
+        # 
+        # print( "get_alias: %s -> %s " % (argin, argout))
         # get_alias: haso107d1:10000/expchan/sis3820_d1/1 -> d1_c01 
         # get_alias: haso107d1:10000/expchan/vc_sig_gen/1 -> sig_gen 
         # get_alias: haso107d1:10000/expchan/vc_ipetra/1 -> ipetra 
@@ -144,14 +128,13 @@ class spectraDoor( sms.BaseDoor):
         argout = PyTango.DeviceProxy( argin)
         return argout
 
-
-    def cleanupSpectra( self):
+    def cleanupPysp( self):
         """
         cleans the internal storage and the graphics screen.
         """
-
-        self.sendHsh( { 'delete': None})
-        self.sendHsh( { 'cls': None})
+        #for k in list( self.counter_gqes.keys()):
+        #    del self.counter_gqes[k]
+        self.sendHsh( { 'command': ['delete', 'cls']})
 
     def waitForFile( self, filename):
         """
@@ -169,7 +152,7 @@ class spectraDoor( sms.BaseDoor):
                 break
             time.sleep(0.05)
         if not status:
-            raise Exception( "spectraDoor.waitForFile", "%s is not created" % (filename))
+            raise Exception( "pyspDoor.waitForFile", "%s is not created" % (filename))
 
         oldSize = 0
         count = 0
@@ -179,7 +162,7 @@ class spectraDoor( sms.BaseDoor):
             oldSize = os.path.getsize(filename)
             time.sleep( 0.02)
             if count > 10:
-                raise Exception( "spectraDoor.waitForFile", "%s still not complete" % (filename))
+                raise Exception( "pyspDoor.waitForFile", "%s still not complete" % (filename))
             count += 1
 
         return status
@@ -232,7 +215,7 @@ class spectraDoor( sms.BaseDoor):
                     return True
                 else:
                     return False
-        #print "spectraDoor>toBeDisplayed: not found", name
+        #print( "pyspDoor>toBeDisplayed: not found %s" % name)
         return False
 
     def findCountersAndMCAs( self, dataRecord):
@@ -240,7 +223,7 @@ class spectraDoor( sms.BaseDoor):
         find the counter and MCA aliases and create
         the dictionary that translate them to device names
         """
-        #print "findCountersAndMCAs"
+        #print( "findCountersAndMCAs")
         self.counterAliases = []
         self.mcaAliases = []
         self.mcaProxies = []
@@ -280,7 +263,7 @@ class spectraDoor( sms.BaseDoor):
                    elm.find( "expchan/sis3302ms1dexp01ctrl/1") >= 0 ):
                 self.mcaAliases.append( alias)
                 self.mcaProxies.append( self.get_proxy( str(elm)))
-            # +++
+            # 
             # !!! has to be after MCA dection because it is just the channel no. which
             # !!! tells that e.g. expchan/sis3302roi1dexp01ctrl/1 is a MCA
             # sis3302rois
@@ -290,9 +273,9 @@ class spectraDoor( sms.BaseDoor):
             else:
                 self.counterAliases.append( alias)
         # +++
-        #print "alias_dict", self.alias_dict
-        #print "counters", self.counterAliases
-        #print "mcas", self.mcaAliases
+        #print( "alias_dict %s" % repr( self.alias_dict))
+        #print( "counters %s" % repr( self.counterAliases))
+        #print( "mcas %s" % repr( self.mcaAliases))
         # 
 
 
@@ -306,18 +289,18 @@ class spectraDoor( sms.BaseDoor):
         else:
             self.scanfile = dataRecord[1]['data'][ 'scanfile']
         if self.scanfile is None:
-            raise Exception( "spectraDoor.prepareTitleAndSo", "ScanFile not defined")
+            raise Exception( "pyspDoor.prepareTitleAndSo", "ScanFile not defined")
         self.scandir = dataRecord[1]['data'][ 'scandir']
         if self.scandir is None:
-            raise Exception( "spectraDoor.prepareTitleAndSo", "ScanDir not defined")
+            raise Exception( "pyspDoor.prepareTitleAndSo", "ScanDir not defined")
         self.serialno = dataRecord[1]['data'][ 'serialno']
         tpl = self.scanfile.rpartition('.')
         self.filename = "%s_%05d.%s" % (tpl[0], self.serialno, tpl[2])
         self.startTime = dataRecord[1]['data']['starttime']
         self.title = dataRecord[1]['data']['title']
 
-        self.sendHsh( { 'setTitle': self.title})
-        self.sendHsh( { 'setComment': "%s, %s" % (self.filename, self.startTime)})
+        self.sendHsh( { 'command': ["setTitle " + self.title]})
+        self.sendHsh( { 'command': ["setComment \"%s, %s\"" % (self.filename, self.startTime)]})
 
     def getPosition( self, name): 
         pos = None
@@ -326,7 +309,7 @@ class spectraDoor( sms.BaseDoor):
             while proxy.state() == PyTango.DevState.MOVING:
                 time.sleep(0.1)
             pos = proxy.position
-        except PyTango.DevFailed, e:
+        except PyTango.DevFailed as e:
             PyTango.Except.print_exception( e)
             return 0
         return pos
@@ -336,7 +319,7 @@ class spectraDoor( sms.BaseDoor):
         try:
             proxy = PyTango.DeviceProxy( str( name))
             velocity = proxy.velocity
-        except PyTango.DevFailed, e:
+        except PyTango.DevFailed as e:
             PyTango.Except.print_exception( e)
             return 0
         return velocity
@@ -348,7 +331,7 @@ class spectraDoor( sms.BaseDoor):
         colArray = dataRecord[1]['data']['column_desc']
         argout = {}
         for hsh in colArray:
-            if hsh.has_key( 'max_value') and hsh.has_key( 'min_value'):
+            if 'max_value' in hsh and 'min_value' in hsh:
                 argout[hsh['name']] = [hsh['min_value'], hsh['max_value']]
         return argout
 
@@ -387,8 +370,6 @@ class spectraDoor( sms.BaseDoor):
             velocity = self.getVelocity( cmd[1])
             diff = math.fabs(self.stop - self.start)
             self.np = int( diff/velocity/integTime/slowFactor) + 10
-            #print "+++spectraDoor: diff %g, velocity %g integTime %g np %d slowFactor %g " % ( diff, velocity, integTime, self.np, slowFactor)
-            
         #
         # ascan_repeat exp_dmy01 0 1 10 0.2 2
         #
@@ -552,7 +533,6 @@ class spectraDoor( sms.BaseDoor):
             velocity = self.getVelocity( cmd[1])
             diff = math.fabs(self.stop - self.start)
             self.np = int( diff/velocity/integTime/slowFactor) + 10
-            #print "+++spectraDoor: diff %g, velocity %g integTime %g np %d slowFactor %g " % ( diff, velocity, integTime, self.np, slowFactor)
         #
         # dscan_repeat eh1_dmy01 -0.1 0.1 3 0.1 2
         #
@@ -716,7 +696,7 @@ class spectraDoor( sms.BaseDoor):
             diffK = math.fabs(float( cmd[4]) - float( cmd[3]))
             diffL = math.fabs(float( cmd[6]) - float( cmd[5]))
             if diffH == 0. and diffK == 0. and diffL == 0.:
-                raise Exception( "spectraDoor.findScanLimits",
+                raise Exception( "pyspDoor.findScanLimits",
                                  "diffH == diffK == diffL == 0.")
                 
             if HasyUtils.isDevice( 'e6cctrl_h'):
@@ -724,7 +704,7 @@ class spectraDoor( sms.BaseDoor):
             elif HasyUtils.isDevice( 'kozhue6cctrl_k'):
                 self.motors = [ 'kozhue6cctrl_h', 'kozhue6cctrl_k', 'kozhue6cctrl_l']
             else:
-                raise Exception( "spectraDoor.findScanLimits",
+                raise Exception( "pyspDoor.findScanLimits",
                                  "failed to identify hkl motors")
             self.np = int(cmd[7])
             if diffH > diffK and diffH > diffL:
@@ -785,28 +765,55 @@ class spectraDoor( sms.BaseDoor):
                 self.meshGoingUp = True
             else:
                 self.meshGoingUp = False
-            self.meshIndex = 0
-            self.meshScan = Spectra.scanMesh( nameX = cmd[1], nameY = cmd[5], 
-                                              startX = float( cmd[2]), stopX = float( cmd[3]), npX = int( cmd[4]) + 1,
-                                              startY = float( cmd[6]), stopY = float( cmd[7]), npY = int( cmd[8]) + 1)
+            #
+            # self.indexScan controlls the counter GQEs during sweeps
+            # self.indexMesh controlls the index of MeshScan
+            #
+            self.indexMesh = 0
+
+            #self.sendHsh( { 'Scan': { 'name': 'MeshScan',
+            #                          'xMin': float( cmd[2]), 
+            #                          'xMax': float( cmd[3]), 
+            #                          'yMin': float( cmd[6]), 
+            #                          'yMax': float( cmd[7]), 
+            #                          'symbolColor': 'red',
+            #                          'symbolSize': 5,
+            #                          'lineColor': 'None',
+            #                          'symbol': '+',
+            #                          'nPts': (int( cmd[4]) + 1)* (int( cmd[8]) + 1), 
+            #                          'autoscaleX': False,
+            #                          'autoscaleY': False}})
+
+            self.sendHsh( { 'Image': { 'name': 'MeshImage',
+                                      'xMin': float( cmd[2]), 
+                                      'xMax': float( cmd[3]), 
+                                      'yMin': float( cmd[6]), 
+                                      'yMax': float( cmd[7]), 
+                                      'width': (int( cmd[4]) + 1), 
+                                      'height': (int( cmd[8]) + 1)}}) 
+            #
+            # the text should be present already during the first display
+            # otherwise the textItem is missing
+            #
+            #self.sendHsh( { 'command': [ "setText MeshScan comment string \"Sweep: 1/%d\" x 0.05 y 0.95" % self.meshSweepCountTotal]})
         #
         # dmesh exp_dmy01 -1 1 10 exp_dmy02 -0.5 0.5 10 0.2 flagSShape
         # +++
         elif cmd[0] == 'dmesh':
             motorLimitDct = self.extractMotorLimitDct( dataRecord)
-            raise Exception( "spectraDoor.findScanLimits",
+            raise Exception( "pyspDoor.findScanLimits",
                              "dmesh!!!", 
                               dataRecord[1]['data']['title'])
         else:
-            raise Exception( "spectraDoor.findScanLimits",
+            raise Exception( "pyspDoor.findScanLimits",
                              "failed to identify scan command", 
                               dataRecord[1]['data']['title'])
 
-        #print "+++spectraDoor.findScanLimits cmd %s" % ( cmd)
-        #print "+++spectraDoor.findScanLimits start %g, stop %g np %d motors %s" % ( self.start, 
+        #print( "+++pyspDoor.findScanLimits cmd %s" % ( cmd))
+        #print( "+++pyspDoor.findScanLimits start %g, stop %g np %d motors %s" % ( self.start, 
         #                                                                         self.stop,
         #                                                                         self.np, 
-        #                                                                         str( self.motors))
+        #                                                                         str( self.motors)))
         return True
                 
     def prepareNewScan( self, dataRecord):
@@ -814,11 +821,12 @@ class spectraDoor( sms.BaseDoor):
         this function is called, if a data_desc record is found
         """
 
-        #print "\n---------- prepareNewScan"
+        #print( "\n---------- prepareNewScan")
 
         self.isMesh = False
         self.meshGoingUp = True 
         self.meshSweepCount = 1
+        self.posOld = []
         
         #
         # scrollAreaFiles.setEnabled( False)
@@ -828,7 +836,7 @@ class spectraDoor( sms.BaseDoor):
 
         self.indexScan = 1
 
-        self.cleanupSpectra()
+        self.cleanupPysp()
         self.findCountersAndMCAs( dataRecord)
 
         self.prepareTitleAndSo( dataRecord)
@@ -838,14 +846,21 @@ class spectraDoor( sms.BaseDoor):
         #
         self.motorIndex = 0
         self.motors = dataRecord[1]['data']['ref_moveables']
+        #
+        # get the environment for every scan
+        #
+        self.env = self.getEnvironment()
+        if 'SignalCounter' not in self.env:
+            raise ValueError( "pyspDoor.prepareNewScan: SignalCounter is not set")
+        self.signalCounter = self.env[ 'SignalCounter']
 
         self.unknownScanType = False
         try:
             self.findScanLimits( dataRecord)
-        except Exception, e:
+        except Exception as e:
             self.unknownScanType = True
             if os.isatty(1):
-                print "prepareNewScan: caught exception: ", repr(e)
+                print( "prepareNewScan: caught exception: ", repr(e))
             return False
 
         #
@@ -855,19 +870,18 @@ class spectraDoor( sms.BaseDoor):
         self.scanInfo[ 'motorIndex'] = self.motorIndex
         self.sendHsh( { 'ScanInfo': self.scanInfo})
         
-        if self.isMesh:
-            at_str = "(%d,%d,%d)" % (self.ncol, self.nrow, count)
-            Spectra.gra_command( "set %s/at=%s" % (self.meshScan.gqeName, at_str))
-            count += 1
+        #+++if self.isMesh:
+        #    at_str = "(%d,%d,%d)" % (self.ncol, self.nrow, count)
+        #    Spectra.gra_command( "set %s/at=%s" % (self.meshScan.gqeName, at_str))
+        #+++    count += 1
+
         #
         # we may have scans using the condition feature
         #
         npTemp = 2*self.np
 
         self.scanNo += 1
-
         for elm in self.counterAliases:
-
             self.sendHsh( { 'Scan': { 'name': elm,
                                       'xMin': self.start,
                                       'xMax': self.stop,
@@ -876,7 +890,7 @@ class spectraDoor( sms.BaseDoor):
                                       'autoscaleX': False}})
             
         env = self.getEnvironment()
-        if env.has_key( 'SignalCounter'):
+        if 'SignalCounter' in env:
             self.signalCounter = env['SignalCounter']
             self.signalInd = 0
             self.signalX = np.zeros( npTemp + 1)
@@ -884,19 +898,19 @@ class spectraDoor( sms.BaseDoor):
         else:
             self.signalCounter = None
 
-        self.sendHsh( { 'display': None})
+        self.sendHsh( {'command': ['display']})
 
         return True
 
     def analyseSignal( self):
         env = self.getEnvironment()
         for elm in ('ssa_status', 'ssa_reason', 'ssa_cms', 'ssa_fwhm'):            
-            if env.has_key( elm):
+            if elm in env:
                 try:
                     self.macro_server.removeEnvironment( elm)
                 except:
                     pass
-        if not env.has_key( 'SignalCounter'):
+        if 'SignalCounter' not in env:
             return
 
         dct = HasyUtils.ssa( self.signalX, self.signalY)
@@ -930,27 +944,27 @@ class spectraDoor( sms.BaseDoor):
         out.write( repr( dataRecord) + "\n")
         out.close()
         if os.isatty(1):
-            print "--- %s \n" % HasyUtils.getDateTime()
-            print "reported only once per scan"
-            print "counter:   %s" % str( self.counterAliases)
-            print "mca:       %s" % str( self.mcaAliases)
-            print "msg:       %s" % msg
-            print "ScanFile:  %s" % self.scanfile
-            print "ScanDir:   %s" % self.scandir
-            print "SerialNo:  %s" % self.serialno
-            print "Filename:  %s" % self.filename
-            print "StartTime: %s" % self.startTime
-            print "Title:     %s" % self.title
-            print "DataRecord: ", repr( dataRecord)
+            print( "--- %s \n" % HasyUtils.getDateTime())
+            print( "reported only once per scan")
+            print( "counter:   %s" % str( self.counterAliases))
+            print( "mca:       %s" % str( self.mcaAliases))
+            print( "msg:       %s" % msg)
+            print( "ScanFile:  %s" % self.scanfile)
+            print( "ScanDir:   %s" % self.scandir)
+            print( "SerialNo:  %s" % self.serialno)
+            print( "Filename:  %s" % self.filename)
+            print( "StartTime: %s" % self.startTime)
+            print( "Title:     %s" % self.title)
+            print( "DataRecord: %s" % repr( dataRecord))
 
-    def adjustLimits( self, elm, pos):
+    def adjustLimitsObsolete( self, elm, pos):
         '''
         this function has been written because we want to avoid autoscale/x
         which gives bad results, if we scan in reverse direction
         '''
-        #print "+++ adjustLimits BEGIN x_min %g, x_max %g " % ( self.counter_gqes[elm].attributeDouble( "x_min"), 
-        #                                                       self.counter_gqes[elm].attributeDouble( "x_max")) 
-        # +++
+        #print( "adjustLimits BEGIN x_min %g, x_max %g " % ( self.counter_gqes[elm].attributeDouble( "x_min"), 
+        #                                                       self.counter_gqes[elm].attributeDouble( "x_max")))
+        # 
         return 
         x_tic = self.counter_gqes[elm].attributeDouble( "x_tic")
         count = 0
@@ -967,31 +981,31 @@ class spectraDoor( sms.BaseDoor):
             count += 1
             if count > 5:
                 break
-        #print "+++ adjustLimits DONE x_min %g, x_max %g " % ( self.counter_gqes[elm].attributeDouble( "x_min"), 
-        #                                                       self.counter_gqes[elm].attributeDouble( "x_max")) 
+        #print( "adjustLimits DONE x_min %g, x_max %g " % ( self.counter_gqes[elm].attributeDouble( "x_min"), 
+        #                                                       self.counter_gqes[elm].attributeDouble( "x_max")))
         return
         
     def recordDataReceived( self, s, t, v):
 
-        #print ">>> recordDataReceived"
+        #print( ">>> recordDataReceived")
         try:
             dataRecord = sms.BaseDoor.recordDataReceived( self, s, t, v)
-        except Exception, e:
-            print "spectraDoor.recordDataReceived: caught exception"
-            print e
+        except Exception as e:
+            print( "pyspDoor.recordDataReceived: caught exception")
+            print( repr(e))
             return
 
         if dataRecord == None:
             return
         # +++
-        #print ">>> recordDataReceived "
+        #print( ">>> recordDataReceived ")
         #pp.pprint( dataRecord)
         # +++
 
         #
         # it may happend that no 'type' is in the record, ignore
         #
-        if not dataRecord[1].has_key( 'type'):
+        if 'type' not in dataRecord[1]:
             return
         #
         # a new scan 
@@ -1009,7 +1023,7 @@ class spectraDoor( sms.BaseDoor):
             # at the end: make sure the GQEs are sorted. 
             # This can be necessary for motors with jitter, e.g. piezos
             #
-            #for elm in self.counter_gqes.keys():
+            #for elm in list( self.counter_gqes.keys()):
             #    Spectra.gra_command( "sort %s" % elm)
             self.flagIsBusy = False
             #
@@ -1042,7 +1056,7 @@ class spectraDoor( sms.BaseDoor):
         self.extractData( dataRecord)
 
         # +++ 
-        #print ">>> recordDataReceived DONE"
+        #print( ">>> recordDataReceived DONE")
         return dataRecord
 
     def extractData( self, dataRecord): 
@@ -1050,7 +1064,7 @@ class spectraDoor( sms.BaseDoor):
         # find the position
         #
         pos = None
-        if  dataRecord[1]['data'].has_key( self.motors[ self.motorIndex]):
+        if  self.motors[ self.motorIndex] in dataRecord[1]['data']:
             pos = dataRecord[1]['data'][ self.motors[ self.motorIndex]]
         else:
             #
@@ -1066,10 +1080,10 @@ class spectraDoor( sms.BaseDoor):
                     found = True
                     break
             if not found:
-                raise Exception( "spectraDoor.extractData",
+                raise Exception( "pyspDoor.extractData",
                                  "key error %s" % (self.motors[ self.motorIndex]))
         if pos is None:
-            raise Exception( "spectraDoor.recordDataReceived",
+            raise Exception( "pyspDoor.recordDataReceived",
                              "key error %s" % (self.motors[ self.motorIndex]))
         #
         # for mesh scans we also need the y-position
@@ -1077,20 +1091,24 @@ class spectraDoor( sms.BaseDoor):
         if self.isMesh:
             try:
                 posY = dataRecord[1]['data'][ self.meshYMotor]
-            except Exception, e:
-                print "spectraDoor.extractData: caught exception"
-                print e
+            except Exception as e:
+                print( "pyspDoor.extractData: caught exception")
+                print( repr( e))
                 return
 
         #
         # the loop over the counters, extract the data
         #
+        signal = None
         for alias in self.counterAliases:
-            if not dataRecord[1]['data'].has_key( self.alias_dict[alias]):
+                
+            if self.alias_dict[alias] not in dataRecord[1]['data']:
                 self.dumpDataRecord( "Missing key %s" % (self.alias_dict[alias]), dataRecord)
                 continue
 
             data  = dataRecord[1]['data'][self.alias_dict[alias]]
+            if alias.upper() == self.signalCounter.upper(): 
+                signal = data
             #
             # the first point has np == 0, but 
             # we must not use np for the index of the data elements
@@ -1101,18 +1119,21 @@ class spectraDoor( sms.BaseDoor):
             if os.isatty(1):
                 np  = dataRecord[1]['data'][ 'point_nb']
                 if np == 1 and  self.indexScan == 1:
-                    print "spectraDoor: missing data point no. ", np - 1 
+                    print( "pyspDoor: missing data point no. %d" % (np - 1 ))
             
-            #if self.isMesh and self.indexScan > 1:
-            #    posOld = self.counter_gqes[ elm].getX( self.indexScan - 2)
-            #    self.handleMeshScanIndices( dataRecord[1]['data'][ 'point_nb'], pos, posOld, posY)
+            if self.isMesh and self.indexScan > 1:
+                posOld = pos
+                if len( self.posOld) > 0: 
+                    posOld = self.posOld[-1]
+                #posOld = self.counter_gqes[ elm].getX( self.indexScan - 2)
+                self.handleMeshScanIndices( dataRecord[1]['data'][ 'point_nb'], pos, posOld, posY)
                         
             #
             # 27.10.2015: for haspp09mag to handle <nodata>
             # 
             if data is None:
                 self.dumpDataRecord( "data == None", dataRecord)
-                self.sendHsh( { 'setY': { 'name': alias, 'index': self.indexScan - 1, 'y': 0.}})
+                self.sendHsh( { 'command': ['setY %s %d %s' % (alias, self.indexScan - 1, repr(0.))]})
             else:
                 if type( data) is list:
                     if len( data) == 1:
@@ -1124,20 +1145,22 @@ class spectraDoor( sms.BaseDoor):
                         
                 if not type( data) is float:
                     self.dumpDataRecord( "type(data) (%s) is not float" % str( data), dataRecord)
-                    self.sendHsh( { 'setY': { 'name': alias, 'index': self.indexScan - 1, 'y': 0.}})
+                    self.sendHsh( { 'command': ['setY %s %d %s' % (alias, self.indexScan - 1, repr(0.))]})
                 else:
-                    self.sendHsh( { 'setY': { 'name': alias, 'index': self.indexScan - 1, 'y': data}})
+                    self.sendHsh( { 'command': ['setY %s %d %s' % (alias, self.indexScan - 1, repr(data))]})
                     pass
 
-            self.sendHsh( { 'setX': { 'name': alias, 'index': self.indexScan - 1, 'x': pos}})
+            self.sendHsh( { 'command': ['setX %s %d %s' % (alias, self.indexScan - 1, repr(pos))]})
 
         if self.isMesh:
-            self.displayMeshScan( pos, posY)
+            self.displayMeshScan( pos, posY, signal)
+
+        self.posOld.append( pos)
 
         if len( self.mcaAliases) > 0:
             self.displayMCAs()
-            self.sendHsh( { 'display': None})
-        self.sendHsh( { 'display': None})
+            
+        self.sendHsh( { 'command': ['display']})
 
         self.indexScan += 1
 
@@ -1147,16 +1170,19 @@ class spectraDoor( sms.BaseDoor):
         '''
         try:
             self.queue.put( hsh)
-        except Exception, e:
-            print "queueSpectraDoor.sendHsh"
-            print "hsh", repr( hsh)
-            print "exception", repr( e)
+        except Exception as e:
+            print( "queueSpectraDoor.sendHsh")
+            print( "hsh %s" % repr( hsh))
+            print( "exception %s" % repr( e))
             raise ValueError( "pyspDoor.sendHsh: something went wrong")
 
-    def displayMeshScan( self, pos, posY):
-        self.meshScan.setX( self.meshIndex, pos)
-        self.meshScan.setY( self.meshIndex, posY)
-        self.meshIndex += 1
+    def displayMeshScan( self, pos, posY, signal):
+        #self.sendHsh( { 'command': ['setXY MeshScan %d %s %s' % (self.indexMesh, repr(pos), repr(posY))]})
+        if signal is None:
+            self.sendHsh( { 'command': ['setPixelWorld MeshImage %g %g 50.' % (pos, posY)]})
+        else:
+            self.sendHsh( { 'command': ['setPixelWorld MeshImage %g %g %g' % (pos, posY, signal)]})
+        self.indexMesh += 1
 
     def handleMeshScanIndices( self, np, pos, posOld, posY):
         '''
@@ -1164,21 +1190,15 @@ class spectraDoor( sms.BaseDoor):
         this has to be done during mesh scans between the sweeps
                 self.meshSShape = True
         '''
-        return 
         if not self.meshSShape:
             if self.meshGoingUp and pos < posOld:
                 self.indexScan = 1
                 self.signalInd = 0
                 self.meshSweepCount += 1
-                Spectra.gra_command( "set %s.1/string=\"SweepCount: %d/%d\"" % (self.meshScan.gqeName, 
-                                                                              self.meshSweepCount, self.meshSweepCountTotal))
-                #print "+++spectraDoor.handleMeshScanIndices-1: np %d  pos %g, posOld %g" % (np, pos, posOld)
             elif not self.meshGoingUp and pos > posOld:
                 self.indexScan = 1
                 self.signalInd = 0
                 self.meshSweepCount += 1
-                Spectra.gra_command( "set %s.1/string=\"SweepCount: %d/%d\"" % (self.meshScan.gqeName, self.meshSweepCount, self.meshSweepCountTotal))
-                #print "+++spectraDoor.handleMeshScanIndices-2: np %d  pos %g, posOld %g" % (np, pos, posOld)
         else:
             #
             # for non-sShape scans: each turning point is repeated
@@ -1189,16 +1209,16 @@ class spectraDoor( sms.BaseDoor):
                     self.indexScan = 1
                     self.signalInd = 0
                     self.meshSweepCount += 1
-                    Spectra.gra_command( "set %s.1/string=\"SweepCount: %d/%d\"" % (self.meshScan.gqeName, self.meshSweepCount, self.meshSweepCountTotal))
-                    #+++print "spectraDoor.handleMeshScanIndices-3: np %d  pos %g, posOld %g" % (np, pos, posOld)
             else:
                 if self.almostEqual( pos, posOld):
                     self.meshGoingUp = True
                     self.indexScan = 1
                     self.signalInd = 0
                     self.meshSweepCount += 1
-                    Spectra.gra_command( "set %s.1/string=\"SweepCount: %d/%d\"" % (self.meshScan.gqeName, self.meshSweepCount, self.meshSweepCountTotal))
-                    #+++print "spectraDoor.handleMeshScanIndices-4: np %d  pos %g, posOld %g" % (np, pos, posOld)
+
+        #self.sendHsh( { 'command': [ "setText MeshScan comment string \"Sweep: %d/%d\"" % \
+        #                             ( self.meshSweepCount, self.meshSweepCountTotal)]})
+        return 
 
     def almostEqual( self, pos, posOld):
         if math.fabs( pos - posOld) < 1.0E-6:
@@ -1209,8 +1229,8 @@ class spectraDoor( sms.BaseDoor):
 # 
 import taurus
 factory = taurus.Factory()
-factory.registerDeviceClass( 'Door',  spectraDoor)
+factory.registerDeviceClass( 'Door',  pyspDoor)
 #
-# returns a spectraDoor
+# returns a pyspDoor
 #
 

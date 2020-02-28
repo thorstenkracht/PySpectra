@@ -5,8 +5,10 @@ import numpy as np
 import sys
 
 def main():
-    pysp.exampleCreatePDF()
-    print "Prtc ",
+    pysp.example_CreatePDF()
+    sys.stdout.write( "Prtc")
+    sys.stdout.flush()
+
     sys.stdin.readline()
 
 if __name__ == '__main__': 

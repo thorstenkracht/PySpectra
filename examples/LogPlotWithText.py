@@ -5,7 +5,7 @@ import numpy as np
 import sys
 
 def main():
-    pysp.exampleLogPlotWithText()
+    pysp.example_LogPlotWithText()
     print "Prtc ",
     sys.stdin.readline()
 
