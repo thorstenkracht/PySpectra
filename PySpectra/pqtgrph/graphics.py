@@ -143,10 +143,12 @@ def setWsViewport( size = None):
 
     #
     # 3778: pixel per meter (spectra)
+    # DINA5S: 793.38, 793.38
+    # DINA6S: 561, 561
     #
     wPixel = w*3778./100. 
     hPixel = h*3778./100.
-    #print "graphics.setWsViewport", wPixel, hPixel
+    #print( "graphics.setWsViewport", wPixel, hPixel)
     _win.setGeometry( 30, 30, int(wPixel), int(hPixel))
     _QApp.processEvents()
     _pysp.setWsViewportFixed( True)

@@ -1566,7 +1566,6 @@ def _getNumberOfOverlaid( nameList = None):
             count += 1
 
     return count
-    
 def setWsViewportFixed( flag):
     '''
     flag: True or False
@@ -1796,7 +1795,7 @@ def fillDataByColumns( hsh):
             scan.setY( i, data[i])
     _pysp.display()
 
-    return 
+    return "done"
 
 def colorSpectraToPysp( color): 
     '''
@@ -1869,7 +1868,7 @@ def fillDataByGqes( hsh):
 
     _pysp.display()
 
-    return 
+    return "done"
 
 def toPysp( hsh): 
     '''
@@ -1955,6 +1954,7 @@ def toPysp( hsh):
         argout[ 'result'] = _pysp.commandIfc( hsh)
     elif 'putData' in hsh:
         argout[ 'result'] = _putData( hsh[ 'putData'])
+        print( "GQE.toPysp: %s " % repr( argout))
     elif 'getData' in hsh:
         try:
             argout[ 'getData'] = getData()
@@ -2156,7 +2156,7 @@ class Image( GQE):
         self.overlay = None
         self.img = None
         self.logWidget = None
-        self.maxIter = 256
+        self.maxIter = 512
         self.mouseLabel = None
         self.mousePrepared = False
         self.viewBox = None

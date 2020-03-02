@@ -80,7 +80,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         # don't use localhost. it is a different interface
         #
         try:
-            self.sckt.bind( "tcp://%s:7778" % socket.gethostbyname( socket.getfqdn()))
+            self.sckt.bind( "tcp://%s:7779" % socket.gethostbyname( socket.getfqdn()))
             self.timerZMQ = QtCore.QTimer( self)
             self.timerZMQ.timeout.connect( self.cb_timerZMQ)
             self.timerZMQ.start(100)

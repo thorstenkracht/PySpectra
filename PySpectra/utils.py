@@ -623,7 +623,7 @@ return
     #
     sckt.setsockopt(zmq.LINGER, 1)
     try:
-        sckt.connect('tcp://%s:7778' % node)
+        sckt.connect('tcp://%s:7779' % node)
     except Exception as e:
         sckt.close()
         return { 'result': "utils.toPyspMonitor: failed to connect to %s" % node}

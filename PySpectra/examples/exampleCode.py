@@ -708,7 +708,7 @@ def example_ImageMB():
 
     (xmin, xmax) = (-2., 0.5)
     (ymin, ymax) = (-1.25, 1.25)
-    (width, height) = (500, 500)
+    (width, height) = (750, 750)
     maxiter = 512
     
     m = _pysp.Image( name = "MandelbrotSet",
