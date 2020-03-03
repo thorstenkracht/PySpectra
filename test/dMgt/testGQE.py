@@ -934,7 +934,7 @@ class testGQE( unittest.TestCase):
         #
         r1 = np.linspace(xmin, xmax, width)
         r2 = np.linspace(ymin, ymax, height)
-        data = np.ndarray( (width, height), np.int32)
+        data = np.ndarray( (width, height), np.float64)
         for i in range(width):
             for j in range(height):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
@@ -975,7 +975,7 @@ class testGQE( unittest.TestCase):
         #
         r1 = np.linspace(xmin, xmax, width)
         r2 = np.linspace(ymin, ymax, height)
-        data = np.ndarray( (width, height), np.int32)
+        data = np.ndarray( (width, height), np.float64)
         for i in range(width):
             for j in range(height):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
