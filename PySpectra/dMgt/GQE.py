@@ -1954,7 +1954,6 @@ def toPysp( hsh):
         argout[ 'result'] = _pysp.commandIfc( hsh)
     elif 'putData' in hsh:
         argout[ 'result'] = _putData( hsh[ 'putData'])
-        print( "GQE.toPysp: %s " % repr( argout))
     elif 'getData' in hsh:
         try:
             argout[ 'getData'] = getData()
