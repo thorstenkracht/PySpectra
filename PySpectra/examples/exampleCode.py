@@ -163,7 +163,8 @@ def exampleImageMBVia_toPysp_OneChunk():
     #
     r1 = _np.linspace(xmin, xmax, width)
     r2 = _np.linspace(ymin, ymax, height)
-    data = _np.ndarray( (width, height), _np.int32)
+    #data = _np.ndarray( (width, height), _np.int32)
+    data = _np.ndarray( (width, height), _np.float64)
     for i in range(width):
         for j in range(height):
             res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
