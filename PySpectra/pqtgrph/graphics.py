@@ -1017,6 +1017,8 @@ def _displayImages( flagDisplaySingle, nameList = None):
                 continue
         if imageGqe.plotItem is None: 
             _createPlotItem( imageGqe, nameList)
+
+        print( "+++pqtgraphics.displayImages: type() = %s %s " % (type( imageGqe.data), repr(imageGqe.data.dtype)))
         #imageGqe.plotItem = _win.addPlot( row = imageGqe.row, col = imageGqe.col)
         if imageGqe.img is None:
             imageGqe.img = _pg.ImageItem()
