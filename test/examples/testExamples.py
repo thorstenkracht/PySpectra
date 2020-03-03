@@ -7,7 +7,7 @@ import unittest
 
 class testExamples( unittest.TestCase):
 
-
+ 
     @classmethod
     def setUpClass( testExamples):
         pass
@@ -24,8 +24,9 @@ class testExamples( unittest.TestCase):
             if funcName.find( 'example') != 0:
                 continue
             cmd = "PySpectra.%s()" % funcName
-            print cmd
+            print( cmd)
             exec cmd
+            print( "%s DONE" %  cmd)
             PySpectra.procEventsLoop( 1)
         return 
 

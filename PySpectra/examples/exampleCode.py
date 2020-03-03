@@ -124,11 +124,6 @@ def exampleImageMBVia_toPysp():
     for i in range(width):
         for j in range(height):
             res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
-            #hsh = { 'putData': 
-            #         { 'name': "Mandelbrot",
-            #           'noDisplay': True, 
-            #           'setPixelWorld': ( r1[i], r2[j], res)}}
-            #hsh = { 'command': [ 'setPixelWorld Mandelbrot %g %g %g' % ( r1[i], r2[j], res)]}
             hsh = { 'command': [ 'setPixelImage Mandelbrot %d %d %g' % ( i, j, res)]}
             hsh = _pysp.toPysp( hsh)
             if hsh[ 'result'] != "done":
@@ -145,6 +140,7 @@ def exampleImageMBVia_toPysp_OneChunk():
 
     replace toPysp() by toPyspMonitor() to connect to pyspMonitor.py 
     '''
+    print( "toPysp_OneChunk") 
     _pysp.setWsViewport( 'DINA5S')
 
     _pysp.cls()
@@ -173,12 +169,16 @@ def exampleImageMBVia_toPysp_OneChunk():
             res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
             data[i][j] = int( res)
 
+    print( "toPysp_OneChunk-1") 
     _pysp.toPysp( { 'putData': 
                     { 'images': [{'name': "Mandelbrot", 'data': data,
                                   'xMin': xmin, 'xMax': xmax, 
                                   'yMin': ymin, 'yMax': ymax}]}})
+    print( "toPysp_OneChunk-2") 
     _pysp.cls()
+    print( "toPysp_OneChunk-3") 
     _pysp.display()
+    print( "toPysp_OneChunk DONE") 
 
     return 
 

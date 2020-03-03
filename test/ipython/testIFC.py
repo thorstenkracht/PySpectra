@@ -19,12 +19,7 @@ python ./test/ipython/testIFC.py testIFC.test_toPyspMonitorSetPixelWorld
 python ./test/ipython/testIFC.py testIFC.test_toPyspMonitorScan
 '''
 import sys
-##pySpectraPath = "/home/kracht/Misc/pySpectra"
-#pySpectraPath = "."
-#sys.path.append( pySpectraPath)
-
 import PySpectra
-#import PySpectra.dMgt.GQE as gqe
 import numpy as np
 import unittest
 import time, sys, os
