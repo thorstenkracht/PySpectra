@@ -432,8 +432,6 @@ def _make_cb_mouseClicked( gqe):
     '''
     def mouseClicked(evt):
 
-        #if len( evt) != 1:
-        #    raise ValueError( "pqt_graphics.mouseClicked: len( evt-tuple) != 1, %s" % gqe.name)
 
         # left mouse button
         if evt.button() == 1: 
@@ -441,7 +439,15 @@ def _make_cb_mouseClicked( gqe):
             if type( gqe) == _pysp.dMgt.GQE.Scan:
                 gqe.move( mousePoint.x())
             elif type( gqe) == _pysp.dMgt.GQE.Image:
+                if gqe.flagZooming: 
+                    return 
                 gqe.move( mousePoint.x(), mousePoint.y())
+        # middle button
+        elif evt.button() == 4: 
+            mousePoint = gqe.plotItem.vb.mapSceneToView(evt.scenePos())
+            if type( gqe) == _pysp.dMgt.GQE.Image:
+                gqe.shift( mousePoint.x(), mousePoint.y())
+            return
 
     return mouseClicked
 

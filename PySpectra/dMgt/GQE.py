@@ -46,7 +46,7 @@ _ImageAttrsPublic = [ 'at', 'colorMap', 'colSpan', 'data', 'estimatedMax', 'flag
 #
 # img is used in pqt_graphics
 #
-_ImageAttrsPrivate = [ 'cbZoomProgress', 'flagZoomSlow', 'img', 'plotItem', 'mousePrepared', 'mouseLabel']
+_ImageAttrsPrivate = [ 'cbZoomProgress', 'flagZooming', 'flagZoomSlow', 'img', 'plotItem', 'mousePrepared', 'mouseLabel']
 
 class Text(): 
     '''
@@ -2104,6 +2104,7 @@ class Image( GQE):
         #
         self.cbZoomProgress = None
         self.flagZoomSlow = None
+        self.flagZooming = False
 
         self.setAttr( kwargs)
 
@@ -2382,6 +2383,19 @@ class Image( GQE):
 
         GQE.monitorGui.door.RunMacro( lst)
         return 
+    #
+    # 
+    #
+    def shift( self, targetIX, targetIY): 
+        '''
+        this function is invoked by a middel-button mouse click from pqtgrph/graphics.py
+        '''
+        import time as _time
+
+        if str(self.name).upper().find( "MANDELBROT") != -1:
+            return self.zoom( targetIX, targetIY, True)
+
+        return 
 
     def mandelbrot( self, c, maxiter):
         z = c
@@ -2440,7 +2454,7 @@ class Image( GQE):
             notdone = _np.less(z.real*z.real + z.imag*z.imag, 4.0)
             output[notdone] = it
             z[notdone] = z[notdone]**2 + c[notdone]
-            if (it % 50) == 0: 
+            if (it % 20) == 0: 
                 self.data = output.transpose()
                 _pysp.display()
                 if self.cbZoomProgress is not None:
@@ -2455,11 +2469,14 @@ class Image( GQE):
         _pysp.display()
         return 
 
-    def zoom( self, targetIX = None, targetIY = None): 
+    def zoom( self, targetIX = None, targetIY = None, flagShift = False): 
 
-        if self.flagZoomSlow:
-            self.zoomSlow( targetIX, targetIY)
-            return 
+        self.flagZooming = True
+
+        #if self.flagZoomSlow:
+        #    self.zoomSlow( targetIX, targetIY)
+        #    self.flagZooming = False
+        #    return 
 
         if targetIX is not None and targetIY is not None: 
             targetX = float( targetIX)/float( self.width)*( self.xMax - self.xMin) + self.xMin
@@ -2468,12 +2485,20 @@ class Image( GQE):
             deltaX = self.xMax - self.xMin
             deltaY = self.yMax - self.yMin
 
-            self.xMin = targetX - deltaX/6.
-            self.xMax = targetX + deltaX/6.
+            if not flagShift: 
+                self.xMin = targetX - deltaX/8.
+                self.xMax = targetX + deltaX/8.
 
-            self.yMin = targetY - deltaY/6.
-            self.yMax = targetY + deltaX/6.
+                self.yMin = targetY - deltaY/8.
+                self.yMax = targetY + deltaX/8.
+            else: 
+                self.xMin = targetX - deltaX/2.
+                self.xMax = targetX + deltaX/2.
+
+                self.yMin = targetY - deltaY/2.
+                self.yMax = targetY + deltaX/2.
 
         self.mandelbrot_numpy()
+        self.flagZooming = False
         return 
 

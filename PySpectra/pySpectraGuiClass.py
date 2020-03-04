@@ -1508,6 +1508,10 @@ class ImageAttributes( QtGui.QMainWindow):
         self.helpImageAttributesAction = self.helpMenu.addAction(self.tr("Image Attributes"))
         self.helpImageAttributesAction.triggered.connect( self.cb_helpImageAttributes)
 
+        if str(self.name).upper().find( "MANDELBROT") != -1:
+            self.helpMandelbrotAttributesAction = self.helpMenu.addAction(self.tr("Mandelbrot Attributes"))
+            self.helpMandelbrotAttributesAction.triggered.connect( self.cb_helpMandelbrotAttributes)
+
         self.activityIndex = 0
         self.activity = self.menuBarActivity.addMenu( "_")
 
@@ -1776,6 +1780,14 @@ class ImageAttributes( QtGui.QMainWindow):
                 "<h3> Image Attributes </h3>"
                 "<ul>"
                 "<li> n.n.</li>"
+                "</ul>"
+                ))
+
+    def cb_helpMandelbrotAttributes(self):
+        QtGui.QMessageBox.about(self, self.tr("Help Mandelbrot Attributes"), self.tr(
+                "<h3> Mandelbrot Attributes </h3>"
+                "<ul>"
+                "<li> Mandelbrot: MB-1: zoom, MB-2: shift</li>"
                 "</ul>"
                 ))
 
