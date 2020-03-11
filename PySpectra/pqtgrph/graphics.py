@@ -162,6 +162,7 @@ def cls():
     global _clsFunctions
     global _myScene
 
+    #print( "+++pqtgraphics.cls")
     if _QApp is None or _win is None: 
         _initGraphic()
 
@@ -215,7 +216,7 @@ def cls():
     # Otherwise all plots are displayed in the upper left corner
     # before they are moves to the correct final positions
     #
-    #+++_QApp.processEvents()
+    #_QApp.processEvents()
     return 
 
 def _getLayout( o): 
@@ -254,7 +255,6 @@ def processEvents():
     second call to processEvents
     '''
     _QApp.processEvents()
-    #_time.sleep( 0.1) # +++
     _QApp.processEvents()
     _QApp.processEvents()
 
@@ -432,6 +432,7 @@ def _make_cb_mouseClicked( gqe):
     '''
     def mouseClicked(evt):
 
+        #print( "+++pqtgraphics.mouseClicked: zooming %s" % gqe.flagZooming) 
 
         # left mouse button
         if evt.button() == 1: 
@@ -459,6 +460,8 @@ def _prepareMouse( gqe):
 
     if gqe.mousePrepared: 
         return 
+
+    #print( "+++pqtgraphics.prepareMouse")
 
     if _myScene is None: 
         _myScene = gqe.plotItem.scene()
