@@ -4,7 +4,7 @@ python ./test/examples/testExamples.py testExamples.test_execTests
 '''
 import PySpectra
 import unittest
-
+import PySpectra.examples.exampleCode
 import sys
 sys.path.append( "/home/kracht/Misc/pySpectra")
 
@@ -25,8 +25,8 @@ class testExamples( unittest.TestCase):
         for funcName in dir( PySpectra.examples.exampleCode):
             if funcName.find( 'example') != 0:
                 continue
-            cmd = "PySpectra.%s()" % funcName
-            print( cmd)
+            cmd = "PySpectra.examples.exampleCode.%s()" % funcName
+            print( "testExamples: executing %s" % cmd)
             exec cmd
             print( "%s DONE" %  cmd)
             PySpectra.procEventsLoop( 1)

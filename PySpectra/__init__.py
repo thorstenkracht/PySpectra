@@ -99,10 +99,7 @@ Select the graphics library by before importing PySpectra
 #from PyQt4 import QtCore as _QtCore
 #from PyQt4 import QtGui as _QtGui
 
-#from dMgt.GQE import *
-#from dMgt.calc import *
-
-from examples.exampleCode import *
+#from examples.exampleCode import *
 
 import os as _os 
 try:
@@ -113,19 +110,20 @@ try:
 except: 
     from pqtgrph.graphics import *
 
+from mtpltlb.graphics import createPDF
 
-
-#from mtpltlb.graphics import createPDF
-
+#+++
 import dMgt.GQE
 import dMgt.calc
-import examples.exampleCode
+#import examples.exampleCode
 import ipython.ifc
-#import ipython.startup
 import misc.IfcGraPysp
 import misc.IfcTango
 import misc.utils
 import misc.zmqIfc
+#+++
+
+#import ipython.startup
 #mtpltlb.graphics
 #pqtgrph.graphics
 
