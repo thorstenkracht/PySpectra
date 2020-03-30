@@ -6,21 +6,19 @@ ssa() - simple scan analysis function
 '''
 import numpy as _np
 import math as _math
-import PySpectra as _pysp
-import PySpectra.dMgt.GQE as _GQE
 import sys as _sys
 import os as _os
 import time as _time
-
 #import matplotlib.pyplot as _plt
 import bisect as _bisect
 from scipy.optimize import curve_fit as _curve_fit
+import PySpectra as _pysp 
 
 def ssa( xIn, yIn, flagNbs = False, stbr = 3):
     '''
     performs a simple scan analysis
     input: 
-      xIn, yIn, numpy arrays
+      xIn, yIn, numpy arrays 
       flagNbs,  if True, no background subtraction
       stbr,     signal to background ratio
     returns: 
@@ -253,7 +251,7 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
     global _lenPlotted
     debug = False
 
-    gqeList = _GQE.getGqeList()
+    gqeList = _pysp.dMgt.GQE.getGqeList()
 
     if debug:
         print( "utils.setGqeVPs.BEGIN: gqeList %s, nameList %s" % \
@@ -263,7 +261,7 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
         #
         # the number of used viewports is (len( gqeList) - numberOfOverlaid) 
         #
-        usedVPs = len( gqeList) - _GQE._getNumberOfOverlaid()
+        usedVPs = len( gqeList) - _pysp.dMgt.GQE._getNumberOfOverlaid()
         if usedVPs != _lenPlotted and _lenPlotted != -1: 
             clsFunc()
         _lenPlotted = usedVPs
@@ -292,7 +290,7 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
         #
         # the number of used viewports is (len( nameList) - numberOfOverlaid( nameList)) 
         #
-        usedVPs = len( nameList) - _GQE._getNumberOfOverlaid( nameList)
+        usedVPs = len( nameList) - _pysp.dMgt.GQE._getNumberOfOverlaid( nameList)
         if usedVPs != _lenPlotted and _lenPlotted != -1: 
             clsFunc()
         _lenPlotted = usedVPs
@@ -322,7 +320,7 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
             #
             # maybe the gqe.overlay has beed deleted
             #
-            if _GQE.getGqe( gqe.overlay) is None:
+            if _pysp.dMgt.GQE.getGqe( gqe.overlay) is None:
                 gqe.overlay = None
             else:
                 continue
@@ -457,7 +455,7 @@ def launchGui():
     from PyQt4 import QtGui as _QtGui
     from PyQt4 import QtCore as _QtCore
 
-    import PySpectra.pySpectraGuiClass as _gui
+    import _pysp.pySpectraGuiClass as _gui
 
     app = _QtGui.QApplication.instance()
     if app is None:
@@ -549,7 +547,7 @@ def yMax( scan):
         if scan.currentIndex == 0:
             ret = scan.y[0]
         else:
-            ret = _np.max( scan.y[:(scan.currentIndex + 1)])
+            ret = _np.max( scan.y[:scan.currentIndex + 1])
     else:
         ret = scan.yMax
     return ret
@@ -563,114 +561,10 @@ def yMin( scan):
         if scan.currentIndex == 0:
             ret = scan.y[0]
         else:
-            ret = _np.min( scan.y[:(scan.currentIndex + 1)])
+            ret = _np.min( scan.y[:scan.currentIndex + 1])
     else:
         ret = scan.yMin
     return ret
-
-
-def toPyspMonitor( hsh, node = None):
-    """
-    sends a dictionary to a PyspMonitor process, 
-    returns a dictionary ...
-# 
-# this piece of code can only be executed,   
-# if the pyspMonitor.py is running
-#
-import PySpectra as pysp
-import random
-MAX = 5
-pos = [float(n)/MAX for n in range( MAX)]
-d1 = [random.random() for n in range( MAX)]
-d2 = [random.random() for n in range( MAX)]
-
-print( "pos %s" % repr( pos))
-print( "d1: %s" % repr( d1))
-
-hsh = { 'putData': 
-           {'title': "Important Data", 
-            'columns': 
-            [ { 'name': "d1_mot01", 'data' : pos},
-              { 'name': "d1_c01", 'data' : d1},
-              { 'name': "d1_c02", 'data' : d2},
-           ]}}
-
-hsh = pysp.toPyspMonitor( hsh)
-print( "return values of putData: %s" % repr( hsh) )
-
-hsh = pysp.toPyspMonitor( { 'getData': True})
-for i in range( MAX):
-    if pos[i] != hsh[ 'getData']['d1_c01']['x'][i]:
-        print( "error: pos[i] != x[i]")
-    if d1[i] != hsh[ 'getData'][ 'd1_c01'][ 'y'][i]:
-        print( "error: d1[i] != y[i]")
-        
-print( "getData, pos: %g" % hsh[ 'getData']['d1_c01']['x'])
-print( "getData, pos: %g" % hsh[ 'getData']['d1_c01']['y'])
-return
-
-    """
-    import zmq, json, socket
-
-    if node is None:
-        node = socket.gethostbyname( socket.getfqdn())
-
-    context = zmq.Context()
-    sckt = context.socket(zmq.REQ)
-    #
-    # prevent context.term() from hanging, if the message
-    # is not consumed by a receiver.
-    #
-    sckt.setsockopt(zmq.LINGER, 1)
-    try:
-        sckt.connect('tcp://%s:7779' % node)
-    except Exception as e:
-        sckt.close()
-        return { 'result': "utils.toPyspMonitor: failed to connect to %s" % node}
-
-    hshEnc = json.dumps( hsh)
-    try:
-        res = sckt.send( hshEnc)
-    except Exception as e:
-        sckt.close()
-        return { 'result': "TgUtils.toPyspMonitor: exception by send() %s" % repr(e)}
-    #
-    # PyspMonitor receives the Dct, processes it and then
-    # returns the message. This may take some time. To pass
-    # 4 arrays, each with 10000 pts takes 2.3s
-    #
-    if 'isAlive' in hsh:
-        lst = zmq.select([sckt], [], [], 0.5)
-        if sckt in lst[0]:
-            hshEnc = sckt.recv() 
-            sckt.close()
-            context.term()
-            return json.loads( hshEnc)
-        else: 
-            sckt.close()
-            context.term()
-            return { 'result': 'notAlive'}
-    else:
-        lst = zmq.select([sckt], [], [], 3.0)
-        if sckt in lst[0]:
-            hshEnc = sckt.recv() 
-            sckt.close()
-            context.term()
-            return json.loads( hshEnc)
-        else: 
-            sckt.close()
-            context.term()
-            return { 'result': 'utils: no reply from pyspMonitor'}
-
-def isPyspMonitorAlive( node = None):
-    '''
-    returns True, if there is a pyspMonitor responding to the isAlive prompt
-    '''
-    hsh = toPyspMonitor( { 'isAlive': True}, node = node)
-    if hsh[ 'result'] == 'notAlive':
-        return False
-    else:
-        return True
 
 # -*- coding: utf-8 -*-
 """
@@ -678,7 +572,6 @@ Created on Thu Feb 26 18:02:40 2015
 
 @author: sprung
 """
-
 # --------------------------------------------------------------------------- #
 def fastscananalysis(x,y,mode):
     """Fast scan analysis

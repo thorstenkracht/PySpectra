@@ -1,6 +1,6 @@
 #!/bin/env python
 '''
-python ./test/testUtils testUtils.test_ssa
+python ./test/testUtils.py testUtils.test_ssa
 '''
 import sys
 import PySpectra
@@ -15,7 +15,6 @@ class testUtils( unittest.TestCase):
     @classmethod
     def setUpClass( testUtils):
         pass
-
     @classmethod
     def tearDownClass( testUtils): 
         PySpectra.close()
@@ -25,13 +24,13 @@ class testUtils( unittest.TestCase):
         overlay 2 scans
         '''
         PySpectra.cls()
-        PySpectra.delete()
-        g = PySpectra.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, lineColor = 'red')
+        PySpectra.dMgt.GQE.delete()
+        g = PySpectra.dMgt.GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, lineColor = 'red')
         mu = 0.
         sigma = 1.
         g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2.*sigma**2))
 
-        hsh = PySpectra.ssa( g.x, g.y)
+        hsh = PySpectra.misc.utils.ssa( g.x, g.y)
         self.assertEqual( hsh[ 'status'], 1)
         self.assertEqual( hsh[ 'midpoint'], 0.)
         self.assertAlmostEqual( hsh[ 'l_back'], 2.521e-5)

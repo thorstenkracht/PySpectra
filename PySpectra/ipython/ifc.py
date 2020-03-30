@@ -33,6 +33,8 @@ and by pyspViewer.py
       s1 is plotted in the viewport of s2
     read fileName
     setComment
+    setArrowMotorCurrent
+    setArrowMotorSetPoint
     setPixelImage
     setPixelWorld
     setText
@@ -100,18 +102,22 @@ def command( line):
         return overlay( lineRest)
     elif lst[0] == 'read':
         return read( lineRest)
+    elif lst[0] == 'setArrowMotorCurrent':
+        return setArrowMotorCurrent( lineRest)
+    elif lst[0] == 'setArrowMotorSetPoint':
+        return setArrowMotorSetPoint( lineRest)
     elif lst[0] == 'setComment':
         return setComment( lineRest)
+    elif lst[0] == 'setPixelImage':
+        return setPixelImage( lineRest)
+    elif lst[0] == 'setPixelWorld':
+        return setPixelWorld( lineRest)
     elif lst[0] == 'setText':
         return setText( lineRest)
     elif lst[0] == 'setTitle':
         return setTitle( lineRest)
     elif lst[0] == 'setWsViewport':
         return setWsViewport( lineRest)
-    elif lst[0] == 'setPixelImage':
-        return setPixelImage( lineRest)
-    elif lst[0] == 'setPixelWorld':
-        return setPixelWorld( lineRest)
     elif lst[0] == 'setX':
         return setX( lineRest)
     elif lst[0] == 'setXY':
@@ -148,9 +154,9 @@ def antiderivative( line):
 
         
     if len( lst) == 1: 
-        pysp.antiderivative( lst[0])
+        pysp.dMgt.calc.antiderivative( lst[0])
     elif len( lst) == 2: 
-        pysp.antiderivative( lst[0], lst[1])
+        pysp.dMgt.calc.antiderivative( lst[0], lst[1])
     else:
         raise ValueError( "ifc.antiderivative: wrong syntax %s" % line)
 
@@ -194,7 +200,7 @@ def create( line):
     else:
         raise ValueError( "ifs.createScan: wrong syntax %s" % line)
         
-    pysp.Scan( **hsh)
+    pysp.dMgt.GQE.Scan( **hsh)
 
 def createPDF( line):
     '''
@@ -222,9 +228,9 @@ def derivative( line):
             lst = line.split( ' ')
         
     if len( lst) == 1: 
-        pysp.derivative( lst[0])
+        pysp.dMgt.calc.derivative( lst[0])
     elif len( lst) == 2: 
-        pysp.derivative( lst[0], lst[1])
+        pysp.dMgt.calc.derivative( lst[0], lst[1])
     else:
         raise ValueError( "ifc.derivative: wrong syntax %s" % line)
 
@@ -244,7 +250,7 @@ def delete( line):
     lst = None
     if line: 
         lst = line.split(' ')
-    pysp.delete( lst)
+    pysp.dMgt.GQE.delete( lst)
 
 def info( line):
     '''
@@ -260,7 +266,7 @@ def overlay( line):
     lst = line.split( ' ')
     if len( lst) != 2:
         raise ValueError( "ifc.overlay: expecting two scan names")
-    pysp.overlay( lst[0], lst[1])
+    pysp.dMgt.GQE.overlay( lst[0], lst[1])
 
 def read( line):
     '''
@@ -273,13 +279,13 @@ def read( line):
     if len( lst) == 0:
         raise ValueError( "ifc.read: expecting a file name and optionally '-mca'")
         return 
-    pysp.read( lst)
+    pysp.dMgt.GQE.read( lst)
 
 def setComment( line):
     '''
     set the comment string for the whole plot
     '''
-    pysp.setComment( line)
+    pysp.dMgt.GQE.setComment( line)
 
 def _pairs( lst): 
     a = iter(lst)
@@ -324,7 +330,7 @@ def setText( line):
     '''
     lst = _mySplit( line)
     try:
-        o = pysp.getGqe( lst[0])
+        o = pysp.dMgt.GQE.getGqe( lst[0])
     except Exception as e: 
         raise ValueError( "ifc.setText: failed to gqeGqe %s" % lst[0])
         return
@@ -381,7 +387,7 @@ def setTitle( line):
     '''
     set the title of the whole plot
     '''
-    pysp.setTitle( line)
+    pysp.dMgt.GQE.setTitle( line)
 
 def setPixelImage( line): 
     '''
@@ -391,13 +397,45 @@ def setPixelImage( line):
         iy > 0 and iy < height
     '''
     lst = line.split( ' ')
-    o = pysp.getGqe( lst[0])
+    o = pysp.dMgt.GQE.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setPixelImage: failed to find %s" % lst[0])
     ix = int( lst[1])
     iy = int( lst[2])
     val = float( lst[3])
     o.setPixelImage( ix, iy, val)
+    return 
+
+def setArrowMotorCurrent( line): 
+    '''
+    handle the arrowMotorCurrent
+      setArrowMotorCurrent nameGqe position <targetPos>
+      setArrowMotorCurrent nameGqe hide
+      setArrowMotorCurrent nameGqe show
+
+      position: the motor current position, maybe from mvsa
+    '''
+    lst = line.split( ' ')
+    o = pysp.dMgt.GQE.getGqe( lst[0])
+    if o is None: 
+        raise ValueError(" ifc.setArrowMotorSCurrent: failed to find %s" % lst[0])
+    o.setArrowMotorCurrent( lst[1:])
+    return 
+
+def setArrowMotorSetPoint( line): 
+    '''
+    handle the arrowMotorSetPoint
+      setArrowMotorSetPoint nameGqe position <targetPos>
+      setArrowMotorSetPoint nameGqe hide
+      setArrowMotorSetPoint nameGqe show
+
+      position: the motor target position, maybe from mvsa
+    '''
+    lst = line.split( ' ')
+    o = pysp.dMgt.GQE.getGqe( lst[0])
+    if o is None: 
+        raise ValueError(" ifc.setArrowMotorSetPoint: failed to find %s" % lst[0])
+    o.setArrowMotorSetPoint( lst[1:])
     return 
 
 def setPixelWorld( line): 
@@ -408,7 +446,7 @@ def setPixelWorld( line):
         y >= yMin and y <= yMax
     '''
     lst = line.split( ' ')
-    o = pysp.getGqe( lst[0])
+    o = pysp.dMgt.GQE.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setPixelWorld: failed to find %s" % lst[0])
     x = float( lst[1])
@@ -422,7 +460,7 @@ def setX( line):
     setX nameGqe index x
     '''
     lst = line.split( ' ')
-    o = pysp.getGqe( lst[0])
+    o = pysp.dMgt.GQE.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setX: failed to find %s" % lst[0])
     index = int( lst[1])
@@ -438,7 +476,7 @@ def setY( line):
     setY nameGqe index y
     '''
     lst = line.split( ' ')
-    o = pysp.getGqe( lst[0])
+    o = pysp.dMgt.GQE.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setY: failed to find %s" % lst[0])
     index = int( lst[1])
@@ -454,7 +492,7 @@ def setXY( line):
     setXY nameGqe index x y
     '''
     lst = line.split( ' ')
-    o = pysp.getGqe( lst[0])
+    o = pysp.dMgt.GQE.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setXY: failed to find %s" % lst[0])
     index = int( lst[1])
@@ -487,7 +525,7 @@ def show( line):
     '''
     show the list of scans
     '''
-    pysp.show()
+    pysp.dMgt.GQE.show()
 
 def write( line):
     ''' 
@@ -501,7 +539,7 @@ def write( line):
       write selected scans
     '''
     lst = line.split( ' ')
-    pysp.write( lst)
+    pysp.dMgt.GQE.write( lst)
 
 def y2my( line):
     lst = line.split( ' ')
@@ -511,5 +549,5 @@ def y2my( line):
     hsh[ 'name'] = lst[0]
     if len( lst) == 2:
         hsh[ 'nameNew'] = lst[1]
-    pysp.yToMinusY( **hsh)
+    pysp.dMgt.calc.yToMinusY( **hsh)
     

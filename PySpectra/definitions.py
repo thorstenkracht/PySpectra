@@ -45,7 +45,7 @@ GREEN_OK = "#70ff70"
 # the arrays are needed to put the colors and the 
 # styles into a well-defined order
 #
-lineColorArr = [ 
+colorArr = [ 
     'RED', 
     'GREEN',
     'BLUE',
@@ -57,7 +57,7 @@ lineColorArr = [
     'NONE', 
 ]
 
-lineColorDct = { 
+colorDct = { 
     'RED': 0, 
     'GREEN': 1, 
     'BLUE': 2, 

@@ -59,7 +59,7 @@ def createPDF( printer = None, fileName = None, flagPrint = False, format = 'DIN
     - returns the name of the output file
     '''
 
-    gqeList = _pysp.getGqeList()
+    gqeList = _pysp.dMgt.GQE.getGqeList()
     if len( gqeList) == 0:
         return None
 
@@ -125,7 +125,7 @@ def configGraphics():
 def _setSizeGraphicsWindow( nScan):
     '''
     '''
-    if _pysp.getWsViewportFixed(): 
+    if _pysp.dMgt.GQE.getWsViewportFixed(): 
         return 
 
     if nScan > 9:
@@ -188,7 +188,7 @@ def setWsViewport( size = None):
 
     fig = matplotlib.pyplot.gcf()
     fig.set_size_inches( w/2.54, h/2.54, forward = True)
-    _pysp.setWsViewportFixed( True)
+    _pysp.dMgt.GQE.setWsViewportFixed( True)
 
     return 
 
@@ -213,7 +213,7 @@ def cls():
     #
     # clear the plotItems
     #
-    gqeList = _pysp.getGqeList()
+    gqeList = _pysp.dMgt.GQE.getGqeList()
 
     for scan in gqeList:
         scan.plotItem = None
@@ -259,7 +259,7 @@ def procEventsLoop( timeOut = None):
         #
         if _os.getenv( "DISPLAY") == ":99.0": 
             break
-        key = _pysp.inkey()        
+        key = _pysp.misc.utils.inkey()        
         if key == 10:
             break
 
@@ -323,9 +323,9 @@ def _setTitle( gqe, nameList):
     else: 
         tempName = gqe.name
 
-    #fontSize = _pysp.getFontSize( nameList)
+    #fontSize = _pysp.dMgt.GQE.getFontSize( nameList)
  
-    if _pysp.getNumberOfGqesToBeDisplayed( nameList) < _pysp.definitions.MANY_GQES:
+    if _pysp.dMgt.GQE.getNumberOfGqesToBeDisplayed( nameList) < _pysp.definitions.MANY_GQES:
         gqe.plotItem.set_title( tempName)
         #scan.plotItem.set_title( tempName, fontsize = fontSize)
     else:
@@ -363,9 +363,9 @@ def _adjustFigure( nDisplay):
     if nDisplay > 4: 
         nDisplay = 10
 
-    if _pysp.getTitle() is not None:
+    if _pysp.dMgt.GQE.getTitle() is not None:
         top -= 0.05
-    if _pysp.getComment() is not None:
+    if _pysp.dMgt.GQE.getComment() is not None:
         top -= 0.05
 
     hsh = { '1':  { 'top': top,
@@ -400,15 +400,15 @@ def _adjustFigure( nDisplay):
 def _displayTitleComment( nameList):     
     '''
     '''
-    #fontSize = _pysp.getFontSize( nameList)
+    #fontSize = _pysp.dMgt.GQE.getFontSize( nameList)
 
-    title = _pysp.getTitle()
+    title = _pysp.dMgt.GQE.getTitle()
     if title is not None:
         if not _textIsOnDisplay( title):
             t = Fig.text( 0.5, 0.95, title, va='center', ha='center')
             #t.set_fontsize( fontSize)
     
-    comment = _pysp.getComment()
+    comment = _pysp.dMgt.GQE.getComment()
     if comment is not None:
         if title is not None:
             if not _textIsOnDisplay( comment):
@@ -424,7 +424,7 @@ def _displayTitleComment( nameList):
 def _addTexts( scan, nameList):
     #print( "mpl_graphics.addTexts")
 
-    #fontSize = _pysp.getFontSize( nameList)
+    #fontSize = _pysp.dMgt.GQE.getFontSize( nameList)
 
     if type( scan) != _pysp.dMgt.GQE.Scan:
         return 
@@ -539,7 +539,7 @@ def _createPlotItem( scan, nameList):
     
     _setTitle( scan, nameList)
 
-    if _pysp.getNumberOfGqesToBeDisplayed( nameList) < _pysp.definitions.MANY_GQES:
+    if _pysp.dMgt.GQE.getNumberOfGqesToBeDisplayed( nameList) < _pysp.definitions.MANY_GQES:
         if hasattr( scan, 'xLabel') and scan.xLabel is not None:
             scan.plotItem.set_xlabel( scan.xLabel)
         if hasattr( scan, 'yLabel') and scan.yLabel is not None:
@@ -552,7 +552,7 @@ def _createPlotItem( scan, nameList):
 def _displayImages( nameList): 
     '''
     '''
-    gqeList = _pysp.getGqeList()
+    gqeList = _pysp.dMgt.GQE.getGqeList()
     for image in gqeList:
         if type( image) != _pysp.dMgt.GQE.Image: 
             continue
@@ -647,10 +647,10 @@ def display( nameList = None):
     # see if the members of nameList arr in the gqeList
     #
     for nm in nameList:
-        if _pysp.getGqe( nm) is None:
+        if _pysp.dMgt.GQE.getGqe( nm) is None:
             raise ValueError( "graphics.display: %s is not in the gqeList" % nm)
 
-    gqeList = _pysp.getGqeList()
+    gqeList = _pysp.dMgt.GQE.getGqeList()
     #
     # if there is only one scan to be displayed, there is no overlay
     #
@@ -661,7 +661,7 @@ def display( nameList = None):
     #
     # adjust the graphics window to the number of displayed scans
     #
-    nDisplay = _pysp.getNumberOfGqesToBeDisplayed( nameList)
+    nDisplay = _pysp.dMgt.GQE.getNumberOfGqesToBeDisplayed( nameList)
     _setSizeGraphicsWindow( nDisplay)
 
     _adjustFigure( nDisplay)
@@ -669,7 +669,7 @@ def display( nameList = None):
     #
     # set scan.nrow, scan.ncol, scan.nplot
     #
-    _pysp.setGqeVPs( nameList, flagDisplaySingle, cls)
+    _pysp.misc.utils.setGqeVPs( nameList, flagDisplaySingle, cls)
 
     _displayTitleComment( nameList)
 
@@ -692,7 +692,7 @@ def display( nameList = None):
             #
             # maybe the scan.overlay has beed deleted
             #
-            if _pysp.getGqe( scan.overlay) is None:
+            if _pysp.dMgt.GQE.getGqe( scan.overlay) is None:
                 scan.overlay = None
             else:
                 continue
@@ -814,7 +814,7 @@ def display( nameList = None):
         
         if len( nameList) > 0 and scan.name not in nameList:
             continue
-        target = _pysp.getGqe( scan.overlay)
+        target = _pysp.dMgt.GQE.getGqe( scan.overlay)
         if target is None or target.plotItem is None:
             raise ValueError( "mpl_graphics.display: %s tries to overlay to %s" %
                               (scan.name, scan.overlay))
@@ -828,7 +828,7 @@ def display( nameList = None):
         if scan.yLog: 
             scan.plotItem.set_yscale( "log")
         
-        if len( _pysp.getGqeList()) >= _pysp.definitions.MANY_GQES or \
+        if len( _pysp.dMgt.GQE.getGqeList()) >= _pysp.definitions.MANY_GQES or \
            scan.yTicksVisible == False: 
             plt.setp( scan.plotItem.get_yticklabels(), visible=False)
 

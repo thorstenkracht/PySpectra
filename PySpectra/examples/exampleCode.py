@@ -16,11 +16,14 @@ import math as _math
 import os as _os
 import time as _time
 import pyqtgraph as _pg
+import PySpectra.misc.zmqIfc as _zmqIfc
+import PySpectra.dMgt.GQE as _GQE
+from PySpectra.mtpltlb.graphics import createPDF
 
 
-def exampleDataVia_toPysp(): 
+def exampleDataVia_execHsh(): 
     '''
-    replace toPysp() with toPyspMonitor() to connect to pyspMonitor.py
+    replace execHsh() with toPyspMonitor() to connect to pyspMonitor.py
     '''
     import random
     MAX = 25
@@ -50,13 +53,13 @@ def exampleDataVia_toPysp():
                  'showGridX': False, 'showGridY': False},
              ]}}
 
-    hsh = _pysp.toPysp( hsh)
-    print( "exampleDataVia_toPysp: putData returns %s" % repr( hsh) )
+    hsh = _zmqIfc.execHsh( hsh)
+    print( "exampleDataVia_execHsh: putData returns %s" % repr( hsh) )
 
     #
     # retrieve the data 
     #
-    hsh = _pysp.toPysp( { 'getData': True})
+    hsh = _zmqIfc.execHsh( { 'getData': True})
     #
     # ... and compare.
     #
@@ -66,8 +69,8 @@ def exampleDataVia_toPysp():
         if d1[i] != hsh[ 'getData'][ 'EH_C01'][ 'y'][i]:
             print( "error: d1[i] != y[i]")
         
-    print( "exampleDataVia_toPysp: getData returns x(EH_C01) %s " % hsh[ 'getData']['EH_C01']['x'])
-    print( "exampleDataVia_toPysp: getData returns y(EH_C01) %s" % hsh[ 'getData']['EH_C01']['y'])
+    print( "exampleDataVia_execHsh: getData returns x(EH_C01) %s " % hsh[ 'getData']['EH_C01']['x'])
+    print( "exampleDataVia_execHsh: getData returns y(EH_C01) %s" % hsh[ 'getData']['EH_C01']['y'])
     return 
 
 def mandelbrot( c, maxiter):
@@ -81,16 +84,16 @@ def mandelbrot( c, maxiter):
         z = z*z + c
     return 0
 
-def exampleImageMBVia_toPysp(): 
+def exampleImageMBVia_execHsh(): 
     '''
     this examples simulates the toPyspMonitor() interface
 
-    replace toPysp() by toPyspMonitor() to connect to pyspMonitor.py 
+    replace execHsh() by toPyspMonitor() to connect to pyspMonitor.py 
     '''
     _pysp.setWsViewport( 'DINA5S')
 
     _pysp.cls()
-    _pysp.delete()
+    _GQE.delete()
 
     (xmin, xmax) = (-2.,-0.5)
     (ymin, ymax) = (0, 1.5)
@@ -100,7 +103,7 @@ def exampleImageMBVia_toPysp():
     #
     # do the clean-up before we start
     #
-    hsh =  _pysp.toPysp( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+    hsh =  _zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
     if hsh[ 'result'] != "done":
         print( "error from ['delete', 'setWsViewport DINA5S', 'cls']")
         return 
@@ -112,7 +115,7 @@ def exampleImageMBVia_toPysp():
               'xMin': xmin, 'xMax': xmax, 'width': width, 
               'yMin': ymin, 'yMax': ymax, 'height': height}}
 
-    hsh = _pysp.toPysp( hsh)
+    hsh = _zmqIfc.execHsh( hsh)
     if hsh[ 'result'] != "done":
         print( "error from putData")
         return 
@@ -125,7 +128,7 @@ def exampleImageMBVia_toPysp():
         for j in range(height):
             res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
             hsh = { 'command': [ 'setPixelImage Mandelbrot %d %d %g' % ( i, j, res)]}
-            hsh = _pysp.toPysp( hsh)
+            hsh = _zmqIfc.execHsh( hsh)
             if hsh[ 'result'] != "done":
                 print( "error from setPixel")
                 return
@@ -134,17 +137,17 @@ def exampleImageMBVia_toPysp():
 
     return 
 
-def exampleImageMBVia_toPysp_OneChunk(): 
+def exampleImageMBVia_execHsh_OneChunk(): 
     '''
     this examples simulates the toPyspMonitor() interface
 
-    replace toPysp() by toPyspMonitor() to connect to pyspMonitor.py 
+    replace execHsh() by toPyspMonitor() to connect to pyspMonitor.py 
     '''
-    print( "toPysp_OneChunk") 
+    print( "execHsh_OneChunk") 
     _pysp.setWsViewport( 'DINA5S')
 
     _pysp.cls()
-    _pysp.delete()
+    _GQE.delete()
 
     (xmin, xmax) = (-2., 1.0)
     (ymin, ymax) = ( -1.5, 1.5)
@@ -154,7 +157,7 @@ def exampleImageMBVia_toPysp_OneChunk():
     #
     # do the clean-up before we start
     #
-    hsh =  _pysp.toPysp( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+    hsh =  _zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
     if hsh[ 'result'] != "done":
         print( "error from ['delete', 'setWsViewport DINA5S', 'cls']")
         return 
@@ -170,16 +173,16 @@ def exampleImageMBVia_toPysp_OneChunk():
             res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
             data[i][j] = int( res)
 
-    print( "toPysp_OneChunk-1") 
-    _pysp.toPysp( { 'putData': 
+    print( "execHsh_OneChunk-1") 
+    _zmqIfc.execHsh( { 'putData': 
                     { 'images': [{'name': "Mandelbrot", 'data': data,
                                   'xMin': xmin, 'xMax': xmax, 
                                   'yMin': ymin, 'yMax': ymax}]}})
-    print( "toPysp_OneChunk-2") 
+    print( "execHsh_OneChunk-2") 
     _pysp.cls()
-    print( "toPysp_OneChunk-3") 
+    print( "execHsh_OneChunk-3") 
     _pysp.display()
-    print( "toPysp_OneChunk DONE") 
+    print( "execHsh_OneChunk DONE") 
 
     return 
 
@@ -189,9 +192,9 @@ def example_LogPlotWithText():
     create 1 scan, y-log scale, one text
     '''
     _pysp.cls()
-    _pysp.delete()
+    _GQE.delete()
     _pysp.setWsViewport( "DINA5")
-    t1 = _pysp.Scan( name = "t1", xMin = 0.01, xMax = 10., nPts = 101, 
+    t1 = _GQE.Scan( name = "t1", xMin = 0.01, xMax = 10., nPts = 101, 
                      lineColor = 'blue', xLabel='Position', 
                      yLabel = 'signal', yLog = True)
     t1.addText( text = "a left/center aligned text, should be in the center", 
@@ -200,10 +203,10 @@ def example_LogPlotWithText():
 
 def example_LogXScale():
     _pysp.cls()
-    _pysp.delete()
+    _GQE.delete()
     _pysp.setWsViewport( "DINA5")
-    _pysp.setTitle( "log x-scale")
-    t1 = _pysp.Scan( name = "t1", xMin = 0.01, xMax = 100., nPts = 101, 
+    _GQE.setTitle( "log x-scale")
+    t1 = _GQE.Scan( name = "t1", xMin = 0.01, xMax = 100., nPts = 101, 
                     lineColor = 'blue', xLabel='Position', yLabel = 'signal', 
                      yLog = False, xLog = True)
     _pysp.display()
@@ -214,11 +217,11 @@ def example_PlotWithSeveralTexts():
     create 1 scan with several texts
     '''
     _pysp.cls()
-    _pysp.delete()
-    _pysp.setTitle( "Here could be the title")
-    _pysp.setComment( "comment: Sinus(), shifted up by 1.1")
+    _GQE.delete()
+    _GQE.setTitle( "Here could be the title")
+    _GQE.setComment( "comment: Sinus(), shifted up by 1.1")
     _pysp.setWsViewport( "DINA5")
-    t1 = _pysp.Scan( name = "t1", xMin = 0.01, xMax = 10., nPts = 101, 
+    t1 = _GQE.Scan( name = "t1", xMin = 0.01, xMax = 10., nPts = 101, 
                      lineColor = 'blue', xLabel = 'Position', yLabel = 'sin')
     t1.addText( text = "a left/center aligned text", x = 0.05, y = 0.8, 
                 hAlign = 'left', vAlign = 'center')
@@ -239,19 +242,19 @@ def example_Overlay2():
     create 2 overlaid scans
     '''
     _pysp.cls()
-    _pysp.delete()
-    _pysp.setTitle( "Overlay 2 Scans")
-    _pysp.setComment( "no comment")
+    _GQE.delete()
+    _GQE.setTitle( "Overlay 2 Scans")
+    _GQE.setComment( "no comment")
     _pysp.setWsViewport( "DINA5")
-    g = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
+    g = _GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
                     lineColor = 'red')
     mu = 0.
     sigma = 1.
     g.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g.y-mu)**2/(2.*sigma**2))
-    t1 = _pysp.Scan( name = "sinus", lineColor = 'blue', xMin = -5, xMax = 5., 
+    t1 = _GQE.Scan( name = "sinus", lineColor = 'blue', xMin = -5, xMax = 5., 
                     yMin = -1.5, yMax = 1.5, yLabel = 'sin')
     t1.y = _np.sin( t1.x)
-    _pysp.overlay( "sinus", "gauss")
+    _GQE.overlay( "sinus", "gauss")
     _pysp.display()
 
 def example_OverlayDoty():
@@ -259,14 +262,14 @@ def example_OverlayDoty():
     create 2 overlaid scans
     '''
     _pysp.cls()
-    _pysp.delete()
-    _pysp.setTitle( "2 Overlay scans, x-axis tick labels show date")
+    _GQE.delete()
+    _GQE.setTitle( "2 Overlay scans, x-axis tick labels show date")
     _pysp.setWsViewport( "DINA5")
-    t1 = _pysp.Scan( name = "t1", xMin = 0, xMax = 10, nPts = 101, 
+    t1 = _GQE.Scan( name = "t1", xMin = 0, xMax = 10, nPts = 101, 
                      lineColor = 'blue', 
                      xLabel = 'Position', yLabel = 'sin', doty = True)
     t1.y = _np.sin( t1.x)
-    t2 = _pysp.Scan( "t2", xLabel = 'Position', yLabel = 'cos', 
+    t2 = _GQE.Scan( "t2", xLabel = 'Position', yLabel = 'cos', 
                      xMin = 0, xMax = 10, nPts = 101, 
                      lineColor = 'green', doty = True)
     t2.y = _np.cos( t2.x)
@@ -278,22 +281,22 @@ def example_PlotsWithTextContainer():
     create 3 scans and a text container
     '''
     _pysp.cls()
-    _pysp.delete()
-    _pysp.setTitle( "here could be a title")
-    _pysp.setComment( "this is a comment")
+    _GQE.delete()
+    _GQE.setTitle( "here could be a title")
+    _GQE.setComment( "this is a comment")
     _pysp.setWsViewport( "DINA5")
-    textScan = _pysp.Scan( name = "textContainer", textOnly = True)
+    textScan = _GQE.Scan( name = "textContainer", textOnly = True)
     textScan.addText( text = "some information", 
                       x = 0., y = 0.95, color = 'blue')
     textScan.addText( text = "and more infos", 
                       x = 0., y = 0.85, color = 'blue')
-    t1 = _pysp.Scan( "t1", lineColor = 'blue', xLabel = 'Position', 
+    t1 = _GQE.Scan( "t1", lineColor = 'blue', xLabel = 'Position', 
                      yLabel = 'sin')
     t1.y = _np.sin( t1.x)
-    t2 = _pysp.Scan( "t2", xLabel = 'Position', yLabel = 'cos', 
+    t2 = _GQE.Scan( "t2", xLabel = 'Position', yLabel = 'cos', 
                      symbol = 'o', symbolColor = 'red', symbolSize = 5)
     t2.y = _np.cos( t2.x)
-    t3 = _pysp.Scan( "t3", xLabel = 'Position', yLabel = 'tan', 
+    t3 = _GQE.Scan( "t3", xLabel = 'Position', yLabel = 'tan', 
                      symbol = '+', lineColor = 'cyan', 
                      symbolColor = 'green', symbolSize = 5)
     t3.y = _np.tan( t3.x)
@@ -304,24 +307,24 @@ def example_Create5Plots():
     create 5 scans, different colors, demonstrate overlay feature
     '''
     _pysp.cls()
-    _pysp.delete()
-    _pysp.setTitle( "5 Scans, t5 is overlaid to t3")
+    _GQE.delete()
+    _GQE.setTitle( "5 Scans, t5 is overlaid to t3")
     _pysp.setWsViewport( "DINA5")
-    t1 = _pysp.Scan( name = "t1", lineColor = 'blue', yLabel = 'sin')
+    t1 = _GQE.Scan( name = "t1", lineColor = 'blue', yLabel = 'sin')
     t1.y = _np.sin( t1.x)
-    t2 = _pysp.Scan( "t2", xLabel = 'Position', yLabel = 'cos', symbol = '+')
+    t2 = _GQE.Scan( "t2", xLabel = 'Position', yLabel = 'cos', symbol = '+')
     t2.y = _np.cos( t2.x)
-    t3 = _pysp.Scan( name = "t3", lineColor = 'green', 
+    t3 = _GQE.Scan( name = "t3", lineColor = 'green', 
                      xLabel = 'Position', yLabel = 'tan')
     t3.y = _np.tan( t3.x)
-    t4 = _pysp.Scan( name = "t4", lineColor = 'NONE', 
+    t4 = _GQE.Scan( name = "t4", lineColor = 'NONE', 
                      xLabel = 'Position', yLabel = 'random', 
                      symbol = '+', symbolColor = 'CYAN')
     t4.y = _np.random.random_sample( (len( t4.y), ))
-    t5 = _pysp.Scan( name = "t5", lineColor = 'magenta', 
+    t5 = _GQE.Scan( name = "t5", lineColor = 'magenta', 
                      xLabel = 'Position', yLabel = 'x**2')
     t5.y = t5.x * t5.x
-    _pysp.overlay( 't5', 't3')
+    _GQE.overlay( 't5', 't3')
     _pysp.display()
 
 def example_Create22Plots():
@@ -329,12 +332,12 @@ def example_Create22Plots():
     create 22 plots
     '''
     _pysp.cls()
-    _pysp.delete()
-    _pysp.setTitle( "22 Scans")
-    _pysp.setComment( "and a comment")
+    _GQE.delete()
+    _GQE.setTitle( "22 Scans")
+    _GQE.setComment( "and a comment")
     _pysp.setWsViewport( "DINA4")
     for i in range( 22): 
-        t = _pysp.Scan( name = "t%d" % i, lineColor = 'blue',
+        t = _GQE.Scan( name = "t%d" % i, lineColor = 'blue',
                         xLabel = 'Position', yLabel = 'rand')
         t.y = _np.random.random_sample( (len( t.x), ))*1000.
     _pysp.display()
@@ -344,18 +347,18 @@ def example_Create56x3Plots():
     create 56x3 plots
     '''
     _pysp.cls()
-    _pysp.delete()
-    _pysp.setTitle( "56 x 3 Scans")
-    _pysp.setComment( "Display many Scans")
+    _GQE.delete()
+    _GQE.setTitle( "56 x 3 Scans")
+    _GQE.setComment( "Display many Scans")
     _pysp.setWsViewport( "DINA4")
     for i in range( 56): 
-        t = _pysp.Scan( name = "t%d_a" % i, lineColor = 'blue', nPts = 200, 
+        t = _GQE.Scan( name = "t%d_a" % i, lineColor = 'blue', nPts = 200, 
                         yLabel = 'rand')
         t.y = _np.random.random_sample( (len( t.x), ))*1000.
-        t = _pysp.Scan( name = "t%d_b" % i, lineColor = 'red', nPts = 200, 
+        t = _GQE.Scan( name = "t%d_b" % i, lineColor = 'red', nPts = 200, 
                         yLabel = 'rand', overlay = "t%d_a" % i)
         t.y = _np.random.random_sample( (len( t.x), ))*1000.
-        t = _pysp.Scan( name = "t%d_c" % i, lineColor = 'green', nPts = 200, 
+        t = _GQE.Scan( name = "t%d_c" % i, lineColor = 'green', nPts = 200, 
                         yLabel = 'rand', overlay = "t%d_a" % i)
         t.y = _np.random.random_sample( (len( t.x), ))*1000.
     _pysp.display()
@@ -371,11 +374,11 @@ def example_CreatePDF():
         return 
 
     _pysp.cls()
-    _pysp.delete()
+    _GQE.delete()
 
-    _pysp.setTitle( "Create PDF file and send it to the printer")
+    _GQE.setTitle( "Create PDF file and send it to the printer")
     _pysp.setWsViewport( "DINA5")
-    scan = _pysp.Scan( name = 'PDF Output', nPts = 100, xMin = -1., xMax = 1.,
+    scan = _GQE.Scan( name = 'PDF Output', nPts = 100, xMin = -1., xMax = 1.,
                            xLabel = 'Position', yLabel = "Counts")
     
     scan.y = _np.sin( scan.x)
@@ -391,18 +394,18 @@ def example_GaussAndSinusOverlay():
     overlay 2 scans
     '''
     _pysp.cls()
-    _pysp.delete()
-    _pysp.setTitle( "2 Overlay Scans")
+    _GQE.delete()
+    _GQE.setTitle( "2 Overlay Scans")
     _pysp.setWsViewport( "DINA5")
-    g = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
+    g = _GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
                     lineColor = 'red')
     mu = 0.
     sigma = 1.
     g.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g.y-mu)**2/(2.*sigma**2))
-    t1 = _pysp.Scan( name = "sinus", lineColor = 'blue', xMin = -5, xMax = 5., 
+    t1 = _GQE.Scan( name = "sinus", lineColor = 'blue', xMin = -5, xMax = 5., 
                     yMin = -1.5, yMax = 1.5, yLabel = 'sin')
     t1.y = _np.sin( t1.x)
-    _pysp.overlay( "sinus", "gauss")
+    _GQE.overlay( "sinus", "gauss")
     _pysp.display()
 
 def example_Gauss():
@@ -410,11 +413,11 @@ def example_Gauss():
     gauss plot
     '''
     _pysp.cls()
-    _pysp.delete()
-    _pysp.setTitle( "A simple Gauss curve")
-    _pysp.setComment( "Can be used with SSA, calculating derivative and so")
+    _GQE.delete()
+    _GQE.setTitle( "A simple Gauss curve")
+    _GQE.setComment( "Can be used with SSA, calculating derivative and so")
     _pysp.setWsViewport( "DINA5")
-    g = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
+    g = _GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
     mu = 0.
     sigma = 1.
     g.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g.y-mu)**2/(2*sigma**2))
@@ -426,9 +429,9 @@ def example_GaussManyOverlay():
     gauss plot
     '''
     _pysp.cls()
-    _pysp.delete()
+    _GQE.delete()
     _pysp.setWsViewport( "DINA5")
-    g = _pysp.Scan( name = "gauss", xMin = -10., xMax = 10., nPts = 101)
+    g = _GQE.Scan( name = "gauss", xMin = -10., xMax = 10., nPts = 101)
     #mu = 0.
     #sigma = 1.
     #g.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g.y-mu)**2/(2*sigma**2))
@@ -445,11 +448,11 @@ def example_GaussManyOverlay():
     g.yMin = 0
     g.yMax = 2
     for i in range( 1,50):  # don't want i == 0
-        gqe = _pysp.Scan( name = "gauss%d" % i, xMin = -5., xMax = 5., 
+        gqe = _GQE.Scan( name = "gauss%d" % i, xMin = -5., xMax = 5., 
                           nPts = 101)
         gqe.x = g.x + 0.02 * i
         gqe.y = g.y + 0.02 * i
-        _pysp.overlay( "gauss%d" % i, "gauss")
+        _GQE.overlay( "gauss%d" % i, "gauss")
         gqe.useTargetWindow = True
         
     _pysp.display()
@@ -460,11 +463,11 @@ def example_GaussNoisy():
     gauss plot
     '''
     _pysp.cls()
-    _pysp.delete()
-    _pysp.setTitle( "a noisy Gauss")
-    _pysp.setComment( "See how SSA behaves with noisy data")
+    _GQE.delete()
+    _GQE.setTitle( "a noisy Gauss")
+    _GQE.setComment( "See how SSA behaves with noisy data")
     _pysp.setWsViewport( "DINA5")
-    g = _pysp.Scan( name = "gauss_noisy", xMin = -5., xMax = 5., nPts = 101)
+    g = _GQE.Scan( name = "gauss_noisy", xMin = -5., xMax = 5., nPts = 101)
     mu = 0.
     sigma = 1.
     g.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g.y-mu)**2/(2*sigma**2)) + \
@@ -477,11 +480,11 @@ def example_Gauss2():
     2 gauss plot
     '''
     _pysp.cls()
-    _pysp.delete()
-    _pysp.setTitle( "Two Gauss curves")
-    _pysp.setComment( "To demonstrate how SSA limits can be defined with VLines")
+    _GQE.delete()
+    _GQE.setTitle( "Two Gauss curves")
+    _GQE.setComment( "To demonstrate how SSA limits can be defined with VLines")
     _pysp.setWsViewport( "DINA5")
-    g = _pysp.Scan( name = "gauss", xMin = -10., xMax = 10., nPts = 101)
+    g = _GQE.Scan( name = "gauss", xMin = -10., xMax = 10., nPts = 101)
     mu1 = 0.
     sigma1 = 1.
     mu2 = 6.5
@@ -495,11 +498,11 @@ def example_Scanning():
     '''    
     '''
     _pysp.cls()
-    _pysp.delete()
+    _GQE.delete()
 
-    _pysp.setTitle( "scanning, x-axis is fixed")
+    _GQE.setTitle( "scanning, x-axis is fixed")
     _pysp.setWsViewport( "DINA5")
-    sinus = _pysp.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, 
+    sinus = _GQE.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, 
                         autoscaleX = False, lineColor = 'red')
 
 
@@ -514,7 +517,7 @@ def example_ScanningMesh():
     '''    
     '''
     _pysp.cls()
-    _pysp.delete()
+    _GQE.delete()
 
     (xmin, xmax) = (-2., 1)
     (ymin, ymax) = (-1.5, 1.5)
@@ -525,16 +528,16 @@ def example_ScanningMesh():
     r2 = _np.linspace(ymin, ymax, height)
     n3 = _np.zeros((width,height))
             
-    m = _pysp.Image( name = "MandelbrotSet", colorMap = 'Greys', 
+    m = _GQE.Image( name = "MandelbrotSet", colorMap = 'Greys', 
                      estimatedMax = 20, 
                      xMin = xmin, xMax = xmax, width = width, 
                      yMin = ymin, yMax = ymax, height = height)
     
-    _pysp.setTitle( "Simulate a mesh scan")
+    _GQE.setTitle( "Simulate a mesh scan")
     _pysp.setWsViewport( "DINA5")
-    sinus = _pysp.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = width*height, 
+    sinus = _GQE.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = width*height, 
                         autoscaleX = False, lineColor = 'red')
-    cosinus = _pysp.Scan( name = 'cosinus', xMin = 0., xMax = 6.0, nPts = width*height, 
+    cosinus = _GQE.Scan( name = 'cosinus', xMin = 0., xMax = 6.0, nPts = width*height, 
                         autoscaleX = False, lineColor = 'red')
 
     _pysp.display()
@@ -561,11 +564,11 @@ def example_ScanningAutoscaleX():
     '''    
     '''
     _pysp.cls()
-    _pysp.delete()
+    _GQE.delete()
     
-    _pysp.setTitle( "scanning, x-axis is re-scaled")
+    _GQE.setTitle( "scanning, x-axis is re-scaled")
     _pysp.setWsViewport( "DINA5")
-    sinus = _pysp.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, 
+    sinus = _GQE.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, 
                         autoscaleX = True, lineColor = 'red')
     for i in range( sinus.nPts): 
         sinus.setX( i, i/10. + 0.01)
@@ -578,11 +581,11 @@ def example_ScanningReverse():
     '''    
     '''
     _pysp.cls()
-    _pysp.delete()
+    _GQE.delete()
     
-    _pysp.setTitle( "scanning in reverse direction, x-axis is fixed")
+    _GQE.setTitle( "scanning in reverse direction, x-axis is fixed")
     _pysp.setWsViewport( "DINA5")
-    sinus = _pysp.Scan( name = 'sinus', 
+    sinus = _GQE.Scan( name = 'sinus', 
                         xMin = 0., xMax = 6.0, nPts = 101, 
                         autoscaleX = False, 
                         lineColor = 'red')
@@ -599,10 +602,10 @@ def example_ScanningReverseAutoscaleX():
     '''    
     '''
     _pysp.cls()
-    _pysp.delete()
-    _pysp.setTitle( "scanning in reverse direction, the x-axis is re-scaled")
+    _GQE.delete()
+    _GQE.setTitle( "scanning in reverse direction, the x-axis is re-scaled")
     _pysp.setWsViewport( "DINA5")
-    sinus = _pysp.Scan( name = 'sinus', 
+    sinus = _GQE.Scan( name = 'sinus', 
                             xMin = 0., xMax = 6.0, nPts = 101, 
                             autoscaleX = True, 
                             lineColor = 'red')
@@ -621,8 +624,8 @@ def example_Lissajous():
     _pysp.setWsViewport( "DINA5S")
     
     _pysp.cls()
-    _pysp.delete()
-    scan = _pysp.Scan( name = 'Lissajous', nPts = 1000, xMin = -1., xMax = 1.)
+    _GQE.delete()
+    scan = _GQE.Scan( name = 'Lissajous', nPts = 1000, xMin = -1., xMax = 1.)
     
     x  = _np.linspace( 0., 6.5, 1000)
     y  = _np.linspace( 0., 6.5, 1000)
@@ -639,64 +642,64 @@ def example_Lissajous():
 
 def example_Overlay2BothLog(): 
     _pysp.cls()
-    _pysp.delete()
-    _pysp.setTitle( "2 Overlay Scans, both with log scale")
-    _pysp.setComment( "both axes have different ranges")
+    _GQE.delete()
+    _GQE.setTitle( "2 Overlay Scans, both with log scale")
+    _GQE.setComment( "both axes have different ranges")
     _pysp.setWsViewport( "DINA5")
-    g1 = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., 
+    g1 = _GQE.Scan( name = "gauss", xMin = -5., xMax = 5., 
                      yLog = True, nPts = 101, lineColor = 'red')
     mu = 0.
     sigma = 1.
     g1.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g1.y-mu)**2/(2.*sigma**2))
-    g2 = _pysp.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0.001, 
+    g2 = _GQE.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0.001, 
                      yLog = True, yMax = 1., nPts = 101, lineColor = 'green')
     mu = 0.5
     sigma = 1.2
     g2.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g2.y-mu)**2/(2.*sigma**2))*100.
 
-    _pysp.overlay( "gauss2", "gauss")
+    _GQE.overlay( "gauss2", "gauss")
 
     _pysp.display()
 
 def example_Overlay2FirstLog(): 
     _pysp.cls()
-    _pysp.delete()
-    _pysp.setTitle( "2 Overlay Scans, first (red) has log scale")
-    _pysp.setComment( "Sadly, there are no major tick mark strings at the right axis")
+    _GQE.delete()
+    _GQE.setTitle( "2 Overlay Scans, first (red) has log scale")
+    _GQE.setComment( "Sadly, there are no major tick mark strings at the right axis")
     _pysp.setWsViewport( "DINA5")
-    g1 = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., 
+    g1 = _GQE.Scan( name = "gauss", xMin = -5., xMax = 5., 
                      yLog = True, nPts = 101, lineColor = 'red')
     mu = 0.
     sigma = 1.
     g1.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g1.y-mu)**2/(2.*sigma**2))
-    g2 = _pysp.Scan( name = "gauss2", xMin = -5., xMax = 5., yLog = False, 
+    g2 = _GQE.Scan( name = "gauss2", xMin = -5., xMax = 5., yLog = False, 
                     yMax = 1., nPts = 101, lineColor = 'green')
     mu = 0.5
     sigma = 1.2
     g2.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g2.y-mu)**2/(2.*sigma**2))
 
-    _pysp.overlay( "gauss2", "gauss")
+    _GQE.overlay( "gauss2", "gauss")
 
     _pysp.display()
 
 def example_Overlay2SecondLog(): 
     _pysp.cls()
-    _pysp.delete()
-    _pysp.setTitle( "2 Overlay Scans, 2nd (green) has log scale")
-    _pysp.setComment( "Sadly, there are no major tick mark strings at the right axis")
+    _GQE.delete()
+    _GQE.setTitle( "2 Overlay Scans, 2nd (green) has log scale")
+    _GQE.setComment( "Sadly, there are no major tick mark strings at the right axis")
     _pysp.setWsViewport( "DINA5")
-    g1 = _pysp.Scan( name = "gauss", xMin = -5., xMax = 5., 
+    g1 = _GQE.Scan( name = "gauss", xMin = -5., xMax = 5., 
                      yLog = False, nPts = 101, lineColor = 'red')
     mu = 0.
     sigma = 1.
     g1.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g1.y-mu)**2/(2.*sigma**2))
-    g2 = _pysp.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0.001, 
+    g2 = _GQE.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0.001, 
                      yLog = True, yMax = 1., nPts = 101, lineColor = 'green')
     mu = 0.5
     sigma = 1.2
     g2.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g2.y-mu)**2/(2.*sigma**2))
 
-    _pysp.overlay( "gauss2", "gauss")
+    _GQE.overlay( "gauss2", "gauss")
 
     _pysp.display()
 
@@ -705,14 +708,14 @@ def example_ImageMB():
     _pysp.setWsViewport( 'DINA5S')
 
     _pysp.cls()
-    _pysp.delete()
+    _GQE.delete()
 
     (xmin, xmax) = (-2., 0.5)
     (ymin, ymax) = (-1.25, 1.25)
     (width, height) = (750, 750)
     maxiter = 512
     
-    m = _pysp.Image( name = "MandelbrotSet",
+    m = _GQE.Image( name = "MandelbrotSet",
                      flagAxes = True, 
                      maxIter = maxiter, 
                      xMin = xmin, xMax = xmax, width = width, 
@@ -728,14 +731,14 @@ def example_ImageMBSlow():
     _pysp.setWsViewport( 'DINA5S')
 
     _pysp.cls()
-    _pysp.delete()
+    _GQE.delete()
 
     (xmin, xmax) = (-2., 0.5)
     (ymin, ymax) = (-1.25, 1.25)
     (width, height) = (500, 500)
     maxiter = 256
     
-    m = _pysp.Image( name = "MandelbrotSet",
+    m = _GQE.Image( name = "MandelbrotSet",
                     xMin = xmin, xMax = xmax, width = width, 
                     yMin = ymin, yMax = ymax, height = height)
 
@@ -752,7 +755,7 @@ def example_ImageRandom():
     _pysp.setWsViewport( 'DINA5S')
 
     _pysp.cls()
-    _pysp.delete()
+    _GQE.delete()
 
     (xmin, xmax) = (-2., 1)
     (ymin, ymax) = (-1.5, 1.5)
@@ -765,7 +768,7 @@ def example_ImageRandom():
         for j in range(height):
             n3[i,j] = i + random.random()*j + 100.
             
-    m = _pysp.Image( name = "ImageRandom", data = n3, 
+    m = _GQE.Image( name = "ImageRandom", data = n3, 
                     xMin = xmin, xMax = xmax, width = width, 
                     yMin = ymin, yMax = ymax, height = height, 
                     xLabel = "x-Axis", yLabel = "y-Axis")
@@ -773,6 +776,22 @@ def example_ImageRandom():
     _pysp.cls()
     _pysp.display()
     return 
+
+
+def example_mvsa():
+    '''
+    move by scan analysis
+    '''
+    _pysp.cls()
+    _GQE.delete()
+    _GQE.setTitle( "Move by Scan Analysis")
+    _pysp.setWsViewport( "DINA5")
+    g = _GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
+                    lineColor = 'red')
+    mu = 0.
+    sigma = 1.
+    g.y = 1/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(g.y-mu)**2/(2.*sigma**2))
+    _pysp.display()
 
 '''
 #!/usr/bin/env python

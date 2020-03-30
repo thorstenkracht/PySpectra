@@ -6,16 +6,18 @@ GQE - contains the Scan() class and functions to handle scans:
 # 1.8.2
 
 import numpy as _np
-import PySpectra as _pysp
 from PyQt4 import QtCore as _QtCore
 from PyQt4 import QtGui as _QtGui
 import math as _math
 import HasyUtils
+import PySpectra as _pysp
+import PyTango as _PyTango
 
 _gqeList = []
 _gqeIndex = None  # used by next/back
 _title = None
 _comment = None
+_scanInfo = None
 #
 # if the wsViewport is set, e.g. to dina4, it is fixed, i.e. independent 
 # of how many scans are displayed 
@@ -29,14 +31,16 @@ _ScanAttrsPublic = [ 'at', 'autoscaleX', 'autoscaleY', 'colSpan', 'currentIndex'
                      'nPts', 'name', 'ncol', 'nplot', 'nrow', 'overlay', 'useTargetWindow', 
                      'showGridX', 'showGridY', 
                      'lineColor', 'lineStyle', 'lineWidth', 
-                     'logWidget', 'motorList', 
+                     'logWidget', 'motorNameList', 
                      'symbol', 'symbolColor', 'symbolSize', 
                      'textList', 'textOnly', 'viewBox', 
                      'x', 'xLog', 'xMax', 'xMin', 
                      'xLabel', 'y', 'yLabel', 'yLog', 'yMin', 'yMax',
                      'yTicksVisible'] 
 
-_ScanAttrsPrivate = [ 'infLineLeft', 'infLineRight', 'mousePrepared', 'mouseLabel',  
+_ScanAttrsPrivate = [ 'attributeWidget', 'infLineLeft', 'infLineRight', 'infLineMouseX', 'infLineMouseY', 
+                      'arrowMotorCurrent', 'labelArrowMotorCurrent', 'arrowMotorSetPoint',   
+                      'mousePrepared', 'mouseLabel', 'cb_mouseLabel', 
                       'plotItem', 'plotDataItem', 'scene', 'xDateMpl']
 
 _ImageAttrsPublic = [ 'at', 'colorMap', 'colSpan', 'data', 'estimatedMax', 'flagAxes', 'indexRotate', 
@@ -46,7 +50,21 @@ _ImageAttrsPublic = [ 'at', 'colorMap', 'colSpan', 'data', 'estimatedMax', 'flag
 #
 # img is used in pqt_graphics
 #
-_ImageAttrsPrivate = [ 'cbZoomProgress', 'flagZooming', 'flagZoomSlow', 'img', 'plotItem', 'mousePrepared', 'mouseLabel']
+_ImageAttrsPrivate = [ 'attributeWidget', 'cbZoomProgress', 'flagZooming', 'flagZoomSlow', 'img', 'plotItem', 'mousePrepared', 'mouseLabel', 'cb_mouseLabel']
+
+
+class InfoBlock( object): 
+    monitorGui = None
+
+    def __init__( self):
+        pass
+    #
+    # called from pyspMonitorClass, if scanInfo is received
+    #
+    @staticmethod
+    def setMonitorGui( monitorGui): 
+        InfoBlock.monitorGui = monitorGui
+        return 
 
 class Text(): 
     '''
@@ -81,22 +99,10 @@ A value of (0,0) sets the upper-left corner
                      of the text box to be at the position specified by setPos(), while a value of (1,1)
                      sets the lower-right corner.        
 '''
-
-class GQE( object): 
-    monitorGui = None
-
-    def __init__( self):
-        pass
-    #
-    # called from pyspMonitorClass, if scanInfo is received
-    #
-    @staticmethod
-    def setMonitorGui( monitorGui): 
-        GQE.monitorGui = monitorGui
-        return 
-
-
-class Scan( GQE):
+#
+# to understand, why object is needed, goto 'def __setattr__( ...)'
+#
+class Scan( object):
     '''
     A Scan contains 2 arrays, x and y, and graphics attributes
 
@@ -111,17 +117,18 @@ class Scan( GQE):
       re-use the existing data struckture, useful for MCA scans
 
     The attributes: 
-        autoscaleX, autoscaleY
+        autoscaleX, 
+        autoscaleY
                     default: True
+        comment:    string
+                    the global comment
         colSpan:    def.: 1
         doty:       bool
                     if True, the x-axis tick mark labels are dates, def. False
         fileName:   string
-        xLog, 
-        yLog:       bool
-                    def. False
-        overlay:    string 
-                    the name of the scan occupying the target viewport 
+        flagMCA     data from MCA, don't use for movements
+        motorNameList: 
+                    from moveMotor() or pyspDoor
         showGridX, 
         showGridY:  True/False
         lineColor:  'red', 'green', 'blue', 'yellow', 'cyan', 'magenta', 'black', 'NONE'
@@ -129,17 +136,20 @@ class Scan( GQE):
                     if None, the line is not plotted
         lineWidth:  float: 1.0, 1.2, 1.4, 1.6, 1.8, 2.0
                     line width, def.: 1
+        overlay:    string 
+                    the name of the scan occupying the target viewport 
         symbol:     string
                     o - circle, s - square, t - triangle, d - diamond, + - plus
         symbolColor: 
                     def.: NONE
         symbolSize: float
                     def.: 5
-        xLabel:     string
-                    the description of the x-axis
+        xLabel,
         yLabel:     string
-                    the description of the y-axis
-        flagIsMCA   data from MCA, don't use for movements
+                    the description of the x- or y-axis
+        xLog, 
+        yLog:       bool
+                    def. False
     '''
     #
     # this class variable stores the Gui, needed to configure the motorsWidget, 
@@ -149,7 +159,6 @@ class Scan( GQE):
         global _gqeList
 
         #print( "GQE.Scan: %s" % repr( kwargs))
-        super( Scan, self).__init__()
         if name is None:
             raise ValueError( "GQE.Scan: 'name' is missing")
         #
@@ -223,11 +232,20 @@ class Scan( GQE):
 
         _gqeList.append( self)
 
+        return 
+
+    def __del__( self): 
+        #print( "SCAN.destructor %s" % (self.name)
+        return 
+    #
+    # recursion can be avoided by calling the super class of scan.
+    # hence, Scan needs to be an object
+    #
     def __setattr__( self, name, value): 
         #print( "GQE.Scan.__setattr__: name %s, value %s" % (name, value))
         if name in _ScanAttrsPublic or \
            name in _ScanAttrsPrivate: 
-            super(Scan, self).__setattr__(name, value)
+            super( Scan, self).__setattr__(name, value)
         else: 
             raise ValueError( "GQE.Scan.__setattr__: %s unknown attribute %s" % ( self.name, name))
 
@@ -239,9 +257,6 @@ class Scan( GQE):
         #else: 
         #    raise ValueError( "GQE.Scan.__getattr__: Scan %s unknown attribute name %s" % ( self.name, name))
         
-    def __del__( self): 
-        pass
-
     def _checkTargetWithinLimits( self, name, target, proxy): 
         '''
         return False, if the target position is outside the limits
@@ -277,179 +292,7 @@ class Scan( GQE):
                                           ( name, target, float( attrConfig[0].max_value)))
                 return False
         return True
-                
-    #@staticmethod
-    #
-    # why do we need a class function for move()
-    #
-    def move( self, target): 
-        '''
-        this function is invoked by a mouse click from pqtgrph/graphics.py
-        '''
-        import PyTango as _PyTango
-        import time as _time
-
-        if GQE.monitorGui is None:
-            if self.logWidget is not None:
-                self.logWidget.append( "GQE.Scan.move: not called from pyspMonitor") 
-            else:
-                print( "GQE.Scan.move: not called from pyspMonitor")
-            return 
-        #
-        # make sure the target is inside the x-range of the plot
-        #
-        if target < self.xMin or target > self.xMax:
-            _QtGui.QMessageBox.about( None, "Info Box", 
-                                      "GQE.Move: target %g outside %s x-axis %g %g" % (target, self.name, self.xMin, self.xMax))
-            return
             
-        #
-        # don't use MCA data to move motors
-        #
-        if self.flagMCA:
-            if self.logWidget is not None:
-                self.logWidget.append( "GQE.Scan.move: error, don't use MCAs to move motors") 
-            return 
-
-        #print( "GQE.Scan.move: to", target, "using %s" % GQE.monitorGui.scanInfo)
-
-        #
-        # ---
-        # from moveMotor widget
-        # ---
-        #
-        if self.motorList is not None:
-            if len( self.motorList) != 1:
-                if self.logWidget is not None:
-                    self.logWidget.append( "GQE.Scan.move: error, len( motorList) != 1") 
-                else: 
-                    print( "GQE.Scan.move: error, len( motorList) != 1") 
-                return 
-
-            proxy = self.motorList[0]
-            #
-            # stop the motor, if it is moving
-            #
-            if proxy.state() == _PyTango.DevState.MOVING:
-                if self.logWidget is not None:
-                    self.logWidget.append( "Move: stopping %s" % proxy.name()) 
-                proxy.stopMove()
-            while proxy.state() == _PyTango.DevState.MOVING:
-                _time.sleep(0.01)
-
-            msg = "Move %s from %g to %g" % ( proxy.name(), 
-                                             float( proxy.read_attribute( 'Position').value), 
-                                             float( target))
-            reply = _QtGui.QMessageBox.question( None, 'YesNo', msg, _QtGui.QMessageBox.Yes, _QtGui.QMessageBox.No)        
-            if not reply == _QtGui.QMessageBox.Yes:
-                if self.logWidget is not None:
-                    self.logWidget.append( "Move: move not confirmed") 
-                else:
-                    print( "Move: move not confirmed")
-                return
-            if self.logWidget is not None:
-                self.logWidget.append( "Moving %s from %g to %g" % ( proxy.name(), 
-                                                                    float( proxy.read_attribute( 'Position').value), 
-                                                                    target))
-            self.motorList[0].Position = target
-            return 
-        
-        #
-        # ---
-        # from the pyspMonitor application
-        # ---
-        #
-        if GQE.monitorGui is None or GQE.monitorGui.scanInfo is None: 
-            _QtGui.QMessageBox.about( None, "Info Box", 
-                                      "GQE.Move: GQE.monitorGui is None or GQE.monitorGui.scanInfo is None")
-            return
-
-        motorArr = GQE.monitorGui.scanInfo['motors']        
-        length = len( motorArr)
-        if  length == 0 or length > 3:
-            _QtGui.QMessageBox.about( None, 'Info Box', "no. of motors == 0 or > 3") 
-            return
-
-        motorIndex = GQE.monitorGui.scanInfo['motorIndex']
-
-        if motorIndex >= length:
-            _QtGui.QMessageBox.about( None, 'Info Box', "motorIndex %d >= no. of motors %d" % (motorIndex, length))
-            return
-            
-        motorArr[motorIndex]['targetPos'] = target
-        r = (motorArr[motorIndex]['targetPos'] - motorArr[motorIndex]['start']) / \
-            (motorArr[motorIndex]['stop'] - motorArr[motorIndex]['start']) 
-
-        if length == 1:
-            p0 = _PyTango.DeviceProxy( motorArr[0]['name'])
-            if not self._checkTargetWithinLimits( motorArr[0]['name'], float( motorArr[0]['targetPos']), p0): 
-                return 
-                
-            msg = "Move %s from %g to %g" % (motorArr[0]['name'], 
-                                             float(p0.read_attribute( 'Position').value), 
-                                             float( motorArr[0]['targetPos']))
-            reply = _QtGui.QMessageBox.question( None, 'YesNo', msg, _QtGui.QMessageBox.Yes, _QtGui.QMessageBox.No)        
-
-        #
-        # for hklscan: a h-move may move the same motors as a k-move, etc. 
-        #
-        elif length == 2:
-            motorArr[0]['targetPos'] = (motorArr[0]['stop'] - motorArr[0]['start'])*r + motorArr[0]['start']
-            motorArr[1]['targetPos'] = (motorArr[1]['stop'] - motorArr[1]['start'])*r + motorArr[1]['start']
-            p0 = _PyTango.DeviceProxy( motorArr[0]['name'])
-            p1 = _PyTango.DeviceProxy( motorArr[1]['name'])
-            if not self._checkTargetWithinLimits( motorArr[0]['name'], float( motorArr[0]['targetPos']), p0): 
-                return 
-            if not self._checkTargetWithinLimits( motorArr[1]['name'], float( motorArr[1]['targetPos']), p1): 
-                return 
-            msg = "Move\n  %s from %g to %g\n  %s from %g to %g " % \
-                  (motorArr[0]['name'], p0.read_attribute( 'Position').value, motorArr[0]['targetPos'],
-                   motorArr[1]['name'], p1.read_attribute( 'Position').value, motorArr[1]['targetPos'])
-            reply = _QtGui.QMessageBox.question( None, 'YesNo', msg, _QtGui.QMessageBox.Yes, _QtGui.QMessageBox.No)
-
-        #
-        # for hklscan: a h-move may move the same motors as a k-move, etc. 
-        #   - therefore we may have to repeat the Move2Cursor
-        #   - and we have to check whether a motor is already in-target
-        #
-        elif length == 3:
-            motorArr[0]['targetPos'] = (motorArr[0]['stop'] - motorArr[0]['start'])*r + motorArr[0]['start']
-            motorArr[1]['targetPos'] = (motorArr[1]['stop'] - motorArr[1]['start'])*r + motorArr[1]['start']
-            motorArr[2]['targetPos'] = (motorArr[2]['stop'] - motorArr[2]['start'])*r + motorArr[2]['start']
-            p0 = _PyTango.DeviceProxy( motorArr[0]['name'])
-            p1 = _PyTango.DeviceProxy( motorArr[1]['name'])
-            p2 = _PyTango.DeviceProxy( motorArr[2]['name'])
-            if not self._checkTargetWithinLimits( motorArr[0]['name'], float( motorArr[0]['targetPos']), p0): 
-                return 
-            if not self._checkTargetWithinLimits( motorArr[1]['name'], float( motorArr[1]['targetPos']), p1): 
-                return 
-            if not self._checkTargetWithinLimits( motorArr[2]['name'], float( motorArr[2]['targetPos']), p2): 
-                return 
-            msg = "Move\n  %s from %g to %g\n  %s from %g to %g\n  %s from %g to %g " % \
-                  (motorArr[0]['name'], p0.read_attribute( 'Position').value, motorArr[0]['targetPos'],
-                   motorArr[1]['name'], p1.read_attribute( 'Position').value, motorArr[1]['targetPos'],
-                   motorArr[2]['name'], p2.read_attribute( 'Position').value, motorArr[2]['targetPos'])
-            reply = _QtGui.QMessageBox.question( None, 'YesNo', msg, _QtGui.QMessageBox.Yes, _QtGui.QMessageBox.No)
-
-        if not reply == _QtGui.QMessageBox.Yes:
-            GQE.monitorGui.logWidget.append( "Move: move not confirmed")
-            return
-
-        if GQE.monitorGui.scanInfo['title'].find( "hklscan") == 0:
-            GQE.monitorGui.logWidget.append( "br %g %g %g" % 
-                                             (motorArr[0]['targetPos'],motorArr[1]['targetPos'],motorArr[2]['targetPos']))
-            GQE.monitorGui.door.RunMacro( ["br",  
-                                 "%g" %  motorArr[0]['targetPos'], 
-                                 "%g" %  motorArr[1]['targetPos'], 
-                                 "%g" %  motorArr[2]['targetPos']])
-        else:
-            lst = [ "umv"]
-            for hsh in motorArr:
-                lst.append( "%s" % (hsh['name']))
-                lst.append( "%g" % (hsh['targetPos']))
-                GQE.monitorGui.logWidget.append( "%s to %g" % (hsh['name'], hsh['targetPos']))
-            GQE.monitorGui.door.RunMacro( lst)
-        return 
 
     def _createScanFromData( self, kwargs):
         '''
@@ -475,6 +318,9 @@ class Scan( GQE):
 
         self.nPts = len( self.x)
         self.lastIndex = 0
+        #
+        # currentIndex refers to the last valid x-, y-value; nPts == currentIndex + 1
+        #
         self.currentIndex = self.nPts - 1
 
         return
@@ -545,19 +391,27 @@ class Scan( GQE):
         Returns None
         '''
 
+        self.arrowMotorCurrent = None
+        self.arrowMotorSetPoint = None
+        self.labelArrowMotorCurrent = None
         self.at = None
+        self.attributeWidget = None
         self.autoscaleX = True
         self.autoscaleY = True
         self.colSpan = 1
         self.doty = False            # x-axis is date-of-the year
         self.fileName = None
         self.flagDisplayVLines = False
+        self.flagMCA = False
         self.nrow = None
         self.ncol = None
         self.nplot = None
         self.overlay = None
         self.useTargetWindow = False
-        self.flagMCA = False
+        self.infLineLeft = None
+        self.infLineRight = None
+        self.infLineMouseX = None
+        self.infLineMouseY = None
         self.plotItem = None
         self.plotDataItem = None
         self.scene = None
@@ -568,8 +422,12 @@ class Scan( GQE):
         self.lineStyle = 'SOLID'
         self.lineWidth = 1.
         self.logWidget = None
-        self.motorList = None
+        #
+        # motorNameList from moveMotor.py or IfcGraPysp.py
+        #
+        self.motorNameList = None
         self.mousePrepared = False
+        self.cb_mouseLabel = None
         self.symbol = 'o'
         self.symbolColor = 'NONE'
         self.symbolSize = 10
@@ -587,7 +445,7 @@ class Scan( GQE):
 
         for attr in [ 'autoscaleX', 'autoscaleY', 'colSpan', 'doty', 'fileName',  
                       'flagMCA', 
-                      'xLog', 'yLog', 'logWidget', 'motorList', 
+                      'xLog', 'yLog', 'logWidget', 'motorNameList', 
                       'ncol', 'nrow', 'nplot', 'overlay', 'showGridX', 'showGridY', 
                       'lineColor', 'lineStyle', 
                       'symbol', 'symbolColor', 'symbolSize', 
@@ -674,6 +532,7 @@ class Scan( GQE):
         Sets a y-value of the scan
 
         The currentIndex, which is used for display, is set to index. 
+        currentIndex refers to the last valid x-, y-value; nPts == currentIndex + 1
 
         Parameters:
         -----------
@@ -694,6 +553,7 @@ class Scan( GQE):
         Sets a x-value of the scan
 
         The currentIndex, which is used for display, is set to index. 
+        currentIndex refers to the last valid x-, y-value; nPts == currentIndex + 1
 
         Parameters:
         -----------
@@ -742,6 +602,7 @@ class Scan( GQE):
         Sets the x- and y-value at index
 
         The currentIndex, which is used for display, is set to index. 
+        currentIndex refers to the last valid x-, y-value; nPts == currentIndex + 1
 
         Parameters:
         -----------
@@ -760,6 +621,183 @@ class Scan( GQE):
         self.currentIndex = index
         return
 
+    def getIndex( self, x): 
+        '''
+        return the index which is closest to x
+        '''
+
+        #
+        # getIndex() makes sense only, if the x-values are ordered
+        # 1. test: normal direction: left-right?
+        flagLeftToRight = True
+        #
+        # range( currentIndex) and not range( currentIndex + 1) 
+        # because inside the loop we refer to x[i + 1]
+        #
+        for i in range( self.currentIndex):   
+            if self.x[i] > self.x[i + 1]:
+                flagLeftToRight = False
+                break
+        # 2. test: reverse direction: right-left? can be created by motor moves
+        if not flagLeftToRight: 
+            for i in range( self.currentIndex): 
+                if self.x[i] < self.x[i + 1]:
+                    raise ValueError( "GQE.getIndex: %s, x-values are not ordered in either direction, return" % ( self.name))
+
+        if flagLeftToRight: 
+            if x < self.x[0]: 
+                raise ValueError( "GQE.getIndex(L2R): x %g < x[0] %g" % ( x, self.x[0]))
+            if x > self.x[ self.currentIndex]: 
+                raise ValueError( "GQE.getIndex(L2R): x %g > x[currentIndex] %g" % 
+                                  ( x, self.x[ self.currentIndex]))
+
+            argout = None
+            for i in range( self.currentIndex): 
+                if x >= self.x[i] and x < self.x[i + 1]:
+                    if (x - self.x[i]) < (self.x[i+1] - x): 
+                        argout = i
+                    else: 
+                        argout = i + 1
+                        break
+        else: 
+            if x < self.x[ self.currentIndex]: 
+                raise ValueError( "GQE.getIndex(R2L): x %g < x[currentIndex] %g" % ( x, self.x[ self.currentIndex]))
+            if x > self.x[0]: 
+                raise ValueError( "GQE.getIndex(R2L): x %g > x[0] %g" % 
+                                  ( x, self.x[ 0]))
+
+            argout = None
+            for i in range( self.currentIndex): 
+                if x < self.x[i] and x >= self.x[i + 1]:
+                    if (self.x[i] - x) < (x - self.x[i+1]): 
+                        argout = i
+                    else: 
+                        argout = i + 1
+                        break
+
+        if argout is None: 
+            raise ValueError( "GQE.getIndex: something is wrong: x %g [%g, %g]" % 
+                              (x, self.x[0], self.x[self.currentIndex]))
+        return argout
+ 
+    def getYMin( self): 
+        '''
+        returns the minimum of the y-values
+        '''
+        # currentIndex refers to the last valid x-, y-value; nPts == currentIndex + 1
+        return _np.min( self.y[:self.currentIndex + 1])
+
+    def getYMax( self): 
+        '''
+        returns the maximum of the y-values
+        '''
+        # currentIndex refers to the last valid x-, y-value; nPts == currentIndex + 1
+        return _np.max( self.y[:self.currentIndex + 1])
+
+    def updateArrowMotorCurrent( self):
+        '''
+        updates the arrow pointing to the current position 
+        of the motor. 
+        called from: 
+          pySpectraGuiClass.py
+        '''
+        #
+        # 
+        #
+        if self.arrowMotorCurrent is None:
+            return
+
+        #
+        # called from the moveMotor menu
+        #
+        if self.motorNameList is not None and len( self.motorNameList) == 1:
+            proxy = _PyTango.DeviceProxy( self.motorNameList[0])
+            motName = self.motorNameList[0]
+        else: 
+            #
+            # ---
+            # from the pyspMonitor application
+            # ---
+            #
+            if InfoBlock.monitorGui is None or InfoBlock.monitorGui.scanInfo is None: 
+                _QtGui.QMessageBox.about( None, "Info Box", 
+                                          "GQE.updateMotorArrowCurrent: InfoBlock.monitorGui is None or InfoBlock.monitorGui.scanInfo is None")
+                return
+
+            motorArr = _scanInfo['motors']        
+            length = len( motorArr)
+            if  length == 0 or length > 3:
+                _QtGui.QMessageBox.about( None, 'Info Box', "no. of motors == 0 or > 3") 
+                return
+            proxy = _PyTango.DeviceProxy( motorArr[0]['name'])
+            motName = motorArr[0]['name']
+    
+        x = proxy.position
+        y = self.getYMin() 
+        
+        self.arrowMotorCurrent.setPos( x, y)
+        self.labelArrowMotorCurrent.setPos( x, y)
+        self.labelArrowMotorCurrent.setHtml( '<div>%s</div>' % ( motName))
+        self.arrowMotorCurrent.show()
+        self.labelArrowMotorCurrent.show()
+
+        return
+
+    def setArrowMotorCurrent( self, lst): 
+        '''
+        handle the arrow pointing to the current position
+          lst: 
+            - 'position', 'pos'
+            - 'hide'
+            - 'show'
+        used from mvsa, via toPyspMonitor(). 
+        '''
+        
+        if self.arrowMotorSetPoint is None:
+            self.display()
+
+        if lst[0].upper() == 'HIDE': 
+            self.arrowMotorCurrent.hide()
+        elif lst[0].upper() == 'SHOW': 
+            self.arrowMotorCurrent.show()
+        elif lst[0].upper() == 'POSITION': 
+            self.arrowMotorCurrent.setPos( float( lst[1]), self.getYMin())
+            self.arrowMotorCurrent.show()
+            self.labelArrowMotorCurrent.setPos( float( lst[1]), self.getYMin())
+            if self.motorNameList is not None and len( self.motorNameList) > 0: 
+                self.labelArrowMotorCurrent.setHtml( '<div>%s</div>' % ( self.motorNameList[0]))
+            self.labelArrowMotorCurrent.show()
+        else: 
+            raise ValueError( "GQE.setArrowMotorCurrent: strange list %s" % str( lst))
+                                    
+        return 
+
+    def setArrowMotorSetPoint( self, lst): 
+        '''
+        handle the arrow pointing to the target position
+          lst: 
+            - 'position', 'pos'
+            - 'hide'
+            - 'show'
+        used from mvsa, via toPyspMonitor(). 
+        '''
+        
+        if self.arrowMotorSetPoint is None:
+            self.display()
+
+        if lst[0].upper() == 'HIDE': 
+            self.arrowMotorSetPoint.hide()
+        elif lst[0].upper() == 'SHOW': 
+            self.arrowMotorSetPoint.show()
+        elif lst[0].upper() == 'POSITION': 
+            self.arrowMotorSetPoint.setPos( float( lst[1]), self.getYMin())
+            self.labelArrowMotorCurrent.setPos( float( lst[1]), self.getYMin())
+            self.arrowMotorSetPoint.show()
+        else: 
+            raise ValueError( "GQE.setArrowMotorSetPoint: strange list %s" % str( lst))
+                                    
+        return 
+        
     def sort( self): 
         '''
         put this functions in because it is in Spectra, I don't know
@@ -783,7 +821,7 @@ class Scan( GQE):
         pass
 
     def display( self): 
-        _pysp.display()
+        _pysp.display( [self.name])
         return 
 
     def yGreaterThanZero( self): 
@@ -829,8 +867,8 @@ class Scan( GQE):
             if logWidget is not None:
                 logWidget.append( "ssa: %s limits: %g, %g" % (self.name, xi, xa))
         else: 
-            lstX = self.x[:self.currentIndex]
-            lstY = self.y[:self.currentIndex]
+            lstX = self.x[:self.currentIndex + 1]
+            lstY = self.y[:self.currentIndex + 1]
             if logWidget is not None:
                 logWidget.append( "ssa: %s total x-range" % (self.name))
         #
@@ -840,7 +878,7 @@ class Scan( GQE):
             lstX = list( reversed( lstX))
             lstY = list( reversed( lstY))
                 
-        hsh = _pysp.ssa( _np.array( lstX), _np.array( lstY))
+        hsh = _pysp.misc.utils.ssa( _np.array( lstX), _np.array( lstY))
 
         if hsh[ 'status'] != 1:
             if logWidget is not None:
@@ -876,7 +914,7 @@ class Scan( GQE):
             ssaName = '%s_ssa_%-d' % (self.name, count)
             count += 1
             
-        res = Scan( name = ssaName, x = self.x[:self.currentIndex], y = self.y[:self.currentIndex],
+        res = Scan( name = ssaName, x = self.x[:self.currentIndex + 1], y = self.y[:self.currentIndex + 1],
                     lineColor = 'None', 
                     symbolColor = 'blue', symbolSize = 5, symbol = '+')
 
@@ -919,8 +957,8 @@ class Scan( GQE):
             if logWidget is not None:
                 logWidget.append( "fsa: %s limits: %g, %g" % (self.name, xi, xa))
         else: 
-            lstX = self.x[:self.currentIndex]
-            lstY = self.y[:self.currentIndex]
+            lstX = self.x[:self.currentIndex + 1]
+            lstY = self.y[:self.currentIndex + 1]
             if logWidget is not None:
                 logWidget.append( "fsa: %s total x-range" % (self.name))
         #
@@ -947,6 +985,7 @@ class Scan( GQE):
             print( "GQE.fsa: message %s xpos %g xpeak %g xmcs %g xcen %g" % (message, xpos, xpeak, xcms, xcen))
 
         return 
+
 
 def getGqeList():
     '''
@@ -1020,16 +1059,16 @@ def delete( nameLst = None):
     if nameLst is supplied, delete the specified scans from the gqeList
     otherwise delete all scans
 
-    PySpectra.delete( ["t1"])
+    PySpectra.dMgt.GQE.delete( ["t1"])
       delete the scan t1
 
-    PySpectra.delete( ["t1", "t2"])
+    PySpectra.dMgt.GQE.delete( ["t1", "t2"])
       delete t1 and t2
 
-    PySpectra.delete( "t1")
+    PySpectra.dMgt.GQE.delete( "t1")
       delete the scan t1, also OK
 
-    PySpectra.delete()
+    PySpectra.dMgt.GQE.delete()
       delete all scans
     '''
     global _gqeIndex
@@ -1046,6 +1085,9 @@ def delete( nameLst = None):
                 #
                 _pysp.clear( tmp)
                 #tmp.plotItem.clear()
+            if tmp.attributeWidget is not None: 
+                tmp.attributeWidget.close()
+            del tmp
             _gqeIndex = None
         setTitle( None)
         setComment( None)
@@ -1061,6 +1103,8 @@ def delete( nameLst = None):
                 if _gqeList[i].plotItem is not None:
                     _pysp.clear( _gqeList[i])
                     #_gqeList[i].plotItem.clear()
+                if _gqeList[i].attributeWidget is not None: 
+                    _gqeList[i].attributeWidget.close()
                 del _gqeList[i]
                 break
         else:
@@ -1079,6 +1123,8 @@ def delete( nameLst = None):
                     #
                     _pysp.clear( _gqeList[i])
                     #_gqeList[i].plotItem.clear()
+                if _gqeList[i].attributeWidget is not None: 
+                    _gqeList[i].attributeWidget.close()
                 del _gqeList[i]
                 break
         else:
@@ -1630,9 +1676,9 @@ def getData():
             hsh[ name]['y'] = []
     # just to make mvsa happy
 
-    if GQE.monitorGui is not None and GQE.monitorGui.scanInfo is not None: 
+    if _scanInfo is not None: 
         hsh[ 'symbols'] = {}
-        temp = GQE.monitorGui.scanInfo[ 'filename']
+        temp = _scanInfo[ 'filename']
         if type( temp) is list:
             hsh[ 'symbols'][ 'file_name_'] = temp[0]
         else:
@@ -1799,8 +1845,14 @@ def fillDataByColumns( hsh):
 
 def colorSpectraToPysp( color): 
     '''
-    to be backwards compatible: allow the user to specify colors by numbers (1 - 7), a la Spectra
+    this functions translates color numbers (a ls Spectra) to strings a la Pysp
     '''
+    #
+    # +++
+    #
+    if type(color) is not int: 
+        return color
+
     if color == 1:
         color = 'black'
     elif color == 2:
@@ -1851,7 +1903,7 @@ def fillDataByGqes( hsh):
         color = 'red'
         if 'color' in elm:
             color = elm[ 'color']
-            color = colorSpectraToPysp( color)
+            color = _colorSpectraToPysp( color)
         
         x = elm[ 'x']
         y = elm[ 'y']
@@ -1870,194 +1922,10 @@ def fillDataByGqes( hsh):
 
     return "done"
 
-def toPysp( hsh): 
-    '''
-    this function executes dictionaries which are received from 
-      - ZMQ, from another client calling toPyspMonitor()
-      - Queue, from pyspDoor
-      - from an application directly (to simulate the to toPyspMonitor() interface
-
-     hsh: 
-       Misc
-         {'command': ['delete']}
-           delete all internal data
-         {'command': ['cls']}
-           clear the screen
-         {'command': ['delete', 'cls']}
-           deletes all internal data and clears the screen
-         {'command': ['display']}
-           a display command
-
-       Title and comment for the whole widget
-         {'command': [u'setTitle ascan exp_dmy01 0.0 1.0 3 0.2']}
-           set the title 
-         {'command': [u'setComment "tst_01366.fio, Wed Dec 18 10:02:09 2019"']}
-           set the comment
-
-       Scan
-         {'Scan': {'name': 'eh_c01', 'xMax': 1.0, 'autoscaleX': False, 'lineColor': 'red', 'xMin': 0.0, 'nPts': 6}}
-           create an empty scan. Notice, the inner dictionary is passed to the Scan constructor
-         {'Scan': {'yMax': 2.0, 'symbol': '+', 'autoscaleY': False, 'autoscaleX': False, 
-                   'xMax': 1.0, 'nPts': 24, 'symbolColor': 'red', 'name': 'MeshScan', 
-                   'symbolSize': 5, 'lineColor': 'None', 'xMin': 0.0, 'yMin': 1.0}}
-           create an empty scan setting more attributes.
-         {'Scan': {'name': 'eh_mca01', 'flagMCA': True, 'lineColor': 'blue', 
-                   'y': array([  0., ..., 35.,  30.]), 
-                   'x': array([  0.0, ..., 2.047e+03]), 'reUse': True}}
-           create an MCA scan, which is re-used
-         {'command': ['setY eh_c01 0 71.41']}
-           set a y-value of eh_c01, index 0
-         {'command': ['setX eh_c01 0 0.0']}
-           set a x-value of eh_c01, index 0
-         {'command': ['setXY MeshScan 0 0.0 1.0']}
-           set the x- and y-value by a single call, index is 0
-         {'putData': {'columns': [{'data': [0.0, ..., 0.96], 'name': 'eh_mot01'}, 
-                                  {'data': [0.39623, ... 0.01250], 'name': 'eh_c01'}, 
-                                  {'showGridY': False, 'symbolColor': 'blue', 'showGridX': False, 
-                                   'name': 'eh_c02', 'yLog': False, 'symbol': '+', 
-                                   'data': [0.1853, ... 0.611], 
-                                   'xLog': False, 'symbolSize': 5}], 
-                      'title': 'a title', 
-                      'comment': 'a comment'}}
-           create the scans eh_c01 and eh_c02. The common x-axis is given by eh_mot01
-
-       Image 
-         {'Image': {'name': 'MandelBrot', 
-                    'height': 5, 'width': 5, 
-                    'xMax': -0.5, 'xMin': -2.0, 
-                    'yMin': 0, 'yMax': 1.5}}
-           create an empty image
-         {'putData': {'images': [{'data': array([[0, 0, 0, ..., 0, 0, 0],
-                                                 [0, 0, 0, ..., 1, 1, 1]], dtype=int32), 
-                                  'name': 'MandelBrot'}]}
-           create an image from a 2D array
-         {'Image': {'data': data, 'name': "Mandelbrot"}}
-           create an image by sending the data, e.g. data = np.ndarray( (width, height), _np.int32)
-         {'command': ['setPixelImage Mandelbrot 1 3 200']}
-           set a pixel value. the position is specified by indices
-         {'command': ['setPixelWorld Mandelbrot 0.5 1.5 200']}
-           set a pixel value. the position is specified by world coordinate
-         Text
-         {'command': ['setText MeshScan comment string "Sweep: 1/4" x 0.05 y 0.95']}
-           create a text GQE for the scan MeshScan, the name of the text is comment
-
-       Retrieve data
-         {'getData': True}
-           {'getData': {'EH_C02': {'y': [0.3183, ... 0.6510], 'x': [0.0, ... 0.959]}, 
-                        'EH_C01': {'y': [0.0234, ... 0.4918], 'x': [0.0, ... 0.959]}}, 
-            'result': 'done'}
-
-    '''
-    #print( "GQE.toPysp: %s" % repr( hsh))
-    argout = {}
-    if 'command' in hsh:
-        argout[ 'result'] = _pysp.commandIfc( hsh)
-    elif 'putData' in hsh:
-        argout[ 'result'] = _putData( hsh[ 'putData'])
-    elif 'getData' in hsh:
-        try:
-            argout[ 'getData'] = getData()
-            argout[ 'result'] = 'done'
-        except Exception as e:
-            argout[ 'getData'] = {}
-            argout[ 'result'] = "GQE.toPysp: error, %s" % repr( e)
-    #
-    # the 'isAlive' question comes from a toPyspMonitor() client, not from the door
-    #
-    elif 'isAlive' in hsh:
-        argout[ 'result'] = 'done'
-    elif 'Image' in hsh:
-        try: 
-            Image( **hsh[ 'Image']) 
-            argout[ 'result'] = 'done'
-        except Exception as e:
-            argout[ 'result'] = "GQE.toPysp: error, %s" % repr( e)
-    elif 'Scan' in hsh:
-        try: 
-            Scan( **hsh[ 'Scan']) 
-            argout[ 'result'] = 'done'
-        except Exception as e:
-            argout[ 'result'] = "GQE.toPysp: error, %s" % repr( e)
-    else:
-        argout[ 'result'] = "GQE.toPysp: error, failed to identify %s" % repr( hsh)
-
-    #print( "GQE.toPysp: return %s" % repr( argout))
-    return argout
-
-def _putData( hsh):
-    '''
-    a plot is created based on a dictionary 
-    the use case: some data are sent pyspMonitor
-    '''
-
-    argout = 'n.n.'
-    if 'title' not in hsh:
-        setTitle( "NoTitle")
-    else:
-        setTitle( hsh[ 'title'])
-
-    if 'columns' in hsh:
-        delete()
-        _pysp.cls()
-        argout = fillDataByColumns( hsh)
-    elif 'gqes' in hsh:
-        delete()
-        _pysp.cls()
-        argout = fillDataByGqes( hsh)
-    #
-    # hsh = { 'putData': 
-    #         { 'name': "MandelBrot",
-    #           'type': 'image', 
-    #           'xMin': xmin, 'xMax': xmax, 'width': width, 
-    #           'yMin': ymin, 'yMax': ymax, 'height': height}}
-    #
-    elif 'type' in hsh and hsh[ 'type'] == 'image':
-        del hsh[ 'type']
-        Image( **hsh)
-        argout = "done"
-    #
-    #_pysp.toPysp( { 'putData': 
-    #                { 'images': [{'name': "Mandelbrot", 'data': data,
-    #                              'xMin': xmin, 'xMax': xmax, 
-    #                              'yMin': ymin, 'yMax': ymax}]}})
-    #
-    elif 'images' in hsh:
-        for h in hsh[ 'images']: 
-            Image( **h)
-        argout = "done"
-    elif 'setPixelImage' in hsh or 'setPixelWorld' in hsh:
-        argout = fillDataImage( hsh)
-    elif 'setXY' in hsh:
-        argout = fillDataXY( hsh)
-    else:
-        raise Exception( "GQE.putData", "expecting 'columns', 'gqes', 'setPixelImage', 'setPixelWorld'")
-
-    return argout
-
-def commandIfc( hsh): 
-    '''
-    passes commands to pysp.ipython.ifc.command()
-
-    called from /home/kracht/Misc/pySpectra/PySpectra/pyspMonitorClass.py
-    
-    List of commands: 
-      hsh = { 'command': ['cls', 'display']}
-    Single commands
-    hsh = { 'command': 'display'}
-    '''
-    argout = "n.n."
-    if type( hsh[ 'command']) == list:
-        for cmd in hsh[ 'command']: 
-            ret = _pysp.ipython.ifc.command( cmd)
-            argout += "%s -> %s;" % (cmd, repr( ret))
-
-        return "done"
-
-    ret = _pysp.ipython.ifc.command( hsh[ 'command'])
-    argout = "%s -> %s" % (hsh[ 'command'], repr( ret))
-    return argout
-
-class Image( GQE):
+#
+# to understand, why object is needed, goto 'def __setattr__( ...)'
+#
+class Image( object):
     '''
     a Image a 2D data array
 
@@ -2086,8 +1954,6 @@ class Image( GQE):
     def __init__( self, name = None, **kwargs):
         global _gqeList
 
-        super( Image, self).__init__()
-
         #print( "GQE.Image: %s" % repr( kwargs))
 
         if name is None:
@@ -2103,6 +1969,7 @@ class Image( GQE):
         # ccallback function to update the zoom progress in the menu
         #
         self.cbZoomProgress = None
+        self.attributeWidget = None
         self.flagZoomSlow = None
         self.flagZooming = False
 
@@ -2120,6 +1987,10 @@ class Image( GQE):
 
         _gqeList.append( self)
 
+    #
+    # recursion can be avoided by calling the super class of scan.
+    # hence, Scan needs to be an object
+    #
     def __setattr__( self, name, value): 
         #print( "GQE.Image.__setattr__: name %s, value %s" % (name, value))
         if name in _ImageAttrsPublic or \
@@ -2157,6 +2028,7 @@ class Image( GQE):
         self.img = None
         self.logWidget = None
         self.maxIter = 512
+        self.cb_mouseLabel = None
         self.mouseLabel = None
         self.mousePrepared = False
         self.viewBox = None
@@ -2329,7 +2201,7 @@ class Image( GQE):
         targetY = float( targetIY)/float( self.height)*( self.yMax - self.yMin) + self.yMin
         print( "GQE.Image.move x %g, y %g" % (targetX, targetY))
 
-        if GQE.monitorGui is None:
+        if InfoBlock.monitorGui is None:
             if self.logWidget is not None:
                 self.logWidget.append( "GQE.Image.move: not called from pyspMonitor") 
             else:
@@ -2373,15 +2245,15 @@ class Image( GQE):
         
         if not reply == _QtGui.QMessageBox.Yes:
             if self.logWidget is not None:
-                GQE.monitorGui.logWidget.append( "Image.Move: move not confirmed")
+                InfoBlock.monitorGui.logWidget.append( "Image.Move: move not confirmed")
             return
 
         lst = [ "umv %s %g %s %g" % (proxyX.name(), targetX, proxyY.name(), targetY)]
         
         if self.logWidget is not None:
-                GQE.monitorGui.logWidget.append( "%s" % (lst[0]))
+                InfoBlock.monitorGui.logWidget.append( "%s" % (lst[0]))
 
-        GQE.monitorGui.door.RunMacro( lst)
+        InfoBlock.monitorGui.door.RunMacro( lst)
         return 
     #
     # 

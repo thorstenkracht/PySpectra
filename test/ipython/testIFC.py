@@ -12,11 +12,11 @@ python ./test/ipython/testIFC.py testIFC.test_setText
 python ./test/ipython/testIFC.py testIFC.test_setX_Y
 python ./test/ipython/testIFC.py testIFC.test_setXY
 python ./test/ipython/testIFC.py testIFC.test_delete
-python ./test/ipython/testIFC.py testIFC.test_toPysp
-python ./test/ipython/testIFC.py testIFC.test_toPyspSetPixelImage
-python ./test/ipython/testIFC.py testIFC.test_toPyspSetPixelWorld
-python ./test/ipython/testIFC.py testIFC.test_toPyspMonitorSetPixelWorld
-python ./test/ipython/testIFC.py testIFC.test_toPyspMonitorScan
+python ./test/ipython/testIFC.py testIFC.test_execHsh
+python ./test/ipython/testIFC.py testIFC.test_execHshSetPixelImage
+python ./test/ipython/testIFC.py testIFC.test_execHshSetPixelWorld
+python ./test/ipython/testIFC.py testIFC.test_execHshMonitorSetPixelWorld
+python ./test/ipython/testIFC.py testIFC.test_execHshMonitorScan
 '''
 import sys
 import PySpectra
@@ -47,15 +47,15 @@ class testIFC( unittest.TestCase):
     def test_create1( self):
         print "testIFC.test_create1"
         PySpectra.cls()
-        PySpectra.delete()
+        PySpectra.dMgt.GQE.delete()
         PySpectra.ipython.ifc.command( "create s1 0 10 100")
-        lst = PySpectra.getGqeList()
+        lst = PySpectra.dMgt.GQE.getGqeList()
         self.assertEqual( len( lst), 1)
         self.assertEqual( lst[0].name, "s1")
         self.assertEqual( lst[0].nPts, 100)
         self.assertEqual( lst[0].xMin, 0.)
         self.assertEqual( lst[0].xMax, 10.)
-        PySpectra.delete()
+        PySpectra.dMgt.GQE.delete()
         print "testIFC.test_create1 DONE"
 
     def test_create( self):
@@ -63,27 +63,27 @@ class testIFC( unittest.TestCase):
         print "testIFC.test_create"
 
         PySpectra.cls()
-        PySpectra.delete()
+        PySpectra.dMgt.GQE.delete()
         PySpectra.ipython.ifc.command( "create s1")
-        lst = PySpectra.getGqeList()
+        lst = PySpectra.dMgt.GQE.getGqeList()
         self.assertEqual( len( lst), 1)
         self.assertEqual( lst[0].name, "s1")
         PySpectra.ipython.ifc.command( "display s1")
 
         PySpectra.ipython.ifc.command( "derivative s1")
-        lst = PySpectra.getGqeList()
+        lst = PySpectra.dMgt.GQE.getGqeList()
         self.assertEqual( lst[1].name, "s1_derivative")
         self.assertEqual( len( lst), 2)
 
         PySpectra.ipython.ifc.command( "antiderivative s1")
-        lst = PySpectra.getGqeList()
+        lst = PySpectra.dMgt.GQE.getGqeList()
         self.assertEqual( lst[2].name, "s1_antiderivative")
         self.assertEqual( len( lst), 3)
 
         PySpectra.ipython.ifc.command( "delete s1")
         PySpectra.ipython.ifc.command( "delete s1_derivative")
         PySpectra.ipython.ifc.command( "delete s1_antiderivative")
-        lst = PySpectra.getGqeList()
+        lst = PySpectra.dMgt.GQE.getGqeList()
         self.assertEqual( len( lst), 0)
         print "testIFC.test_create DONE"
 
@@ -98,7 +98,7 @@ class testIFC( unittest.TestCase):
         print "testIFC.test_show"
 
         PySpectra.cls()
-        PySpectra.delete()
+        PySpectra.dMgt.GQE.delete()
         PySpectra.ipython.ifc.command( "create s1")
         PySpectra.ipython.ifc.command( "show s1")
         print "testIFC.test_show DONE"
@@ -106,32 +106,32 @@ class testIFC( unittest.TestCase):
     def test_title( self): 
         print "testIFC.test_title"
         PySpectra.cls()
-        PySpectra.delete()
+        PySpectra.dMgt.GQE.delete()
         PySpectra.ipython.ifc.command( "create s1")
         PySpectra.ipython.ifc.command( "setTitle hallo")
 
-        ret = PySpectra.getTitle()
+        ret = PySpectra.dMgt.GQE.getTitle()
         self.assertEqual( ret, "hallo")
         print "testIFC.test_title DONE"
 
     def test_comment( self): 
         print "testIFC.test_comment"
         PySpectra.cls()
-        PySpectra.delete()
+        PySpectra.dMgt.GQE.delete()
         PySpectra.ipython.ifc.command( "setComment AComment")
 
-        ret = PySpectra.getComment()
+        ret = PySpectra.dMgt.GQE.getComment()
         self.assertEqual( ret, "AComment")
         print "testIFC.test_comment DONE"
 
     def test_y2my( self): 
         print "testIFC.test_y2my"
         PySpectra.cls()
-        PySpectra.delete()
+        PySpectra.dMgt.GQE.delete()
         PySpectra.ipython.ifc.command( "create s1")
         PySpectra.ipython.ifc.command( "y2my s1")
 
-        lst = PySpectra.getGqeList()
+        lst = PySpectra.dMgt.GQE.getGqeList()
         self.assertEqual( lst[1].name, "s1_y2my")
         self.assertEqual( len( lst), 2)
         print "testIFC.test_y2my DONE"
@@ -139,7 +139,7 @@ class testIFC( unittest.TestCase):
     def test_wsViewPort( self): 
         print "testIFC.test_wsViewPort"
         PySpectra.cls()
-        PySpectra.delete()
+        PySpectra.dMgt.GQE.delete()
         PySpectra.ipython.ifc.command( "setWsViewport DINA4")
         PySpectra.procEventsLoop( 1)
         PySpectra.ipython.ifc.command( "setWsViewport DINA4P")
@@ -157,11 +157,11 @@ class testIFC( unittest.TestCase):
     def test_overlay( self): 
         print "testIFC.test_overlay"
         PySpectra.cls()
-        PySpectra.delete()
+        PySpectra.dMgt.GQE.delete()
         PySpectra.ipython.ifc.command( "create s1")
         PySpectra.ipython.ifc.command( "create s2")
         PySpectra.ipython.ifc.command( "overlay s1 s2")
-        s1 = PySpectra.getGqe( 's1')
+        s1 = PySpectra.dMgt.GQE.getGqe( 's1')
         self.assertEqual( s1.overlay, "s2")
         print "testIFC.test_overlay DONE"
 
@@ -180,7 +180,7 @@ class testIFC( unittest.TestCase):
         PySpectra.ipython.ifc.command( "cls")
         PySpectra.ipython.ifc.command( "delete")
         PySpectra.ipython.ifc.command( "create s1")
-        o = PySpectra.getGqe( "s1")
+        o = PySpectra.dMgt.GQE.getGqe( "s1")
         self.assertEqual( len( o.textList), 0)
         PySpectra.ipython.ifc.command( "setText s1 comment string \"this is a comment\" x 0.05 y 0.95 hAlign left vAlign top color blue")
         self.assertEqual( len( o.textList), 1)
@@ -206,7 +206,7 @@ class testIFC( unittest.TestCase):
         max = 50
         PySpectra.ipython.ifc.command( "create s1 0 10 %d" % max)
 
-        s1 = PySpectra.getGqe( "s1")
+        s1 = PySpectra.dMgt.GQE.getGqe( "s1")
         self.assertEqual( s1.currentIndex, 49)
         self.assertEqual( s1.lastIndex, 0)
         PySpectra.ipython.ifc.command( "display")
@@ -254,7 +254,7 @@ class testIFC( unittest.TestCase):
         PySpectra.ipython.ifc.command( "create s4 0 10 %d" % max)
         PySpectra.ipython.ifc.command( "display")
         PySpectra.procEventsLoop( 1)
-        gqeList = PySpectra.getGqeList()
+        gqeList = PySpectra.dMgt.GQE.getGqeList()
         self.assertEqual( len( gqeList), 4)
         self.assertEqual( gqeList[0].name, "s1")
         self.assertEqual( gqeList[1].name, "s2")
@@ -266,7 +266,7 @@ class testIFC( unittest.TestCase):
         PySpectra.ipython.ifc.command( "setTitle \"s1,s3,s4\"")
         PySpectra.ipython.ifc.command( "display")
         PySpectra.procEventsLoop( 1)
-        gqeList = PySpectra.getGqeList()
+        gqeList = PySpectra.dMgt.GQE.getGqeList()
         self.assertEqual( len( gqeList), 3)
         self.assertEqual( gqeList[0].name, "s1")
         self.assertEqual( gqeList[1].name, "s3")
@@ -277,26 +277,26 @@ class testIFC( unittest.TestCase):
         PySpectra.ipython.ifc.command( "setTitle \"s1\"")
         PySpectra.ipython.ifc.command( "display")
         PySpectra.procEventsLoop( 1)
-        gqeList = PySpectra.getGqeList()
+        gqeList = PySpectra.dMgt.GQE.getGqeList()
         self.assertEqual( len( gqeList), 1)
         self.assertEqual( gqeList[0].name, "s1")
         print "testIFC.test_delete DONE"
 
 
-    def test_toPyspScan( self): 
+    def test_execHshScan( self): 
         import random
 
-        print "testIFC.test_toPysp"
-        ret = PySpectra.toPysp( { 'command': ["cls", "delete"]}) 
+        print "testIFC.test_execHsh"
+        ret = PySpectra.misc.zmqIfc.execHsh( { 'command': ["cls", "delete"]}) 
         self.assertEqual( ret[ 'result'], 'done')
         
-        ret = PySpectra.toPysp( { 'command': ["setTitle \"An important title\"", 
+        ret = PySpectra.misc.zmqIfc.execHsh( { 'command': ["setTitle \"An important title\"", 
                                               "setComment \"An interesting comment\""]}) 
         self.assertEqual( ret[ 'result'], 'done')
 
         max = 101
         name = "TestScan"
-        ret = PySpectra.toPysp( {'Scan': { 'name': name,
+        ret = PySpectra.misc.zmqIfc.execHsh( {'Scan': { 'name': name,
                                            'xMin': 0., 'xMax': 100., 
                                            'yMin': 0., 'yMax': 1.,
                                            'symbol': '+','symbolColor': 'red',
@@ -304,7 +304,7 @@ class testIFC( unittest.TestCase):
                                            'nPts': max,
                                            'autoscaleX': False, 'autoscaleY': True}})
         self.assertEqual( ret[ 'result'], 'done')
-        o = PySpectra.getGqe( name)
+        o = PySpectra.dMgt.GQE.getGqe( name)
         self.assertEqual( o.nPts, max)
         self.assertEqual( o.symbol, '+')
         self.assertEqual( o.symbolColor, 'red')
@@ -316,20 +316,20 @@ class testIFC( unittest.TestCase):
         for i in range( max): 
             pos = float(i)
             posY = random.random()*10
-            PySpectra.toPysp( { 'command': ['setXY %s %d %s %s' % (name, i, repr(pos), repr(posY))]})
-            PySpectra.toPysp( { 'command': ["display"]}) 
+            PySpectra.misc.zmqIfc.execHsh( { 'command': ['setXY %s %d %s %s' % (name, i, repr(pos), repr(posY))]})
+            PySpectra.misc.zmqIfc.execHsh( { 'command': ["display"]}) 
             self.assertEqual( o.currentIndex, i)
             time.sleep( 0.1)
 
-        print "testIFC.test_toPysp DONE"
+        print "testIFC.test_execHsh DONE"
 
 
-    def test_toPyspSetPixelImage( self): 
+    def test_execHshSetPixelImage( self): 
 
         '''
         this examples simulates the toPyspMonitor() interface
         
-        replace toPysp() by toPyspMonitor() to connect to pyspMonitor.py 
+        replace execHsh() by toPyspMonitor() to connect to pyspMonitor.py 
         '''
         (xmin, xmax) = (-2.,-0.5)
         (ymin, ymax) = (0, 1.5)
@@ -339,14 +339,14 @@ class testIFC( unittest.TestCase):
         #
         # do the clean-up before we start
         #
-        hsh =  PySpectra.toPysp( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        hsh =  PySpectra.misc.zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
         if hsh[ 'result'] != "done":
             print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
             return 
         #
         # create the image
         #
-        hsh = PySpectra.toPysp( { 'Image': 
+        hsh = PySpectra.misc.zmqIfc.execHsh( { 'Image': 
                                   { 'name': "MandelBrot",
                                     'xMin': xmin, 'xMax': xmax, 'width': width, 
                                     'yMin': ymin, 'yMax': ymax, 'height': height}})
@@ -361,24 +361,24 @@ class testIFC( unittest.TestCase):
         for i in range(width):
             for j in range(height):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
-                hsh = PySpectra.toPysp( { 'command': 
+                hsh = PySpectra.misc.zmqIfc.execHsh( { 'command': 
                                           ["setPixelImage MandelBrot %d %d %s" % ( i, j, repr( res))]})
                 if hsh[ 'result'] != "done":
                     print "error from setPixel"
                     return
-            PySpectra.toPysp( { 'command': ['cls','display']})
-        PySpectra.toPysp( { 'command': ['cls', 'display']})
+            PySpectra.misc.zmqIfc.execHsh( { 'command': ['cls','display']})
+        PySpectra.misc.zmqIfc.execHsh( { 'command': ['cls', 'display']})
         PySpectra.procEventsLoop( 1)
 
         return 
 
-    def test_toPyspSetPixelWorld( self): 
+    def test_execHshSetPixelWorld( self): 
 
         '''
         this examples simulates the toPyspMonitor() interface
-        replace toPysp() by toPyspMonitor() to connect to pyspMonitor.py 
+        replace execHsh() by toPyspMonitor() to connect to pyspMonitor.py 
         '''
-        hsh =  PySpectra.toPysp( { 'command': ['cls', 'delete', 'setWsViewport DINA5S']})
+        hsh =  PySpectra.misc.zmqIfc.execHsh( { 'command': ['cls', 'delete', 'setWsViewport DINA5S']})
         if hsh[ 'result'] != "done":
             print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
             return 
@@ -391,7 +391,7 @@ class testIFC( unittest.TestCase):
         #
         # create the image
         #
-        hsh = PySpectra.toPysp( { 'Image': 
+        hsh = PySpectra.misc.zmqIfc.execHsh( { 'Image': 
                                   { 'name': "MandelBrot",
                                     'xMin': xmin, 'xMax': xmax, 'width': width, 
                                     'yMin': ymin, 'yMax': ymax, 'height': height}})
@@ -406,33 +406,33 @@ class testIFC( unittest.TestCase):
         for i in range(width):
             for j in range(height):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
-                hsh = PySpectra.toPysp( { 'command': 
+                hsh = PySpectra.misc.zmqIfc.execHsh( { 'command': 
                                           ["setPixelWorld MandelBrot %g %g %s" % ( r1[i], r2[j], repr( res))]})
                 if hsh[ 'result'] != "done":
                     print "error from setPixelWorld"
                     return
-            PySpectra.toPysp( { 'command': ['cls','display']})
-        PySpectra.toPysp( { 'command': ['cls']})
-        PySpectra.toPysp( { 'command': ['display']})
+            PySpectra.misc.zmqIfc.execHsh( { 'command': ['cls','display']})
+        PySpectra.misc.zmqIfc.execHsh( { 'command': ['cls']})
+        PySpectra.misc.zmqIfc.execHsh( { 'command': ['display']})
         PySpectra.procEventsLoop( 1)
 
         return 
 
-    def test_toPyspMonitorSetPixelWorld( self): 
+    def test_execHshMonitorSetPixelWorld( self): 
 
         '''
         this examples simulates the toPyspMonitor() interface
-        replace toPysp() by toPyspMonitor() to connect to pyspMonitor.py 
+        replace execHsh() by toPyspMonitor() to connect to pyspMonitor.py 
         '''
         #
         # see, if the pyspMonitor is running. If not, return silently
         #
-        hsh =  PySpectra.toPyspMonitor( { 'isAlive': True})
+        hsh =  PySpectra.misc.zmqIfc.toPyspMonitor( { 'isAlive': True})
         if hsh[ 'result'] != "done":
             print "test_toPyspMonitorSetPixelWorld: no pyspMonitor running"
             return 
 
-        hsh =  PySpectra.toPyspMonitor( { 'command': ['cls', 'delete', 'setWsViewport DINA5S']})
+        hsh =  PySpectra.misc.zmqIfc.toPyspMonitor( { 'command': ['cls', 'delete', 'setWsViewport DINA5S']})
         if hsh[ 'result'] != "done":
             print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
             return 
@@ -445,7 +445,7 @@ class testIFC( unittest.TestCase):
         #
         # create the image
         #
-        hsh = PySpectra.toPyspMonitor( { 'Image': 
+        hsh = PySpectra.misc.zmqIfc.toPyspMonitor( { 'Image': 
                                          { 'name': "MandelBrot",
                                            'xMin': xmin, 'xMax': xmax, 'width': width, 
                                            'yMin': ymin, 'yMax': ymax, 'height': height}})
@@ -460,14 +460,14 @@ class testIFC( unittest.TestCase):
         for i in range(width):
             for j in range(height):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
-                hsh = PySpectra.toPyspMonitor( { 'command': 
+                hsh = PySpectra.misc.zmqIfc.toPyspMonitor( { 'command': 
                                           ["setPixelWorld MandelBrot %g %g %s" % ( r1[i], r2[j], repr( res))]})
                 if hsh[ 'result'] != "done":
                     print "error from setPixelWorld"
                     return
-            PySpectra.toPyspMonitor( { 'command': ['cls','display']})
-        PySpectra.toPyspMonitor( { 'command': ['cls']})
-        PySpectra.toPyspMonitor( { 'command': ['display']})
+            PySpectra.misc.zmqIfc.toPyspMonitor( { 'command': ['cls','display']})
+        PySpectra.misc.zmqIfc.toPyspMonitor( { 'command': ['cls']})
+        PySpectra.misc.zmqIfc.toPyspMonitor( { 'command': ['display']})
 
         return 
 
@@ -478,21 +478,21 @@ class testIFC( unittest.TestCase):
         #
         # see, if the pyspMonitor is running. If not, return silently
         #
-        hsh =  PySpectra.toPyspMonitor( { 'isAlive': True})
+        hsh =  PySpectra.misc.zmqIfc.toPyspMonitor( { 'isAlive': True})
         if hsh[ 'result'] != "done":
             print "test_toPyspMonitorScan: no pyspMonitor running"
             return 
 
-        ret = PySpectra.toPyspMonitor( { 'command': ["cls", "delete"]}) 
+        ret = PySpectra.misc.zmqIfc.toPyspMonitor( { 'command': ["cls", "delete"]}) 
         self.assertEqual( ret[ 'result'], 'done')
         
-        ret = PySpectra.toPyspMonitor( { 'command': ["setTitle \"An important title\"", 
+        ret = PySpectra.misc.zmqIfc.toPyspMonitor( { 'command': ["setTitle \"An important title\"", 
                                                      "setComment \"An interesting comment\""]}) 
         self.assertEqual( ret[ 'result'], 'done')
 
         max = 101
         name = "TestScan"
-        ret = PySpectra.toPyspMonitor( {'Scan': { 'name': name,
+        ret = PySpectra.misc.zmqIfc.toPyspMonitor( {'Scan': { 'name': name,
                                            'xMin': 0., 'xMax': 100., 
                                            'yMin': 0., 'yMax': 1.,
                                            'symbol': '+','symbolColor': 'red',
@@ -504,8 +504,8 @@ class testIFC( unittest.TestCase):
         for i in range( max): 
             pos = float(i)
             posY = random.random()*10
-            PySpectra.toPyspMonitor( { 'command': ['setXY %s %d %s %s' % (name, i, repr(pos), repr(posY))]})
-            PySpectra.toPyspMonitor( { 'command': ["display"]}) 
+            PySpectra.misc.zmqIfc.toPyspMonitor( { 'command': ['setXY %s %d %s %s' % (name, i, repr(pos), repr(posY))]})
+            PySpectra.misc.zmqIfc.toPyspMonitor( { 'command': ["display"]}) 
             time.sleep( 0.1)
 
         print "testIFC.test_toPyspMonitorScan DONE"

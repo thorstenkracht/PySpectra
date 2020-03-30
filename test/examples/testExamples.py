@@ -5,8 +5,10 @@ python ./test/examples/testExamples.py testExamples.test_execTests
 import PySpectra
 import unittest
 
-class testExamples( unittest.TestCase):
+import sys
+sys.path.append( "/home/kracht/Misc/pySpectra")
 
+class testExamples( unittest.TestCase):
  
     @classmethod
     def setUpClass( testExamples):
@@ -30,6 +32,6 @@ class testExamples( unittest.TestCase):
             PySpectra.procEventsLoop( 1)
         return 
 
-        
+         
 if __name__ == "__main__":
     unittest.main()

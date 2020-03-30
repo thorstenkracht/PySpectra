@@ -10,6 +10,7 @@ from PyQt4 import QtGui, QtCore
 import numpy as np
 
 import PySpectra as pysp
+import PySpectra.dMgt.GQE as GQE
 import mtpltlb.graphics as mpl_graphics # for pdf output
 
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
@@ -112,13 +113,13 @@ class QListWidgetTK( QtGui.QListWidget):
                 self.parent.displayChecked()
         if event.button() == QtCore.Qt.RightButton:
             item = self.currentItem()
-            gqe = pysp.getGqe( item.text())
-            if type( gqe) == pysp.dMgt.GQE.Scan:
+            gqe = GQE.getGqe( item.text())
+            if type( gqe) == GQE.Scan:
                 if gqe.textOnly: 
                     self.logWidget.append( "%s is textOnly" % item.text())
                     return 
                 self.scanAttributes = ScanAttributes( self.parent, item.text(), self.logWidget)
-            elif type( gqe) == pysp.dMgt.GQE.Image:
+            elif type( gqe) == GQE.Image:
                 self.imageAttributes = ImageAttributes( self.parent, item.text(), self.logWidget)
         return 
 #
@@ -538,8 +539,8 @@ class ScanAttributes( QtGui.QMainWindow):
             raise ValueError( "pyspFio.ScanAttributes: name not specified")
         self.name = name
         self.logWidget = logWidget
-        self.scan = pysp.getGqe( self.name)
-
+        self.scan = GQE.getGqe( self.name)
+        self.scan.attributeWidget = self
         self.scan.flagDisplayVLines = False
         pysp.cls()
         pysp.display( [self.name])
@@ -599,6 +600,19 @@ class ScanAttributes( QtGui.QMainWindow):
         self.xValue = QtGui.QLabel( self.scan.xLabel)
         self.layout_grid.addWidget( self.xValue, row, 3)
         #
+        # mouse
+        #
+        #self.mouseLabel = QtGui.QLabel( "Mouse")
+        #self.mouseLabel.setAlignment( QtCore.Qt.AlignRight)
+        #self.layout_grid.addWidget( self.mouseLabel, row, 3)
+        self.mouseLabelX = QtGui.QLabel( "")
+        self.mouseLabelX.setMinimumWidth( 90)
+        self.layout_grid.addWidget( self.mouseLabelX, row, 4)
+        self.mouseLabelY = QtGui.QLabel( "")
+        self.mouseLabelY.setMinimumWidth( 90)
+        self.layout_grid.addWidget( self.mouseLabelY, row, 5)
+        self.scan.cb_mouseLabel = self.cb_mouseLabel
+        #
         # length
         #
         row += 1
@@ -610,6 +624,7 @@ class ScanAttributes( QtGui.QMainWindow):
         # currentIndex
         #
         self.currentIndexLabel = QtGui.QLabel( "Current/LastIndex:")
+        self.currentIndexLabel.setToolTip( "CurrentIndex refers to the last valid x-, y-values (Np == CurrentIndex + 1)")
         self.layout_grid.addWidget( self.currentIndexLabel, row, 3)
         self.currentIndexValue = QtGui.QLabel( "%d/%d" % (self.scan.currentIndex, self.scan.lastIndex))
         self.layout_grid.addWidget( self.currentIndexValue, row, 4)
@@ -746,9 +761,9 @@ class ScanAttributes( QtGui.QMainWindow):
         self.lineColorLabel = QtGui.QLabel( "LineColor")
         self.layout_grid.addWidget( self.lineColorLabel, row, 0)
         self.w_lineColorComboBox = QtGui.QComboBox()
-        for lineColor in pysp.definitions.lineColorArr:
+        for lineColor in pysp.definitions.colorArr:
             self.w_lineColorComboBox.addItem( lineColor)
-        self.w_lineColorComboBox.setCurrentIndex( pysp.definitions.lineColorDct[ self.scan.lineColor.upper()])
+        self.w_lineColorComboBox.setCurrentIndex( pysp.definitions.colorDct[ self.scan.lineColor.upper()])
         self.w_lineColorComboBox.currentIndexChanged.connect( self.cb_lineColor)
         self.layout_grid.addWidget( self.w_lineColorComboBox, row, 1) 
         #
@@ -785,7 +800,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.w_symbolColorComboBox = QtGui.QComboBox()
         if str( self.scan.symbolColor).upper() not in list(pysp.definitions.lineColorDct.keys()):
             self.scan.symbolColor = 'black'
-        for symbolColor in pysp.definitions.lineColorArr:
+        for symbolColor in pysp.definitions.colorArr:
             self.w_symbolColorComboBox.addItem( symbolColor)
         self.w_symbolColorComboBox.setCurrentIndex( 
             pysp.definitions.lineColorDct[ str( self.scan.symbolColor).upper()])
@@ -828,7 +843,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.w_overlayComboBox.addItem( "None")
         count = 1 
         countTemp = -1
-        for scan in pysp.dMgt.GQE.getGqeList(): 
+        for scan in GQE.getGqeList(): 
             if scan.name == self.name:
                 continue
             if self.scan.overlay is not None and self.scan.overlay == scan.name:
@@ -933,6 +948,11 @@ class ScanAttributes( QtGui.QMainWindow):
         self.vlines.clicked.connect( self.cb_vlines)
         self.vlines.setShortcut( "Alt+v")
 
+        self.showScan = QtGui.QPushButton(self.tr("Show")) 
+        self.showScan.setToolTip( "Prints a list i, x, y")
+        self.statusBar.addPermanentWidget( self.showScan) # 'permanent' to shift it right
+        self.showScan.clicked.connect( self.cb_showScan)
+
         self.display = QtGui.QPushButton(self.tr("&Display")) 
         self.statusBar.addPermanentWidget( self.display) # 'permanent' to shift it right
         self.display.clicked.connect( self.cb_display)
@@ -950,8 +970,8 @@ class ScanAttributes( QtGui.QMainWindow):
 
 
     def cb_next( self): 
-        nextScan = pysp.dMgt.GQE.nextScan( self.name)
-        index = pysp.dMgt.GQE.getIndex( nextScan.name)
+        nextScan = GQE.nextScan( self.name)
+        index = GQE.getIndex( nextScan.name)
         self.name = nextScan.name
         self.scan = nextScan
         pysp.cls()
@@ -960,13 +980,17 @@ class ScanAttributes( QtGui.QMainWindow):
         return 
 
     def cb_back( self): 
-        prevScan = pysp.dMgt.GQE.prevScan( self.name)
-        index = pysp.dMgt.GQE.getIndex( prevScan.name)
+        prevScan = GQE.prevScan( self.name)
+        index = GQE.getIndex( prevScan.name)
         self.name = prevScan.name
         self.scan = prevScan
         pysp.cls()
         pysp.display( [ self.name])
         self.parent.gqesListWidget.setCurrentRow( index)
+
+    def cb_mouseLabel( self, x, y): 
+        self.mouseLabelX.setText( "x: %g" % (x))
+        self.mouseLabelY.setText( "y: %g" % (y))
 
     def cb_vlines( self): 
         if self.scan.flagDisplayVLines: 
@@ -1137,7 +1161,8 @@ class ScanAttributes( QtGui.QMainWindow):
         self.updateTimer.stop()
 
         self.nameValue.setText( self.name)
-        self.xValue.setText( self.scan.xLabel)
+        if self.scan.xLabel is not None: 
+            self.xValue.setText( self.scan.xLabel)
         self.lengthValue.setText( "%d" % len( self.scan.x))
         self.currentIndexValue.setText( "%d/%d" % (self.scan.currentIndex, self.scan.lastIndex))
         self.xMinValue.setText( "%g" % self.scan.xMin)
@@ -1186,9 +1211,15 @@ class ScanAttributes( QtGui.QMainWindow):
         pysp.cls()
         pysp.display()
 
+    def cb_showScan( self): 
+        for i in range( 0, self.scan.currentIndex + 1): 
+            print( "%5d %15g %15g " % ( i, self.scan.x[i], self.scan.y[i]))
+        return 
+
     def cb_display( self): 
         pysp.cls()
         pysp.display()
+
     def cb_helpScanAttributes(self):
         QtGui.QMessageBox.about(self, self.tr("Help Scan Attributes"), self.tr(
                 "<h3> Scan Attributes </h3>"
@@ -1250,7 +1281,8 @@ class ImageAttributes( QtGui.QMainWindow):
             raise ValueError( "pyspFio.ImageAttributes: name not specified")
         self.name = name
         self.logWidget = logWidget
-        self.image = pysp.getGqe( self.name)
+        self.image = GQE.getGqe( self.name)
+        self.image.attributeWidget = self
 
         pysp.cls()
         pysp.display( [self.name])
@@ -1302,10 +1334,23 @@ class ImageAttributes( QtGui.QMainWindow):
         self.layout_grid.addWidget( self.nameLabel, row, 0)
         self.nameValue = QtGui.QLabel( self.name)
         self.layout_grid.addWidget( self.nameValue, row, 1)
-        row += 1
+        #
+        # mouse
+        #
+        self.mouseLabelX = QtGui.QLabel( "")
+        self.mouseLabelX.setMinimumWidth( 90)
+        self.layout_grid.addWidget( self.mouseLabelX, row, 3)
+        self.mouseLabelY = QtGui.QLabel( "")
+        self.mouseLabelY.setMinimumWidth( 90)
+        self.layout_grid.addWidget( self.mouseLabelY, row, 4)
+        self.mouseLabelValue = QtGui.QLabel( "")
+        self.mouseLabelValue.setMinimumWidth( 90)
+        self.layout_grid.addWidget( self.mouseLabelValue, row, 5)
+        self.image.cb_mouseLabel = self.cb_mouseLabel
         #
         # xLabel
         #
+        row += 1
         self.xLabel = QtGui.QLabel( "xLabel:")
         self.layout_grid.addWidget( self.xLabel, row, 0)
         self.xValue = QtGui.QLabel( self.image.xLabel)
@@ -1557,6 +1602,12 @@ class ImageAttributes( QtGui.QMainWindow):
         self.exit.clicked.connect( self.cb_close)
         self.exit.setShortcut( "Alt+x")
 
+    def cb_mouseLabel( self, x, y, val): 
+        self.mouseLabelX.setText( "x: %g" % (x))
+        self.mouseLabelY.setText( "y: %g" % (y))
+        self.mouseLabelValue.setText( "val: %g" % (val))
+
+
     def cb_modulo( self): 
         temp = self.w_moduloComboBox.currentText()
         self.image.modulo = int( temp)
@@ -1587,8 +1638,8 @@ class ImageAttributes( QtGui.QMainWindow):
         return
 
     def cb_next( self): 
-        nextImage = pysp.dMgt.GQE.nextImage( self.name)
-        index = pysp.dMgt.GQE.getIndex( nextImage.name)
+        nextImage = GQE.nextImage( self.name)
+        index = GQE.getIndex( nextImage.name)
         self.name = nextImage.name
         self.image = nextImage
         pysp.cls()
@@ -1597,8 +1648,8 @@ class ImageAttributes( QtGui.QMainWindow):
         return 
 
     def cb_back( self): 
-        prevImage = pysp.dMgt.GQE.prevImage( self.name)
-        index = pysp.dMgt.GQE.getIndex( prevImage.name)
+        prevImage = GQE.prevImage( self.name)
+        index = GQE.getIndex( prevImage.name)
         self.name = prevImage.name
         self.image = prevImage
         pysp.cls()
@@ -1635,7 +1686,7 @@ class ImageAttributes( QtGui.QMainWindow):
             self.image.yMin = -1.5
         if self.image.yMax > 1.5: 
             self.image.yMax = 1.5
-        self.image.maxIter = 256
+        self.image.maxIter = 512
         self.image.modulo = -1
         self.image.indexRotate = 0
         self.image.zoom()
@@ -2070,12 +2121,12 @@ class pySpectraGui( QtGui.QMainWindow):
 
         hBox.addStretch()            
         self.motProxies = []
-        self.motNameLabels = []
+        self.motorNameButtons = []
         self.motPosLabels = []
         names = [ 'mot1', 'mot2', 'mot3']
         for i in range( len( names)):
-            w = QtGui.QLabel( names[i])
-            self.motNameLabels.append( w)
+            w = QtGui.QPushButton( names[i])
+            self.motorNameButtons.append( w)
             hBox.addWidget( w)
             w.hide()
 
@@ -2134,7 +2185,6 @@ class pySpectraGui( QtGui.QMainWindow):
                 self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % pysp.definitions.GREEN_OK)
             else:
                 self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % pysp.definitions.RED_ALARM)
-
 
     def addScanFrame( self): 
         '''
@@ -2244,7 +2294,7 @@ class pySpectraGui( QtGui.QMainWindow):
         #
         elif pathNameTokens[-1] in pysp.definitions.dataFormats:
             pysp.cls()
-            pysp.dMgt.GQE.delete()
+            GQE.delete()
             try: 
                 pysp.read( pathName, flagMCA = self.mcaAction.isChecked())
             except Exception as e :
@@ -2282,11 +2332,16 @@ class pySpectraGui( QtGui.QMainWindow):
 
         #self.updateTimerPySpectraGui.stop()        
         
-        #self.updateFilesList()
         self.updateScansList()
 
         self.updateMotorWidgets()
 
+        if len( self.getCheckedNameList()) != 1: 
+            return 
+
+        #gqe = GQE.getGqe( self.getCheckedNameList()[0])
+        #gqe.updateArrowMotorCurrent()
+        
         #self.updateTimerPySpectraGui.start( int( updateTime*1000))
         return 
    
@@ -2297,8 +2352,19 @@ class pySpectraGui( QtGui.QMainWindow):
         #   - the current gqeList and the displayed gqeList are different
         #
 
-        gqeList = pysp.dMgt.GQE.getGqeList()[:]
-        
+        gqeList = GQE.getGqeList()[:]
+        #
+        # see if one of the GQEs has an arrowMotorCurrent. 
+        # if so, update it because the motor might have been 
+        # moved somehow
+        # 
+        for gqe in gqeList: 
+            if type( gqe) != GQE.Scan:            
+                continue
+            if gqe.arrowMotorCurrent is None: 
+                continue
+            gqe.updateArrowMotorCurrent()
+
         flagUpdate = False
         if self.gqeList is None:
             flagUpdate = True
@@ -2329,7 +2395,7 @@ class pySpectraGui( QtGui.QMainWindow):
         # fill the gqesListWidget
         #
         if len( self.gqeList) > 0:
-            if type( self.gqeList[0]) == pysp.dMgt.GQE.Scan:
+            if type( self.gqeList[0]) == GQE.Scan:
                 if self.gqeList[0].fileName is not None:
                     self.fileNameLabel.setText( self.gqeList[0].fileName)
 
@@ -2389,15 +2455,15 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.display()
 
     def cb_back( self): 
-        scan = pysp.dMgt.GQE.prevScan()
-        index = pysp.dMgt.GQE.getIndex( scan.name)
+        scan = GQE.prevScan()
+        index = GQE.getIndex( scan.name)
         pysp.cls()
         pysp.display( [ scan.name])
         self.gqesListWidget.setCurrentRow( index)
 
     def cb_next( self): 
-        scan = pysp.dMgt.GQE.nextScan()
-        index = pysp.dMgt.GQE.getIndex( scan.name)
+        scan = GQE.nextScan()
+        index = GQE.getIndex( scan.name)
         pysp.cls()
         pysp.display( [ scan.name])
         self.gqesListWidget.setCurrentRow( index)
@@ -2570,14 +2636,23 @@ class pySpectraGui( QtGui.QMainWindow):
     def prepareStatusBar( self): 
 
         #
-        # cls, delete
+        # cls
         #
         self.clsBtn = QtGui.QPushButton(self.tr("&Cls")) 
         self.statusBar.addWidget( self.clsBtn) 
         self.clsBtn.clicked.connect( self.cb_cls)
         self.clsBtn.setToolTip( "Clear the graphics window")
         self.clsBtn.setShortcut( "Alt+c")
-
+        #
+        # display
+        #
+        self.displayBtn = QtGui.QPushButton(self.tr("Display")) 
+        self.statusBar.addWidget( self.displayBtn) 
+        self.displayBtn.clicked.connect( self.cb_display)
+        self.displayBtn.setToolTip( "Display")
+        #
+        # delete
+        #
         self.deleteBtn = QtGui.QPushButton(self.tr("&Delete")) 
         self.statusBar.addWidget( self.deleteBtn) 
         self.deleteBtn.clicked.connect( self.cb_delete)
@@ -2637,7 +2712,7 @@ class pySpectraGui( QtGui.QMainWindow):
     def _printHelper( self, frmt): 
         import HasyUtils
 
-        lst = pysp.dMgt.GQE.getGqeList()
+        lst = GQE.getGqeList()
         if len( lst) == 0:
             QtGui.QMessageBox.about(self, 'Info Box', "No Scans to print")
             return
@@ -2664,7 +2739,10 @@ class pySpectraGui( QtGui.QMainWindow):
     def cb_createPdfA6( self): 
         self._printHelper( "DINA6")
 
-
+    def cb_display( self): 
+        pysp.cls()
+        pysp.display()
+        
     def cb_launchEvince( self):
         sts = os.system( "evince pyspOutput.pdf &")
 
@@ -2710,6 +2788,9 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.cls()
         
     def getCheckedNameList( self): 
+        '''
+        get the list of selected names
+        '''
         nameList = []
         for row in range( self.gqesListWidget.count()):
             item = self.gqesListWidget.item( row)
@@ -2727,7 +2808,7 @@ class pySpectraGui( QtGui.QMainWindow):
             return 
         for name in lst: 
             self.logWidget.append(  "Deleting %s" % name)
-        pysp.dMgt.GQE.delete( lst)
+        GQE.delete( lst)
         pysp.cls()
         pysp.display()
         return 
@@ -2741,7 +2822,7 @@ class pySpectraGui( QtGui.QMainWindow):
             self.logWidget.append( "failed to create PDF file")
         
     def cb_doty( self):
-        lst = pysp.dMgt.GQE.getGqeList()
+        lst = GQE.getGqeList()
         if self.dotyAction.isChecked():
             for elm in lst:
                 elm.doty = True
@@ -2752,7 +2833,7 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.display()
 
     def cb_grid( self): 
-        lst = pysp.dMgt.GQE.getGqeList()
+        lst = GQE.getGqeList()
         if self.gridAction.isChecked():
             for scan in lst:
                 scan.showGridX = True
@@ -2765,7 +2846,7 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.display()
 
     def cb_mca( self): 
-        self.mcaAction.isChecked() # +++
+        self.mcaAction.isChecked() 
 
     def cb_edit( self):
         item = self.filesListWidget.currentItem()
@@ -2793,28 +2874,28 @@ class pySpectraGui( QtGui.QMainWindow):
         return 
         
     def cb_derivative( self):
-        displayList = pysp.dMgt.GQE.getDisplayList()
+        displayList = GQE.getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append(  "cb_derivative: expecting 1 displayed scan")
             return 
         pysp.derivative( displayList[0].name)
 
     def cb_antiderivative( self):
-        displayList = pysp.dMgt.GQE.getDisplayList()
+        displayList = GQE.getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append(  "cb_antiderivative: expecting 1 displayed scan")
             return 
         pysp.antiderivative( displayList[0].name)
 
     def cb_y2my( self):
-        displayList = pysp.dMgt.GQE.getDisplayList()
+        displayList = GQE.getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append(  "cb_y2my: expecting 1 displayed scan")
             return 
         pysp.yToMinusY( displayList[0].name)
 
     def cb_ssa( self):
-        displayList = pysp.dMgt.GQE.getDisplayList()
+        displayList = GQE.getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append( "cb_ssa: expecting 1 displayed scan")
             return 
@@ -2825,7 +2906,7 @@ class pySpectraGui( QtGui.QMainWindow):
         pysp.display()
 
     def cb_fsa( self):
-        displayList = pysp.dMgt.GQE.getDisplayList()
+        displayList = GQE.getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append( "cb_fsa: expecting 1 displayed scan")
             return 

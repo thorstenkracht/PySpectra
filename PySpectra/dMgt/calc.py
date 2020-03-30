@@ -1,5 +1,8 @@
 #!/usr/bin/env python 
-
+'''
+a module containing 
+derivative(), antiderivative(), yToMinusY()
+'''
 import GQE as _GQE
 
 from numpy import diff as _diff

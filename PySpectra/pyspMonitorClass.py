@@ -12,7 +12,8 @@ has to be done in advance.
 '''
 import builtins
 import pySpectraGuiClass
-import PySpectra as pysp
+import PySpectra.dMgt.GQE as GQE
+import PySpectra.misc.zmqIfc as zmqIfc
 import HasyUtils 
 
 import queue, argparse, sys, os
@@ -24,7 +25,6 @@ import PyTango as _PyTango
 import zmq, json, socket
 
 updateTime = 0.1
-
 
 #
 #
@@ -106,7 +106,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             hsh = json.loads( msg)
             if self.flagIsBusy:
                 return "pyspMonitor: rejecting dct while scanning"
-            argout = pysp.toPysp( hsh)
+            argout = zmqIfc.execHsh( hsh)
             msg = json.dumps( argout)
             self.sckt.send( msg)
         #
@@ -145,10 +145,15 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         self.refreshFiles.setEnabled( flag)
         self.scrollAreaFiles.setEnabled( flag)
         self.scrollAreaScans.setEnabled( flag)
+
+        for w in self.motorNameButtons: 
+            w.setEnabled( flag)
+            
         if self.useMatplotlib:
             self.matplotlibBtn.setEnabled( flag)
 
-    def execHsh( self, hsh): 
+            
+    def execHshLocal( self, hsh): 
         '''
         data come from the door
         '''
@@ -167,14 +172,15 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             self.scanInfo = hsh[ 'ScanInfo']
             self.configureMotorsWidget()
         else: 
-            pysp.toPysp( hsh)
+            zmqIfc.execHsh( hsh)
+        return 
         
     def configureMotorsWidget( self): 
         '''
         we received a scanInfo block indicating that a new scan has started
         now we configure the motors widget using information from the scanInfo block
         '''
-        pysp.GQE.setMonitorGui( self)
+        GQE.InfoClass.setMonitorGui( self)
 
         length = len( self.scanInfo['motors'])
         if  length == 0 or length > 3:
@@ -185,16 +191,26 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         motorArr = self.scanInfo['motors']        
         for i in range( 3):
             if i < length: 
-                self.motNameLabels[i].setText( motorArr[i]['name'])
+                self.motorNameButtons[i].setText( motorArr[i]['name'])
+                #
+                # invode TngGui for all motors
+                #
+                self.motorNameButtons[i].clicked.connect( self.makeMotorCb( motorArr[i]))
                 self.motProxies[i] = _PyTango.DeviceProxy( motorArr[i]['name'])
-                self.motNameLabels[i].show()
+                self.motorNameButtons[i].show()
                 self.motPosLabels[i].show()
             else:
-                self.motNameLabels[i].hide()
+                self.motorNameButtons[i].hide()
                 self.motPosLabels[i].hide()
 
         self.nMotor = length
-
+    def makeMotorCb( self, hsh): 
+        def motorCb():
+            os.system( "TngGui.py %s &" %  hsh[ 'name']); 
+            print( "+++pyspMonitorClass.motorCb")
+            return
+        return motorCb
+        
     def cb_refreshMain( self):
         '''
         this function receives data from the door
@@ -211,7 +227,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             cnt = 0
             while True:
                 hsh = self.queue.get_nowait()
-                self.execHsh( hsh)
+                self.execHshLocal( hsh)
                 self.queue.task_done()
                 cnt += 1
         except queue.Empty as e:

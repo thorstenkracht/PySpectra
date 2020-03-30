@@ -340,7 +340,7 @@ class pyspDoor( sms.BaseDoor):
         look at the command line and find the start and stop values.
         these values should be chosen from a motor that is actually moved, 
         consider hkl scans where h stays at a constant position
-        also set the self.motors array because ref_moveables is not correct
+        also set the self.motorNameList array because ref_moveables is not correct
         '''
         #
         # get the scan limits from the title
@@ -354,7 +354,7 @@ class pyspDoor( sms.BaseDoor):
             self.stop =  float( cmd[3])
             self.np =    int( cmd[4])
             self.motorIndex = 0
-            self.motors = [ cmd[1]]
+            self.motorNameList = [ cmd[1]]
         #
         # ascanc exp_dmy01 start stop integTime slowFactor
         #
@@ -362,7 +362,7 @@ class pyspDoor( sms.BaseDoor):
             self.start = float( cmd[2])
             self.stop =  float( cmd[3])
             self.motorIndex = 0
-            self.motors = [ cmd[1]]
+            self.motorNameList = [ cmd[1]]
             slowFactor = 1.
             if len( cmd) == 6:
                 slowFactor = float( cmd[5])
@@ -378,7 +378,7 @@ class pyspDoor( sms.BaseDoor):
             self.stop =  float( cmd[3])
             self.np =    int( cmd[4])*int(cmd[6]) + 1
             self.motorIndex = 0
-            self.motors = [ cmd[1]]
+            self.motorNameList = [ cmd[1]]
         #
         # ascan_checkabs exp_dmy01 0 1 10 0.2
         #
@@ -388,13 +388,13 @@ class pyspDoor( sms.BaseDoor):
             self.stop = float( cmd[3])
             self.np = 2000 # we don't know beforehand how many points will be measured
             self.motorIndex = 0
-            self.motors = [ cmd[1]]
+            self.motorNameList = [ cmd[1]]
         #
         # a2scan exp_dmy01 0 1 exp_dmy02 2 3 10 0.2
         #
         elif cmd[0] == 'a2scan':
             diff1 = math.fabs(float( cmd[3]) - float( cmd[2]))
-            self.motors = [ cmd[1], cmd[4]]
+            self.motorNameList = [ cmd[1], cmd[4]]
             self.np =    int( cmd[7])
             if diff1 == 0.:
                 self.start = float( cmd[5])
@@ -409,7 +409,7 @@ class pyspDoor( sms.BaseDoor):
         #
         elif cmd[0] == 'a2scanc':
             diff1 = math.fabs(float( cmd[3]) - float( cmd[2]))
-            self.motors = [ cmd[1], cmd[4]]
+            self.motorNameList = [ cmd[1], cmd[4]]
             if diff1 == 0.:
                 self.start = float( cmd[5])
                 self.stop =  float( cmd[6])
@@ -433,7 +433,7 @@ class pyspDoor( sms.BaseDoor):
         elif cmd[0] == 'a3scan':
             diff1 = math.fabs(float( cmd[3]) - float( cmd[2]))
             diff2 = math.fabs(float( cmd[6]) - float( cmd[5]))
-            self.motors = [ cmd[1], cmd[4], cmd[7]]
+            self.motorNameList = [ cmd[1], cmd[4], cmd[7]]
             self.np =    int( cmd[10])
             if diff2  == 0. and diff1 == 0.:
                 self.start = float( cmd[8])
@@ -453,7 +453,7 @@ class pyspDoor( sms.BaseDoor):
         elif cmd[0] == 'a3scanc':
             diff1 = math.fabs(float( cmd[3]) - float( cmd[2]))
             diff2 = math.fabs(float( cmd[6]) - float( cmd[5]))
-            self.motors = [ cmd[1], cmd[4], cmd[7]]
+            self.motorNameList = [ cmd[1], cmd[4], cmd[7]]
             if diff2  == 0. and diff1 == 0.:
                 self.start = float( cmd[8])
                 self.stop =  float( cmd[9])
@@ -484,7 +484,7 @@ class pyspDoor( sms.BaseDoor):
             diff1 = math.fabs(float( cmd[3]) - float( cmd[2]))
             diff2 = math.fabs(float( cmd[6]) - float( cmd[5]))
             diff3 = math.fabs(float( cmd[9]) - float( cmd[8]))
-            self.motors = [ cmd[1], cmd[4], cmd[7], cmd[10]]
+            self.motorNameList = [ cmd[1], cmd[4], cmd[7], cmd[10]]
             self.np =    int( cmd[13])
             if diff3 == 0 and diff2 == 0. and diff1 == 0.:
                 self.start = float( cmd[11])
@@ -512,7 +512,7 @@ class pyspDoor( sms.BaseDoor):
             motorLimitDct = self.extractMotorLimitDct( dataRecord)
 
             self.motorIndex = 0
-            self.motors = [ cmd[1]]
+            self.motorNameList = [ cmd[1]]
             self.start = motorLimitDct[ cmd[1]][0]
             self.stop = motorLimitDct[ cmd[1]][1]
 
@@ -523,7 +523,7 @@ class pyspDoor( sms.BaseDoor):
         elif cmd[0] == 'dscanc':
             motorLimitDct = self.extractMotorLimitDct( dataRecord)
             self.motorIndex = 0
-            self.motors = [ cmd[1]]
+            self.motorNameList = [ cmd[1]]
             self.start = motorLimitDct[ cmd[1]][0]
             self.stop = motorLimitDct[ cmd[1]][1]
             slowFactor = 1
@@ -540,12 +540,12 @@ class pyspDoor( sms.BaseDoor):
             motorLimitDct = self.extractMotorLimitDct( dataRecord)
 
             self.motorIndex = 0
-            self.motors = [ cmd[1]]
+            self.motorNameList = [ cmd[1]]
             self.start = motorLimitDct[ cmd[1]][0]
             self.stop = motorLimitDct[ cmd[1]][1]
             self.motorIndex = 0
-            self.motors = [ cmd[1]]
-            #pos = self.getPosition( self.motors[ self.motorIndex])
+            self.motorNameList = [ cmd[1]]
+            #pos = self.getPosition( self.motorNameList[ self.motorIndex])
             #self.start =  pos
             #self.stop = pos + float(cmd[3]) - float(cmd[2])
             self.np = int(cmd[4])*int(cmd[6]) + 1
@@ -555,7 +555,7 @@ class pyspDoor( sms.BaseDoor):
         elif cmd[0] == 'd2scan':
             motorLimitDct = self.extractMotorLimitDct( dataRecord)
             diff1 = math.fabs(float( cmd[3]) - float( cmd[2]))
-            self.motors = [ cmd[1], cmd[4]]
+            self.motorNameList = [ cmd[1], cmd[4]]
             self.np = int(cmd[7])
 
             if diff1 == 0.:
@@ -572,7 +572,7 @@ class pyspDoor( sms.BaseDoor):
         elif cmd[0] == 'd2scanc':
             motorLimitDct = self.extractMotorLimitDct( dataRecord)
             diff1 = math.fabs(float( cmd[3]) - float( cmd[2]))
-            self.motors = [ cmd[1], cmd[4]]
+            self.motorNameList = [ cmd[1], cmd[4]]
 
             if diff1 == 0.:
                 self.motorIndex = 1
@@ -599,7 +599,7 @@ class pyspDoor( sms.BaseDoor):
 
             diff1 = math.fabs(float( cmd[3]) - float( cmd[2]))
             diff2 = math.fabs(float( cmd[6]) - float( cmd[5]))
-            self.motors = [ cmd[1], cmd[4], cmd[7]]
+            self.motorNameList = [ cmd[1], cmd[4], cmd[7]]
             self.np = int(cmd[10])
             #
             # getPosition() returns after the move has finished - but
@@ -626,7 +626,7 @@ class pyspDoor( sms.BaseDoor):
 
             diff1 = math.fabs(float( cmd[3]) - float( cmd[2]))
             diff2 = math.fabs(float( cmd[6]) - float( cmd[5]))
-            self.motors = [ cmd[1], cmd[4], cmd[7]]
+            self.motorNameList = [ cmd[1], cmd[4], cmd[7]]
             #
             # getPosition() returns after the move has finished - but
             # it has to be started!
@@ -660,9 +660,9 @@ class pyspDoor( sms.BaseDoor):
         #
         elif cmd[0] == 'hscan':
             if HasyUtils.isDevice( 'e6cctrl_h'):
-                self.motors = [ 'e6cctrl_h']
+                self.motorNameList = [ 'e6cctrl_h']
             elif HasyUtils.isDevice( 'kozhue6cctrl_h'):
-                self.motors = [ 'kozhue6cctrl_h']
+                self.motorNameList = [ 'kozhue6cctrl_h']
             self.np = int(cmd[3])
             self.start =  float(cmd[1])
             self.stop = float(cmd[2])
@@ -671,9 +671,9 @@ class pyspDoor( sms.BaseDoor):
         #
         elif cmd[0] == 'kscan':
             if HasyUtils.isDevice( 'e6cctrl_k'):
-                self.motors = [ 'e6cctrl_k']
+                self.motorNameList = [ 'e6cctrl_k']
             elif HasyUtils.isDevice( 'kozhue6cctrl_k'):
-                self.motors = [ 'kozhue6cctrl_k']
+                self.motorNameList = [ 'kozhue6cctrl_k']
             self.np = int(cmd[3])
             self.start =  float(cmd[1])
             self.stop = float(cmd[2])
@@ -682,9 +682,9 @@ class pyspDoor( sms.BaseDoor):
         #
         elif cmd[0] == 'lscan':
             if HasyUtils.isDevice( 'e6cctrl_l'):
-                self.motors = [ 'e6cctrl_l']
+                self.motorNameList = [ 'e6cctrl_l']
             elif HasyUtils.isDevice( 'kozhue6cctrl_l'):
-                self.motors = [ 'kozhue6cctrl_l']
+                self.motorNameList = [ 'kozhue6cctrl_l']
             self.np = int(cmd[3])
             self.start =  float(cmd[1])
             self.stop = float(cmd[2])
@@ -700,41 +700,41 @@ class pyspDoor( sms.BaseDoor):
                                  "diffH == diffK == diffL == 0.")
                 
             if HasyUtils.isDevice( 'e6cctrl_h'):
-                self.motors = [ 'e6cctrl_h', 'e6cctrl_k', 'e6cctrl_l']
+                self.motorNameList = [ 'e6cctrl_h', 'e6cctrl_k', 'e6cctrl_l']
             elif HasyUtils.isDevice( 'kozhue6cctrl_k'):
-                self.motors = [ 'kozhue6cctrl_h', 'kozhue6cctrl_k', 'kozhue6cctrl_l']
+                self.motorNameList = [ 'kozhue6cctrl_h', 'kozhue6cctrl_k', 'kozhue6cctrl_l']
             else:
                 raise Exception( "pyspDoor.findScanLimits",
                                  "failed to identify hkl motors")
             self.np = int(cmd[7])
             if diffH > diffK and diffH > diffL:
                 self.motorIndex = 0
-                pos = self.getPosition( self.motors[ self.motorIndex])                
+                pos = self.getPosition( self.motorNameList[ self.motorIndex])                
                 self.start =  float(cmd[1])
                 self.stop = float(cmd[2]) 
             elif diffK > diffH and diffK > diffL:
                 self.motorIndex = 1
-                pos = self.getPosition( self.motors[ self.motorIndex])                
+                pos = self.getPosition( self.motorNameList[ self.motorIndex])                
                 self.start =  float(cmd[3])
                 self.stop = float(cmd[4]) 
             elif diffL > diffH and diffL > diffK:
                 self.motorIndex = 2
-                pos = self.getPosition( self.motors[ self.motorIndex])                
+                pos = self.getPosition( self.motorNameList[ self.motorIndex])                
                 self.start =  float(cmd[5])
                 self.stop = float(cmd[6]) 
             elif diffH > 0.:
                 self.motorIndex = 0
-                pos = self.getPosition( self.motors[ self.motorIndex])                
+                pos = self.getPosition( self.motorNameList[ self.motorIndex])                
                 self.start =  float(cmd[1])
                 self.stop = float(cmd[2]) 
             elif diffK > 0.:
                 self.motorIndex = 1
-                pos = self.getPosition( self.motors[ self.motorIndex])                
+                pos = self.getPosition( self.motorNameList[ self.motorIndex])                
                 self.start =  float(cmd[3])
                 self.stop = float(cmd[4]) 
             else:
                 self.motorIndex = 2
-                pos = self.getPosition( self.motors[ self.motorIndex])                
+                pos = self.getPosition( self.motorNameList[ self.motorIndex])                
                 self.start =  float(cmd[5])
                 self.stop = float(cmd[6]) 
         #
@@ -748,7 +748,7 @@ class pyspDoor( sms.BaseDoor):
             self.stop =  float( cmd[3])
             self.np =    int( cmd[4])
             self.motorIndex = 0
-            self.motors = [ cmd[1]]
+            self.motorNameList = [ cmd[1]]
             self.isMesh = True
             self.meshYMotor = cmd[5]
             self.meshSweepCount = 1
@@ -813,7 +813,7 @@ class pyspDoor( sms.BaseDoor):
         #print( "+++pyspDoor.findScanLimits start %g, stop %g np %d motors %s" % ( self.start, 
         #                                                                         self.stop,
         #                                                                         self.np, 
-        #                                                                         str( self.motors)))
+        #                                                                         str( self.motorNameList)))
         return True
                 
     def prepareNewScan( self, dataRecord):
@@ -845,7 +845,7 @@ class pyspDoor( sms.BaseDoor):
         # the motorIndex allows us to adjust the plotting to eg.g a3scans
         #
         self.motorIndex = 0
-        self.motors = dataRecord[1]['data']['ref_moveables']
+        self.motorNameList = dataRecord[1]['data']['ref_moveables']
         #
         # get the environment for every scan
         #
@@ -887,6 +887,7 @@ class pyspDoor( sms.BaseDoor):
                                       'xMax': self.stop,
                                       'lineColor': 'red',
                                       'nPts': npTemp,
+                                      'motorNameList': self.motorNameList, 
                                       'autoscaleX': False}})
             
         env = self.getEnvironment()
@@ -1064,8 +1065,8 @@ class pyspDoor( sms.BaseDoor):
         # find the position
         #
         pos = None
-        if  self.motors[ self.motorIndex] in dataRecord[1]['data']:
-            pos = dataRecord[1]['data'][ self.motors[ self.motorIndex]]
+        if  self.motorNameList[ self.motorIndex] in dataRecord[1]['data']:
+            pos = dataRecord[1]['data'][ self.motorNameList[ self.motorIndex]]
         else:
             #
             # this else clause is a workaround for the fact that the
@@ -1074,17 +1075,17 @@ class pyspDoor( sms.BaseDoor):
             #
             found = False
             for key in dataRecord[1]['data']:
-                if key.find( self.motors[ self.motorIndex]) > 0:
-                    self.motors[ self.motorIndex] = key
-                    pos = dataRecord[1]['data'][ self.motors[ self.motorIndex]]
+                if key.find( self.motorNameList[ self.motorIndex]) > 0:
+                    self.motorNameList[ self.motorIndex] = key
+                    pos = dataRecord[1]['data'][ self.motorNameList[ self.motorIndex]]
                     found = True
                     break
             if not found:
                 raise Exception( "pyspDoor.extractData",
-                                 "key error %s" % (self.motors[ self.motorIndex]))
+                                 "key error %s" % (self.motorNameList[ self.motorIndex]))
         if pos is None:
             raise Exception( "pyspDoor.recordDataReceived",
-                             "key error %s" % (self.motors[ self.motorIndex]))
+                             "key error %s" % (self.motorNameList[ self.motorIndex]))
         #
         # for mesh scans we also need the y-position
         #

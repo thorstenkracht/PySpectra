@@ -99,8 +99,9 @@ Select the graphics library by before importing PySpectra
 #from PyQt4 import QtCore as _QtCore
 #from PyQt4 import QtGui as _QtGui
 
-from dMgt.GQE import *
-from dMgt.calc import *
+#from dMgt.GQE import *
+#from dMgt.calc import *
+
 from examples.exampleCode import *
 
 import os as _os 
@@ -112,17 +113,24 @@ try:
 except: 
     from pqtgrph.graphics import *
 
-#import __builtin__
-#try:
-#    if __builtin__.__dict__[ 'graphicsLib'] == 'matplotlib':
-#    else: 
-#        from pqtgrph.graphics import *
-#except: 
-#    __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
-#    from pqtgrph.graphics import *
 
-from mtpltlb.graphics import createPDF
-from utils import *
+
+#from mtpltlb.graphics import createPDF
+
+import dMgt.GQE
+import dMgt.calc
+import examples.exampleCode
 import ipython.ifc
-from ipython.ifc import command
-import definitions
+#import ipython.startup
+import misc.IfcGraPysp
+import misc.IfcTango
+import misc.utils
+import misc.zmqIfc
+#mtpltlb.graphics
+#pqtgrph.graphics
+
+
+#from misc.utils import *
+#import ipython.ifc
+#from ipython.ifc import command
+#import definitions
