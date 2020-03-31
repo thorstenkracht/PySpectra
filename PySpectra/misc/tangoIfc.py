@@ -1,8 +1,20 @@
 #!/bin/env python
 
-import PySpectra as _pysp
+from PyQt4 import QtCore as _QtCore
+from PyQt4 import QtGui as _QtGui
 
-def move( scan, target): 
+import PySpectra
+import PySpectra.dMgt.GQE as _gqe
+
+def move( gqe, targetX, targetY = None):
+    if type( gqe) == _gqe.Scan: 
+        return moveScan( gqe, targetX)
+    elif type( gqe) == _gqe.Image: 
+        return moveImage( gqe, targetX, targetY)
+    else: 
+        raise ValueError( "IfTango.move: failed to identify the gqe type" % type( gqe))
+
+def moveScan( scan, target): 
     '''
     this function is invoked 
       - by a mouse click from pqtgrph/graphics.py
@@ -10,10 +22,17 @@ def move( scan, target):
     import PyTango as _PyTango
     import time as _time
 
-    print( "IfcTango.move(), motorNameList %s " % repr( scan.motorNameList))
-    if _pysp.dMgt.GQE.InfoBlock.monitorGui is None and scan.motorNameList is None:
+    #print( "tangoIfc.move(), motorNameList %s " % repr( scan.motorNameList))
+    if _gqe.InfoBlock.monitorGui.door.state() != _PyTango.DevState.ON: 
         if scan.logWidget is not None:
-            scan.logWidget.append( "IfcTango.move: not called from pyspMonitor or moveMotor") 
+            scan.logWidget.append( "tangoIfc.move: door.state() != ON %s" % repr( _gqe.infoBlock.monitorGui.door.state()))
+        else:
+            print( "tangoIfc.move: door.state() != ON %s" % repr( _gqe.InfoBlock.monitorGui.door.state()))
+        return 
+        
+    if _gqe.InfoBlock.monitorGui is None and scan.motorNameList is None:
+        if scan.logWidget is not None:
+            scan.logWidget.append( "tangoIfc.move: not called from pyspMonitor or moveMotor") 
         else:
             pass
         return 
@@ -22,7 +41,7 @@ def move( scan, target):
     #
     if target < scan.xMin or target > scan.xMax:
         _QtGui.QMessageBox.about( None, "Info Box", 
-                                  "IfcTango.Move: target %g outside %s x-axis %g %g" % 
+                                  "tangoIfc.Move: target %g outside %s x-axis %g %g" % 
                                   (target, scan.name, scan.xMin, scan.xMax))
         return
             
@@ -31,7 +50,7 @@ def move( scan, target):
     #
     if scan.flagMCA:
         if scan.logWidget is not None:
-            scan.logWidget.append( "IfcTango.move: error, don't use MCAs to move motors") 
+            scan.logWidget.append( "tangoIfc.move: error, don't use MCAs to move motors") 
         return 
 
     #
@@ -45,7 +64,7 @@ def move( scan, target):
         try: 
             proxy = _PyTango.DeviceProxy( scan.motorNameList[0])
         except Exception as e: 
-            print( "IfcTango.move: failed to create the proxy to %s" % scan.motorNameList[0])
+            print( "tangoIfc.move: failed to create the proxy to %s" % scan.motorNameList[0])
             print( "%s" % repr( e))
             return 
         #
@@ -89,18 +108,18 @@ def move( scan, target):
     # from the pyspMonitor application, after a scan macro has bee executed
     # ---
     #
-    if _pysp.dMgt.GQE.InfoBlock.monitorGui is None or _pysp.dMgt.GQE.InfoBlock.monitorGui.scanInfo is None: 
+    if _gqe.InfoBlock.monitorGui is None or _gqe.InfoBlock.monitorGui.scanInfo is None: 
         _QtGui.QMessageBox.about( None, "Info Box", 
-                                  "GQE.Move: _pysp.dMgt.GQE.monitorGui is None or _pysp.dMgt.GQE.monitorGui.scanInfo is None")
+                                  "GQE.Move: _gqe.monitorGui is None or _gqe.monitorGui.scanInfo is None")
         return
 
-    motorArr = _pysp.dMgt.GQE.InfoBlock.monitorGui.scanInfo['motors']        
+    motorArr = _gqe.InfoBlock.monitorGui.scanInfo['motors']        
     length = len( motorArr)
     if  length == 0 or length > 3:
         _QtGui.QMessageBox.about( None, 'Info Box', "no. of motors == 0 or > 3") 
         return
 
-    motorIndex = _pysp.dMgt.GQE.InfoBlock.monitorGui.scanInfo['motorIndex']
+    motorIndex = _gqe.InfoBlock.monitorGui.scanInfo['motorIndex']
 
     if motorIndex >= length:
         _QtGui.QMessageBox.about( None, 'Info Box', "motorIndex %d >= no. of motors %d" % (motorIndex, length))
@@ -165,13 +184,13 @@ def move( scan, target):
     scan.arrowMotorSetPoint.show()
 
     if not reply == _QtGui.QMessageBox.Yes:
-        _pysp.dMgt.GQE.InfoBlock.monitorGui.logWidget.append( "Move: move not confirmed")
+        _gqe.InfoBlock.monitorGui.logWidget.append( "Move: move not confirmed")
         return
 
-    if _pysp.dMgt.GQE.InfoBlock.monitorGui.scanInfo['title'].find( "hklscan") == 0:
-        _pysp.dMgt.GQE.InfoBlock.monitorGui.logWidget.append( "br %g %g %g" % 
+    if _gqe.InfoBlock.monitorGui.scanInfo['title'].find( "hklscan") == 0:
+        _gqe.InfoBlock.monitorGui.logWidget.append( "br %g %g %g" % 
                                          (motorArr[0]['targetPos'],motorArr[1]['targetPos'],motorArr[2]['targetPos']))
-        _pysp.dMgt.GQE.InfoBlock.monitorGui.door.RunMacro( ["br",  
+        _gqe.InfoBlock.monitorGui.door.RunMacro( ["br",  
                                        "%g" %  motorArr[0]['targetPos'], 
                                        "%g" %  motorArr[1]['targetPos'], 
                                        "%g" %  motorArr[2]['targetPos']])
@@ -180,6 +199,87 @@ def move( scan, target):
         for hsh in motorArr:
             lst.append( "%s" % (hsh['name']))
             lst.append( "%g" % (hsh['targetPos']))
-            _pysp.dMgt.GQE.InfoBlock.monitorGui.logWidget.append( "%s to %g" % (hsh['name'], hsh['targetPos']))
-        _pysp.dMgt.GQE.InfoBlock.monitorGui.door.RunMacro( lst)
+            _gqe.InfoBlock.monitorGui.logWidget.append( "%s to %g" % (hsh['name'], hsh['targetPos']))
+        _gqe.InfoBlock.monitorGui.door.RunMacro( lst)
+
+    return 
+
+    #
+    # why do we need a class function for move()
+    #
+def moveImage( image, targetIX, targetIY): 
+    '''
+    this function is invoked by a mouse click from pqtgrph/graphics.py
+    '''
+    import PyTango as _PyTango
+    import time as _time
+
+    if str(image.name).upper().find( "MANDELBROT") != -1:
+        return image.zoom( targetIX, targetIY)
+
+    if not hasattr( image, 'xMin'):
+        print( "Gqe.Image.move: %s no attribute xMin" % image.name)
+        return 
+
+    if type( image) != Image:
+        print( "Gqe.Image.move: %s is not a Image" % image.name)
+        return 
+            
+    targetX = float( targetIX)/float( image.width)*( image.xMax - image.xMin) + image.xMin
+    targetY = float( targetIY)/float( image.height)*( image.yMax - image.yMin) + image.yMin
+    print( "GQE.Image.move x %g, y %g" % (targetX, targetY))
+
+    if _gqe.InfoBlock.monitorGui is None:
+        if image.logWidget is not None:
+            image.logWidget.append( "GQE.Image.move: not called from pyspMonitor") 
+        else:
+            print( "GQE.Image.move: not called from pyspMonitor")
+        return 
+
+    try: 
+        proxyX = _PyTango.DeviceProxy( image.xLabel)
+    except Exception as e:
+        print( "Image.move: no proxy to %s" % image.xLabel)
+        print( repr( e))
+        return 
+
+    try: 
+        proxyY = _PyTango.DeviceProxy( image.yLabel)
+    except Exception as e:
+        print( "Image.move: no proxy to %s" % image.yLabel)
+        print( repr( e))
+        return 
+
+    #
+    # stop the motors, if they is moving
+    #
+    if proxyX.state() == _PyTango.DevState.MOVING:
+        if image.logWidget is not None:
+            image.logWidget.append( "Image.Move: stopping %s" % proxyX.name()) 
+        proxyX.stopMove()
+    while proxyX.state() == _PyTango.DevState.MOVING:
+        _time.sleep(0.01)
+    if proxyY.state() == _PyTango.DevState.MOVING:
+        if image.logWidget is not None:
+            image.logWidget.append( "Image.Move: stopping %s" % proxyY.name()) 
+        proxyY.stopMove()
+    while proxyY.state() == _PyTango.DevState.MOVING:
+        _time.sleep(0.01)
+
+    msg = "Move\n  %s from %g to %g\n  %s from %g to %g " % \
+          (proxyX.name(), proxyX.read_attribute( 'Position').value, targetX,
+           proxyY.name(), proxyY.read_attribute( 'Position').value, targetY)
+    reply = _QtGui.QMessageBox.question( None, 'YesNo', msg, _QtGui.QMessageBox.Yes, _QtGui.QMessageBox.No)
+        
+    if not reply == _QtGui.QMessageBox.Yes:
+        if image.logWidget is not None:
+            _gqe.InfoBlock.monitorGui.logWidget.append( "Image.Move: move not confirmed")
+        return
+
+    lst = [ "umv %s %g %s %g" % (proxyX.name(), targetX, proxyY.name(), targetY)]
+        
+    if image.logWidget is not None:
+        _gqe.InfoBlock.monitorGui.logWidget.append( "%s" % (lst[0]))
+
+    _gqe.InfoBlock.monitorGui.door.RunMacro( lst)
     return 

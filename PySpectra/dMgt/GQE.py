@@ -10,8 +10,10 @@ from PyQt4 import QtCore as _QtCore
 from PyQt4 import QtGui as _QtGui
 import math as _math
 import HasyUtils
-import PySpectra as _pysp
 import PyTango as _PyTango
+import PySpectra 
+import PySpectra.definitions as _definitions 
+import PySpectra.misc.utils as _utils
 
 _gqeList = []
 _gqeIndex = None  # used by next/back
@@ -423,7 +425,7 @@ class Scan( object):
         self.lineWidth = 1.
         self.logWidget = None
         #
-        # motorNameList from moveMotor.py or IfcGraPysp.py
+        # motorNameList from moveMotor.py or graPyspIfc.py
         #
         self.motorNameList = None
         self.mousePrepared = False
@@ -462,7 +464,7 @@ class Scan( object):
 
         attr = 'lineWidth'
         if attr in kwargs:
-            if str(kwargs[ attr]) in _pysp.definitions.lineWidthArr:
+            if str(kwargs[ attr]) in _definitions.lineWidthArr:
                 setattr( self, attr, float( kwargs[ attr]))
             else: 
                 setattr( self, attr, 1.0)
@@ -821,7 +823,7 @@ class Scan( object):
         pass
 
     def display( self): 
-        _pysp.display( [self.name])
+        PySpectra.display( [self.name])
         return 
 
     def yGreaterThanZero( self): 
@@ -878,7 +880,7 @@ class Scan( object):
             lstX = list( reversed( lstX))
             lstY = list( reversed( lstY))
                 
-        hsh = _pysp.misc.utils.ssa( _np.array( lstX), _np.array( lstY))
+        hsh = _utils.ssa( _np.array( lstX), _np.array( lstY))
 
         if hsh[ 'status'] != 1:
             if logWidget is not None:
@@ -969,7 +971,7 @@ class Scan( object):
             lstY = list( reversed( lstY))
                 
         try: 
-            message, xpos, xpeak, xcms, xcen = _pysp.fastscananalysis( lstX, lstY, mode)
+            message, xpos, xpeak, xcms, xcen = _utils.fastscananalysis( lstX, lstY, mode)
         except Exception as e:
             print( "GQE.fsa: trouble with %s" % self.name)
             print( repr( e))
@@ -1083,7 +1085,7 @@ def delete( nameLst = None):
                 #
                 # clear.__doc__: 'Remove all items from the ViewBox'
                 #
-                _pysp.clear( tmp)
+                PySpectra.clear( tmp)
                 #tmp.plotItem.clear()
             if tmp.attributeWidget is not None: 
                 tmp.attributeWidget.close()
@@ -1101,7 +1103,7 @@ def delete( nameLst = None):
                 # we had many MCA spectra displayed on top of each other
                 #
                 if _gqeList[i].plotItem is not None:
-                    _pysp.clear( _gqeList[i])
+                    PySpectra.clear( _gqeList[i])
                     #_gqeList[i].plotItem.clear()
                 if _gqeList[i].attributeWidget is not None: 
                     _gqeList[i].attributeWidget.close()
@@ -1121,7 +1123,7 @@ def delete( nameLst = None):
                     #
                     # clear.__doc__: 'Remove all items from the ViewBox'
                     #
-                    _pysp.clear( _gqeList[i])
+                    PySpectra.clear( _gqeList[i])
                     #_gqeList[i].plotItem.clear()
                 if _gqeList[i].attributeWidget is not None: 
                     _gqeList[i].attributeWidget.close()
@@ -1520,12 +1522,12 @@ def write( lst = None):
         if lst is not None:
             if gqe.name not in lst:
                 continue
-        if type( gqe) is _pysp.dMgt.GQE.Scan: 
+        if type( gqe) is Scan: 
             if length is None:
                 length = len( gqe.x)
             if length != len( gqe.x):
                 raise ValueError( "GQE.write: output GQEs differ in length")
-        if type( gqe) is _pysp.dMgt.GQE.Image: 
+        if type( gqe) is Image: 
             flagImage = True
         outLst.append( gqe)
     #
@@ -1560,7 +1562,7 @@ def write( lst = None):
     else: 
         for gqe in outLst:
             col = _HasyUtils.fioColumn( gqe.name)
-            if type( gqe) is _pysp.dMgt.GQE.Scan: 
+            if type( gqe) is Scan: 
                 #
                 # Mind currentIndex starts at 0. So, if currentIndex == 100, 
                 # we have 101 list elements
@@ -1645,12 +1647,12 @@ def getFontSize( nameList):
     '''
     depending on how many gqes are displayed the font size is adjusted
     '''
-    if getNumberOfGqesToBeDisplayed( nameList) < _pysp.definitions.MANY_GQES:
-        fontSize = _pysp.definitions.FONT_SIZE_NORMAL
-    elif getNumberOfGqesToBeDisplayed( nameList) <= _pysp.definitions.VERY_MANY_GQES:
-        fontSize = _pysp.definitions.FONT_SIZE_SMALL
+    if getNumberOfGqesToBeDisplayed( nameList) < _definitions.MANY_GQES:
+        fontSize = _definitions.FONT_SIZE_NORMAL
+    elif getNumberOfGqesToBeDisplayed( nameList) <= _definitions.VERY_MANY_GQES:
+        fontSize = _definitions.FONT_SIZE_SMALL
     else: 
-        fontSize = _pysp.definitions.FONT_SIZE_VERY_SMALL
+        fontSize = _definitions.FONT_SIZE_VERY_SMALL
 
     return fontSize
 
@@ -1699,16 +1701,16 @@ def fillDataImage( hsh):
                          y = hsh[ 'setPixelWorld'][1],
                          value = hsh[ 'setPixelWorld'][2])
         if 'noDisplay' not in hsh or not hsh[ 'noDisplay']: 
-            _pysp.cls()
-            _pysp.display()
+            PySpectra.cls()
+            PySpectra.display()
     elif 'setPixelImage' in hsh: 
         o = getGqe( hsh[ 'name'])
         o.setPixelImage( x = hsh[ 'setPixelImage'][0],
                          y = hsh[ 'setPixelImage'][1],
                          value = hsh[ 'setPixelImage'][2])
         if 'noDisplay' not in hsh or not hsh[ 'noDisplay']: 
-            _pysp.cls()
-            _pysp.display()
+            PySpectra.cls()
+            PySpectra.display()
 
     else: 
         raise ValueError( "GQE.fillDataImage: dictionary unexpected")
@@ -1731,10 +1733,10 @@ def fillDataXY( hsh):
     '''
 
     if 'xMin' in hsh: 
-        m = _pysp.Scan( name = hsh[ 'name'],  
-                        xMin = hsh[ 'xMin'], xMax = hsh[ 'xMax'], 
-                        yMin = hsh[ 'yMin'], yMax = hsh[ 'yMax'],
-                        nPts = hsh[ 'nPts'] )
+        m = Scan( name = hsh[ 'name'],  
+                  xMin = hsh[ 'xMin'], xMax = hsh[ 'xMax'], 
+                  yMin = hsh[ 'yMin'], yMax = hsh[ 'yMax'],
+                  nPts = hsh[ 'nPts'] )
         o = getGqe( hsh[ 'name'])
     elif 'setXY' in hsh: 
         o = getGqe( hsh[ 'name'])
@@ -1742,8 +1744,8 @@ def fillDataXY( hsh):
                  hsh[ 'setXY'][1],
                  hsh[ 'setXY'][2])
         if 'noDisplay' not in hsh or not hsh[ 'noDisplay']: 
-            _pysp.cls()
-            _pysp.display()
+            PySpectra.cls()
+            PySpectra.display()
 
     else: 
         raise ValueError( "GQE.fillDataImage: dictionary unexpected")
@@ -1839,7 +1841,7 @@ def fillDataByColumns( hsh):
         for i in range(len(data)):
             scan.setX( i, xcol[ 'data'][i])
             scan.setY( i, data[i])
-    _pysp.display()
+    PySpectra.display()
 
     return "done"
 
@@ -1918,7 +1920,7 @@ def fillDataByGqes( hsh):
             gqe.setY( i, y[i])
 
 
-    _pysp.display()
+    PySpectra.display()
 
     return "done"
 
@@ -2177,85 +2179,6 @@ class Image( object):
         return 
 
     #
-    # why do we need a class function for move()
-    #
-    def move( self, targetIX, targetIY): 
-        '''
-        this function is invoked by a mouse click from pqtgrph/graphics.py
-        '''
-        import PyTango as _PyTango
-        import time as _time
-
-        if str(self.name).upper().find( "MANDELBROT") != -1:
-            return self.zoom( targetIX, targetIY)
-
-        if not hasattr( self, 'xMin'):
-            print( "Gqe.Image.move: %s no attribute xMin" % self.name)
-            return 
-
-        if type( self) != Image:
-            print( "Gqe.Image.move: %s is not a Image" % self.name)
-            return 
-            
-        targetX = float( targetIX)/float( self.width)*( self.xMax - self.xMin) + self.xMin
-        targetY = float( targetIY)/float( self.height)*( self.yMax - self.yMin) + self.yMin
-        print( "GQE.Image.move x %g, y %g" % (targetX, targetY))
-
-        if InfoBlock.monitorGui is None:
-            if self.logWidget is not None:
-                self.logWidget.append( "GQE.Image.move: not called from pyspMonitor") 
-            else:
-                print( "GQE.Image.move: not called from pyspMonitor")
-            return 
-
-        try: 
-            proxyX = _PyTango.DeviceProxy( self.xLabel)
-        except Exception as e:
-            print( "Image.move: no proxy to %s" % self.xLabel)
-            print( repr( e))
-            return 
-
-        try: 
-            proxyY = _PyTango.DeviceProxy( self.yLabel)
-        except Exception as e:
-            print( "Image.move: no proxy to %s" % self.yLabel)
-            print( repr( e))
-            return 
-
-        #
-        # stop the motors, if they is moving
-        #
-        if proxyX.state() == _PyTango.DevState.MOVING:
-            if self.logWidget is not None:
-                self.logWidget.append( "Image.Move: stopping %s" % proxyX.name()) 
-            proxyX.stopMove()
-        while proxyX.state() == _PyTango.DevState.MOVING:
-            _time.sleep(0.01)
-        if proxyY.state() == _PyTango.DevState.MOVING:
-            if self.logWidget is not None:
-                self.logWidget.append( "Image.Move: stopping %s" % proxyY.name()) 
-            proxyY.stopMove()
-        while proxyY.state() == _PyTango.DevState.MOVING:
-            _time.sleep(0.01)
-
-        msg = "Move\n  %s from %g to %g\n  %s from %g to %g " % \
-              (proxyX.name(), proxyX.read_attribute( 'Position').value, targetX,
-               proxyY.name(), proxyY.read_attribute( 'Position').value, targetY)
-        reply = _QtGui.QMessageBox.question( None, 'YesNo', msg, _QtGui.QMessageBox.Yes, _QtGui.QMessageBox.No)
-        
-        if not reply == _QtGui.QMessageBox.Yes:
-            if self.logWidget is not None:
-                InfoBlock.monitorGui.logWidget.append( "Image.Move: move not confirmed")
-            return
-
-        lst = [ "umv %s %g %s %g" % (proxyX.name(), targetX, proxyY.name(), targetY)]
-        
-        if self.logWidget is not None:
-                InfoBlock.monitorGui.logWidget.append( "%s" % (lst[0]))
-
-        InfoBlock.monitorGui.door.RunMacro( lst)
-        return 
-    #
     # 
     #
     def shift( self, targetIX, targetIY): 
@@ -2301,10 +2224,10 @@ class Image( object):
                 self.setPixelWorld( x = r1[i], y = r2[j], value = res)
 
             if (i % 10) == 0:
-                _pysp.display()
+                PySpectra.display()
 
-        _pysp.cls()
-        _pysp.display()
+        PySpectra.cls()
+        PySpectra.display()
 
         print( "GQE.zoom, DONE")
         #if targetIX is not None:
@@ -2328,7 +2251,7 @@ class Image( object):
             z[notdone] = z[notdone]**2 + c[notdone]
             if (it % 20) == 0: 
                 self.data = output.transpose()
-                _pysp.display()
+                PySpectra.display()
                 if self.cbZoomProgress is not None:
                     self.cbZoomProgress( "%d/%d" % ( it, self.maxIter))
         output[output == self.maxIter-1] = 0
@@ -2337,8 +2260,8 @@ class Image( object):
         
         if self.cbZoomProgress is not None:
             self.cbZoomProgress( "DONE")
-        _pysp.cls()
-        _pysp.display()
+        PySpectra.cls()
+        PySpectra.display()
         return 
 
     def zoom( self, targetIX = None, targetIY = None, flagShift = False): 

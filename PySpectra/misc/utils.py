@@ -12,8 +12,9 @@ import time as _time
 #import matplotlib.pyplot as _plt
 import bisect as _bisect
 from scipy.optimize import curve_fit as _curve_fit
-import PySpectra as _pysp 
-
+import PySpectra 
+import PySpectra.definitions as _definitions
+  
 def ssa( xIn, yIn, flagNbs = False, stbr = 3):
     '''
     performs a simple scan analysis
@@ -248,10 +249,11 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
 
     clsFunc is specified to be able to distinguish between mpl and pqt
     '''
+    import PySpectra.dMgt.GQE as _gqe
     global _lenPlotted
     debug = False
 
-    gqeList = _pysp.dMgt.GQE.getGqeList()
+    gqeList = _gqe.getGqeList()
 
     if debug:
         print( "utils.setGqeVPs.BEGIN: gqeList %s, nameList %s" % \
@@ -261,7 +263,7 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
         #
         # the number of used viewports is (len( gqeList) - numberOfOverlaid) 
         #
-        usedVPs = len( gqeList) - _pysp.dMgt.GQE._getNumberOfOverlaid()
+        usedVPs = len( gqeList) - _gqe._getNumberOfOverlaid()
         if usedVPs != _lenPlotted and _lenPlotted != -1: 
             clsFunc()
         _lenPlotted = usedVPs
@@ -275,7 +277,7 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
             nrow = 2
         else:
             ncol = int( _math.ceil( _math.sqrt( usedVPs)))
-            if usedVPs > _pysp.definitions.MANY_GQES: 
+            if usedVPs > _definitions.MANY_GQES: 
                 ncol -= 1
             nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
         nplot = 1 
@@ -290,7 +292,7 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
         #
         # the number of used viewports is (len( nameList) - numberOfOverlaid( nameList)) 
         #
-        usedVPs = len( nameList) - _pysp.dMgt.GQE._getNumberOfOverlaid( nameList)
+        usedVPs = len( nameList) - _gqe._getNumberOfOverlaid( nameList)
         if usedVPs != _lenPlotted and _lenPlotted != -1: 
             clsFunc()
         _lenPlotted = usedVPs
@@ -304,7 +306,7 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
             nrow = 2
         else:
             ncol = int( _math.ceil( _math.sqrt( usedVPs)))
-            if usedVPs > _pysp.definitions.MANY_GQES: 
+            if usedVPs > _definitions.MANY_GQES: 
                 ncol -= 1
             nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
         nplot = 1 
@@ -320,7 +322,7 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
             #
             # maybe the gqe.overlay has beed deleted
             #
-            if _pysp.dMgt.GQE.getGqe( gqe.overlay) is None:
+            if _gqe.getGqe( gqe.overlay) is None:
                 gqe.overlay = None
             else:
                 continue
@@ -455,7 +457,7 @@ def launchGui():
     from PyQt4 import QtGui as _QtGui
     from PyQt4 import QtCore as _QtCore
 
-    import _pysp.pySpectraGuiClass as _gui
+    import PySpectra.pySpectraGuiClass as _gui
 
     app = _QtGui.QApplication.instance()
     if app is None:
@@ -496,14 +498,14 @@ def launchGui():
 #
 #    startTime = _time.time()
 #    while (_time.time() - startTime) < waitTime:
-#        _pysp.processEvents()
+#        PySpectra.processEvents()
 #        key = inkey()
 #        if key == 32:
 #            return 32
 #        if key == 112: # 'p'
 #            print( "paused, press 'p' to resume")
 #            while True:
-#                _pysp.processEvents()
+#                PySpectra.processEvents()
 #                if inkey() == 112:
 #                    print( "unpaused, press 'p' to pause")
 #                    break
@@ -979,3 +981,4 @@ def _chi2(npara, exp_data, sim_data):
     chi2  = chi2 / (len(exp_data)-npara)
     return chi2
 # --------------------------------------------------------------------------- #
+

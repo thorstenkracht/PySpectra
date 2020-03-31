@@ -48,9 +48,11 @@ and by pyspViewer.py
     y2my
       y to minus y
 '''
-import PySpectra as pysp
 import itertools
+import PySpectra
 import PySpectra.mtpltlb.graphics as _mpl_graphics # to create postscript
+import PySpectra.dMgt.calc as _calc
+import PySpectra.dMgt.GQE as _gqe
 
 def command( line):
     '''
@@ -154,9 +156,9 @@ def antiderivative( line):
 
         
     if len( lst) == 1: 
-        pysp.dMgt.calc.antiderivative( lst[0])
+        _calc.antiderivative( lst[0])
     elif len( lst) == 2: 
-        pysp.dMgt.calc.antiderivative( lst[0], lst[1])
+        _calc.antiderivative( lst[0], lst[1])
     else:
         raise ValueError( "ifc.antiderivative: wrong syntax %s" % line)
 
@@ -164,7 +166,7 @@ def cls( line):
     '''
     clears the graphics screen
     '''
-    pysp.cls()
+    PySpectra.cls()
 
 def create( line):
     '''
@@ -200,7 +202,7 @@ def create( line):
     else:
         raise ValueError( "ifs.createScan: wrong syntax %s" % line)
         
-    pysp.dMgt.GQE.Scan( **hsh)
+    _gqe.Scan( **hsh)
 
 def createPDF( line):
     '''
@@ -228,9 +230,9 @@ def derivative( line):
             lst = line.split( ' ')
         
     if len( lst) == 1: 
-        pysp.dMgt.calc.derivative( lst[0])
+        _calc.derivative( lst[0])
     elif len( lst) == 2: 
-        pysp.dMgt.calc.derivative( lst[0], lst[1])
+        _calc.derivative( lst[0], lst[1])
     else:
         raise ValueError( "ifc.derivative: wrong syntax %s" % line)
 
@@ -244,19 +246,19 @@ def display( line):
         if len( line) > 0:
             lst = line.split( ' ')
         
-    pysp.display( lst)
+    PySpectra.display( lst)
 
 def delete( line):
     lst = None
     if line: 
         lst = line.split(' ')
-    pysp.dMgt.GQE.delete( lst)
+    _gqe.delete( lst)
 
 def info( line):
     '''
     displays some information
     '''
-    pysp.info()
+    PySpectra.info()
 
 def overlay( line):
     '''
@@ -266,7 +268,7 @@ def overlay( line):
     lst = line.split( ' ')
     if len( lst) != 2:
         raise ValueError( "ifc.overlay: expecting two scan names")
-    pysp.dMgt.GQE.overlay( lst[0], lst[1])
+    _gqe.overlay( lst[0], lst[1])
 
 def read( line):
     '''
@@ -279,13 +281,13 @@ def read( line):
     if len( lst) == 0:
         raise ValueError( "ifc.read: expecting a file name and optionally '-mca'")
         return 
-    pysp.dMgt.GQE.read( lst)
+    _gqe.read( lst)
 
 def setComment( line):
     '''
     set the comment string for the whole plot
     '''
-    pysp.dMgt.GQE.setComment( line)
+    _gqe.setComment( line)
 
 def _pairs( lst): 
     a = iter(lst)
@@ -330,7 +332,7 @@ def setText( line):
     '''
     lst = _mySplit( line)
     try:
-        o = pysp.dMgt.GQE.getGqe( lst[0])
+        o = _gqe.getGqe( lst[0])
     except Exception as e: 
         raise ValueError( "ifc.setText: failed to gqeGqe %s" % lst[0])
         return
@@ -387,7 +389,7 @@ def setTitle( line):
     '''
     set the title of the whole plot
     '''
-    pysp.dMgt.GQE.setTitle( line)
+    _gqe.setTitle( line)
 
 def setPixelImage( line): 
     '''
@@ -397,7 +399,7 @@ def setPixelImage( line):
         iy > 0 and iy < height
     '''
     lst = line.split( ' ')
-    o = pysp.dMgt.GQE.getGqe( lst[0])
+    o = _gqe.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setPixelImage: failed to find %s" % lst[0])
     ix = int( lst[1])
@@ -416,7 +418,7 @@ def setArrowMotorCurrent( line):
       position: the motor current position, maybe from mvsa
     '''
     lst = line.split( ' ')
-    o = pysp.dMgt.GQE.getGqe( lst[0])
+    o = _gqe.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setArrowMotorSCurrent: failed to find %s" % lst[0])
     o.setArrowMotorCurrent( lst[1:])
@@ -432,7 +434,7 @@ def setArrowMotorSetPoint( line):
       position: the motor target position, maybe from mvsa
     '''
     lst = line.split( ' ')
-    o = pysp.dMgt.GQE.getGqe( lst[0])
+    o = _gqe.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setArrowMotorSetPoint: failed to find %s" % lst[0])
     o.setArrowMotorSetPoint( lst[1:])
@@ -446,7 +448,7 @@ def setPixelWorld( line):
         y >= yMin and y <= yMax
     '''
     lst = line.split( ' ')
-    o = pysp.dMgt.GQE.getGqe( lst[0])
+    o = _gqe.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setPixelWorld: failed to find %s" % lst[0])
     x = float( lst[1])
@@ -460,7 +462,7 @@ def setX( line):
     setX nameGqe index x
     '''
     lst = line.split( ' ')
-    o = pysp.dMgt.GQE.getGqe( lst[0])
+    o = _gqe.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setX: failed to find %s" % lst[0])
     index = int( lst[1])
@@ -476,7 +478,7 @@ def setY( line):
     setY nameGqe index y
     '''
     lst = line.split( ' ')
-    o = pysp.dMgt.GQE.getGqe( lst[0])
+    o = _gqe.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setY: failed to find %s" % lst[0])
     index = int( lst[1])
@@ -492,7 +494,7 @@ def setXY( line):
     setXY nameGqe index x y
     '''
     lst = line.split( ' ')
-    o = pysp.dMgt.GQE.getGqe( lst[0])
+    o = _gqe.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setXY: failed to find %s" % lst[0])
     index = int( lst[1])
@@ -517,15 +519,15 @@ def setWsViewport( line):
         return 
 
     if len( lst) == 0:
-        pysp.setWsViewport( None)
+        PySpectra.setWsViewport( None)
     else:
-        pysp.setWsViewport( lst[0])
+        PySpectra.setWsViewport( lst[0])
 
 def show( line):
     '''
     show the list of scans
     '''
-    pysp.dMgt.GQE.show()
+    _gqe.show()
 
 def write( line):
     ''' 
@@ -539,7 +541,7 @@ def write( line):
       write selected scans
     '''
     lst = line.split( ' ')
-    pysp.dMgt.GQE.write( lst)
+    _gqe.write( lst)
 
 def y2my( line):
     lst = line.split( ' ')
@@ -549,5 +551,5 @@ def y2my( line):
     hsh[ 'name'] = lst[0]
     if len( lst) == 2:
         hsh[ 'nameNew'] = lst[1]
-    pysp.dMgt.calc.yToMinusY( **hsh)
+    _calc.yToMinusY( **hsh)
     

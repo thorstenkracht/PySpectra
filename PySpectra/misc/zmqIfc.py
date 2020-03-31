@@ -15,14 +15,16 @@ Functions
             msg = self.sckt.recv()
             hsh = json.loads( msg)
             ...
-            argout = pysp.execHsh( hsh)
+            argout = PySpectra.misc.zmqIfc.execHsh( hsh)
             msg = json.dumps( argout)
             self.sckt.send( msg)
   - isPyspMonitorAlive()
   - execHsh()
 
 '''
-import PySpectra as _pysp
+import PySpectra 
+import PySpectra.dMgt.GQE as _gqe
+import PySpectra.ipython.ifc as _ifc
 
 def toPyspMonitor( hsh, node = None):
     """
@@ -50,10 +52,10 @@ hsh = { 'putData':
               { 'name': "d1_c02", 'data' : d2},
            ]}}
 
-hsh = pysp.toPyspMonitor( hsh)
+hsh = PySpectra.misc.zmqIfc.toPyspMonitor( hsh)
 print( "return values of putData: %s" % repr( hsh) )
 
-hsh = pysp.toPyspMonitor( { 'getData': True})
+hsh = PySpectra.misc.zmqIfc.toPyspMonitor( { 'getData': True})
 for i in range( MAX):
     if pos[i] != hsh[ 'getData']['d1_c01']['x'][i]:
         print( "error: pos[i] != x[i]")
@@ -215,7 +217,7 @@ def execHsh( hsh):
         argout[ 'result'] = _putData( hsh[ 'putData'])
     elif 'getData' in hsh:
         try:
-            argout[ 'getData'] = _pysp.dMgt.GQE.getData()
+            argout[ 'getData'] = _gqe.getData()
             argout[ 'result'] = 'done'
         except Exception as e:
             argout[ 'getData'] = {}
@@ -227,13 +229,19 @@ def execHsh( hsh):
         argout[ 'result'] = 'done'
     elif 'Image' in hsh:
         try: 
-            _pysp.dMgt.GQE.Image( **hsh[ 'Image']) 
+            #
+            # '**hsh': unpacked dictionary
+            #
+            _gqe.Image( **hsh[ 'Image']) 
             argout[ 'result'] = 'done'
         except Exception as e:
             argout[ 'result'] = "zmqIfc.execHsh: error, %s" % repr( e)
     elif 'Scan' in hsh:
         try: 
-            _pysp.dMgt.GQE.Scan( **hsh[ 'Scan']) 
+            #
+            # '**hsh' unpacked dictionary
+            #
+            _gqe.Scan( **hsh[ 'Scan']) 
             argout[ 'result'] = 'done'
         except Exception as e:
             argout[ 'result'] = "zmqIfc.execHsh: error, %s" % repr( e)
@@ -251,18 +259,18 @@ def _putData( hsh):
 
     argout = 'n.n.'
     if 'title' not in hsh:
-        _pysp.dMgt.GQE.setTitle( "NoTitle")
+        _gqe.setTitle( "NoTitle")
     else:
-        _pysp.dMgt.GQE.setTitle( hsh[ 'title'])
+        _gqe.setTitle( hsh[ 'title'])
 
     if 'columns' in hsh:
-        _pysp.dMgt.GQE.delete()
-        _pysp.cls()
-        argout = _pysp.dMgt.GQE.fillDataByColumns( hsh)
+        _gqe.delete()
+        PySpectra.cls()
+        argout = _gqe.fillDataByColumns( hsh)
     elif 'gqes' in hsh:
-        _pysp.dMgt.GQE.delete()
-        _pysp.cls()
-        argout = _pysp.dMgt.GQE.fillDataByGqes( hsh)
+        _gqe.delete()
+        PySpectra.cls()
+        argout = _gqe.fillDataByGqes( hsh)
     #
     # hsh = { 'putData': 
     #         { 'name': "MandelBrot",
@@ -272,22 +280,22 @@ def _putData( hsh):
     #
     elif 'type' in hsh and hsh[ 'type'] == 'image':
         del hsh[ 'type']
-        _pysp.dMgt.GQE.Image( **hsh)
+        _gqe.Image( **hsh)
         argout = "done"
     #
-    #_pysp.execHsh( { 'putData': 
+    #_PySpectra.misc.zmqIfc.execHsh( { 'putData': 
     #                { 'images': [{'name': "Mandelbrot", 'data': data,
     #                              'xMin': xmin, 'xMax': xmax, 
     #                              'yMin': ymin, 'yMax': ymax}]}})
     #
     elif 'images' in hsh:
         for h in hsh[ 'images']: 
-            _pysp.dMgt.GQE.Image( **h)
+            _gqe.Image( **h)
         argout = "done"
     elif 'setPixelImage' in hsh or 'setPixelWorld' in hsh:
-        argout = _pysp.dMgt.GQE.fillDataImage( hsh)
+        argout = _gqe.fillDataImage( hsh)
     elif 'setXY' in hsh:
-        argout = _pysp.dMgt.GQE.fillDataXY( hsh)
+        argout = _gqe.fillDataXY( hsh)
     else:
         raise Exception( "zmqIfc._putData", "expecting 'columns', 'gqes', 'setPixelImage', 'setPixelWorld'")
 
@@ -307,11 +315,11 @@ def commandIfc( hsh):
     argout = "n.n."
     if type( hsh[ 'command']) == list:
         for cmd in hsh[ 'command']: 
-            ret = _pysp.ipython.ifc.command( cmd)
+            ret = _ifc.command( cmd)
             argout += "%s -> %s;" % (cmd, repr( ret))
 
         return "done"
 
-    ret = _pysp.ipython.ifc.command( hsh[ 'command'])
+    ret = _ifc.command( hsh[ 'command'])
     argout = "%s -> %s" % (hsh[ 'command'], repr( ret))
     return argout

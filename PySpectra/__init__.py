@@ -96,12 +96,14 @@ Select the graphics library by before importing PySpectra
 
 '''
 
-#from PyQt4 import QtCore as _QtCore
-#from PyQt4 import QtGui as _QtGui
-
-#from examples.exampleCode import *
-
 import os as _os 
+#
+# here we include functions like cls(), display() into the toplevel 
+# PySpectra name space. Depending on the state of PYSP_USE_MATPLOTLIB
+# these function are from pyqt or matplotlib.
+# createPDF is a special case because it has to be available also 
+# in the pqt world.
+#
 try:
     if _os.environ["PYSP_USE_MATPLOTLIB"] == "True":
         from mtpltlb.graphics import *
@@ -112,23 +114,4 @@ except:
 
 from mtpltlb.graphics import createPDF
 
-#+++
-import dMgt.GQE
-import dMgt.calc
-#import examples.exampleCode
-import ipython.ifc
-import misc.IfcGraPysp
-import misc.IfcTango
-import misc.utils
-import misc.zmqIfc
-#+++
 
-#import ipython.startup
-#mtpltlb.graphics
-#pqtgrph.graphics
-
-
-#from misc.utils import *
-#import ipython.ifc
-#from ipython.ifc import command
-#import definitions

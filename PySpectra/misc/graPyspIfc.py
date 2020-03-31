@@ -29,7 +29,7 @@ def setSpectra( flag):
     
     if flag:
         if not spectraInstalled: 
-            print( "*** IfcGraPysp.setSpectra: spectra is not installed")
+            print( "*** graPyspIfc.setSpectra: spectra is not installed")
             sys.exit( 255)
         useSpectra = True
     else:
@@ -110,7 +110,7 @@ def Scan( **hsh):
                              at = hsh[ 'at'])
     else:
         if not 'name' in hsh:
-            raise ValueError( "IfcGraPysp.Scan: 'name' is missing")
+            raise ValueError( "graPyspIfc.Scan: 'name' is missing")
 
         name = hsh[ 'name']
         xMin = 0

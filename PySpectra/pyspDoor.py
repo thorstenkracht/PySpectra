@@ -2,7 +2,7 @@
 '''
 the Door which communicates to pyspMonitor via a queue
 
-the Door is the sender using sendHsh()
+the Door is the sender using sendHshQueue()
 '''
 import PyTango
 import time, sys, os, math
@@ -134,7 +134,7 @@ class pyspDoor( sms.BaseDoor):
         """
         #for k in list( self.counter_gqes.keys()):
         #    del self.counter_gqes[k]
-        self.sendHsh( { 'command': ['delete', 'cls']})
+        self.sendHshQueue( { 'command': ['delete', 'cls']})
 
     def waitForFile( self, filename):
         """
@@ -174,7 +174,7 @@ class pyspDoor( sms.BaseDoor):
             #
             # Re-use the scan. Otherwise we have these flickering displays
             #
-            self.sendHsh( { 'Scan': { 'name': self.mcaAliases[n],
+            self.sendHshQueue( { 'Scan': { 'name': self.mcaAliases[n],
                                       'reUse': True, 
                                       'flagMCA': True, 
                                       'lineColor': 'blue', 
@@ -299,8 +299,8 @@ class pyspDoor( sms.BaseDoor):
         self.startTime = dataRecord[1]['data']['starttime']
         self.title = dataRecord[1]['data']['title']
 
-        self.sendHsh( { 'command': ["setTitle " + self.title]})
-        self.sendHsh( { 'command': ["setComment \"%s, %s\"" % (self.filename, self.startTime)]})
+        self.sendHshQueue( { 'command': ["setTitle " + self.title]})
+        self.sendHshQueue( { 'command': ["setComment \"%s, %s\"" % (self.filename, self.startTime)]})
 
     def getPosition( self, name): 
         pos = None
@@ -771,7 +771,7 @@ class pyspDoor( sms.BaseDoor):
             #
             self.indexMesh = 0
 
-            #self.sendHsh( { 'Scan': { 'name': 'MeshScan',
+            #self.sendHshQueue( { 'Scan': { 'name': 'MeshScan',
             #                          'xMin': float( cmd[2]), 
             #                          'xMax': float( cmd[3]), 
             #                          'yMin': float( cmd[6]), 
@@ -784,7 +784,7 @@ class pyspDoor( sms.BaseDoor):
             #                          'autoscaleX': False,
             #                          'autoscaleY': False}})
 
-            self.sendHsh( { 'Image': { 'name': 'MeshImage',
+            self.sendHshQueue( { 'Image': { 'name': 'MeshImage',
                                       'xMin': float( cmd[2]), 
                                       'xMax': float( cmd[3]), 
                                       'yMin': float( cmd[6]), 
@@ -795,7 +795,7 @@ class pyspDoor( sms.BaseDoor):
             # the text should be present already during the first display
             # otherwise the textItem is missing
             #
-            #self.sendHsh( { 'command': [ "setText MeshScan comment string \"Sweep: 1/%d\" x 0.05 y 0.95" % self.meshSweepCountTotal]})
+            #self.sendHshQueue( { 'command': [ "setText MeshScan comment string \"Sweep: 1/%d\" x 0.05 y 0.95" % self.meshSweepCountTotal]})
         #
         # dmesh exp_dmy01 -1 1 10 exp_dmy02 -0.5 0.5 10 0.2 flagSShape
         # +++
@@ -832,7 +832,7 @@ class pyspDoor( sms.BaseDoor):
         # scrollAreaFiles.setEnabled( False)
         # scrollAreaScans.setEnabled( False)
         #
-        self.sendHsh( { 'newScan': True})
+        self.sendHshQueue( { 'newScan': True})
 
         self.indexScan = 1
 
@@ -868,7 +868,7 @@ class pyspDoor( sms.BaseDoor):
         # to prepare the motorsWidget of the GUI
         #
         self.scanInfo[ 'motorIndex'] = self.motorIndex
-        self.sendHsh( { 'ScanInfo': self.scanInfo})
+        self.sendHshQueue( { 'ScanInfo': self.scanInfo})
         
         #+++if self.isMesh:
         #    at_str = "(%d,%d,%d)" % (self.ncol, self.nrow, count)
@@ -882,7 +882,7 @@ class pyspDoor( sms.BaseDoor):
 
         self.scanNo += 1
         for elm in self.counterAliases:
-            self.sendHsh( { 'Scan': { 'name': elm,
+            self.sendHshQueue( { 'Scan': { 'name': elm,
                                       'xMin': self.start,
                                       'xMax': self.stop,
                                       'lineColor': 'red',
@@ -899,7 +899,7 @@ class pyspDoor( sms.BaseDoor):
         else:
             self.signalCounter = None
 
-        self.sendHsh( {'command': ['display']})
+        self.sendHshQueue( {'command': ['display']})
 
         return True
 
@@ -1031,7 +1031,7 @@ class pyspDoor( sms.BaseDoor):
             # scrollAreaFiles.setEnabled( True)
             # scrollAreaScans.setEnabled( True)
             #
-            self.sendHsh( { 'endScan': True})
+            self.sendHshQueue( { 'endScan': True})
             return
  
         # ('',
@@ -1134,7 +1134,7 @@ class pyspDoor( sms.BaseDoor):
             # 
             if data is None:
                 self.dumpDataRecord( "data == None", dataRecord)
-                self.sendHsh( { 'command': ['setY %s %d %s' % (alias, self.indexScan - 1, repr(0.))]})
+                self.sendHshQueue( { 'command': ['setY %s %d %s' % (alias, self.indexScan - 1, repr(0.))]})
             else:
                 if type( data) is list:
                     if len( data) == 1:
@@ -1146,12 +1146,12 @@ class pyspDoor( sms.BaseDoor):
                         
                 if not type( data) is float:
                     self.dumpDataRecord( "type(data) (%s) is not float" % str( data), dataRecord)
-                    self.sendHsh( { 'command': ['setY %s %d %s' % (alias, self.indexScan - 1, repr(0.))]})
+                    self.sendHshQueue( { 'command': ['setY %s %d %s' % (alias, self.indexScan - 1, repr(0.))]})
                 else:
-                    self.sendHsh( { 'command': ['setY %s %d %s' % (alias, self.indexScan - 1, repr(data))]})
+                    self.sendHshQueue( { 'command': ['setY %s %d %s' % (alias, self.indexScan - 1, repr(data))]})
                     pass
 
-            self.sendHsh( { 'command': ['setX %s %d %s' % (alias, self.indexScan - 1, repr(pos))]})
+            self.sendHshQueue( { 'command': ['setX %s %d %s' % (alias, self.indexScan - 1, repr(pos))]})
 
         if self.isMesh:
             self.displayMeshScan( pos, posY, signal)
@@ -1161,28 +1161,32 @@ class pyspDoor( sms.BaseDoor):
         if len( self.mcaAliases) > 0:
             self.displayMCAs()
             
-        self.sendHsh( { 'command': ['display']})
+        self.sendHshQueue( { 'command': ['display']})
 
         self.indexScan += 1
 
-    def sendHsh( self, hsh): 
+    def sendHshQueue( self, hsh): 
         '''
-        sends a dictionary to the pyspMonitor
+        sends a dictionary to the pyspMonitor via queue(): 
+        handled by: 
+          /home/kracht/Misc/pySpectra/PySpectra/pyspMonitorClass.py
+            cb_refreshMain( )
         '''
+        #print( "pyspDoor.sendHshQueue: %s" % repr( hsh))
         try:
             self.queue.put( hsh)
         except Exception as e:
-            print( "queueSpectraDoor.sendHsh")
+            print( "queueSpectraDoor.sendHshQueue")
             print( "hsh %s" % repr( hsh))
             print( "exception %s" % repr( e))
-            raise ValueError( "pyspDoor.sendHsh: something went wrong")
+            raise ValueError( "pyspDoor.sendHshQueue: something went wrong")
 
     def displayMeshScan( self, pos, posY, signal):
-        #self.sendHsh( { 'command': ['setXY MeshScan %d %s %s' % (self.indexMesh, repr(pos), repr(posY))]})
+        #self.sendHshQueue( { 'command': ['setXY MeshScan %d %s %s' % (self.indexMesh, repr(pos), repr(posY))]})
         if signal is None:
-            self.sendHsh( { 'command': ['setPixelWorld MeshImage %g %g 50.' % (pos, posY)]})
+            self.sendHshQueue( { 'command': ['setPixelWorld MeshImage %g %g 50.' % (pos, posY)]})
         else:
-            self.sendHsh( { 'command': ['setPixelWorld MeshImage %g %g %g' % (pos, posY, signal)]})
+            self.sendHshQueue( { 'command': ['setPixelWorld MeshImage %g %g %g' % (pos, posY, signal)]})
         self.indexMesh += 1
 
     def handleMeshScanIndices( self, np, pos, posOld, posY):
@@ -1217,7 +1221,7 @@ class pyspDoor( sms.BaseDoor):
                     self.signalInd = 0
                     self.meshSweepCount += 1
 
-        #self.sendHsh( { 'command': [ "setText MeshScan comment string \"Sweep: %d/%d\"" % \
+        #self.sendHshQueue( { 'command': [ "setText MeshScan comment string \"Sweep: %d/%d\"" % \
         #                             ( self.meshSweepCount, self.meshSweepCountTotal)]})
         return 
 

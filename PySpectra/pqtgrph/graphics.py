@@ -13,7 +13,9 @@ from matplotlib import cm
 import datetime as _datetime
 import types as _types
 import psutil as _psutil
-import PySpectra as _pysp
+import PySpectra.dMgt.GQE as _gqe
+import PySpectra.misc.utils as _utils
+import PySpectra.misc.tangoIfc as _tangoIfc
 import PySpectra.definitions as _definitions
 
 _QApp = None
@@ -77,7 +79,7 @@ def close():
 
 def _setSizeGraphicsWindow( nGqe):
 
-    if _pysp.dMgt.GQE.getWsViewportFixed(): 
+    if _gqe.getWsViewportFixed(): 
         return 
 
     if nGqe > 10:
@@ -152,7 +154,7 @@ def setWsViewport( size = None):
     #print( "graphics.setWsViewport", wPixel, hPixel)
     _win.setGeometry( 30, 30, int(wPixel), int(hPixel))
     _QApp.processEvents()
-    _pysp.dMgt.GQE.setWsViewportFixed( True)
+    _gqe.setWsViewportFixed( True)
 
     return 
 
@@ -182,7 +184,7 @@ def cls():
     # gqe.mousePrepared: needed because we can have several display() 
     # calls without cls()
     #
-    gqeList = _pysp.dMgt.GQE.getGqeList()
+    gqeList = _gqe.getGqeList()
     for gqe in gqeList:
         gqe.mousePrepared = False
 
@@ -201,14 +203,14 @@ def cls():
     #
     # clear the plotItems
     #
-    gqeList = _pysp.dMgt.GQE.getGqeList()
+    gqeList = _gqe.getGqeList()
     for gqe in gqeList:
         #
         # this is necessary because createPDF() might hasv been called before
         #
         if gqe.plotItem is None: 
             continue
-        if type( gqe) == _pysp.dMgt.GQE.Scan:
+        if type( gqe) == _gqe.Scan:
             if gqe.labelArrowMotorCurrent is not None: 
                 gqe.plotItem.removeItem( gqe.labelArrowMotorCurrent)
                 gqe.labelArrowMotorCurrent = None
@@ -240,7 +242,7 @@ def cls():
         gqe.viewBox = None
         gqe.plotItem = None
 
-        if type( gqe) == _pysp.dMgt.GQE.Image:
+        if type( gqe) == _gqe.Image:
             gqe.img = None
 
     #
@@ -274,7 +276,7 @@ def procEventsLoop( timeOut = None):
         #
         if _os.getenv( "DISPLAY") == ":99.0": 
             break
-        key = _pysp.misc.utils.inkey()        
+        key = _utils.inkey()        
         if key == 10:
             break
     print ""
@@ -360,7 +362,7 @@ def _addArrowsMotor( gqe, nameList):
     # anchor, (0, 0) -> upper left
     #
     gqe.labelArrowMotorCurrent = _pg.TextItem( color='k', anchor = ( 0.5, 2.))
-    fontSize = _pysp.dMgt.GQE.getFontSize( nameList)
+    fontSize = _gqe.getFontSize( nameList)
     gqe.labelArrowMotorCurrent.setHtml( '<div style="font-size:%dpx;">%s</div>' % (fontSize, "n.n."))
     gqe.plotItem.addItem( gqe.arrowMotorSetPoint)
     gqe.plotItem.addItem( gqe.arrowMotorCurrent)
@@ -533,7 +535,7 @@ def _make_cb_mouseMoved( gqe):
         #
         # it is an image
         #
-        if type( gqe) == _pysp.dMgt.GQE.Image: 
+        if type( gqe) == _gqe.Image: 
             mY = mousePoint.y()
             mX = mousePoint.x()
             if mY >= gqe.height: 
@@ -674,7 +676,7 @@ def _make_cb_mouseClicked( gqe):
         # left mouse button
         if evt.button() == 1: 
             mousePoint = gqe.plotItem.vb.mapSceneToView(evt.scenePos())
-            if type( gqe) == _pysp.dMgt.GQE.Scan:
+            if type( gqe) == _gqe.Scan:
                 if mousePoint.y() < gqe.getYMin() or \
                    mousePoint.y() > gqe.getYMax(): 
                     return 
@@ -683,15 +685,15 @@ def _make_cb_mouseClicked( gqe):
                 except Exception as err: 
                     print( "pqtgraphics.mouseClicked %s" % repr( err))
                     return 
-                _pysp.misc.IfcTango.move( gqe.x[ index])
-            elif type( gqe) == _pysp.dMgt.GQE.Image:
+                _tangoIfc.move( gqe, gqe.x[ index])
+            elif type( gqe) == _gqe.Image:
                 if gqe.flagZooming: 
                     return 
-                _pysp.misc.IfcTango.move( mousePoint.x(), mousePoint.y())
+                _tangoIfc.move( gqe, mousePoint.x(), mousePoint.y())
         # middle button
         elif evt.button() == 4: 
             mousePoint = gqe.plotItem.vb.mapSceneToView(evt.scenePos())
-            if type( gqe) == _pysp.dMgt.GQE.Image:
+            if type( gqe) == _gqe.Image:
                 gqe.shift( mousePoint.x(), mousePoint.y())
             return
 
@@ -719,13 +721,13 @@ def _prepareMouse( gqe):
     # the mouseLabel.hide() call messes up the x-scale, so we plot only a ' '
     #
 
-    if type(gqe) == _pysp.dMgt.GQE.Scan:
+    if type(gqe) == _gqe.Scan:
         if gqe.xLog or gqe.yLog or gqe.doty: 
             gqe.mouseLabel = _pg.TextItem( ".", color='k', anchor = (1, 1))
             #gqe.mouseLabel.setPos( gqe.x[0], gqe.y[0])
             gqe.plotItem.addItem( gqe.mouseLabel, ignoreBounds = True)
             gqe.mouseLabel.hide()
-    elif type(gqe) == _pysp.dMgt.GQE.Image:
+    elif type(gqe) == _gqe.Image:
         gqe.mouseLabel = _pg.TextItem( ".", color='b', anchor = (0.5, 0.5))
         gqe.mouseLabel.setPos( 0., 0.,)
         gqe.plotItem.addItem( gqe.mouseLabel, ignoreBounds = True)
@@ -795,12 +797,12 @@ def _displayTitleComment():
     - title is over comment
     - colspan is infinity
     '''
-    title = _pysp.dMgt.GQE.getTitle()
+    title = _gqe.getTitle()
     if title is not None:
         if not _textIsOnDisplay( title):
             _win.addLabel( title, row = 0, col = 0, colspan = 10)
 
-    comment = _pysp.dMgt.GQE.getComment()
+    comment = _gqe.getComment()
     if comment is not None:
         if not _textIsOnDisplay( comment):
             _win.addLabel( comment, row = 1, col = 0, colspan = 10)
@@ -813,7 +815,7 @@ def _calcTextPosition( scan, xIn, yIn):
     '''
     
     if not scan.xLog:
-        x = (_pysp.misc.utils.xMax( scan) - _pysp.misc.utils.xMin( scan))*xIn + _pysp.misc.utils.xMin( scan)
+        x = (_utils.xMax( scan) - _utils.xMin( scan))*xIn + _utils.xMin( scan)
     else:
         if scan.xMax <= 0. or scan.xMin <= 0.:
             raise ValueError( "pqt_graphics.calcTextPosition: xLog && (xMin <= 0: %g or xMax <= 0: %g" % 
@@ -837,25 +839,25 @@ def _calcTextPosition( scan, xIn, yIn):
             scan.yMin = scan.getYMin()
         if not scan.yLog:
             #y = ( scan.yMax - scan.yMin)*yIn + scan.yMin
-            y = (_pysp.misc.utils.yMax( scan) - _pysp.misc.utils.yMin( scan))*yIn + _pysp.misc.utils.yMin( scan)
+            y = (_utils.yMax( scan) - _utils.yMin( scan))*yIn + _utils.yMin( scan)
         else:
             if scan.yMax <= 0. or scan.yMin <= 0.:
                 raise ValueError( "pqt_graphics.calcTextPosition: yLog && (yMin <= 0: %g or yMax <= 0: %g" % 
                                   (scan.yMin, scan.yMax))
             y = ( _math.log10( scan.yMax) - _math.log10( scan.yMin))*yIn + _math.log10( scan.yMin)
     #
-    #print "pqt_graphics.calcTextPosition: yMin %g, yMax %g, y %g" % ( _pysp.misc.utils.yMin( scan), 
-    #                                                                  _pysp.misc.utils.yMax( scan), y)
+    #print "pqt_graphics.calcTextPosition: yMin %g, yMax %g, y %g" % ( _utils.yMin( scan), 
+    #                                                                  _utils.yMax( scan), y)
     #if hasattr( scan, "plotDataItem"): 
     #    print scan.plotDataItem.dataBounds(1)
     return( x, y)
 
 def _addTexts( scan, nameList): 
 
-    if type( scan) != _pysp.dMgt.GQE.Scan:
+    if type( scan) != _gqe.Scan:
         return 
 
-    fontSize = _pysp.dMgt.GQE.getFontSize( nameList)
+    fontSize = _gqe.getFontSize( nameList)
     
     for elm in scan.textList:
 
@@ -917,7 +919,7 @@ def _updateTextPosition( scan):
 
 def _setTitle( scan, nameList): 
 
-    fontSize = _pysp.dMgt.GQE.getFontSize( nameList)
+    fontSize = _gqe.getFontSize( nameList)
 
     #
     # the length of the title has to be limited. Otherwise pg 
@@ -939,7 +941,7 @@ def _setTitle( scan, nameList):
     #   /home/kracht/Misc/pySpectra/examples/create22.py
     #   /home/kracht/Misc/pySpectra/examples/pyqtgraph/create22.py
     #
-    if True or _pysp.dMgt.GQE.getNumberOfGqesToBeDisplayed( nameList) < _definitions.MANY_GQES: 
+    if True or _gqe.getNumberOfGqesToBeDisplayed( nameList) < _definitions.MANY_GQES: 
         scan.plotItem.setLabel( 'top', text=tempName, size = '%dpx' % fontSize)
     #
     # too many plots, so put the title into the plot
@@ -1041,7 +1043,7 @@ def _isOverlayTarget( scan, nameList):
     returns True, if the scan is the target for the overlay 
     of another scan
     '''
-    gqeList = _pysp.dMgt.GQE.getGqeList()
+    gqeList = _gqe.getGqeList()
     for elm in gqeList: 
         if elm.overlay is None: 
             continue
@@ -1092,7 +1094,7 @@ def _createPlotItem( gqe, nameList):
     #
     # the textContainer
     #
-    if type( gqe) == _pysp.dMgt.GQE.Scan and gqe.textOnly:
+    if type( gqe) == _gqe.Scan and gqe.textOnly:
         #
         # pyqtgraph.graphicsItems.ViewBox.ViewBox.ViewBox
         #
@@ -1102,7 +1104,7 @@ def _createPlotItem( gqe, nameList):
         return 
 
     try:
-        if type( gqe) == _pysp.dMgt.GQE.Scan and gqe.doty: 
+        if type( gqe) == _gqe.Scan and gqe.doty: 
             plotItem = _win.addPlot( axisItems = { 'bottom': _CAxisTime( orientation='bottom'),
                                                    'left': SmartFormat(orientation='left'),
                                                    'right': SmartFormat(orientation='right')}, # if overlay
@@ -1111,7 +1113,7 @@ def _createPlotItem( gqe, nameList):
             #
             # <class 'pyqtgraph.graphicsItems.PlotItem.PlotItem.PlotItem'>
             #
-            if type( gqe) == _pysp.dMgt.GQE.Image:
+            if type( gqe) == _gqe.Image:
                 l = _CAxisImageY( orientation='left')
                 b = _CAxisImageX( orientation='bottom')
                 l.gqe = gqe
@@ -1163,10 +1165,10 @@ def _createPlotItem( gqe, nameList):
         if not _isOverlayTarget( gqe, nameList):
             gqe.plotItem.getAxis('right').setTicks( [])
 
-    if type( gqe) == _pysp.dMgt.GQE.Scan: 
+    if type( gqe) == _gqe.Scan: 
         gqe.plotItem.showGrid( x = gqe.showGridX, y = gqe.showGridY)
 
-    if _pysp.dMgt.GQE.getNumberOfGqesToBeDisplayed( nameList) <= _definitions.MANY_GQES:
+    if _gqe.getNumberOfGqesToBeDisplayed( nameList) <= _definitions.MANY_GQES:
         if hasattr( gqe, 'xLabel') and gqe.xLabel is not None:
             gqe.plotItem.setLabel( 'bottom', text=gqe.xLabel)
         if hasattr( gqe, 'yLabel')  and gqe.yLabel is not None:
@@ -1174,7 +1176,7 @@ def _createPlotItem( gqe, nameList):
     #
     # autoscale
     #
-    if type( gqe) == _pysp.dMgt.GQE.Scan:
+    if type( gqe) == _gqe.Scan:
         arX = gqe.autoscaleX
         arY = gqe.autoscaleY
         #
@@ -1184,7 +1186,7 @@ def _createPlotItem( gqe, nameList):
         # see also the raise() at line 768 in 
         #   /usr/lib/python2.7/dist-packages/pyqtgraph/graphicsItems/AxisItem.py
         #
-        if arY and gqe.yLog and len( _pysp.dMgt.GQE.getGqeList()) > 15:
+        if arY and gqe.yLog and len( _gqe.getGqeList()) > 15:
             arY = False
             #print "pqt_graphics.createPlotItem: changing autoRangeY to False"
             gqe.setLimits()
@@ -1246,10 +1248,10 @@ def _cmap_xmap(function, cmap):
 
 def _displayImages( flagDisplaySingle, nameList = None):
 
-    gqeList = _pysp.dMgt.GQE.getGqeList()
+    gqeList = _gqe.getGqeList()
 
     for imageGqe in gqeList:
-        if type( imageGqe) != _pysp.dMgt.GQE.Image: 
+        if type( imageGqe) != _gqe.Image: 
             continue
         if len( nameList) > 0: 
             if imageGqe.name not in nameList:
@@ -1379,10 +1381,10 @@ def display( nameList = None):
     # see if the members of nameList are in the gqeList
     #
     for nm in nameList:
-        if _pysp.dMgt.GQE.getGqe( nm) is None:
+        if _gqe.getGqe( nm) is None:
             raise ValueError( "graphics.display: %s is not in the gqeList" % nm)
 
-    gqeList = _pysp.dMgt.GQE.getGqeList()
+    gqeList = _gqe.getGqeList()
     #
     # find out whether only one gqe will be displayed 
     # in this case the mouse-cursor will be activated
@@ -1394,14 +1396,14 @@ def display( nameList = None):
     #
     # adjust the graphics window to the number of displayed scans
     #
-    nDisplay = _pysp.dMgt.GQE.getNumberOfGqesToBeDisplayed( nameList)
+    nDisplay = _gqe.getNumberOfGqesToBeDisplayed( nameList)
     _setSizeGraphicsWindow( nDisplay)
     _adjustFigure( nDisplay)
 
     #
     # set scan.nrow, scan.ncol, scan.nplot
     #
-    _pysp.misc.utils.setGqeVPs( nameList, flagDisplaySingle, cls)
+    _utils.setGqeVPs( nameList, flagDisplaySingle, cls)
 
     #
     # _displayTitleComment() uses (0,0) and (1, 0)
@@ -1421,7 +1423,7 @@ def display( nameList = None):
     #
     for scan in gqeList:
 
-        if type( scan) != _pysp.dMgt.GQE.Scan: 
+        if type( scan) != _gqe.Scan: 
             continue
         #print "graphics.display.firstPass,", scan.name
 
@@ -1440,7 +1442,7 @@ def display( nameList = None):
             #
             # maybe the scan.overlay has beed deleted
             #
-            if _pysp.dMgt.GQE.getGqe( scan.overlay) is None:
+            if _gqe.getGqe( scan.overlay) is None:
                 scan.overlay = None
             else:
                 continue
@@ -1512,7 +1514,7 @@ def display( nameList = None):
     for scan in gqeList:
         #print "graphics.display.secondPass,", scan.name
 
-        if type( scan) != _pysp.dMgt.GQE.Scan: 
+        if type( scan) != _gqe.Scan: 
             continue
 
         #
@@ -1537,7 +1539,7 @@ def display( nameList = None):
         if len( nameList) > 0 and scan.name not in nameList:
             continue
 
-        target = _pysp.dMgt.GQE.getGqe( scan.overlay)
+        target = _gqe.getGqe( scan.overlay)
         if target is None or target.plotItem is None:
             raise ValueError( "pqt_graphics.display: %s tries to overlay to %s" %
                               (scan.name, scan.overlay))

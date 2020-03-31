@@ -12,7 +12,7 @@ has to be done in advance.
 '''
 import builtins
 import pySpectraGuiClass
-import PySpectra.dMgt.GQE as GQE
+import PySpectra.dMgt.GQE as _gqe
 import PySpectra.misc.zmqIfc as zmqIfc
 import HasyUtils 
 
@@ -151,11 +151,10 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             
         if self.useMatplotlib:
             self.matplotlibBtn.setEnabled( flag)
-
             
     def execHshLocal( self, hsh): 
         '''
-        data come from the door
+        data come from the door, via a queue()
         '''
         #print( "pyspMonitorClass.queueSM.execHsh %s " % repr( hsh))
 
@@ -170,6 +169,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         #
         elif 'ScanInfo' in hsh:
             self.scanInfo = hsh[ 'ScanInfo']
+            _gqe._scanInfo = hsh[ 'ScanInfo']
             self.configureMotorsWidget()
         else: 
             zmqIfc.execHsh( hsh)
@@ -180,7 +180,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         we received a scanInfo block indicating that a new scan has started
         now we configure the motors widget using information from the scanInfo block
         '''
-        GQE.InfoClass.setMonitorGui( self)
+        _gqe.InfoBlock.setMonitorGui( self)
 
         length = len( self.scanInfo['motors'])
         if  length == 0 or length > 3:
@@ -207,7 +207,6 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
     def makeMotorCb( self, hsh): 
         def motorCb():
             os.system( "TngGui.py %s &" %  hsh[ 'name']); 
-            print( "+++pyspMonitorClass.motorCb")
             return
         return motorCb
         
@@ -222,7 +221,9 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         self.updateTimer.stop()
 
         self.refreshCount += 1
-
+        #
+        # the queue() is filled from /home/kracht/Misc/pySpectra/PySpectra/pyspDoor.py, sendHshQueue()
+        #
         try:
             cnt = 0
             while True:

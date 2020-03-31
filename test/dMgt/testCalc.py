@@ -15,6 +15,8 @@ import numpy as np
 import unittest
 import time, sys
 import math 
+import PySpectra.dMgt.GQE as _gqe
+import PySpectra.dMgt.calc as _calc
 
 class testCalc( unittest.TestCase):
 
@@ -31,10 +33,10 @@ class testCalc( unittest.TestCase):
         print "testCalc.testYToMinusY"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        scan = PySpectra.dMgt.GQE.Scan( name = "t1", xMin = 2., xMax = 10.0, nPts = 201)
+        _gqe.delete()
+        scan = _gqe.Scan( name = "t1", xMin = 2., xMax = 10.0, nPts = 201)
         scan.y = np.sin( scan.y)
-        scanMY = PySpectra.dMgt.calc.yToMinusY( name = scan.name, nameNew = "t1_y2MinusY")
+        scanMY = _calc.yToMinusY( name = scan.name, nameNew = "t1_y2MinusY")
 
         self.assertEqual( len( scan.y), len( scanMY.y))
         self.assertEqual( len( scan.x), len( scanMY.x))
@@ -69,28 +71,28 @@ class testCalc( unittest.TestCase):
         print "testCalc.testDerivative"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        scan = PySpectra.dMgt.GQE.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
+        _gqe.delete()
+        scan = _gqe.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
         scan.y = np.sin( scan.y)
-        PySpectra.dMgt.calc.derivative( name = scan.name, nameNew = "t1_d")
+        _calc.derivative( name = scan.name, nameNew = "t1_d")
         PySpectra.display()
         #PySpectra.show()
         PySpectra.procEventsLoop( 1)
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        scan = PySpectra.dMgt.GQE.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
+        _gqe.delete()
+        scan = _gqe.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
         scan.y = np.cos( scan.y)
-        PySpectra.dMgt.calc.derivative( name = scan.name)
+        _calc.derivative( name = scan.name)
         PySpectra.display()
         #PySpectra.show()
         PySpectra.procEventsLoop( 1)
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        scan = PySpectra.dMgt.GQE.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
+        _gqe.delete()
+        scan = _gqe.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
         scan.y = np.tan( scan.y)
-        PySpectra.dMgt.calc.derivative( scan.name, "t1_d")
+        _calc.derivative( scan.name, "t1_d")
         PySpectra.display()
         #PySpectra.show()
         PySpectra.procEventsLoop( 1)
@@ -102,10 +104,10 @@ class testCalc( unittest.TestCase):
         print "testCalc.testAntiDerivative"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        scan = PySpectra.dMgt.GQE.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
+        _gqe.delete()
+        scan = _gqe.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
         scan.y = np.sin( scan.y)
-        PySpectra.dMgt.calc.antiderivative( name = scan.name, nameNew = "t1_ad")
+        _calc.antiderivative( name = scan.name, nameNew = "t1_ad")
         PySpectra.display()
         #PySpectra.show()
         PySpectra.procEventsLoop( 1)
@@ -117,11 +119,11 @@ class testCalc( unittest.TestCase):
         print "testCalc.testDerivativeAntiDerivative"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        scan = PySpectra.dMgt.GQE.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
+        _gqe.delete()
+        scan = _gqe.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
         scan.y = np.sin( scan.y)
-        derivative = PySpectra.dMgt.calc.derivative( name = scan.name, nameNew = "t1_d")
-        stamm = PySpectra.dMgt.calc.antiderivative( name = derivative.name, nameNew = "t1_ad")
+        derivative = _calc.derivative( name = scan.name, nameNew = "t1_d")
+        stamm = _calc.antiderivative( name = derivative.name, nameNew = "t1_ad")
 
         self.assertEqual( len( scan.y), len( stamm.y))
         self.assertEqual( len( scan.x), len( stamm.x))
@@ -136,9 +138,9 @@ class testCalc( unittest.TestCase):
         self.assertLess( diff, 0.08)
 
         stamm.lineColor = 'blue'
-        PySpectra.dMgt.GQE.delete( "t1_d")
+        _gqe.delete( "t1_d")
 
-        PySpectra.dMgt.GQE.overlay( "t1_ad", "t1") 
+        _gqe.overlay( "t1_ad", "t1") 
 
         PySpectra.cls()
         PySpectra.display()
