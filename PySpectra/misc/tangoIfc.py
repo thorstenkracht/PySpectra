@@ -1,10 +1,11 @@
 #!/bin/env python
 
-from PyQt4 import QtCore as _QtCore
-from PyQt4 import QtGui as _QtGui
+from PyQt4 import QtCore, QtGui
 
+import pyqtgraph as _pg
 import PySpectra
 import PySpectra.dMgt.GQE as _gqe
+import PySpectra.definitions as _definitions
 
 def move( gqe, targetX, targetY = None):
     if type( gqe) == _gqe.Scan: 
@@ -23,12 +24,6 @@ def moveScan( scan, target):
     import time as _time
 
     #print( "tangoIfc.move(), motorNameList %s " % repr( scan.motorNameList))
-    if _gqe.InfoBlock.monitorGui.door.state() != _PyTango.DevState.ON: 
-        if scan.logWidget is not None:
-            scan.logWidget.append( "tangoIfc.move: door.state() != ON %s" % repr( _gqe.infoBlock.monitorGui.door.state()))
-        else:
-            print( "tangoIfc.move: door.state() != ON %s" % repr( _gqe.InfoBlock.monitorGui.door.state()))
-        return 
         
     if _gqe.InfoBlock.monitorGui is None and scan.motorNameList is None:
         if scan.logWidget is not None:
@@ -36,11 +31,18 @@ def moveScan( scan, target):
         else:
             pass
         return 
+
+    if _gqe.InfoBlock.monitorGui.door.state() != _PyTango.DevState.ON: 
+        if scan.logWidget is not None:
+            scan.logWidget.append( "tangoIfc.move: door.state() != ON %s" % repr( _gqe.infoBlock.monitorGui.door.state()))
+        else:
+            print( "tangoIfc.move: door.state() != ON %s" % repr( _gqe.InfoBlock.monitorGui.door.state()))
+        return 
     #
     # make sure the target is inside the x-range of the plot
     #
     if target < scan.xMin or target > scan.xMax:
-        _QtGui.QMessageBox.about( None, "Info Box", 
+        QtGui.QMessageBox.about( None, "Info Box", 
                                   "tangoIfc.Move: target %g outside %s x-axis %g %g" % 
                                   (target, scan.name, scan.xMin, scan.xMax))
         return
@@ -80,9 +82,9 @@ def moveScan( scan, target):
         msg = "Move %s from %g to %g" % ( proxy.name(), 
                                           float( proxy.read_attribute( 'Position').value), 
                                           float( target))
-        reply = _QtGui.QMessageBox.question( None, 'YesNo', msg, _QtGui.QMessageBox.Yes, _QtGui.QMessageBox.No)        
+        reply = QtGui.QMessageBox.question( None, 'YesNo', msg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)        
 
-        if not reply == _QtGui.QMessageBox.Yes:
+        if not reply == QtGui.QMessageBox.Yes:
             if scan.logWidget is not None:
                 scan.logWidget.append( "Move: move not confirmed") 
             else:
@@ -98,7 +100,11 @@ def moveScan( scan, target):
         #
         scan.infLineMouseX.hide()
         scan.infLineMouseY.hide()
-        scan.arrowMotorSetPoint.setPos( target, scan.getYMin())
+
+        pos = scan.plotItem.vb.mapViewToScene( _pg.Point( target, scan.getYMin())).toPoint()
+        pos.setY( scan.graphicsWindow.geometry().height() - _definitions.ARROY_Y_OFFSET)
+        #scan.arrowMotorSetPoint.setPos( target, scan.getYMin())
+        scan.arrowMotorSetPoint.setPos( pos)
         scan.arrowMotorSetPoint.show()
         
         return 
@@ -109,20 +115,20 @@ def moveScan( scan, target):
     # ---
     #
     if _gqe.InfoBlock.monitorGui is None or _gqe.InfoBlock.monitorGui.scanInfo is None: 
-        _QtGui.QMessageBox.about( None, "Info Box", 
+        QtGui.QMessageBox.about( None, "Info Box", 
                                   "GQE.Move: _gqe.monitorGui is None or _gqe.monitorGui.scanInfo is None")
         return
 
     motorArr = _gqe.InfoBlock.monitorGui.scanInfo['motors']        
     length = len( motorArr)
     if  length == 0 or length > 3:
-        _QtGui.QMessageBox.about( None, 'Info Box', "no. of motors == 0 or > 3") 
+        QtGui.QMessageBox.about( None, 'Info Box', "no. of motors == 0 or > 3") 
         return
 
     motorIndex = _gqe.InfoBlock.monitorGui.scanInfo['motorIndex']
 
     if motorIndex >= length:
-        _QtGui.QMessageBox.about( None, 'Info Box', "motorIndex %d >= no. of motors %d" % (motorIndex, length))
+        QtGui.QMessageBox.about( None, 'Info Box', "motorIndex %d >= no. of motors %d" % (motorIndex, length))
         return
             
     motorArr[motorIndex]['targetPos'] = target
@@ -137,7 +143,7 @@ def moveScan( scan, target):
         msg = "Move %s from %g to %g" % (motorArr[0]['name'], 
                                          float(p0.read_attribute( 'Position').value), 
                                          float( motorArr[0]['targetPos']))
-        reply = _QtGui.QMessageBox.question( None, 'YesNo', msg, _QtGui.QMessageBox.Yes, _QtGui.QMessageBox.No) 
+        reply = QtGui.QMessageBox.question( None, 'YesNo', msg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No) 
     #
     # for hklscan: a h-move may move the same motors as a k-move, etc. 
     #
@@ -153,7 +159,7 @@ def moveScan( scan, target):
         msg = "Move\n  %s from %g to %g\n  %s from %g to %g " % \
               (motorArr[0]['name'], p0.read_attribute( 'Position').value, motorArr[0]['targetPos'],
                motorArr[1]['name'], p1.read_attribute( 'Position').value, motorArr[1]['targetPos'])
-        reply = _QtGui.QMessageBox.question( None, 'YesNo', msg, _QtGui.QMessageBox.Yes, _QtGui.QMessageBox.No)
+        reply = QtGui.QMessageBox.question( None, 'YesNo', msg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
     #
     # for hklscan: a h-move may move the same motors as a k-move, etc. 
     #   - therefore we may have to repeat the Move2Cursor
@@ -176,14 +182,17 @@ def moveScan( scan, target):
               (motorArr[0]['name'], p0.read_attribute( 'Position').value, motorArr[0]['targetPos'],
                motorArr[1]['name'], p1.read_attribute( 'Position').value, motorArr[1]['targetPos'],
                motorArr[2]['name'], p2.read_attribute( 'Position').value, motorArr[2]['targetPos'])
-        reply = _QtGui.QMessageBox.question( None, 'YesNo', msg, _QtGui.QMessageBox.Yes, _QtGui.QMessageBox.No)
+        reply = QtGui.QMessageBox.question( None, 'YesNo', msg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
 
     scan.infLineMouseX.hide()
     scan.infLineMouseY.hide()
-    scan.arrowMotorSetPoint.setPos(  motorArr[0]['targetPos'], scan.getYMin())
+
+    pos = scan.plotItem.vb.mapViewToScene( _pg.Point( motorArr[0]['targetPos'], scan.getYMin())).toPoint()
+    #scan.arrowMotorSetPoint.setPos(  motorArr[0]['targetPos'], scan.getYMin())
+    scan.arrowMotorSetPoint.setPos(  pos)
     scan.arrowMotorSetPoint.show()
 
-    if not reply == _QtGui.QMessageBox.Yes:
+    if not reply == QtGui.QMessageBox.Yes:
         _gqe.InfoBlock.monitorGui.logWidget.append( "Move: move not confirmed")
         return
 
@@ -269,9 +278,9 @@ def moveImage( image, targetIX, targetIY):
     msg = "Move\n  %s from %g to %g\n  %s from %g to %g " % \
           (proxyX.name(), proxyX.read_attribute( 'Position').value, targetX,
            proxyY.name(), proxyY.read_attribute( 'Position').value, targetY)
-    reply = _QtGui.QMessageBox.question( None, 'YesNo', msg, _QtGui.QMessageBox.Yes, _QtGui.QMessageBox.No)
+    reply = QtGui.QMessageBox.question( None, 'YesNo', msg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
         
-    if not reply == _QtGui.QMessageBox.Yes:
+    if not reply == QtGui.QMessageBox.Yes:
         if image.logWidget is not None:
             _gqe.InfoBlock.monitorGui.logWidget.append( "Image.Move: move not confirmed")
         return

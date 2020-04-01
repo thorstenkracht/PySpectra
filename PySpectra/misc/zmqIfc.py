@@ -27,46 +27,16 @@ import PySpectra.dMgt.GQE as _gqe
 import PySpectra.ipython.ifc as _ifc
 
 def toPyspMonitor( hsh, node = None):
-    """
-    sends a dictionary to a PyspMonitor process, 
-    returns a dictionary ...
-# 
-# this piece of code can only be executed,   
-# if the pyspMonitor.py is running
-#
-import PySpectra as pysp
-import random
-MAX = 5
-pos = [float(n)/MAX for n in range( MAX)]
-d1 = [random.random() for n in range( MAX)]
-d2 = [random.random() for n in range( MAX)]
+    '''
+    send a dictionay to pyspMonitor, cb_timerZMQ() in 
+      /home/kracht/Misc/pySpectra/PySpectra/pyspMonitorClass.py
+    from there it is sent to execHsh()
 
-print( "pos %s" % repr( pos))
-print( "d1: %s" % repr( d1))
+    the result is returned in a dictionary
 
-hsh = { 'putData': 
-           {'title': "Important Data", 
-            'columns': 
-            [ { 'name': "d1_mot01", 'data' : pos},
-              { 'name': "d1_c01", 'data' : d1},
-              { 'name': "d1_c02", 'data' : d2},
-           ]}}
+    For details see the docu of execHsh()
+    '''
 
-hsh = PySpectra.misc.zmqIfc.toPyspMonitor( hsh)
-print( "return values of putData: %s" % repr( hsh) )
-
-hsh = PySpectra.misc.zmqIfc.toPyspMonitor( { 'getData': True})
-for i in range( MAX):
-    if pos[i] != hsh[ 'getData']['d1_c01']['x'][i]:
-        print( "error: pos[i] != x[i]")
-    if d1[i] != hsh[ 'getData'][ 'd1_c01'][ 'y'][i]:
-        print( "error: d1[i] != y[i]")
-        
-print( "getData, pos: %g" % hsh[ 'getData']['d1_c01']['x'])
-print( "getData, pos: %g" % hsh[ 'getData']['d1_c01']['y'])
-return
-
-    """
     import zmq, json, socket
 
     if node is None:
@@ -92,6 +62,7 @@ return
         sckt.close()
         return { 'result': "TgUtils.toPyspMonitor: exception by send() %s" % repr(e)}
     #
+
     # PyspMonitor receives the Dct, processes it and then
     # returns the message. This may take some time. To pass
     # 4 arrays, each with 10000 pts takes 2.3s
@@ -139,39 +110,63 @@ def execHsh( hsh):
       - from an application directly (to simulate the to toPyspMonitor() interface
 
      hsh: 
-       Misc
+       commands, list of commands: PySpectra.ipython.ifc?
          {'command': ['delete']}
            delete all internal data
+
          {'command': ['cls']}
            clear the screen
+
          {'command': ['delete', 'cls']}
            deletes all internal data and clears the screen
-         {'command': ['display']}
-           a display command
 
-       Title and comment for the whole widget
+         {'command': ['display']}
+           display all GQEs
+
+         { 'command': ['setArrowMotorCurrent sig_gen position 1.234']}
+         { 'command': ['setArrowMotorCurrent sig_gen show']}
+         { 'command': ['setArrowMotorCurrent sig_gen hide']}
+           handle the arrow pointing to the current position
+
+         { 'command': ['setArrowMotorSetPoint sig_gen position 1.234']}
+         { 'command': ['setArrowMotorSetPoint sig_gen show']}
+         { 'command': ['setArrowMotorSetPoint sig_gen hide']}
+           handle the arrow pointing to the setpoint
+
          {'command': [u'setTitle ascan exp_dmy01 0.0 1.0 3 0.2']}
-           set the title 
+           set the title for the whole widget
          {'command': [u'setComment "tst_01366.fio, Wed Dec 18 10:02:09 2019"']}
-           set the comment
+           set the comment for the whole widget
+
+       Misc
+         {'isAlive': True}
+           return values:
+             {u'result': u'done'}
+             {'result': 'notAlive'}
 
        Scan
          {'Scan': {'name': 'eh_c01', 'xMax': 1.0, 'autoscaleX': False, 'lineColor': 'red', 'xMin': 0.0, 'nPts': 6}}
            create an empty scan. Notice, the inner dictionary is passed to the Scan constructor
+
          {'Scan': {'yMax': 2.0, 'symbol': '+', 'autoscaleY': False, 'autoscaleX': False, 
                    'xMax': 1.0, 'nPts': 24, 'symbolColor': 'red', 'name': 'MeshScan', 
                    'symbolSize': 5, 'lineColor': 'None', 'xMin': 0.0, 'yMin': 1.0}}
            create an empty scan setting more attributes.
+
          {'Scan': {'name': 'eh_mca01', 'flagMCA': True, 'lineColor': 'blue', 
                    'y': array([  0., ..., 35.,  30.]), 
                    'x': array([  0.0, ..., 2.047e+03]), 'reUse': True}}
            create an MCA scan, which is re-used
+
          {'command': ['setY eh_c01 0 71.41']}
            set a y-value of eh_c01, index 0
+
          {'command': ['setX eh_c01 0 0.0']}
            set a x-value of eh_c01, index 0
+
          {'command': ['setXY MeshScan 0 0.0 1.0']}
            set the x- and y-value by a single call, index is 0
+
          {'putData': {'columns': [{'data': [0.0, ..., 0.96], 'name': 'eh_mot01'}, 
                                   {'data': [0.39623, ... 0.01250], 'name': 'eh_c01'}, 
                                   {'showGridY': False, 'symbolColor': 'blue', 'showGridX': False, 
@@ -188,16 +183,21 @@ def execHsh( hsh):
                     'xMax': -0.5, 'xMin': -2.0, 
                     'yMin': 0, 'yMax': 1.5}}
            create an empty image
+
          {'putData': {'images': [{'data': array([[0, 0, 0, ..., 0, 0, 0],
                                                  [0, 0, 0, ..., 1, 1, 1]], dtype=int32), 
                                   'name': 'MandelBrot'}]}
            create an image from a 2D array
+
          {'Image': {'data': data, 'name': "Mandelbrot"}}
            create an image by sending the data, e.g. data = np.ndarray( (width, height), _np.int32)
+
          {'command': ['setPixelImage Mandelbrot 1 3 200']}
            set a pixel value. the position is specified by indices
+
          {'command': ['setPixelWorld Mandelbrot 0.5 1.5 200']}
            set a pixel value. the position is specified by world coordinate
+
          Text
          {'command': ['setText MeshScan comment string "Sweep: 1/4" x 0.05 y 0.95']}
            create a text GQE for the scan MeshScan, the name of the text is comment

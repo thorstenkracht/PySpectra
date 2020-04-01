@@ -6,14 +6,14 @@ GQE - contains the Scan() class and functions to handle scans:
 # 1.8.2
 
 import numpy as _np
-from PyQt4 import QtCore as _QtCore
-from PyQt4 import QtGui as _QtGui
+from PyQt4 import QtCore, QtGui
 import math as _math
 import HasyUtils
 import PyTango as _PyTango
 import PySpectra 
 import PySpectra.definitions as _definitions 
 import PySpectra.misc.utils as _utils
+import pyqtgraph as _pg
 
 _gqeList = []
 _gqeIndex = None  # used by next/back
@@ -269,15 +269,15 @@ class Scan( object):
         if hasattr( proxy, "UnitLimitMin"): 
             try: 
                 if target < proxy.UnitLimitMin: 
-                    _QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g < unitLimitMin %g" % 
+                    QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g < unitLimitMin %g" % 
                                               ( name, target, proxy.UnitLimitMin))
                     return False
                 if target > proxy.UnitLimitMax: 
-                    _QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g > unitLimitMax %g" % 
+                    QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g > unitLimitMax %g" % 
                                               ( name, target, proxy.UnitLimitMax))
                     return False
             except Exception as e: 
-                _QtGui.QMessageBox.about( None, 'Info Box', "CheckTargetWithinLimits: %s %s" % 
+                QtGui.QMessageBox.about( None, 'Info Box', "CheckTargetWithinLimits: %s %s" % 
                                           ( name, repr( e)))
                 return False
         #
@@ -286,11 +286,11 @@ class Scan( object):
         else: 
             attrConfig = proxy.get_attribute_config_ex( "Position")
             if target < float( attrConfig[0].min_value): 
-                _QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g < attrConf.min_value %g" % 
+                QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g < attrConf.min_value %g" % 
                                           ( name, target, float( attrConfig[0].min_value)))
                 return False
             if target > float( attrConfig[0].max_value): 
-                _QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g > attrConf.max_value %g" % 
+                QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g > attrConf.max_value %g" % 
                                           ( name, target, float( attrConfig[0].max_value)))
                 return False
         return True
@@ -722,26 +722,45 @@ class Scan( object):
             # ---
             #
             if InfoBlock.monitorGui is None or InfoBlock.monitorGui.scanInfo is None: 
-                _QtGui.QMessageBox.about( None, "Info Box", 
+                QtGui.QMessageBox.about( None, "Info Box", 
                                           "GQE.updateMotorArrowCurrent: InfoBlock.monitorGui is None or InfoBlock.monitorGui.scanInfo is None")
                 return
 
             motorArr = _scanInfo['motors']        
             length = len( motorArr)
             if  length == 0 or length > 3:
-                _QtGui.QMessageBox.about( None, 'Info Box', "no. of motors == 0 or > 3") 
+                QtGui.QMessageBox.about( None, 'Info Box', "no. of motors == 0 or > 3") 
                 return
             proxy = _PyTango.DeviceProxy( motorArr[0]['name'])
             motName = motorArr[0]['name']
-    
+        #
+        # x, y in world coordinated
+        #
         x = proxy.position
         y = self.getYMin() 
-        
-        self.arrowMotorCurrent.setPos( x, y)
-        self.labelArrowMotorCurrent.setPos( x, y)
-        self.labelArrowMotorCurrent.setHtml( '<div>%s</div>' % ( motName))
+        #self.arrowMotorCurrent.setPos( x, y)
+        #self.labelArrowMotorCurrent.setPos( x, y)
+        #
+        # map to scene (pixel) coordinates
+        #
+        pos = self.plotItem.vb.mapViewToScene( _pg.Point( x, y)).toPoint()
+        pos.setY( PySpectra.getGraphicsWindowHeight() - _definitions.ARROW_Y_OFFSET)
+        self.arrowMotorCurrent.setPos( pos)
+        self.labelArrowMotorCurrent.setPos( pos)
+        self.labelArrowMotorCurrent.setHtml( '<div align="center">%s: %g</div>' % ( motName, x))
+
         self.arrowMotorCurrent.show()
         self.labelArrowMotorCurrent.show()
+
+        #
+        # we cannot hide() the motorArrorSetPoint when the motor
+        # state becomes ON because the arrow may also have been 
+        # placed by the mvsa macro and there is no move yet because
+        # the user is prompted for confirmation
+        #
+        #if proxy.state() == _PyTango.DevState.ON: 
+        #    self.arrowMotorSetPoint.hide()
+        #
 
         return
 
@@ -763,7 +782,11 @@ class Scan( object):
         elif lst[0].upper() == 'SHOW': 
             self.arrowMotorCurrent.show()
         elif lst[0].upper() == 'POSITION': 
-            self.arrowMotorCurrent.setPos( float( lst[1]), self.getYMin())
+            x = float( lst[1])
+            y = self.getYMin()
+            pos = self.plotItem.vb.mapViewToScene( _pg.Point( x, y)).toPoint()
+            pos.setY( PySpectra.getGraphicsWindowHeight() - _definitions.ARROW_Y_OFFSET)
+            self.arrowMotorCurrent.setPos( pos)
             self.arrowMotorCurrent.show()
             self.labelArrowMotorCurrent.setPos( float( lst[1]), self.getYMin())
             if self.motorNameList is not None and len( self.motorNameList) > 0: 
@@ -781,7 +804,9 @@ class Scan( object):
             - 'position', 'pos'
             - 'hide'
             - 'show'
-        used from mvsa, via toPyspMonitor(). 
+        used from 
+          - mvsa, via toPyspMonitor()
+          - pqtgraphic, mouse click
         '''
         
         if self.arrowMotorSetPoint is None:
@@ -792,8 +817,11 @@ class Scan( object):
         elif lst[0].upper() == 'SHOW': 
             self.arrowMotorSetPoint.show()
         elif lst[0].upper() == 'POSITION': 
-            self.arrowMotorSetPoint.setPos( float( lst[1]), self.getYMin())
-            self.labelArrowMotorCurrent.setPos( float( lst[1]), self.getYMin())
+            x = float( lst[1])
+            y = self.getYMin()
+            pos = self.plotItem.vb.mapViewToScene( _pg.Point( x, y)).toPoint()
+            pos.setY( PySpectra.getGraphicsWindowHeight() - _definitions.ARROW_Y_OFFSET)
+            self.arrowMotorSetPoint.setPos( pos)
             self.arrowMotorSetPoint.show()
         else: 
             raise ValueError( "GQE.setArrowMotorSetPoint: strange list %s" % str( lst))
@@ -1850,7 +1878,7 @@ def colorSpectraToPysp( color):
     this functions translates color numbers (a ls Spectra) to strings a la Pysp
     '''
     #
-    # +++
+    # 
     #
     if type(color) is not int: 
         return color

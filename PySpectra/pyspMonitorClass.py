@@ -24,6 +24,10 @@ from PyQt4 import QtGui
 import PyTango as _PyTango
 import zmq, json, socket
 
+import tngGui.lib.tngGuiClass
+import tngGui.lib.moveMotor as moveMotor
+import tngGui.lib.devices as devices
+
 updateTime = 0.1
 
 #
@@ -39,12 +43,13 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
     This class listens to a queue and displays the data.
     The queue is filled from pyspDoor.
     '''
-    def __init__( self, flagNoDoor = None, parent = None):
+    def __init__( self, app, flagNoDoor = None, parent = None):
         super( pyspMonitor, self).__init__( parent, calledFromSardanaMonitor = True)
 
         self.queue = queue.Queue()
         builtins.__dict__[ 'queue'] = self.queue
 
+        self.app = app
         self.refreshCount = 0
         self.flagIsBusy = False
         #
@@ -67,6 +72,11 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         self.helpMoveAction = self.helpMenu.addAction(self.tr("Move"))
         self.helpMoveAction.triggered.connect( self.cb_helpMove)
 
+        #
+        # needed when moveMotor is launched
+        #
+        self.devices = None
+
         self.setupZMQ()
 
     def setupZMQ( self): 
@@ -85,7 +95,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             self.timerZMQ.timeout.connect( self.cb_timerZMQ)
             self.timerZMQ.start(100)
         except Exception as e:
-            print( "pyspMonitorMain.__init__(): ZMQ error (json-dict receiver)")
+            print( "pyspMonitorClass.setupZMQ(): ZMQ error (json-dict receiver)")
             print( "message: %s" % repr( e))
             print( "assuming another pyspMonitor is ready to receive json-dcts")
             pass
@@ -204,9 +214,20 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
                 self.motPosLabels[i].hide()
 
         self.nMotor = length
+
     def makeMotorCb( self, hsh): 
         def motorCb():
-            os.system( "TngGui.py %s &" %  hsh[ 'name']); 
+            if self.devices is None: 
+                self.devices = devices.Devices()
+            devSelected = None
+            for dev in self.devices.allMotors: 
+                if hsh[ 'name'].upper() == dev[ 'name'].upper(): 
+                    devSelected = dev
+                    break
+            if devSelected is None: 
+                raise ValueError( "pyspMonitorClass.motorCb: failed to find %s in devices" % hsh[ 'name'])
+            w = tngGui.lib.tngGuiClass.launchMoveMotor( devSelected, self.devices, self.app, self.logWidget, self)
+            w.show()
             return
         return motorCb
         
@@ -222,7 +243,8 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
 
         self.refreshCount += 1
         #
-        # the queue() is filled from /home/kracht/Misc/pySpectra/PySpectra/pyspDoor.py, sendHshQueue()
+        # the queue() is filled from sendHshQueue() in
+        #  /home/kracht/Misc/pySpectra/PySpectra/pyspDoor.py
         #
         try:
             cnt = 0

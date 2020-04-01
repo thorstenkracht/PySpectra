@@ -12,8 +12,11 @@ here are the definitions used in various python files of the project
 # if there are more scans than MANY_GQES the x- and y-labels
 # are suppressed and the title is moved into the plot
 #
-from PyQt4 import QtCore as _QtCore
-from PyQt4 import QtGui as _QtGui
+from PyQt4 import QtCore, QtGui
+
+# y-offset for the currentPos and setPoint arrows (motors)
+ARROW_Y_OFFSET = 50
+
 MANY_GQES = 20
 VERY_MANY_GQES = 30
 
@@ -194,10 +197,10 @@ symbolSizeArr = [
 # pyqtgraph
 #
 lineStylePQT = { 
-    'SOLID': _QtCore.Qt.SolidLine,
-    'DASHED': _QtCore.Qt.DashLine,
-    'DOTTED': _QtCore.Qt.DotLine,
-    'DASHDOTTED': _QtCore.Qt.DashDotLine,
+    'SOLID': QtCore.Qt.SolidLine,
+    'DASHED': QtCore.Qt.DashLine,
+    'DOTTED': QtCore.Qt.DotLine,
+    'DASHDOTTED': QtCore.Qt.DashDotLine,
 }
 
 colorMaps = [ 

@@ -454,14 +454,13 @@ def launchGui():
     launches the Gui
     '''
 
-    from PyQt4 import QtGui as _QtGui
-    from PyQt4 import QtCore as _QtCore
+    from PyQt4 import QtGui, QtCore
 
     import PySpectra.pySpectraGuiClass as _gui
 
-    app = _QtGui.QApplication.instance()
+    app = QtGui.QApplication.instance()
     if app is None:
-        app = _QtGui.QApplication([])
+        app = QtGui.QApplication([])
 
     gui = _gui.pySpectraGui()
     gui.show()

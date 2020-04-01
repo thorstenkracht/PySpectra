@@ -802,12 +802,12 @@ class ScanAttributes( QtGui.QMainWindow):
         self.symbolColorLabel = QtGui.QLabel( "SymbolColor")
         self.layout_grid.addWidget( self.symbolColorLabel, row, 0)
         self.w_symbolColorComboBox = QtGui.QComboBox()
-        if str( self.scan.symbolColor).upper() not in list(_definitions.lineColorDct.keys()):
+        if str( self.scan.symbolColor).upper() not in list(_definitions.colorDct.keys()):
             self.scan.symbolColor = 'black'
         for symbolColor in _definitions.colorArr:
             self.w_symbolColorComboBox.addItem( symbolColor)
         self.w_symbolColorComboBox.setCurrentIndex( 
-            _definitions.lineColorDct[ str( self.scan.symbolColor).upper()])
+            _definitions.colorDct[ str( self.scan.symbolColor).upper()])
         self.w_symbolColorComboBox.currentIndexChanged.connect( self.cb_symbolColor)
         self.layout_grid.addWidget( self.w_symbolColorComboBox, row, 1) 
         #
@@ -1192,7 +1192,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.w_lineWidthComboBox.setCurrentIndex( _definitions.lineWidthDct[ str( self.scan.lineWidth)])
 
         self.w_symbolColorComboBox.setCurrentIndex( 
-            _definitions.lineColorDct[ str( self.scan.symbolColor).upper()])
+            _definitions.colorDct[ str( self.scan.symbolColor).upper()])
         self.w_symbolComboBox.setCurrentIndex( _definitions.symbolDct[ str( self.scan.symbol)])
         self.w_symbolSizeComboBox.setCurrentIndex( 
             _definitions.symbolSizeDct[ str( self.scan.symbolSize)])

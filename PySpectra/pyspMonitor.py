@@ -47,7 +47,7 @@ def main( flagNoDoor):
     if app is None:
         app = QtGui.QApplication(sys.argv)
 
-    o = pysp.pyspMonitorClass.pyspMonitor( flagNoDoor)
+    o = pysp.pyspMonitorClass.pyspMonitor( app, flagNoDoor)
     o.show()
 
     import PySpectra.pyspDoor

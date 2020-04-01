@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-from PyQt4 import QtCore as _QtCore
-from PyQt4 import QtGui as _QtGui
+from PyQt4 import QtCore, QtGui
 
 import pyqtgraph as _pg
 import matplotlib as _mpl
@@ -19,7 +18,7 @@ import PySpectra.misc.tangoIfc as _tangoIfc
 import PySpectra.definitions as _definitions
 
 _QApp = None
-_win = None
+_graphicsWindow = None
 _myScene = None
 _clsFunctions = []
 
@@ -28,31 +27,33 @@ def _initGraphic():
     haso107d1: 1920 x 1200
     spectra: 640 x 450 def., A4:  680 x 471 
     '''
-    global _QApp, _win
+    global _QApp, _graphicsWindow
 
-    if _QApp is not None and _win is not None: 
-        return (_QApp, _win)
+    if _QApp is not None and _graphicsWindow is not None: 
+        return (_QApp, _graphicsWindow)
 
-    _QApp = _QtGui.QApplication.instance()
+    _QApp = QtGui.QApplication.instance()
     if _QApp is None:
-        _QApp = _QtGui.QApplication([])
+        _QApp = QtGui.QApplication([])
 
     screen_resolution = _QApp.desktop().screenGeometry()
     width, height = screen_resolution.width(), screen_resolution.height()
 
-    if _win is None:
+    if _graphicsWindow is None:
         _pg.setConfigOption( 'background', 'w')
         _pg.setConfigOption( 'foreground', 'k')
-        _win = _pg.GraphicsWindow( title="PySpectra Application (PQT)")
-        _win.setGeometry( 30, 30, 793, int( 793./1.414))
+        _graphicsWindow = _pg.GraphicsWindow( title="PySpectra Application (PQT)")
+        _graphicsWindow.setGeometry( 30, 30, 793, int( 793./1.414))
+    return (_QApp, _graphicsWindow)
 
-    return (_QApp, _win)
+def getGraphicsWindowHeight(): 
+    return _graphicsWindow.geometry().height()
 
 def clear( scan): 
     '''
-    the clear() is executed here to ensure that _win is still alive
+    the clear() is executed here to ensure that _graphicsWindow is still alive
     '''
-    if _win is None: 
+    if _graphicsWindow is None: 
         return 
     #
     # clear.__doc__: 'Remove all items from the ViewBox'
@@ -61,15 +62,15 @@ def clear( scan):
     return 
 
 def close(): 
-    global _win
+    global _graphicsWindow
     global _clsFunctions
     global _myScene
 
-    if _win is None: 
+    if _graphicsWindow is None: 
         return
 
-    _win.destroy()
-    _win = None
+    _graphicsWindow.destroy()
+    _graphicsWindow = None
 
     _myScene = None
 
@@ -90,9 +91,9 @@ def _setSizeGraphicsWindow( nGqe):
     else: 
         factor = 0.35 # 1920 -> 680
 
-    geo = _win.geometry()
+    geo = _graphicsWindow.geometry()
 
-    geoScreen = _QtGui.QDesktopWidget().screenGeometry(-1)
+    geoScreen = QtGui.QDesktopWidget().screenGeometry(-1)
     widthNew = int( geoScreen.width()*factor)
     heightNew = int( widthNew/1.414)
     if widthNew > geoScreen.width(): 
@@ -101,7 +102,7 @@ def _setSizeGraphicsWindow( nGqe):
         heightNew = geoScreen.height() - 60
     if widthNew > geo.width() or heightNew > geo.height():
         #print "set-geo, new", widthNew, heightNew, "curr", geo.width(), geo.height()
-        _win.setGeometry( 30, 30, widthNew, heightNew)
+        _graphicsWindow.setGeometry( 30, 30, widthNew, heightNew)
     return 
 
 def setWsViewport( size = None):
@@ -152,7 +153,7 @@ def setWsViewport( size = None):
     wPixel = w*3778./100. 
     hPixel = h*3778./100.
     #print( "graphics.setWsViewport", wPixel, hPixel)
-    _win.setGeometry( 30, 30, int(wPixel), int(hPixel))
+    _graphicsWindow.setGeometry( 30, 30, int(wPixel), int(hPixel))
     _QApp.processEvents()
     _gqe.setWsViewportFixed( True)
 
@@ -165,11 +166,11 @@ def cls():
     global _clsFunctions
     global _myScene
 
-    if _QApp is None or _win is None: 
+    if _QApp is None or _graphicsWindow is None: 
         _initGraphic()
 
     #
-    # since _win.clear() does not clear all, we have to 
+    # since _graphicsWindow.clear() does not clear all, we have to 
     # run through the prepared cls-functions
     # the problem was visible when one runs through the 
     # pyspViewer examples
@@ -193,12 +194,12 @@ def cls():
         _myScene.sigMouseMoved.disconnect()
         _myScene = None
     #
-    # the clear() statement cuts down this list:_win.items() to 
+    # the clear() statement cuts down this list:_graphicsWindow.items() to 
     # one element, <class 'pyqtgraph.graphicsItems.GraphicsLayout.GraphicsLayout'>
     #
-    _win.clear()
+    _graphicsWindow.clear()
 
-    #_itemCrawler( _win, "after _win.clear()")
+    #_itemCrawler( _graphicsWindow, "after _graphicsWindow.clear()")
 
     #
     # clear the plotItems
@@ -212,10 +213,13 @@ def cls():
             continue
         if type( gqe) == _gqe.Scan:
             if gqe.labelArrowMotorCurrent is not None: 
-                gqe.plotItem.removeItem( gqe.labelArrowMotorCurrent)
+                _graphicsWindow.scene().removeItem( gqe.labelArrowMotorCurrent)
                 gqe.labelArrowMotorCurrent = None
             if gqe.arrowMotorCurrent is not None: 
-                gqe.plotItem.removeItem( gqe.arrowMotorCurrent)
+                _graphicsWindow.scene().removeItem( gqe.arrowMotorCurrent)
+                gqe.arrowMotorCurrent = None
+            if gqe.arrowMotorSetPoint is not None: 
+                _graphicsWindow.scene().removeItem( gqe.arrowMotorSetPoint)
                 gqe.arrowMotorCurrent = None
             if gqe.infLineLeft is not None: 
                 gqe.plotItem.removeItem( gqe.infLineLeft)
@@ -233,7 +237,7 @@ def cls():
                 try: 
                     gqe.plotItem.removeItem( gqe.plotDataItem)
                 except Exception as e: 
-                    print( "pqtgraph.cls: trouble removing %s " % repr( type( gqe.plotDataItem)))
+                    print( "pqtgraph.cls: trouble removing gqe.plotDataItem, %s " % repr( type( gqe.plotDataItem)))
                     print( "pqtgraph.cls: type plotItem %s " % repr( type( gqe.plotItem)))
                     print( repr( e))
                 gqe.plotDataItem = None
@@ -246,7 +250,7 @@ def cls():
             gqe.img = None
 
     #
-    # _QApp.processEvents() must not follow a _win.clear(). 
+    # _QApp.processEvents() must not follow a _graphicsWindow.clear(). 
     # Otherwise all plots are displayed in the upper left corner
     # before they are moves to the correct final positions
     #
@@ -364,9 +368,16 @@ def _addArrowsMotor( gqe, nameList):
     gqe.labelArrowMotorCurrent = _pg.TextItem( color='k', anchor = ( 0.5, 2.))
     fontSize = _gqe.getFontSize( nameList)
     gqe.labelArrowMotorCurrent.setHtml( '<div style="font-size:%dpx;">%s</div>' % (fontSize, "n.n."))
-    gqe.plotItem.addItem( gqe.arrowMotorSetPoint)
-    gqe.plotItem.addItem( gqe.arrowMotorCurrent)
-    gqe.plotItem.addItem( gqe.labelArrowMotorCurrent)
+    #
+    # the arrows are added to the GraphicsWindow to use pixel coordinates (?)
+    #
+    _graphicsWindow.scene().addItem( gqe.arrowMotorSetPoint)
+    _graphicsWindow.scene().addItem( gqe.arrowMotorCurrent)
+    _graphicsWindow.scene().addItem( gqe.labelArrowMotorCurrent)
+
+    #gqe.plotItem.addItem( gqe.arrowMotorSetPoint)
+    # gqe.plotItem.addItem( gqe.arrowMotorCurrent)
+    #gqe.plotItem.addItem( gqe.labelArrowMotorCurrent)
 
     gqe.arrowMotorCurrent.hide()
     gqe.arrowMotorSetPoint.hide()
@@ -504,7 +515,7 @@ def _getPen( scan):
     if scan.lineStyle in _definitions.lineStylePQT:
         stl = _definitions.lineStylePQT[ scan.lineStyle]
     else:
-        stl = _QtCore.Qt.DashLine
+        stl = QtCore.Qt.DashLine
 
     return _pg.mkPen( color = clr, width = scan.lineWidth, style = stl)
 
@@ -671,10 +682,13 @@ def _make_cb_mouseClicked( gqe):
     '''
     def mouseClicked(evt):
 
-        #print( "+++pqtgraphics.mouseClicked: zooming %s" % gqe.flagZooming) 
-
+        #print( "+++pqtgraphics.mouseClicked: %s" % repr( evt.scenePos()))
+        
         # left mouse button
         if evt.button() == 1: 
+            #
+            # scenePos() are pixel values
+            #
             mousePoint = gqe.plotItem.vb.mapSceneToView(evt.scenePos())
             if type( gqe) == _gqe.Scan:
                 if mousePoint.y() < gqe.getYMin() or \
@@ -743,7 +757,7 @@ def _textIsOnDisplay( textStr):
     '''
     searches the list of Items to see whether textStr exists already
     '''
-    for item in _win.items():
+    for item in _graphicsWindow.items():
         if type( item) is _pg.graphicsItems.LabelItem.LabelItem: 
             if textStr == item.text:
                 return True
@@ -754,13 +768,13 @@ def configGraphics():
     '''
     called from the GuiClass to adjust the distance between the plots
     '''
-    if _QApp is None or _win is None: 
+    if _QApp is None or _graphicsWindow is None: 
         _initGraphic()
 
-    _win.ci.layout.setContentsMargins( _definitions.marginLeft, _definitions.marginTop, 
+    _graphicsWindow.ci.layout.setContentsMargins( _definitions.marginLeft, _definitions.marginTop, 
                                        _definitions.marginRight, _definitions.marginBottom)
-    _win.ci.layout.setHorizontalSpacing( _definitions.spacingHorizontal)
-    _win.ci.layout.setVerticalSpacing( _definitions.spacingVertical)
+    _graphicsWindow.ci.layout.setHorizontalSpacing( _definitions.spacingHorizontal)
+    _graphicsWindow.ci.layout.setVerticalSpacing( _definitions.spacingVertical)
     return
 
 def _adjustFigure( nDisplay): 
@@ -774,7 +788,7 @@ def _isCellTaken( row, col):
     returns True, if there is already a plotItem in (row, col)
     '''
     argout = False
-    for item in _win.items():
+    for item in _graphicsWindow.items():
         if isinstance( item, _pg.graphicsItems.GraphicsLayout.GraphicsLayout):
             if item.getItem( row, col) is not None:
                 for elm in item.items:
@@ -800,12 +814,12 @@ def _displayTitleComment():
     title = _gqe.getTitle()
     if title is not None:
         if not _textIsOnDisplay( title):
-            _win.addLabel( title, row = 0, col = 0, colspan = 10)
+            _graphicsWindow.addLabel( title, row = 0, col = 0, colspan = 10)
 
     comment = _gqe.getComment()
     if comment is not None:
         if not _textIsOnDisplay( comment):
-            _win.addLabel( comment, row = 1, col = 0, colspan = 10)
+            _graphicsWindow.addLabel( comment, row = 1, col = 0, colspan = 10)
 
 def _calcTextPosition( scan, xIn, yIn): 
     '''
@@ -1098,17 +1112,17 @@ def _createPlotItem( gqe, nameList):
         #
         # pyqtgraph.graphicsItems.ViewBox.ViewBox.ViewBox
         #
-        gqe.plotItem = _win.addViewBox( row, col)
+        gqe.plotItem = _graphicsWindow.addViewBox( row, col)
         gqe.plotItem.setRange( xRange = ( 0, 1), yRange = ( 0., 1.))
         _addTexts( gqe, nameList)
         return 
 
     try:
         if type( gqe) == _gqe.Scan and gqe.doty: 
-            plotItem = _win.addPlot( axisItems = { 'bottom': _CAxisTime( orientation='bottom'),
-                                                   'left': SmartFormat(orientation='left'),
-                                                   'right': SmartFormat(orientation='right')}, # if overlay
-                                     row = row, col = col, colspan = gqe.colSpan) 
+            plotItem = _graphicsWindow.addPlot( axisItems = { 'bottom': _CAxisTime( orientation='bottom'),
+                                                              'left': SmartFormat(orientation='left'),
+                                                              'right': SmartFormat(orientation='right')}, # if overlay
+                                                row = row, col = col, colspan = gqe.colSpan) 
         else:
             #
             # <class 'pyqtgraph.graphicsItems.PlotItem.PlotItem.PlotItem'>
@@ -1119,14 +1133,14 @@ def _createPlotItem( gqe, nameList):
                 l.gqe = gqe
                 b.gqe = gqe
                 if gqe.flagAxes:
-                    plotItem = _win.addPlot( row = row, col = col, colspan = gqe.colSpan,
+                    plotItem = _graphicsWindow.addPlot( row = row, col = col, colspan = gqe.colSpan,
                                              axisItems = { 'left': l, 
                                                            'right': SmartFormat(orientation='right'),  # if overlay
                                                            'bottom': b})
                 else: 
-                    plotItem = _win.addPlot( row = row, col = col, colspan = gqe.colSpan)
+                    plotItem = _graphicsWindow.addPlot( row = row, col = col, colspan = gqe.colSpan)
             else:
-                plotItem = _win.addPlot( row = row, col = col, colspan = gqe.colSpan,
+                plotItem = _graphicsWindow.addPlot( row = row, col = col, colspan = gqe.colSpan,
                                          axisItems = { 'left': SmartFormat(orientation='left'), 
                                                        'right': SmartFormat(orientation='right'),  # if overlay
                                                        'bottom': SmartFormat(orientation='bottom')})
@@ -1259,7 +1273,7 @@ def _displayImages( flagDisplaySingle, nameList = None):
         if imageGqe.plotItem is None: 
             _createPlotItem( imageGqe, nameList)
 
-        #imageGqe.plotItem = _win.addPlot( row = imageGqe.row, col = imageGqe.col)
+        #imageGqe.plotItem = _graphicsWindow.addPlot( row = imageGqe.row, col = imageGqe.col)
         if imageGqe.img is None:
             imageGqe.img = _pg.ImageItem()
             imageGqe.plotItem.addItem( imageGqe.img)
@@ -1372,6 +1386,7 @@ def display( nameList = None):
 
     if _QApp is None: 
         _initGraphic()
+
     #
     # Do not put a cls() here because it takes a lot of time, especially when
     # fast displays are done. 
@@ -1551,7 +1566,7 @@ def display( nameList = None):
             target.scene = target.plotItem.scene()
             target.scene.addItem( scan.viewBox)
             #
-            # _win.clear() doesn't really work. Therefore we have to 
+            # _graphicsWindow.clear() doesn't really work. Therefore we have to 
             # prepare a function to be called by cls()
             #
             _clsFunctions.append( _makeClsSceneFunc( target.scene, scan.viewBox))
@@ -1573,7 +1588,7 @@ def display( nameList = None):
 
         target.plotItem.getAxis('right').linkToView( scan.viewBox)
         #
-        # _win.clear() doesn't really work. Therefore we have to 
+        # _graphicsWindow.clear() doesn't really work. Therefore we have to 
         # prepare a function to be called by cls()
         #
         #_clsFunctions.append( _makeClsSceneFunc( target.scene, scan.viewBox))

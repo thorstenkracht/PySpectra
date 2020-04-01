@@ -4,8 +4,7 @@ import matplotlib
 matplotlib.use( 'TkAgg')
 import matplotlib.pyplot as plt
 
-from PyQt4 import QtCore as _QtCore
-from PyQt4 import QtGui as _QtGui
+from PyQt4 import QtCore, QtGui
 
 import time as _time
 import os as _os
@@ -34,9 +33,9 @@ def _initGraphic( figureIn = None, canvasIn = None):
     global Fig, Canvas, _QApp
 
     if _QApp is None:
-        _QApp = _QtGui.QApplication.instance()
+        _QApp = QtGui.QApplication.instance()
         if _QApp is None:
-            _QApp = _QtGui.QApplication([])
+            _QApp = QtGui.QApplication([])
 
     if figureIn is not None:
         Fig = figureIn
