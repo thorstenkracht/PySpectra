@@ -172,14 +172,11 @@ def exampleImageMBVia_execHsh_OneChunk():
             res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
             data[i][j] = int( res)
 
-    print( "execHsh_OneChunk-1") 
     _zmqIfc.execHsh( { 'putData': 
                     { 'images': [{'name': "Mandelbrot", 'data': data,
                                   'xMin': xmin, 'xMax': xmax, 
                                   'yMin': ymin, 'yMax': ymax}]}})
-    print( "execHsh_OneChunk-2") 
     PySpectra.cls()
-    print( "execHsh_OneChunk-3") 
     PySpectra.display()
     print( "execHsh_OneChunk DONE") 
 

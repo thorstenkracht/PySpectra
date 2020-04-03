@@ -910,6 +910,10 @@ class ScanAttributes( QtGui.QMainWindow):
         self.fsaAction.triggered.connect( self.cb_fsa)
         self.utilsMenu.addAction( self.fsaAction)
 
+        self.detailsAction = QtGui.QAction('Details', self)        
+        self.detailsAction.triggered.connect( self.cb_details)
+        self.utilsMenu.addAction( self.detailsAction)
+
 
         #
         # the activity menubar: help and activity
@@ -1214,6 +1218,17 @@ class ScanAttributes( QtGui.QMainWindow):
 
         PySpectra.cls()
         PySpectra.display()
+
+    def cb_details( self): 
+        print( "\n %s " % self.scan.name)
+        print( "arrowMotorCurrent %s" % repr( self.scan.arrowMotorCurrent))
+        print( "labelArrowMotorCurrent %s" % repr( self.scan.labelArrowMotorCurrent))
+        print( "arrowMotorSetPoint %s" % repr( self.scan.arrowMotorSetPoint))
+        print( "infLineMouseX %s" % repr( self.scan.infLineMouseX))
+        print( "infLineMouseY %s" % repr( self.scan.infLineMouseY))
+        print( "infLineLeft %s" % repr( self.scan.infLineLeft))
+        print( "infLineRight %s" % repr( self.scan.infLineRight))
+        return 
 
     def cb_showScan( self): 
         for i in range( 0, self.scan.currentIndex + 1): 

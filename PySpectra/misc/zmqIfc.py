@@ -133,6 +133,11 @@ def execHsh( hsh):
          { 'command': ['setArrowMotorSetPoint sig_gen hide']}
            handle the arrow pointing to the setpoint
 
+         { 'command': ['setArrowMotorMisc sig_gen position 1.234']}
+         { 'command': ['setArrowMotorMisc sig_gen show']}
+         { 'command': ['setArrowMotorMisc sig_gen hide']}
+           handle the arrow pointing to a position defined e.g. by mvsa
+
          {'command': [u'setTitle ascan exp_dmy01 0.0 1.0 3 0.2']}
            set the title for the whole widget
          {'command': [u'setComment "tst_01366.fio, Wed Dec 18 10:02:09 2019"']}

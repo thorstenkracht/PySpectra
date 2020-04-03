@@ -4,13 +4,13 @@ from PyQt4 import QtCore, QtGui
 
 import pyqtgraph as _pg
 import PySpectra
-import PySpectra.dMgt.GQE as _gqe
+import PySpectra.dMgt.GQE as GQE
 import PySpectra.definitions as _definitions
 
 def move( gqe, targetX, targetY = None):
-    if type( gqe) == _gqe.Scan: 
+    if type( gqe) == GQE.Scan: 
         return moveScan( gqe, targetX)
-    elif type( gqe) == _gqe.Image: 
+    elif type( gqe) == GQE.Image: 
         return moveImage( gqe, targetX, targetY)
     else: 
         raise ValueError( "IfTango.move: failed to identify the gqe type" % type( gqe))
@@ -25,18 +25,18 @@ def moveScan( scan, target):
 
     #print( "tangoIfc.move(), motorNameList %s " % repr( scan.motorNameList))
         
-    if _gqe.InfoBlock.monitorGui is None and scan.motorNameList is None:
+    if GQE.InfoBlock.monitorGui is None and scan.motorNameList is None:
         if scan.logWidget is not None:
             scan.logWidget.append( "tangoIfc.move: not called from pyspMonitor or moveMotor") 
         else:
             pass
         return 
 
-    if _gqe.InfoBlock.monitorGui.door.state() != _PyTango.DevState.ON: 
+    if GQE.InfoBlock.monitorGui.door.state() != _PyTango.DevState.ON: 
         if scan.logWidget is not None:
-            scan.logWidget.append( "tangoIfc.move: door.state() != ON %s" % repr( _gqe.infoBlock.monitorGui.door.state()))
+            scan.logWidget.append( "tangoIfc.move: door.state() != ON %s" % repr( GQE.infoBlock.monitorGui.door.state()))
         else:
-            print( "tangoIfc.move: door.state() != ON %s" % repr( _gqe.InfoBlock.monitorGui.door.state()))
+            print( "tangoIfc.move: door.state() != ON %s" % repr( GQE.InfoBlock.monitorGui.door.state()))
         return 
     #
     # make sure the target is inside the x-range of the plot
@@ -102,7 +102,7 @@ def moveScan( scan, target):
         scan.infLineMouseY.hide()
 
         pos = scan.plotItem.vb.mapViewToScene( _pg.Point( target, scan.getYMin())).toPoint()
-        pos.setY( scan.graphicsWindow.geometry().height() - _definitions.ARROY_Y_OFFSET)
+        pos.setY( PySpectra.getGraphicsWindowHeight() - _definitions.ARROW_Y_OFFSET)
         #scan.arrowMotorSetPoint.setPos( target, scan.getYMin())
         scan.arrowMotorSetPoint.setPos( pos)
         scan.arrowMotorSetPoint.show()
@@ -114,18 +114,18 @@ def moveScan( scan, target):
     # from the pyspMonitor application, after a scan macro has bee executed
     # ---
     #
-    if _gqe.InfoBlock.monitorGui is None or _gqe.InfoBlock.monitorGui.scanInfo is None: 
+    if GQE.InfoBlock.monitorGui is None or GQE.InfoBlock.monitorGui.scanInfo is None: 
         QtGui.QMessageBox.about( None, "Info Box", 
-                                  "GQE.Move: _gqe.monitorGui is None or _gqe.monitorGui.scanInfo is None")
+                                  "GQE.Move: GQE.monitorGui is None or GQE.monitorGui.scanInfo is None")
         return
 
-    motorArr = _gqe.InfoBlock.monitorGui.scanInfo['motors']        
+    motorArr = GQE.InfoBlock.monitorGui.scanInfo['motors']        
     length = len( motorArr)
     if  length == 0 or length > 3:
         QtGui.QMessageBox.about( None, 'Info Box', "no. of motors == 0 or > 3") 
         return
 
-    motorIndex = _gqe.InfoBlock.monitorGui.scanInfo['motorIndex']
+    motorIndex = GQE.InfoBlock.monitorGui.scanInfo['motorIndex']
 
     if motorIndex >= length:
         QtGui.QMessageBox.about( None, 'Info Box', "motorIndex %d >= no. of motors %d" % (motorIndex, length))
@@ -193,13 +193,13 @@ def moveScan( scan, target):
     scan.arrowMotorSetPoint.show()
 
     if not reply == QtGui.QMessageBox.Yes:
-        _gqe.InfoBlock.monitorGui.logWidget.append( "Move: move not confirmed")
+        GQE.InfoBlock.monitorGui.logWidget.append( "Move: move not confirmed")
         return
 
-    if _gqe.InfoBlock.monitorGui.scanInfo['title'].find( "hklscan") == 0:
-        _gqe.InfoBlock.monitorGui.logWidget.append( "br %g %g %g" % 
+    if GQE.InfoBlock.monitorGui.scanInfo['title'].find( "hklscan") == 0:
+        GQE.InfoBlock.monitorGui.logWidget.append( "br %g %g %g" % 
                                          (motorArr[0]['targetPos'],motorArr[1]['targetPos'],motorArr[2]['targetPos']))
-        _gqe.InfoBlock.monitorGui.door.RunMacro( ["br",  
+        GQE.InfoBlock.monitorGui.door.RunMacro( ["br",  
                                        "%g" %  motorArr[0]['targetPos'], 
                                        "%g" %  motorArr[1]['targetPos'], 
                                        "%g" %  motorArr[2]['targetPos']])
@@ -208,8 +208,8 @@ def moveScan( scan, target):
         for hsh in motorArr:
             lst.append( "%s" % (hsh['name']))
             lst.append( "%g" % (hsh['targetPos']))
-            _gqe.InfoBlock.monitorGui.logWidget.append( "%s to %g" % (hsh['name'], hsh['targetPos']))
-        _gqe.InfoBlock.monitorGui.door.RunMacro( lst)
+            GQE.InfoBlock.monitorGui.logWidget.append( "%s to %g" % (hsh['name'], hsh['targetPos']))
+        GQE.InfoBlock.monitorGui.door.RunMacro( lst)
 
     return 
 
@@ -238,7 +238,7 @@ def moveImage( image, targetIX, targetIY):
     targetY = float( targetIY)/float( image.height)*( image.yMax - image.yMin) + image.yMin
     print( "GQE.Image.move x %g, y %g" % (targetX, targetY))
 
-    if _gqe.InfoBlock.monitorGui is None:
+    if GQE.InfoBlock.monitorGui is None:
         if image.logWidget is not None:
             image.logWidget.append( "GQE.Image.move: not called from pyspMonitor") 
         else:
@@ -282,13 +282,13 @@ def moveImage( image, targetIX, targetIY):
         
     if not reply == QtGui.QMessageBox.Yes:
         if image.logWidget is not None:
-            _gqe.InfoBlock.monitorGui.logWidget.append( "Image.Move: move not confirmed")
+            GQE.InfoBlock.monitorGui.logWidget.append( "Image.Move: move not confirmed")
         return
 
     lst = [ "umv %s %g %s %g" % (proxyX.name(), targetX, proxyY.name(), targetY)]
         
     if image.logWidget is not None:
-        _gqe.InfoBlock.monitorGui.logWidget.append( "%s" % (lst[0]))
+        GQE.InfoBlock.monitorGui.logWidget.append( "%s" % (lst[0]))
 
-    _gqe.InfoBlock.monitorGui.door.RunMacro( lst)
+    GQE.InfoBlock.monitorGui.door.RunMacro( lst)
     return 

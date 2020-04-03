@@ -132,9 +132,8 @@ class pyspDoor( sms.BaseDoor):
         """
         cleans the internal storage and the graphics screen.
         """
-        #for k in list( self.counter_gqes.keys()):
-        #    del self.counter_gqes[k]
         self.sendHshQueue( { 'command': ['delete', 'cls']})
+        return 
 
     def waitForFile( self, filename):
         """

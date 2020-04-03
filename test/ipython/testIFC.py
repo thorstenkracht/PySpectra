@@ -4,6 +4,8 @@ cd /home/kracht/Misc/pySpectra
 python -m unittest discover -v
 
 python ./test/ipython/testIFC.py testIFC.test_create
+python ./test/ipython/testIFC.py testIFC.test_cls
+python ./test/ipython/testIFC.py testIFC.test_show
 python ./test/ipython/testIFC.py testIFC.test_pdf
 python ./test/ipython/testIFC.py testIFC.test_createText
 python ./test/ipython/testIFC.py testIFC.test_wsViewPort
@@ -14,6 +16,7 @@ python ./test/ipython/testIFC.py testIFC.test_setXY
 python ./test/ipython/testIFC.py testIFC.test_y2my
 python ./test/ipython/testIFC.py testIFC.test_delete
 python ./test/ipython/testIFC.py testIFC.test_execHsh
+python ./test/ipython/testIFC.py testIFC.test_execHshScan
 python ./test/ipython/testIFC.py testIFC.test_execHshSetPixelImage
 python ./test/ipython/testIFC.py testIFC.test_execHshSetPixelWorld
 python ./test/ipython/testIFC.py testIFC.test_execHshMonitorSetPixelWorld
@@ -210,7 +213,7 @@ class testIFC( unittest.TestCase):
 
         s1 = _gqe.getGqe( "s1")
         self.assertEqual( s1.currentIndex, 49)
-        self.assertEqual( s1.lastIndex, 0)
+        self.assertEqual( s1.lastIndex, -1)
         _ifc.command( "display")
         self.assertEqual( s1.lastIndex, (max - 1))
 
@@ -312,7 +315,7 @@ class testIFC( unittest.TestCase):
         self.assertEqual( o.symbolColor, 'red')
         self.assertEqual( o.symbolSize, 7)
         self.assertEqual( o.lineColor, 'blue')
-        self.assertEqual( o.lastIndex, 0)
+        self.assertEqual( o.lastIndex, -1)
         self.assertEqual( o.currentIndex, (max - 1))
          
         for i in range( max): 

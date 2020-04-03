@@ -160,11 +160,8 @@ class testGQE( unittest.TestCase):
 
         PySpectra.cls()
         PySpectra.dMgt.GQE.delete()
-        print "reading splitter"
         PySpectra.dMgt.GQE.read( "%s/test/data/SPLITTER_PXE_BL_22_2.dat" % pySpectraPath)
-        print "reading splitter DONE"
         lst = PySpectra.dMgt.GQE.getGqeList()
-        print "scanList", repr( lst)
         self.assertEqual( len( lst), 4)
         self.assertEqual( lst[0].name, "scan1")
         self.assertEqual( lst[1].name, "scan2")

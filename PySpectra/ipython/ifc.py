@@ -35,6 +35,10 @@ and by pyspViewer.py
     setComment
     setArrowMotorCurrent
     setArrowMotorSetPoint
+      used by the mouse-click callback
+    setArrowMotorMisc  
+      this arrow is ignored by the refresh() of pyspMonitor, 
+      used by e.g. mvsa
     setPixelImage
     setPixelWorld
     setText
@@ -108,6 +112,8 @@ def command( line):
         return setArrowMotorCurrent( lineRest)
     elif lst[0] == 'setArrowMotorSetPoint':
         return setArrowMotorSetPoint( lineRest)
+    elif lst[0] == 'setArrowMotorMisc':
+        return setArrowMotorMisc( lineRest)
     elif lst[0] == 'setComment':
         return setComment( lineRest)
     elif lst[0] == 'setPixelImage':
@@ -431,13 +437,29 @@ def setArrowMotorSetPoint( line):
       setArrowMotorSetPoint nameGqe hide
       setArrowMotorSetPoint nameGqe show
 
-      position: the motor target position, maybe from mvsa
+      position: the motor target position, mayby from mouse-click
     '''
     lst = line.split( ' ')
     o = _gqe.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setArrowMotorSetPoint: failed to find %s" % lst[0])
     o.setArrowMotorSetPoint( lst[1:])
+    return 
+
+def setArrowMotorMisc( line): 
+    '''
+    handle the arrowMotorMisc
+      setArrowMotorMisc nameGqe position <targetPos>
+      setArrowMotorMisc nameGqe hide
+      setArrowMotorMisc nameGqe show
+
+      position: the motor target position, maybe from mvsa
+    '''
+    lst = line.split( ' ')
+    o = _gqe.getGqe( lst[0])
+    if o is None: 
+        raise ValueError(" ifc.setArrowMotorMisc: failed to find %s" % lst[0])
+    o.setArrowMotorMisc( lst[1:])
     return 
 
 def setPixelWorld( line): 

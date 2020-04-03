@@ -2,25 +2,21 @@
 
 from PyQt4 import QtCore, QtGui
 
-import pyqtgraph as _pg
-import matplotlib as _mpl
-import time as _time
-import os as _os
-import math as _math
-import numpy as _np
-from matplotlib import cm
-import datetime as _datetime
-import types as _types
+import pyqtgraph 
+import time, os, math, datetime
+import numpy as np
 import psutil as _psutil
-import PySpectra.dMgt.GQE as _gqe
-import PySpectra.misc.utils as _utils
-import PySpectra.misc.tangoIfc as _tangoIfc
-import PySpectra.definitions as _definitions
+import PySpectra.dMgt.GQE as GQE
+import PySpectra.misc.utils as utils
+import PySpectra.misc.tangoIfc as tangoIfc
+import PySpectra.definitions as definitions
 
 _QApp = None
 _graphicsWindow = None
 _myScene = None
 _clsFunctions = []
+
+debug = False
 
 def _initGraphic():
     '''
@@ -40,34 +36,109 @@ def _initGraphic():
     width, height = screen_resolution.width(), screen_resolution.height()
 
     if _graphicsWindow is None:
-        _pg.setConfigOption( 'background', 'w')
-        _pg.setConfigOption( 'foreground', 'k')
-        _graphicsWindow = _pg.GraphicsWindow( title="PySpectra Application (PQT)")
+        pyqtgraph.setConfigOption( 'background', 'w')
+        pyqtgraph.setConfigOption( 'foreground', 'k')
+        _graphicsWindow = pyqtgraph.GraphicsWindow( title="PySpectra Application (PQT)")
         _graphicsWindow.setGeometry( 30, 30, 793, int( 793./1.414))
     return (_QApp, _graphicsWindow)
 
 def getGraphicsWindowHeight(): 
     return _graphicsWindow.geometry().height()
 
-def clear( scan): 
+def clear( gqe): 
     '''
-    the clear() is executed here to ensure that _graphicsWindow is still alive
+    clears the items related to a gqe
     '''
+
+    if debug: print( "pqtgraphics.clear %s" % gqe.name)
+
     if _graphicsWindow is None: 
         return 
     #
-    # clear.__doc__: 'Remove all items from the ViewBox'
+    # this is necessary because createPDF() might have been called before
     #
-    scan.plotItem.clear()
+    if gqe.plotItem is None: 
+        if debug: print( "pqtgraphics.clear:   plotItem is None %s" % gqe.name)
+        return 
+    #
+    # clear.__doc__: 'Remove all items from the ViewBox'
+    # 
+    gqe.plotItem.clear()
+    
+    if type( gqe) == GQE.Image:
+        gqe.img = None
+
+    if type( gqe) == GQE.Scan:
+        if debug: print( "pqtgraphics.clear:   type == Scan %s" % gqe.name)
+        if gqe.labelArrowMotorCurrent is not None: 
+            if debug: print( "pqtgraphics.clear removing label %s from %d" % 
+                   (id( gqe.labelArrowMotorCurrent), id( _graphicsWindow.scene())))
+            _graphicsWindow.scene().removeItem( gqe.labelArrowMotorCurrent)
+            gqe.labelArrowMotorCurrent = None
+        if gqe.arrowMotorCurrent is not None: 
+            if debug: print( "pqtgraphics.clear removing arrowCurr %s from %d" % 
+                   ( id(gqe.arrowMotorCurrent), id( _graphicsWindow.scene())))
+            _graphicsWindow.scene().removeItem( gqe.arrowMotorCurrent)
+            gqe.arrowMotorCurrent = None
+        if gqe.arrowMotorSetPoint is not None: 
+            if debug: print( "pqtgraphics.clear removing arrowSetP %s from %d" % 
+                   ( id( gqe.arrowMotorSetPoint), id( _graphicsWindow.scene())))
+            _graphicsWindow.scene().removeItem( gqe.arrowMotorSetPoint)
+            gqe.arrowMotorSetPoint = None
+        if gqe.arrowMotorMisc is not None: 
+            if debug: print( "pqtgraphics.clear removing arrowMisc %s from %d" % 
+                   ( id( gqe.arrowMotorMisc), id( _graphicsWindow.scene())))
+            _graphicsWindow.scene().removeItem( gqe.arrowMotorMisc)
+            gqe.arrowMotorMisc = None
+        if gqe.infLineLeft is not None: 
+            gqe.plotItem.removeItem( gqe.infLineLeft)
+            gqe.infLineLeft = None
+        if gqe.infLineRight is not None: 
+            gqe.plotItem.removeItem( gqe.infLineRight)
+            gqe.infLineRight = None
+        if gqe.infLineMouseX is not None: 
+            gqe.plotItem.removeItem( gqe.infLineMouseX)
+            gqe.infLineMouseX = None
+        if gqe.infLineMouseY is not None: 
+            gqe.plotItem.removeItem( gqe.infLineMouseY)
+            gqe.infLineMouseY = None
+        if gqe.plotDataItem is not None: 
+            try: 
+                gqe.plotItem.removeItem( gqe.plotDataItem)
+            except Exception as e: 
+                print( "pqtgraphics.clear: trouble removing gqe.plotDataItem, %s " % repr( type( gqe.plotDataItem)))
+                print( "pqtgraphics.clear: type plotItem %s " % repr( type( gqe.plotItem)))
+                print( repr( e))
+            gqe.plotDataItem = None
+        gqe.lastIndex = 0
+
+    gqe.viewBox = None
+    gqe.plotItem = None
+
     return 
 
 def close(): 
+    '''
+    '''
     global _graphicsWindow
     global _clsFunctions
     global _myScene
 
     if _graphicsWindow is None: 
         return
+    """
+    the cls() is necessary to avoid errors like the one below, if close() is followed
+    by a cls(). the problems seems to be that cls() removes items that have been 
+    removed by close()
+
+    the error
+      $ python ./test/graphics/testGraphics.py testGraphics.testClose
+      pqtgraphics.clear: trouble removing gqe.plotDataItem, <class 'pyqtgraph.graphicsItems.PlotDataItem.PlotDataItem'> 
+      pqtgraphics.clear: type plotItem <class 'pyqtgraph.graphicsItems.PlotItem.PlotItem.PlotItem'> 
+      RuntimeError('wrapped C/C++ object of type PlotDataItem has been deleted',)
+
+    """
+    cls()
 
     _graphicsWindow.destroy()
     _graphicsWindow = None
@@ -80,7 +151,7 @@ def close():
 
 def _setSizeGraphicsWindow( nGqe):
 
-    if _gqe.getWsViewportFixed(): 
+    if GQE.getWsViewportFixed(): 
         return 
 
     if nGqe > 10:
@@ -155,7 +226,7 @@ def setWsViewport( size = None):
     #print( "graphics.setWsViewport", wPixel, hPixel)
     _graphicsWindow.setGeometry( 30, 30, int(wPixel), int(hPixel))
     _QApp.processEvents()
-    _gqe.setWsViewportFixed( True)
+    GQE.setWsViewportFixed( True)
 
     return 
 
@@ -165,6 +236,8 @@ def cls():
     '''
     global _clsFunctions
     global _myScene
+
+    if debug: print( "\npqtgraphics.cls()") 
 
     if _QApp is None or _graphicsWindow is None: 
         _initGraphic()
@@ -185,7 +258,8 @@ def cls():
     # gqe.mousePrepared: needed because we can have several display() 
     # calls without cls()
     #
-    gqeList = _gqe.getGqeList()
+    gqeList = GQE.getGqeList()
+
     for gqe in gqeList:
         gqe.mousePrepared = False
 
@@ -204,50 +278,9 @@ def cls():
     #
     # clear the plotItems
     #
-    gqeList = _gqe.getGqeList()
+    gqeList = GQE.getGqeList()
     for gqe in gqeList:
-        #
-        # this is necessary because createPDF() might hasv been called before
-        #
-        if gqe.plotItem is None: 
-            continue
-        if type( gqe) == _gqe.Scan:
-            if gqe.labelArrowMotorCurrent is not None: 
-                _graphicsWindow.scene().removeItem( gqe.labelArrowMotorCurrent)
-                gqe.labelArrowMotorCurrent = None
-            if gqe.arrowMotorCurrent is not None: 
-                _graphicsWindow.scene().removeItem( gqe.arrowMotorCurrent)
-                gqe.arrowMotorCurrent = None
-            if gqe.arrowMotorSetPoint is not None: 
-                _graphicsWindow.scene().removeItem( gqe.arrowMotorSetPoint)
-                gqe.arrowMotorCurrent = None
-            if gqe.infLineLeft is not None: 
-                gqe.plotItem.removeItem( gqe.infLineLeft)
-                gqe.infLineLeft = None
-            if gqe.infLineRight is not None: 
-                gqe.plotItem.removeItem( gqe.infLineRight)
-                gqe.infLineRight = None
-            if gqe.infLineMouseX is not None: 
-                gqe.plotItem.removeItem( gqe.infLineMouseX)
-                gqe.infLineMouseX = None
-            if gqe.infLineMouseY is not None: 
-                gqe.plotItem.removeItem( gqe.infLineMouseY)
-                gqe.infLineMouseY = None
-            if gqe.plotDataItem is not None: 
-                try: 
-                    gqe.plotItem.removeItem( gqe.plotDataItem)
-                except Exception as e: 
-                    print( "pqtgraph.cls: trouble removing gqe.plotDataItem, %s " % repr( type( gqe.plotDataItem)))
-                    print( "pqtgraph.cls: type plotItem %s " % repr( type( gqe.plotItem)))
-                    print( repr( e))
-                gqe.plotDataItem = None
-
-            gqe.lastIndex = 0
-        gqe.viewBox = None
-        gqe.plotItem = None
-
-        if type( gqe) == _gqe.Image:
-            gqe.img = None
+        clear( gqe)
 
     #
     # _QApp.processEvents() must not follow a _graphicsWindow.clear(). 
@@ -259,7 +292,7 @@ def cls():
 
 def _getLayout( o): 
     for item in o.items(): 
-        if type( item) == _pg.graphicsItems.GraphicsLayout.GraphicsLayout: 
+        if type( item) == pyqtgraph.graphicsItems.GraphicsLayout.GraphicsLayout: 
             return item
 
 def procEventsLoop( timeOut = None):
@@ -268,19 +301,19 @@ def procEventsLoop( timeOut = None):
     '''
     if timeOut is None:
         print "\nPress <enter> to continue ",
-    startTime = _time.time()
+    startTime = time.time()
     while True:
-        _time.sleep(0.01)
+        time.sleep(0.01)
         _QApp.processEvents()
         if timeOut is not None:
-            if (_time.time() - startTime) > timeOut: 
+            if (time.time() - startTime) > timeOut: 
                 break
         #
         # :99.0 is the DISPLAY in travis
         #
-        if _os.getenv( "DISPLAY") == ":99.0": 
+        if os.getenv( "DISPLAY") == ":99.0": 
             break
-        key = _utils.inkey()        
+        key = utils.inkey()        
         if key == 10:
             break
     print ""
@@ -306,22 +339,22 @@ def _addInfLineMouse( gqe):
         return 
 
     if not gqe.xLog: 
-        gqe.infLineMouseX = _pg.InfiniteLine( movable=True, angle=90, label='x={value:g}', 
-                                              pen = _pg.mkPen( color = (0, 0, 0)), 
+        gqe.infLineMouseX = pyqtgraph.InfiniteLine( movable=True, angle=90, label='x={value:g}', 
+                                              pen = pyqtgraph.mkPen( color = (0, 0, 0)), 
                                               labelOpts={'position': 0.1, 
                                                          'color': (0,0,000), 
                                                          'movable': True})
     else: 
-        gqe.infLineMouseX = _pg.InfiniteLine( movable=True, angle=90, 
-                                              pen = _pg.mkPen( color = (0, 0, 0)))
+        gqe.infLineMouseX = pyqtgraph.InfiniteLine( movable=True, angle=90, 
+                                              pen = pyqtgraph.mkPen( color = (0, 0, 0)))
 
     if not gqe.yLog:
-        gqe.infLineMouseY = _pg.InfiniteLine( movable=True, angle=0, label='y={value:g}', 
-                                              pen = _pg.mkPen( color = (0, 0, 0)), 
+        gqe.infLineMouseY = pyqtgraph.InfiniteLine( movable=True, angle=0, label='y={value:g}', 
+                                              pen = pyqtgraph.mkPen( color = (0, 0, 0)), 
                                               labelOpts={'position':0.1, 'color': (0,0,0), 'movable': True})
     else: 
-        gqe.infLineMouseY = _pg.InfiniteLine( angle=0, 
-                                              pen = _pg.mkPen( color = (0, 0, 0)))
+        gqe.infLineMouseY = pyqtgraph.InfiniteLine( angle=0, 
+                                              pen = pyqtgraph.mkPen( color = (0, 0, 0)))
 
     gqe.plotItem.addItem( gqe.infLineMouseX)
     gqe.plotItem.addItem( gqe.infLineMouseY)
@@ -332,17 +365,18 @@ def _addInfLineMouse( gqe):
     if not gqe.xLog: 
         gqe.infLineMouseX.setPos( gqe.x[mIndex])
     else: 
-        gqe.infLineMouseX.setPos( _math.log10( gqe.x[mIndex]))
+        gqe.infLineMouseX.setPos( math.log10( gqe.x[mIndex]))
     if not gqe.yLog: 
         gqe.infLineMouseY.setPos( gqe.y[mIndex])
     else: 
-        gqe.infLineMouseY.setPos( _math.log10( gqe.y[mIndex]))
+        gqe.infLineMouseY.setPos( math.log10( gqe.y[mIndex]))
 
     return 
 
+
 def _addArrowsMotor( gqe, nameList): 
     '''
-    the arrows pointing to the current position and the setpoint
+    the arrows pointing to the current position, the setpoint and to misc
     '''
 
     if gqe.arrowMotorCurrent is not None: 
@@ -359,27 +393,41 @@ def _addArrowsMotor( gqe, nameList):
     if gqe.flagMCA: 
         return 
 
-    gqe.arrowMotorCurrent = _pg.ArrowItem( angle=270, pen = _pg.mkPen( color = (0, 0, 255)))
-    gqe.arrowMotorSetPoint = _pg.ArrowItem( angle=270, pen = _pg.mkPen( color = (255, 0, 0)),
-                                            brush = _pg.mkBrush( color = (255, 0, 0)))
+    gqe.arrowMotorCurrent = pyqtgraph.ArrowItem( angle=270, pen = pyqtgraph.mkPen( color = (0, 0, 255)))
+    gqe.arrowMotorSetPoint = pyqtgraph.ArrowItem( angle=270, pen = pyqtgraph.mkPen( color = (255, 0, 0)),
+                                            brush = pyqtgraph.mkBrush( color = (255, 0, 0)))
+    #
+    # 'Misc' is for mvsa e.g., this arrow is not touched by the
+    # refresh callback of the pyspMonitor
+    #
+    gqe.arrowMotorMisc = pyqtgraph.ArrowItem( angle=270, pen = pyqtgraph.mkPen( color = (255, 0, 0)),
+                                              brush = pyqtgraph.mkBrush( color = (255, 0, 0)))
     #
     # anchor, (0, 0) -> upper left
     #
-    gqe.labelArrowMotorCurrent = _pg.TextItem( color='k', anchor = ( 0.5, 2.))
-    fontSize = _gqe.getFontSize( nameList)
+    gqe.labelArrowMotorCurrent = pyqtgraph.TextItem( color='k', anchor = ( 0.5, 2.))
+    fontSize = GQE.getFontSize( nameList)
     gqe.labelArrowMotorCurrent.setHtml( '<div style="font-size:%dpx;">%s</div>' % (fontSize, "n.n."))
     #
     # the arrows are added to the GraphicsWindow to use pixel coordinates (?)
     #
+    if debug: 
+        print( "addArrow %s labelCurr %s to %d" % 
+               ( gqe.name, id(gqe.labelArrowMotorCurrent), id( _graphicsWindow.scene())))
+        print( "addArrow %s arrowCurr %s to %d" % 
+               ( gqe.name, id(gqe.arrowMotorCurrent), id( _graphicsWindow.scene())))
+        print( "addArrow %s arrowSetP %s to %d" % 
+               ( gqe.name, id( gqe.arrowMotorSetPoint), id( _graphicsWindow.scene()))) 
+        print( "addArrow %s arrowMisc %s to %d" % 
+               ( gqe.name, id( gqe.arrowMotorMisc), id( _graphicsWindow.scene()))) 
+
+    _graphicsWindow.scene().addItem( gqe.arrowMotorMisc)
     _graphicsWindow.scene().addItem( gqe.arrowMotorSetPoint)
     _graphicsWindow.scene().addItem( gqe.arrowMotorCurrent)
     _graphicsWindow.scene().addItem( gqe.labelArrowMotorCurrent)
 
-    #gqe.plotItem.addItem( gqe.arrowMotorSetPoint)
-    # gqe.plotItem.addItem( gqe.arrowMotorCurrent)
-    #gqe.plotItem.addItem( gqe.labelArrowMotorCurrent)
-
     gqe.arrowMotorCurrent.hide()
+    gqe.arrowMotorMisc.hide()
     gqe.arrowMotorSetPoint.hide()
     gqe.labelArrowMotorCurrent.hide()
     return 
@@ -391,9 +439,9 @@ def _addVLines( gqe):
     if gqe.infLineLeft is not None:
         return 
 
-    gqe.infLineLeft = _pg.InfiniteLine(movable=True, angle=90, label='x={value:g}', 
+    gqe.infLineLeft = pyqtgraph.InfiniteLine(movable=True, angle=90, label='x={value:g}', 
                                     labelOpts={'position':0.1, 'color': (0,0,0), 'movable': True})
-    gqe.infLineRight = _pg.InfiniteLine(movable=True, angle=90, label='x={value:g}', 
+    gqe.infLineRight = pyqtgraph.InfiniteLine(movable=True, angle=90, label='x={value:g}', 
                                     labelOpts={'position':0.1, 'color': (0,0,0), 'movable': True})
     lIndex = int( gqe.currentIndex*0.25)
     rIndex = int( gqe.currentIndex*0.75)
@@ -436,20 +484,20 @@ def _doty2datetime(doty, year = None):
       --> Jan 29, 02:52
     """
     if year is None:
-        now = _datetime.datetime.now()
+        now = datetime.datetime.now()
         year = now.year
     dotySeconds = doty*24.*60.*60
-    boy = _datetime.datetime(year, 1, 1)
-    return boy + _datetime.timedelta(seconds=dotySeconds)
+    boy = datetime.datetime(year, 1, 1)
+    return boy + datetime.timedelta(seconds=dotySeconds)
 
-class _CAxisTime( _pg.AxisItem):
+class _CAxisTime( pyqtgraph.AxisItem):
     ''' 
     Formats axis label to human readable time.
     '''
     def tickStrings(self, values, scale, spacing):
         strns = []
         m = [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-        now = _datetime.datetime.now()
+        now = datetime.datetime.now()
         year = now.year
         for x in values:
             yearTemp = year
@@ -470,7 +518,7 @@ class _CAxisTime( _pg.AxisItem):
                 strns.append('')
         return strns
 
-class _CAxisImageX( _pg.AxisItem):
+class _CAxisImageX( pyqtgraph.AxisItem):
     ''' 
     Formats axis label to human readable time.
     '''
@@ -486,7 +534,7 @@ class _CAxisImageX( _pg.AxisItem):
 
         return strns
 
-class _CAxisImageY( _pg.AxisItem):
+class _CAxisImageY( pyqtgraph.AxisItem):
     ''' 
     Formats axis label for a image
     '''
@@ -507,17 +555,17 @@ def _getPen( scan):
     if scan.lineColor.upper() == 'NONE': 
         return None
 
-    if scan.lineColor.lower() in _definitions.colorCode: 
-        clr = _definitions.colorCode[ scan.lineColor.lower()]
+    if scan.lineColor.lower() in definitions.colorCode: 
+        clr = definitions.colorCode[ scan.lineColor.lower()]
     else:
         clr = 'k'
 
-    if scan.lineStyle in _definitions.lineStylePQT:
-        stl = _definitions.lineStylePQT[ scan.lineStyle]
+    if scan.lineStyle in definitions.lineStylePQT:
+        stl = definitions.lineStylePQT[ scan.lineStyle]
     else:
         stl = QtCore.Qt.DashLine
 
-    return _pg.mkPen( color = clr, width = scan.lineWidth, style = stl)
+    return pyqtgraph.mkPen( color = clr, width = scan.lineWidth, style = stl)
 
 def _make_cb_mouseMoved( gqe):
     '''
@@ -546,7 +594,7 @@ def _make_cb_mouseMoved( gqe):
         #
         # it is an image
         #
-        if type( gqe) == _gqe.Image: 
+        if type( gqe) == GQE.Image: 
             mY = mousePoint.y()
             mX = mousePoint.x()
             if mY >= gqe.height: 
@@ -566,7 +614,7 @@ def _make_cb_mouseMoved( gqe):
         # x is day-of-the year
         #
         if gqe.doty:
-            now = _datetime.datetime.now()
+            now = datetime.datetime.now()
             year = now.year
             x = mousePoint.x()
             if x < 0: 
@@ -594,11 +642,11 @@ def _make_cb_mouseMoved( gqe):
         if not gqe.yLog:
             mY = mousePoint.y()
         else:
-            mY = _math.pow( 10., mousePoint.y())
+            mY = math.pow( 10., mousePoint.y())
         if not gqe.xLog:
             mX = mousePoint.x()
         else:
-            mX = _math.pow( 10., mousePoint.x())
+            mX = math.pow( 10., mousePoint.x())
         #
         # getIndex() may throw an exception, if the x-values
         # are not ordered
@@ -626,14 +674,14 @@ def _make_cb_mouseMoved( gqe):
             gqe.infLineMouseX.setPos( gqe.x[index])
         else: 
             try: 
-                gqe.infLineMouseX.setPos( _math.log10( gqe.x[index]))
+                gqe.infLineMouseX.setPos( math.log10( gqe.x[index]))
             except: 
                 pass
         if not gqe.yLog:
             gqe.infLineMouseY.setPos( gqe.y[index])
         else: 
             try: 
-                gqe.infLineMouseY.setPos( _math.log10( gqe.y[index]))
+                gqe.infLineMouseY.setPos( math.log10( gqe.y[index]))
             except: 
                 pass
 
@@ -644,7 +692,7 @@ def _make_cb_mouseMoved( gqe):
             if gqe.xLog and gqe.yLog: 
                 gqe.mouseLabel.setText( "x=%g, y=%g" % ( gqe.x[ index], gqe.y[index]))
                 try: 
-                    gqe.mouseLabel.setPos( mousePoint.x(), _math.log10( gqe.y[index]))
+                    gqe.mouseLabel.setPos( mousePoint.x(), math.log10( gqe.y[index]))
                 except: 
                     pass
                 if index > gqe.currentIndex/2.: 
@@ -654,7 +702,7 @@ def _make_cb_mouseMoved( gqe):
             elif gqe.yLog: 
                 gqe.mouseLabel.setText( "y=%g" % (gqe.y[index]))
                 try: 
-                    gqe.mouseLabel.setPos( mousePoint.x(), _math.log10( gqe.y[index]))
+                    gqe.mouseLabel.setPos( mousePoint.x(), math.log10( gqe.y[index]))
                 except: 
                     pass
                 if index > gqe.currentIndex/2.: 
@@ -668,7 +716,7 @@ def _make_cb_mouseMoved( gqe):
                     gqe.mouseLabel.setAnchor((0, 1))
                 gqe.mouseLabel.setText( "x=%g" % (gqe.x[index]))
                 try: 
-                    gqe.mouseLabel.setPos( _math.log10( gqe.x[index]), mousePoint.y())
+                    gqe.mouseLabel.setPos( math.log10( gqe.x[index]), mousePoint.y())
                 except: 
                     pass
 
@@ -690,7 +738,7 @@ def _make_cb_mouseClicked( gqe):
             # scenePos() are pixel values
             #
             mousePoint = gqe.plotItem.vb.mapSceneToView(evt.scenePos())
-            if type( gqe) == _gqe.Scan:
+            if type( gqe) == GQE.Scan:
                 if mousePoint.y() < gqe.getYMin() or \
                    mousePoint.y() > gqe.getYMax(): 
                     return 
@@ -699,15 +747,15 @@ def _make_cb_mouseClicked( gqe):
                 except Exception as err: 
                     print( "pqtgraphics.mouseClicked %s" % repr( err))
                     return 
-                _tangoIfc.move( gqe, gqe.x[ index])
-            elif type( gqe) == _gqe.Image:
+                tangoIfc.move( gqe, gqe.x[ index])
+            elif type( gqe) == GQE.Image:
                 if gqe.flagZooming: 
                     return 
-                _tangoIfc.move( gqe, mousePoint.x(), mousePoint.y())
+                tangoIfc.move( gqe, mousePoint.x(), mousePoint.y())
         # middle button
         elif evt.button() == 4: 
             mousePoint = gqe.plotItem.vb.mapSceneToView(evt.scenePos())
-            if type( gqe) == _gqe.Image:
+            if type( gqe) == GQE.Image:
                 gqe.shift( mousePoint.x(), mousePoint.y())
             return
 
@@ -735,14 +783,14 @@ def _prepareMouse( gqe):
     # the mouseLabel.hide() call messes up the x-scale, so we plot only a ' '
     #
 
-    if type(gqe) == _gqe.Scan:
+    if type(gqe) == GQE.Scan:
         if gqe.xLog or gqe.yLog or gqe.doty: 
-            gqe.mouseLabel = _pg.TextItem( ".", color='k', anchor = (1, 1))
+            gqe.mouseLabel = pyqtgraph.TextItem( ".", color='k', anchor = (1, 1))
             #gqe.mouseLabel.setPos( gqe.x[0], gqe.y[0])
             gqe.plotItem.addItem( gqe.mouseLabel, ignoreBounds = True)
             gqe.mouseLabel.hide()
-    elif type(gqe) == _gqe.Image:
-        gqe.mouseLabel = _pg.TextItem( ".", color='b', anchor = (0.5, 0.5))
+    elif type(gqe) == GQE.Image:
+        gqe.mouseLabel = pyqtgraph.TextItem( ".", color='b', anchor = (0.5, 0.5))
         gqe.mouseLabel.setPos( 0., 0.,)
         gqe.plotItem.addItem( gqe.mouseLabel, ignoreBounds = True)
         gqe.mouseLabel.hide()
@@ -758,7 +806,7 @@ def _textIsOnDisplay( textStr):
     searches the list of Items to see whether textStr exists already
     '''
     for item in _graphicsWindow.items():
-        if type( item) is _pg.graphicsItems.LabelItem.LabelItem: 
+        if type( item) is pyqtgraph.graphicsItems.LabelItem.LabelItem: 
             if textStr == item.text:
                 return True
 
@@ -771,10 +819,10 @@ def configGraphics():
     if _QApp is None or _graphicsWindow is None: 
         _initGraphic()
 
-    _graphicsWindow.ci.layout.setContentsMargins( _definitions.marginLeft, _definitions.marginTop, 
-                                       _definitions.marginRight, _definitions.marginBottom)
-    _graphicsWindow.ci.layout.setHorizontalSpacing( _definitions.spacingHorizontal)
-    _graphicsWindow.ci.layout.setVerticalSpacing( _definitions.spacingVertical)
+    _graphicsWindow.ci.layout.setContentsMargins( definitions.marginLeft, definitions.marginTop, 
+                                       definitions.marginRight, definitions.marginBottom)
+    _graphicsWindow.ci.layout.setHorizontalSpacing( definitions.spacingHorizontal)
+    _graphicsWindow.ci.layout.setVerticalSpacing( definitions.spacingVertical)
     return
 
 def _adjustFigure( nDisplay): 
@@ -789,10 +837,10 @@ def _isCellTaken( row, col):
     '''
     argout = False
     for item in _graphicsWindow.items():
-        if isinstance( item, _pg.graphicsItems.GraphicsLayout.GraphicsLayout):
+        if isinstance( item, pyqtgraph.graphicsItems.GraphicsLayout.GraphicsLayout):
             if item.getItem( row, col) is not None:
                 for elm in item.items:
-                    if type( elm) == _pg.graphicsItems.LabelItem.LabelItem:
+                    if type( elm) == pyqtgraph.graphicsItems.LabelItem.LabelItem:
                         print "pqt_graphics.isCellTaken (%d, %d) %s" % (row, col, elm.text)
                         pass
                     else: 
@@ -811,12 +859,12 @@ def _displayTitleComment():
     - title is over comment
     - colspan is infinity
     '''
-    title = _gqe.getTitle()
+    title = GQE.getTitle()
     if title is not None:
         if not _textIsOnDisplay( title):
             _graphicsWindow.addLabel( title, row = 0, col = 0, colspan = 10)
 
-    comment = _gqe.getComment()
+    comment = GQE.getComment()
     if comment is not None:
         if not _textIsOnDisplay( comment):
             _graphicsWindow.addLabel( comment, row = 1, col = 0, colspan = 10)
@@ -829,12 +877,12 @@ def _calcTextPosition( scan, xIn, yIn):
     '''
     
     if not scan.xLog:
-        x = (_utils.xMax( scan) - _utils.xMin( scan))*xIn + _utils.xMin( scan)
+        x = (utils.xMax( scan) - utils.xMin( scan))*xIn + utils.xMin( scan)
     else:
         if scan.xMax <= 0. or scan.xMin <= 0.:
             raise ValueError( "pqt_graphics.calcTextPosition: xLog && (xMin <= 0: %g or xMax <= 0: %g" % 
                               (scan.xMin, scan.xMax))
-        x = (_math.log10( scan.xMax) - _math.log10( scan.xMin))*xIn + _math.log10( scan.xMin)
+        x = (math.log10( scan.xMax) - math.log10( scan.xMin))*xIn + math.log10( scan.xMin)
 
     if scan.autoscaleY:  
         yMax = scan.getYMax()
@@ -845,7 +893,7 @@ def _calcTextPosition( scan, xIn, yIn):
             if yMax <= 0. or yMin <= 0.:
                 raise ValueError( "pqt_graphics.calcTextPosition: yLog && (yMin <= 0: %g or yMax <= 0: %g" % 
                                   (yMin, yMax))
-            y = ( _math.log10( yMax) - _math.log10( yMin))*yIn + _math.log10( yMin)
+            y = ( math.log10( yMax) - math.log10( yMin))*yIn + math.log10( yMin)
     else: 
         if scan.yMax is None: 
             scan.yMax = scan.getYMax()
@@ -853,25 +901,25 @@ def _calcTextPosition( scan, xIn, yIn):
             scan.yMin = scan.getYMin()
         if not scan.yLog:
             #y = ( scan.yMax - scan.yMin)*yIn + scan.yMin
-            y = (_utils.yMax( scan) - _utils.yMin( scan))*yIn + _utils.yMin( scan)
+            y = (utils.yMax( scan) - utils.yMin( scan))*yIn + utils.yMin( scan)
         else:
             if scan.yMax <= 0. or scan.yMin <= 0.:
                 raise ValueError( "pqt_graphics.calcTextPosition: yLog && (yMin <= 0: %g or yMax <= 0: %g" % 
                                   (scan.yMin, scan.yMax))
-            y = ( _math.log10( scan.yMax) - _math.log10( scan.yMin))*yIn + _math.log10( scan.yMin)
+            y = ( math.log10( scan.yMax) - math.log10( scan.yMin))*yIn + math.log10( scan.yMin)
     #
-    #print "pqt_graphics.calcTextPosition: yMin %g, yMax %g, y %g" % ( _utils.yMin( scan), 
-    #                                                                  _utils.yMax( scan), y)
+    #print "pqt_graphics.calcTextPosition: yMin %g, yMax %g, y %g" % ( utils.yMin( scan), 
+    #                                                                  utils.yMax( scan), y)
     #if hasattr( scan, "plotDataItem"): 
     #    print scan.plotDataItem.dataBounds(1)
     return( x, y)
 
 def _addTexts( scan, nameList): 
 
-    if type( scan) != _gqe.Scan:
+    if type( scan) != GQE.Scan:
         return 
 
-    fontSize = _gqe.getFontSize( nameList)
+    fontSize = GQE.getFontSize( nameList)
     
     for elm in scan.textList:
 
@@ -892,11 +940,11 @@ def _addTexts( scan, nameList):
             anchorY = 1
         elif elm.vAlign == 'center':
             anchorY = 0.5
-        if elm.color.lower() in _definitions.colorCode:
-            textItem = _pg.TextItem( color=_definitions.colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
+        if elm.color.lower() in definitions.colorCode:
+            textItem = pyqtgraph.TextItem( color=definitions.colorCode[ elm.color.lower()], anchor = ( anchorX, anchorY))
             textItem.setHtml( '<div style="font-size:%dpx;">%s</div>' % ( elm.fontSizeTemp, elm.text))
         else:
-            textItem = _pg.TextItem( color='k', anchor = ( anchorX, anchorY))
+            textItem = pyqtgraph.TextItem( color='k', anchor = ( anchorX, anchorY))
             textItem.setHtml( '<div style="font-size:%dpx;">%s</div>' % ( elm.fontSizeTemp, elm.text))
 
         if scan.textOnly:
@@ -933,7 +981,7 @@ def _updateTextPosition( scan):
 
 def _setTitle( scan, nameList): 
 
-    fontSize = _gqe.getFontSize( nameList)
+    fontSize = GQE.getFontSize( nameList)
 
     #
     # the length of the title has to be limited. Otherwise pg 
@@ -941,8 +989,8 @@ def _setTitle( scan, nameList):
     # and the following display command, even with less scans, will 
     # also not fit into the graphics window
     #
-    if len( scan.name) > _definitions.LEN_MAX_TITLE:
-        tempName = "X_" + scan.name[-_definitions.LEN_MAX_TITLE:]
+    if len( scan.name) > definitions.LEN_MAX_TITLE:
+        tempName = "X_" + scan.name[-definitions.LEN_MAX_TITLE:]
     else: 
         tempName = scan.name 
 
@@ -955,7 +1003,7 @@ def _setTitle( scan, nameList):
     #   /home/kracht/Misc/pySpectra/examples/create22.py
     #   /home/kracht/Misc/pySpectra/examples/pyqtgraph/create22.py
     #
-    if True or _gqe.getNumberOfGqesToBeDisplayed( nameList) < _definitions.MANY_GQES: 
+    if True or GQE.getNumberOfGqesToBeDisplayed( nameList) < definitions.MANY_GQES: 
         scan.plotItem.setLabel( 'top', text=tempName, size = '%dpx' % fontSize)
     #
     # too many plots, so put the title into the plot
@@ -965,14 +1013,14 @@ def _setTitle( scan, nameList):
         #
         # (0, 0) upper left corner, (1, 1) lower right corner
         #
-        txt = _pg.TextItem( color='k', anchor = ( 1.0, 0.5))
+        txt = pyqtgraph.TextItem( color='k', anchor = ( 1.0, 0.5))
         txt.setHtml( '<div style="font-size:%dpx;">%s</div>' % (fontSize, tempName))
         if not scan.xLog:
             x = (scan.xMax - scan.xMin)*1.0 + scan.xMin
         else:
             if scan.xMax <= 0. or scan.xMin <= 0.:
                 raise ValueError( "pqt_graphics.setTitle: xLog && (xMin <= 0: %g or xMax <= 0: %g" %( scan.xMin, scan.xMax))
-            x = (_math.log10( scan.xMax) - _math.log10( scan.xMin))*1.0 + _math.log10( scan.xMin)
+            x = (math.log10( scan.xMax) - math.log10( scan.xMin))*1.0 + math.log10( scan.xMin)
         if scan.autoscaleY: 
             y = ( scan.getYMax() - scan.getYMin())*0.85 + scan.getYMin()
         else: 
@@ -985,8 +1033,8 @@ def _setTitle( scan, nameList):
             else:
                 if scan.yMax <= 0. or scan.yMin <= 0.:
                     raise ValueError( "pqt_graphics.setTitle: yLog && (yMin <= 0: %g or yMax <= 0: %g" % (scan.yMin, scan.yMax))
-                y = ( _math.log10( scan.yMax) - _math.log10( scan.yMin))*0.85 + \
-                    _math.log10( scan.yMin)
+                y = ( math.log10( scan.yMax) - math.log10( scan.yMin))*0.85 + \
+                    math.log10( scan.yMin)
         txt.setPos( x, y)
         #
         # if 'ignoreBounds=True', the x-range is corrent and the log tick 
@@ -1057,7 +1105,7 @@ def _isOverlayTarget( scan, nameList):
     returns True, if the scan is the target for the overlay 
     of another scan
     '''
-    gqeList = _gqe.getGqeList()
+    gqeList = GQE.getGqeList()
     for elm in gqeList: 
         if elm.overlay is None: 
             continue
@@ -1070,13 +1118,13 @@ def _isOverlayTarget( scan, nameList):
     return False
 
 
-class SmartFormat( _pg.AxisItem):
+class SmartFormat( pyqtgraph.AxisItem):
     def __init__(self, *args, **kwargs):
         super(SmartFormat, self).__init__(*args, **kwargs)
 
     def tickStrings(self, values, scale, spacing):
         if self.logMode:
-            return [ "%g" % x for x in 10 ** _np.array(values).astype(float)]
+            return [ "%g" % x for x in 10 ** np.array(values).astype(float)]
         return super( SmartFormat, self).tickStrings( values, scale, spacing)
 
 def _createPlotItem( gqe, nameList):            
@@ -1096,7 +1144,7 @@ def _createPlotItem( gqe, nameList):
     #print "graphics.createPlotItem", gqe.name, repr( gqe.at)
     #print "graphics.createPlotItem, nrow", gqe.nrow, "ncol", gqe.ncol, \
     #    "nplot", gqe.nplot
-    row = int( _math.floor(float( gqe.nplot - 1)/float(gqe.ncol)))
+    row = int( math.floor(float( gqe.nplot - 1)/float(gqe.ncol)))
     col = int( gqe.nplot - 1 - row*gqe.ncol) 
     #
     # take title and comment into account
@@ -1108,7 +1156,7 @@ def _createPlotItem( gqe, nameList):
     #
     # the textContainer
     #
-    if type( gqe) == _gqe.Scan and gqe.textOnly:
+    if type( gqe) == GQE.Scan and gqe.textOnly:
         #
         # pyqtgraph.graphicsItems.ViewBox.ViewBox.ViewBox
         #
@@ -1118,7 +1166,7 @@ def _createPlotItem( gqe, nameList):
         return 
 
     try:
-        if type( gqe) == _gqe.Scan and gqe.doty: 
+        if type( gqe) == GQE.Scan and gqe.doty: 
             plotItem = _graphicsWindow.addPlot( axisItems = { 'bottom': _CAxisTime( orientation='bottom'),
                                                               'left': SmartFormat(orientation='left'),
                                                               'right': SmartFormat(orientation='right')}, # if overlay
@@ -1127,7 +1175,7 @@ def _createPlotItem( gqe, nameList):
             #
             # <class 'pyqtgraph.graphicsItems.PlotItem.PlotItem.PlotItem'>
             #
-            if type( gqe) == _gqe.Image:
+            if type( gqe) == GQE.Image:
                 l = _CAxisImageY( orientation='left')
                 b = _CAxisImageX( orientation='bottom')
                 l.gqe = gqe
@@ -1174,15 +1222,15 @@ def _createPlotItem( gqe, nameList):
     #
     # 0.9.8-3 
     #
-    if _pg.__version__ is None: 
+    if pyqtgraph.__version__ is None: 
         gqe.plotItem.getAxis('top').setTicks( [])
         if not _isOverlayTarget( gqe, nameList):
             gqe.plotItem.getAxis('right').setTicks( [])
 
-    if type( gqe) == _gqe.Scan: 
+    if type( gqe) == GQE.Scan: 
         gqe.plotItem.showGrid( x = gqe.showGridX, y = gqe.showGridY)
 
-    if _gqe.getNumberOfGqesToBeDisplayed( nameList) <= _definitions.MANY_GQES:
+    if GQE.getNumberOfGqesToBeDisplayed( nameList) <= definitions.MANY_GQES:
         if hasattr( gqe, 'xLabel') and gqe.xLabel is not None:
             gqe.plotItem.setLabel( 'bottom', text=gqe.xLabel)
         if hasattr( gqe, 'yLabel')  and gqe.yLabel is not None:
@@ -1190,7 +1238,7 @@ def _createPlotItem( gqe, nameList):
     #
     # autoscale
     #
-    if type( gqe) == _gqe.Scan:
+    if type( gqe) == GQE.Scan:
         arX = gqe.autoscaleX
         arY = gqe.autoscaleY
         #
@@ -1200,7 +1248,7 @@ def _createPlotItem( gqe, nameList):
         # see also the raise() at line 768 in 
         #   /usr/lib/python2.7/dist-packages/pyqtgraph/graphicsItems/AxisItem.py
         #
-        if arY and gqe.yLog and len( _gqe.getGqeList()) > 15:
+        if arY and gqe.yLog and len( GQE.getGqeList()) > 15:
             arY = False
             #print "pqt_graphics.createPlotItem: changing autoRangeY to False"
             gqe.setLimits()
@@ -1208,7 +1256,7 @@ def _createPlotItem( gqe, nameList):
         if gqe.yMin is None or gqe.yMax is None:
             arY = True
         #
-        # problem: autoscale needs padding != 0
+        # autoRange, search below
         #
         gqe.plotItem.enableAutoRange( x = arX, y = arY)
         #
@@ -1225,7 +1273,7 @@ def _createPlotItem( gqe, nameList):
                 if gqe.yMax <= 0. or gqe.yMin <= 0.:
                     raise ValueError( "pqt_graphics.createPlotItem: yLog && (yMin <= 0: %g or yMax <= 0: %g" % \
                                       (gqe.yMin, gqe.yMax))
-                gqe.plotItem.setYRange( _math.log10( gqe.yMin), _math.log10(gqe.yMax))
+                gqe.plotItem.setYRange( math.log10( gqe.yMin), math.log10(gqe.yMax))
             else:
                 gqe.plotItem.setYRange( gqe.yMin, gqe.yMax)
 
@@ -1234,7 +1282,7 @@ def _createPlotItem( gqe, nameList):
                 if gqe.xMax <= 0. or gqe.xMin <= 0.:
                     raise ValueError( "pqt_graphics.createPlotItem: xLog && (xMin <= 0: %g or xMax <= 0: %g" % \
                                       (gqe.xMin, gqe.xMax))
-                gqe.plotItem.setXRange( _math.log10( gqe.xMin), _math.log10(gqe.xMax))
+                gqe.plotItem.setXRange( math.log10( gqe.xMin), math.log10(gqe.xMax))
             else:
                 gqe.plotItem.setXRange( gqe.xMin, gqe.xMax) #, padding = 0)
 
@@ -1251,6 +1299,8 @@ def _cmap_xmap(function, cmap):
 
     See also cmap_xmap.
     """
+    import matplotlib as mpl
+
     cdict = cmap._segmentdata
     function_to_map = lambda x : (function(x[0]), x[1], x[2])
     for key in ('red','green','blue'):
@@ -1258,14 +1308,15 @@ def _cmap_xmap(function, cmap):
         cdict[key].sort()
         assert (cdict[key][0]<0 or cdict[key][-1]>1), "Resulting indices extend out of the [0, 1] segment."
 
-    return _mpl.colors.LinearSegmentedColormap('colormap',cdict,1024)
+    return mpl.colors.LinearSegmentedColormap('colormap',cdict,1024)
 
 def _displayImages( flagDisplaySingle, nameList = None):
 
-    gqeList = _gqe.getGqeList()
+    from matplotlib import cm
+    gqeList = GQE.getGqeList()
 
     for imageGqe in gqeList:
-        if type( imageGqe) != _gqe.Image: 
+        if type( imageGqe) != GQE.Image: 
             continue
         if len( nameList) > 0: 
             if imageGqe.name not in nameList:
@@ -1275,11 +1326,11 @@ def _displayImages( flagDisplaySingle, nameList = None):
 
         #imageGqe.plotItem = _graphicsWindow.addPlot( row = imageGqe.row, col = imageGqe.col)
         if imageGqe.img is None:
-            imageGqe.img = _pg.ImageItem()
+            imageGqe.img = pyqtgraph.ImageItem()
             imageGqe.plotItem.addItem( imageGqe.img)
             if imageGqe.log:
                 try:
-                    imageGqe.img.setImage( _np.log( imageGqe.data))
+                    imageGqe.img.setImage( np.log( imageGqe.data))
                 except Exception, e: 
                     imageGqe.log = False
                     print "pqt_graphics: log failed"
@@ -1293,7 +1344,7 @@ def _displayImages( flagDisplaySingle, nameList = None):
         else: 
             if imageGqe.log:
                 try:
-                    imageGqe.img.setImage( _np.log( imageGqe.data))
+                    imageGqe.img.setImage( np.log( imageGqe.data))
                 except Exception, e: 
                     imageGqe.log = False
                     print "pqt_graphics: log failed"
@@ -1306,27 +1357,27 @@ def _displayImages( flagDisplaySingle, nameList = None):
                     imageGqe.img.setImage( imageGqe.data)
         try: 
             #
-            # matplotlib.colors.LinearSegmentedColormap
+            # mpl.colors.LinearSegmentedColormap
             #
             if imageGqe.colorMap == 'blackwhite':
                 import matplotlib.colors as clr
                 colormap = clr.LinearSegmentedColormap.from_list('blackwhite',     ['#000000','#ffffff'], N=256)
                 colormap._init()
-                lut = (colormap._lut * 255).view( _np.ndarray)  # Convert matplotlib colormap from 0-1 to 0-255 for Qt
+                lut = (colormap._lut * 255).view( np.ndarray)  # Convert matplotlib colormap from 0-1 to 0-255 for Qt
                 length = lut.shape[0] - 3
-                lutTemp = _np.copy( lut)
+                lutTemp = np.copy( lut)
                 for i in range( length):
                     if (i%2) == 0:
                         lutTemp[i] = [0., 0., 0., 255.] 
                     else:
                         lutTemp[i] = [255., 255., 255., 255.] 
-                lut = _np.copy( lutTemp)
+                lut = np.copy( lutTemp)
             else:
                 colormap = cm.get_cmap( imageGqe.colorMap)
                 colormap._init()
-                lut = (colormap._lut * 255).view( _np.ndarray)  # Convert matplotlib colormap from 0-1 to 0-255 for Qt
+                lut = (colormap._lut * 255).view( np.ndarray)  # Convert matplotlib colormap from 0-1 to 0-255 for Qt
                 length = lut.shape[0] - 3
-                lutTemp = _np.copy( lut)
+                lutTemp = np.copy( lut)
 
             for i in range( length):
                 j = i - (imageGqe.indexRotate % length)
@@ -1334,16 +1385,16 @@ def _displayImages( flagDisplaySingle, nameList = None):
                     j = j + length
                 lutTemp[j] = lut[i]
 
-            lut = _np.copy( lutTemp)
+            lut = np.copy( lutTemp)
 
             imageGqe.img.setLookupTable( lut)
         except Exception, e: 
             print "pqt_graphics: problem accessing color map, using default"
             print repr( e)
-            lut = _np.zeros((256,3), dtype=_np.ubyte)
-            lut[:128,0] = _np.arange(0,255,2)
+            lut = np.zeros((256,3), dtype=np.ubyte)
+            lut[:128,0] = np.arange(0,255,2)
             lut[128:,0] = 255
-            lut[:,1] = _np.arange(256)
+            lut[:,1] = np.arange(256)
             imageGqe.img.setLookupTable(lut)
 
         if flagDisplaySingle:
@@ -1379,7 +1430,7 @@ def display( nameList = None):
     #import HasyUtils
     #HasyUtils.printCallStack()
     #print "pqt_graphics.display, nameList:", repr( nameList)
-    startTime = _time.time()
+    startTime = time.time()
 
     if nameList is None:
         nameList = []
@@ -1396,10 +1447,10 @@ def display( nameList = None):
     # see if the members of nameList are in the gqeList
     #
     for nm in nameList:
-        if _gqe.getGqe( nm) is None:
+        if GQE.getGqe( nm) is None:
             raise ValueError( "graphics.display: %s is not in the gqeList" % nm)
 
-    gqeList = _gqe.getGqeList()
+    gqeList = GQE.getGqeList()
     #
     # find out whether only one gqe will be displayed 
     # in this case the mouse-cursor will be activated
@@ -1411,14 +1462,14 @@ def display( nameList = None):
     #
     # adjust the graphics window to the number of displayed scans
     #
-    nDisplay = _gqe.getNumberOfGqesToBeDisplayed( nameList)
+    nDisplay = GQE.getNumberOfGqesToBeDisplayed( nameList)
     _setSizeGraphicsWindow( nDisplay)
     _adjustFigure( nDisplay)
 
     #
     # set scan.nrow, scan.ncol, scan.nplot
     #
-    _utils.setGqeVPs( nameList, flagDisplaySingle, cls)
+    utils.setGqeVPs( nameList, flagDisplaySingle, cls)
 
     #
     # _displayTitleComment() uses (0,0) and (1, 0)
@@ -1438,16 +1489,18 @@ def display( nameList = None):
     #
     for scan in gqeList:
 
-        if type( scan) != _gqe.Scan: 
+        if type( scan) != GQE.Scan: 
             continue
         #print "graphics.display.firstPass,", scan.name
 
         #
         # if currentIndex == 0 it is a problem to draw the axes, escpecially 
         # to put text strings on the screen
+        # 3.4.2020 not so sure, seems to be workin
         #
-        if not scan.textOnly and scan.currentIndex == 0:
-            continue
+        # if not scan.textOnly and scan.currentIndex == 0:
+        #     continue
+
         #
         # overlay? - don't create a plot for this scan. Plot it
         # in the second pass. But it is displayed, if it is the only 
@@ -1457,7 +1510,7 @@ def display( nameList = None):
             #
             # maybe the scan.overlay has beed deleted
             #
-            if _gqe.getGqe( scan.overlay) is None:
+            if GQE.getGqe( scan.overlay) is None:
                 scan.overlay = None
             else:
                 continue
@@ -1485,8 +1538,8 @@ def display( nameList = None):
                 else:
                     scan.plotDataItem = scan.plotItem.plot(pen = _getPen( scan), 
                                                            symbol = scan.symbol, 
-                                                           symbolPen = _definitions.colorCode[ scan.symbolColor.lower()], 
-                                                           symbolBrush = _definitions.colorCode[ scan.symbolColor.lower()], 
+                                                           symbolPen = definitions.colorCode[ scan.symbolColor.lower()], 
+                                                           symbolBrush = definitions.colorCode[ scan.symbolColor.lower()], 
                                                            symbolSize = scan.symbolSize)
 
         if scan.textOnly:
@@ -1503,7 +1556,10 @@ def display( nameList = None):
         #
         scan.plotDataItem.setData( scan.x[:(scan.currentIndex + 1)], 
                                    scan.y[:(scan.currentIndex + 1)])
-
+        #
+        # we can introduce a padding with autoRange() but the
+        # paading is on both ends of the plot.
+        # scan.plotItem.vb.autoRange( padding = 0.1)
         #
         # keep track of what has already been displayed
         #
@@ -1529,7 +1585,7 @@ def display( nameList = None):
     for scan in gqeList:
         #print "graphics.display.secondPass,", scan.name
 
-        if type( scan) != _gqe.Scan: 
+        if type( scan) != GQE.Scan: 
             continue
 
         #
@@ -1554,7 +1610,7 @@ def display( nameList = None):
         if len( nameList) > 0 and scan.name not in nameList:
             continue
 
-        target = _gqe.getGqe( scan.overlay)
+        target = GQE.getGqe( scan.overlay)
         if target is None or target.plotItem is None:
             raise ValueError( "pqt_graphics.display: %s tries to overlay to %s" %
                               (scan.name, scan.overlay))
@@ -1562,7 +1618,7 @@ def display( nameList = None):
         scan.plotItem = target.plotItem
 
         if scan.viewBox is None:
-            scan.viewBox = _pg.ViewBox()
+            scan.viewBox = pyqtgraph.ViewBox()
             target.scene = target.plotItem.scene()
             target.scene.addItem( scan.viewBox)
             #
@@ -1602,14 +1658,14 @@ def display( nameList = None):
 
         if scan.plotDataItem is None:
             if scan.symbolColor.upper()  == 'NONE':
-                #curveItem = _pg.PlotCurveItem( x = scan.x, y = scan.y, pen = _getPen( scan))
-                scan.plotDataItem = _pg.PlotDataItem( x = scan.x, y = scan.y, pen = _getPen( scan))
+                #curveItem = pyqtgraph.PlotCurveItem( x = scan.x, y = scan.y, pen = _getPen( scan))
+                scan.plotDataItem = pyqtgraph.PlotDataItem( x = scan.x, y = scan.y, pen = _getPen( scan))
             else:
-                #scan.plotDataItem = _pg.PlotDataItem( x = scan.x, y = scan.y, pen = _getPen( scan))
-                scan.plotDataItem = _pg.ScatterPlotItem( x = scan.x, y = scan.y,
+                #scan.plotDataItem = pyqtgraph.PlotDataItem( x = scan.x, y = scan.y, pen = _getPen( scan))
+                scan.plotDataItem = pyqtgraph.ScatterPlotItem( x = scan.x, y = scan.y,
                                                          symbol = scan.symbol, 
-                                                         pen = _definitions.colorCode[ scan.symbolColor.lower()], 
-                                                         brush = _definitions.colorCode[ scan.symbolColor.lower()], 
+                                                         pen = definitions.colorCode[ scan.symbolColor.lower()], 
+                                                         brush = definitions.colorCode[ scan.symbolColor.lower()], 
                                                          size = scan.symbolSize)
             scan.viewBox.addItem( scan.plotDataItem )
                 
@@ -1621,7 +1677,7 @@ def display( nameList = None):
                 raise ValueError( "pqt_graphics.createPlotItem: yLog && (yMin (%g) <= 0 or yMax (%g) <= 0" % \
                                   (scan.yMin, scan.yMax))
             scan.plotDataItem.setLogMode( False, True)
-            scan.viewBox.setYRange( _math.log10( scan.yMin), _math.log10(scan.yMax))
+            scan.viewBox.setYRange( math.log10( scan.yMin), math.log10(scan.yMax))
         else:
             if scan.useTargetWindow:
                 if target.autoscaleY:

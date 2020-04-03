@@ -41,7 +41,7 @@ _ScanAttrsPublic = [ 'at', 'autoscaleX', 'autoscaleY', 'colSpan', 'currentIndex'
                      'yTicksVisible'] 
 
 _ScanAttrsPrivate = [ 'attributeWidget', 'infLineLeft', 'infLineRight', 'infLineMouseX', 'infLineMouseY', 
-                      'arrowMotorCurrent', 'labelArrowMotorCurrent', 'arrowMotorSetPoint',   
+                      'arrowMotorCurrent', 'labelArrowMotorCurrent', 'arrowMotorSetPoint', 'arrowMotorMisc',    
                       'mousePrepared', 'mouseLabel', 'cb_mouseLabel', 
                       'plotItem', 'plotDataItem', 'scene', 'xDateMpl']
 
@@ -181,7 +181,7 @@ class Scan( object):
                                           ( len( _gqeList[i].y), len( kwargs['y'])))
                     _gqeList[i].x = kwargs['x']
                     _gqeList[i].y = kwargs['y']
-                    _gqeList[i].lastIndex = 0
+                    _gqeList[i].lastIndex = -1
                     return
                 else:
                     raise ValueError( "GQE.Scan.__init__(): %s exists already" % name)
@@ -319,7 +319,7 @@ class Scan( object):
         self.dType = type( self.x[0])
 
         self.nPts = len( self.x)
-        self.lastIndex = 0
+        self.lastIndex = -1
         #
         # currentIndex refers to the last valid x-, y-value; nPts == currentIndex + 1
         #
@@ -381,7 +381,7 @@ class Scan( object):
         # the currentIndex points to the last valid point.
         # it starts at 0.
         #
-        self.lastIndex = 0
+        self.lastIndex = -1
         self.currentIndex = self.nPts - 1
             
         return
@@ -395,6 +395,7 @@ class Scan( object):
 
         self.arrowMotorCurrent = None
         self.arrowMotorSetPoint = None
+        self.arrowMotorMisc = None # for e.g. mvsa
         self.labelArrowMotorCurrent = None
         self.at = None
         self.attributeWidget = None
@@ -752,15 +753,8 @@ class Scan( object):
         self.arrowMotorCurrent.show()
         self.labelArrowMotorCurrent.show()
 
-        #
-        # we cannot hide() the motorArrorSetPoint when the motor
-        # state becomes ON because the arrow may also have been 
-        # placed by the mvsa macro and there is no move yet because
-        # the user is prompted for confirmation
-        #
-        #if proxy.state() == _PyTango.DevState.ON: 
-        #    self.arrowMotorSetPoint.hide()
-        #
+        if proxy.state() == _PyTango.DevState.ON: 
+            self.arrowMotorSetPoint.hide()
 
         return
 
@@ -805,7 +799,6 @@ class Scan( object):
             - 'hide'
             - 'show'
         used from 
-          - mvsa, via toPyspMonitor()
           - pqtgraphic, mouse click
         '''
         
@@ -825,6 +818,36 @@ class Scan( object):
             self.arrowMotorSetPoint.show()
         else: 
             raise ValueError( "GQE.setArrowMotorSetPoint: strange list %s" % str( lst))
+                                    
+        return 
+
+    def setArrowMotorMisc( self, lst): 
+        '''
+        handle the arrow pointing to a target position defined by e.g. mvsa
+          lst: 
+            - 'position', 'pos'
+            - 'hide'
+            - 'show'
+        used from 
+          - mvsa
+        '''
+        
+        if self.arrowMotorSetPoint is None:
+            self.display()
+
+        if lst[0].upper() == 'HIDE': 
+            self.arrowMotorMisc.hide()
+        elif lst[0].upper() == 'SHOW': 
+            self.arrowMotorMisc.show()
+        elif lst[0].upper() == 'POSITION': 
+            x = float( lst[1])
+            y = self.getYMin()
+            pos = self.plotItem.vb.mapViewToScene( _pg.Point( x, y)).toPoint()
+            pos.setY( PySpectra.getGraphicsWindowHeight() - _definitions.ARROW_Y_OFFSET)
+            self.arrowMotorMisc.setPos( pos)
+            self.arrowMotorMisc.show()
+        else: 
+            raise ValueError( "GQE.setArrowMotorMisc: strange list %s" % str( lst))
                                     
         return 
         
@@ -1106,15 +1129,13 @@ def delete( nameLst = None):
     #print( "GQE.delete, nameList: %s" % repr( nameLst))
     #print( "GQE.delete: %s" % repr( HasyUtils.getTraceBackList()))
 
+    #
+    # delete everything
+    #
     if not nameLst:    
         while len( _gqeList) > 0:
             tmp = _gqeList.pop()
-            if tmp.plotItem is not None:
-                #
-                # clear.__doc__: 'Remove all items from the ViewBox'
-                #
-                PySpectra.clear( tmp)
-                #tmp.plotItem.clear()
+            PySpectra.clear( tmp)
             if tmp.attributeWidget is not None: 
                 tmp.attributeWidget.close()
             del tmp
@@ -1122,41 +1143,33 @@ def delete( nameLst = None):
         setTitle( None)
         setComment( None)
         return 
-
+    #
+    # delete a single GQE
+    #
     if type( nameLst) is not list:
         name = nameLst
         for i in range( len( _gqeList)):
-            if name.upper() == _gqeList[i].name.upper():
-                #
-                # we had many MCA spectra displayed on top of each other
-                #
-                if _gqeList[i].plotItem is not None:
-                    PySpectra.clear( _gqeList[i])
-                    #_gqeList[i].plotItem.clear()
-                if _gqeList[i].attributeWidget is not None: 
-                    _gqeList[i].attributeWidget.close()
-                del _gqeList[i]
-                break
+            if name.upper() != _gqeList[i].name.upper():
+                continue
+            PySpectra.clear( _gqeList[i])
+            if _gqeList[i].attributeWidget is not None: 
+                _gqeList[i].attributeWidget.close()
+            del _gqeList[i]
         else:
             raise ValueError( "GQE.delete: not found %s" % name)
         return 
-
+    #
+    # delete a list of GQEs
+    #
     for name in nameLst:
         for i in range( len( _gqeList)):
-            if name.upper() == _gqeList[i].name.upper():
-                #
-                # we had many MCA spectra displayed on top of each other
-                #
-                if _gqeList[i].plotItem is not None:
-                    #
-                    # clear.__doc__: 'Remove all items from the ViewBox'
-                    #
-                    PySpectra.clear( _gqeList[i])
-                    #_gqeList[i].plotItem.clear()
-                if _gqeList[i].attributeWidget is not None: 
-                    _gqeList[i].attributeWidget.close()
-                del _gqeList[i]
-                break
+            if name.upper() != _gqeList[i].name.upper():
+                continue
+            PySpectra.clear( _gqeList[i])
+            if _gqeList[i].attributeWidget is not None: 
+                _gqeList[i].attributeWidget.close()
+            del _gqeList[i]
+            break
         else:
             print( "GQE.delete: not found %s" % name)
     return 

@@ -361,7 +361,6 @@ class testZmqIfc( unittest.TestCase):
         self.assertEqual( o.xMax, xmax)
         self.assertEqual( o.yMin, ymin)
         self.assertEqual( o.yMax, ymax)
-        print dir(o)
         PySpectra.procEventsLoop( 1)
 
 if __name__ == "__main__":
