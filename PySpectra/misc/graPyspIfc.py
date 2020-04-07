@@ -2,7 +2,8 @@
 '''
 this module actracts Spectra, PySpectra
 '''
-import PySpectra as pysp
+import PySpectra 
+import PySpectra.dMgt.GQE as GQE
 
 try: 
     import Spectra
@@ -43,7 +44,7 @@ def cls():
     if spectraInstalled and useSpectra:
         Spectra.gra_command( "cls/graphic")
     else:
-        pysp.cls()
+        PySpectra.cls()
     return 
 
 def close(): 
@@ -51,7 +52,7 @@ def close():
     if spectraInstalled and useSpectra:
         pass
     else:
-        pysp.close()
+        PySpectra.close()
     return 
 
 def createHardCopy( printer = None, flagPrint = False, format = 'DINA4'):
@@ -65,31 +66,36 @@ def createHardCopy( printer = None, flagPrint = False, format = 'DINA4'):
         Spectra.gra_command(" set 0.1/border=0")
         Spectra.gra_command(" postscript/redisplay/nolog/nocon/print/lp=%s" % printer)
     else:
-        fName = pysp.createPDF( flagPrint = flagPrint, format = format)
+        fName = PySpectra.createPDF( flagPrint = flagPrint, format = format)
         #
         # necessary to bring pqt and mpl again in-sync, mind lastIndex
         #
-        pysp.cls()
-        pysp.display()
+        PySpectra.cls()
+        PySpectra.display()
 
     return fName
 
 def deleteScan( scan): 
-    
+    '''
+    delete a single scan
+    '''
     if spectraInstalled and useSpectra:
         del scan
     else: 
-        pysp.dMgt.GQE.delete( [scan.name])
-        pysp.cls()
+        GQE.delete( [scan.name])
+        PySpectra.cls()
 
     return 
 
-def writeFile( nameGQE):
-
+def delete():
+    '''
+    delete all internal data
+    '''
     if spectraInstalled and useSpectra:
-        Spectra.gra_command( "write/fio %s" % nameGQE)
-    else:
-        pysp.write( [nameGQE])
+        Spectra.gra_command("delete *.*")
+    else: 
+        PySpectra.cls()
+        GQE.delete()
 
     return 
 
@@ -134,7 +140,7 @@ def Scan( **hsh):
         if 'color' in hsh:
             color = hsh[ 'color']
         if type(color) == int:
-            pysp.dMgt.GQE.colorSpectraToPysp( color)
+            GQE.colorSpectraToPysp( color)
 
         motorNameList = None
         if 'motorNameList' in hsh:
@@ -146,23 +152,46 @@ def Scan( **hsh):
         if 'at' in hsh: 
             at = hsh[ 'at']
         
-        scan = pysp.dMgt.GQE.Scan( name = name, 
-                                   xMin = xMin, 
-                                   xMax = xMax,
-                                   nPts = nPts,
-                                   xLabel = xLabel, 
-                                   yLabel = yLabel,
-                                   color = color,
-                                   autoscaleX = True, 
-                                   autoscaleY = True,
-                                   motorNameList = motorNameList,
-                                   logWidget = logWidget,
-                                   at = at)
+        scan = GQE.Scan( name = name, 
+                         xMin = xMin, 
+                         xMax = xMax,
+                         nPts = nPts,
+                         xLabel = xLabel, 
+                         yLabel = yLabel,
+                         color = color,
+                         autoscaleX = True, 
+                         autoscaleY = True,
+                         motorNameList = motorNameList,
+                         logWidget = logWidget,
+                         at = at)
 
-        scan.addText( text = hsh[ 'comment'], x = 0.95, y = 0.95, hAlign = 'right', vAlign = 'top', 
+        scan.addText( text = hsh[ 'comment'], 
+                      x = 0.95, y = 0.95, 
+                      hAlign = 'right', vAlign = 'top', 
                       color = 'black', fontSize = None)
             
     return scan
+
+def setComment( line): 
+    return GQE.setComment( line) 
+
+def getComment( line): 
+    return GQE.getComment()
+
+def setTitle( line): 
+    return GQE.setTitle( line) 
+
+def getTitle( line): 
+    return GQE.getTitle()
+
+def writeFile( nameGQE):
+
+    if spectraInstalled and useSpectra:
+        Spectra.gra_command( "write/fio %s" % nameGQE)
+    else:
+        PySpectra.write( [nameGQE])
+
+    return 
     
 
 

@@ -12,7 +12,7 @@ has to be done in advance.
 '''
 import builtins
 import pySpectraGuiClass
-import PySpectra.dMgt.GQE as _gqe
+import PySpectra.dMgt.GQE as GQE
 import PySpectra.misc.zmqIfc as zmqIfc
 import HasyUtils 
 
@@ -25,7 +25,6 @@ import PyTango as _PyTango
 import zmq, json, socket
 
 import tngGui.lib.tngGuiClass
-import tngGui.lib.moveMotor as moveMotor
 import tngGui.lib.devices as devices
 
 updateTime = 0.1
@@ -179,7 +178,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         #
         elif 'ScanInfo' in hsh:
             self.scanInfo = hsh[ 'ScanInfo']
-            _gqe._scanInfo = hsh[ 'ScanInfo']
+            GQE._scanInfo = hsh[ 'ScanInfo']
             self.configureMotorsWidget()
         else: 
             zmqIfc.execHsh( hsh)
@@ -190,7 +189,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         we received a scanInfo block indicating that a new scan has started
         now we configure the motors widget using information from the scanInfo block
         '''
-        _gqe.InfoBlock.setMonitorGui( self)
+        GQE.InfoBlock.setMonitorGui( self)
 
         length = len( self.scanInfo['motors'])
         if  length == 0 or length > 3:

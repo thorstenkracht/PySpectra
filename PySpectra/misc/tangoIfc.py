@@ -101,11 +101,7 @@ def moveScan( scan, target):
         scan.infLineMouseX.hide()
         scan.infLineMouseY.hide()
 
-        pos = scan.plotItem.vb.mapViewToScene( _pg.Point( target, scan.getYMin())).toPoint()
-        pos.setY( PySpectra.getGraphicsWindowHeight() - _definitions.ARROW_Y_OFFSET)
-        #scan.arrowMotorSetPoint.setPos( target, scan.getYMin())
-        scan.arrowMotorSetPoint.setPos( pos)
-        scan.arrowMotorSetPoint.show()
+        scan.setPosArrowMotorSetPoint( proxy.name(), target)
         
         return 
         

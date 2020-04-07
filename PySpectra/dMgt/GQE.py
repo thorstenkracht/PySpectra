@@ -7,13 +7,13 @@ GQE - contains the Scan() class and functions to handle scans:
 
 import numpy as _np
 from PyQt4 import QtCore, QtGui
-import math as _math
 import HasyUtils
 import PyTango as _PyTango
 import PySpectra 
-import PySpectra.definitions as _definitions 
-import PySpectra.misc.utils as _utils
-import pyqtgraph as _pg
+import PySpectra.definitions as definitions 
+import PySpectra.misc.utils as utils
+import pyqtgraph as pg
+import time
 
 _gqeList = []
 _gqeIndex = None  # used by next/back
@@ -465,7 +465,7 @@ class Scan( object):
 
         attr = 'lineWidth'
         if attr in kwargs:
-            if str(kwargs[ attr]) in _definitions.lineWidthArr:
+            if str(kwargs[ attr]) in definitions.lineWidthArr:
                 setattr( self, attr, float( kwargs[ attr]))
             else: 
                 setattr( self, attr, 1.0)
@@ -697,12 +697,60 @@ class Scan( object):
         # currentIndex refers to the last valid x-, y-value; nPts == currentIndex + 1
         return _np.max( self.y[:self.currentIndex + 1])
 
+    def setPosArrowMotorCurrent( self, motName, x): 
+        '''
+        set the position of the arrow pointing to the current motor position
+
+        to be taken into account: 
+          - try to plot the arrow at a constant height, this is
+            easiest in scene coordinates (pixel)
+          - make sure that the arrow is autoranged. Otherwise it may
+            be plotted outside the viewport, esp. during moveMotor() moves.
+        to we plot into the viewBox but we calculate the y-position from 
+        scene coordinates.
+        '''
+        xScene = 300
+        yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET
+        posVb = self.plotItem.vb.mapSceneToView( pg.Point( xScene, yScene))
+        self.arrowMotorCurrent.setPos( x, posVb.y())
+        self.labelArrowMotorCurrent.setPos(  x, posVb.y())
+        self.labelArrowMotorCurrent.setText( '%s: %g' % ( motName, x))
+
+        self.arrowMotorCurrent.show()
+        self.labelArrowMotorCurrent.show()
+
+        return
+
+    def setPosArrowMotorSetPoint( self, motName, x): 
+        '''
+        set the position of the arrow pointing to the set-point
+        '''
+        xScene = 300
+        yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET
+        posVb = self.plotItem.vb.mapSceneToView( pg.Point( xScene, yScene)).toPoint()
+        self.arrowMotorSetPoint.setPos( x, posVb.y())
+        self.arrowMotorSetPoint.show()
+
+        return
+
+    def setPosArrowMotorMisc( self, motName, x): 
+        '''
+        set the position of the arrow pointing to Misc
+        '''
+        xScene = 300
+        yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET
+        posVb = self.plotItem.vb.mapSceneToView( pg.Point( xScene, yScene)).toPoint()
+        self.arrowMotorMisc.setPos( x, posVb.y())
+        self.arrowMotorMisc.show()
+
+        return
+
     def updateArrowMotorCurrent( self):
         '''
         updates the arrow pointing to the current position 
         of the motor. 
         called from: 
-          pySpectraGuiClass.py
+          pySpectraGuiClass.py, time-out callback
         '''
         #
         # 
@@ -734,24 +782,8 @@ class Scan( object):
                 return
             proxy = _PyTango.DeviceProxy( motorArr[0]['name'])
             motName = motorArr[0]['name']
-        #
-        # x, y in world coordinated
-        #
-        x = proxy.position
-        y = self.getYMin() 
-        #self.arrowMotorCurrent.setPos( x, y)
-        #self.labelArrowMotorCurrent.setPos( x, y)
-        #
-        # map to scene (pixel) coordinates
-        #
-        pos = self.plotItem.vb.mapViewToScene( _pg.Point( x, y)).toPoint()
-        pos.setY( PySpectra.getGraphicsWindowHeight() - _definitions.ARROW_Y_OFFSET)
-        self.arrowMotorCurrent.setPos( pos)
-        self.labelArrowMotorCurrent.setPos( pos)
-        self.labelArrowMotorCurrent.setHtml( '<div align="center">%s: %g</div>' % ( motName, x))
 
-        self.arrowMotorCurrent.show()
-        self.labelArrowMotorCurrent.show()
+        self.setPosArrowMotorCurrent( motName, proxy.position)
 
         if proxy.state() == _PyTango.DevState.ON: 
             self.arrowMotorSetPoint.hide()
@@ -777,15 +809,7 @@ class Scan( object):
             self.arrowMotorCurrent.show()
         elif lst[0].upper() == 'POSITION': 
             x = float( lst[1])
-            y = self.getYMin()
-            pos = self.plotItem.vb.mapViewToScene( _pg.Point( x, y)).toPoint()
-            pos.setY( PySpectra.getGraphicsWindowHeight() - _definitions.ARROW_Y_OFFSET)
-            self.arrowMotorCurrent.setPos( pos)
-            self.arrowMotorCurrent.show()
-            self.labelArrowMotorCurrent.setPos( float( lst[1]), self.getYMin())
-            if self.motorNameList is not None and len( self.motorNameList) > 0: 
-                self.labelArrowMotorCurrent.setHtml( '<div>%s</div>' % ( self.motorNameList[0]))
-            self.labelArrowMotorCurrent.show()
+            self.setPosArrowMotorCurrent( self.motorNameList[0], x)
         else: 
             raise ValueError( "GQE.setArrowMotorCurrent: strange list %s" % str( lst))
                                     
@@ -811,11 +835,7 @@ class Scan( object):
             self.arrowMotorSetPoint.show()
         elif lst[0].upper() == 'POSITION': 
             x = float( lst[1])
-            y = self.getYMin()
-            pos = self.plotItem.vb.mapViewToScene( _pg.Point( x, y)).toPoint()
-            pos.setY( PySpectra.getGraphicsWindowHeight() - _definitions.ARROW_Y_OFFSET)
-            self.arrowMotorSetPoint.setPos( pos)
-            self.arrowMotorSetPoint.show()
+            self.setPosArrowMotorSetPoint( x)
         else: 
             raise ValueError( "GQE.setArrowMotorSetPoint: strange list %s" % str( lst))
                                     
@@ -841,11 +861,7 @@ class Scan( object):
             self.arrowMotorMisc.show()
         elif lst[0].upper() == 'POSITION': 
             x = float( lst[1])
-            y = self.getYMin()
-            pos = self.plotItem.vb.mapViewToScene( _pg.Point( x, y)).toPoint()
-            pos.setY( PySpectra.getGraphicsWindowHeight() - _definitions.ARROW_Y_OFFSET)
-            self.arrowMotorMisc.setPos( pos)
-            self.arrowMotorMisc.show()
+            self.setPosArrowMotorMisc( x)
         else: 
             raise ValueError( "GQE.setArrowMotorMisc: strange list %s" % str( lst))
                                     
@@ -931,7 +947,7 @@ class Scan( object):
             lstX = list( reversed( lstX))
             lstY = list( reversed( lstY))
                 
-        hsh = _utils.ssa( _np.array( lstX), _np.array( lstY))
+        hsh = utils.ssa( _np.array( lstX), _np.array( lstY))
 
         if hsh[ 'status'] != 1:
             if logWidget is not None:
@@ -1022,7 +1038,7 @@ class Scan( object):
             lstY = list( reversed( lstY))
                 
         try: 
-            message, xpos, xpeak, xcms, xcen = _utils.fastscananalysis( lstX, lstY, mode)
+            message, xpos, xpeak, xcms, xcen = utils.fastscananalysis( lstX, lstY, mode)
         except Exception as e:
             print( "GQE.fsa: trouble with %s" % self.name)
             print( repr( e))
@@ -1076,7 +1092,7 @@ def setTitle( text = None):
     delete() also clears the title
     '''
     global _title 
-    if text is None:
+    if text is None or len( text) == 0:
         _title = None
         return 
     text = text.replace( "'", "")
@@ -1091,11 +1107,13 @@ def setComment( text = None):
     '''
     the comment line appears across all columns below the title
 
-    the comment is cleared, if no argument is supplied
+    the comment is cleared, if no argument is supplied or if 
+    the text has zero length
+
     delete() also clears the comment
     '''
     global _comment 
-    if text is None:
+    if text is None or len( text) == 0:
         _comment = None
         return 
     text = text.replace( "'", "")
@@ -1155,6 +1173,7 @@ def delete( nameLst = None):
             if _gqeList[i].attributeWidget is not None: 
                 _gqeList[i].attributeWidget.close()
             del _gqeList[i]
+            break
         else:
             raise ValueError( "GQE.delete: not found %s" % name)
         return 
@@ -1688,12 +1707,12 @@ def getFontSize( nameList):
     '''
     depending on how many gqes are displayed the font size is adjusted
     '''
-    if getNumberOfGqesToBeDisplayed( nameList) < _definitions.MANY_GQES:
-        fontSize = _definitions.FONT_SIZE_NORMAL
-    elif getNumberOfGqesToBeDisplayed( nameList) <= _definitions.VERY_MANY_GQES:
-        fontSize = _definitions.FONT_SIZE_SMALL
+    if getNumberOfGqesToBeDisplayed( nameList) < definitions.MANY_GQES:
+        fontSize = definitions.FONT_SIZE_NORMAL
+    elif getNumberOfGqesToBeDisplayed( nameList) <= definitions.VERY_MANY_GQES:
+        fontSize = definitions.FONT_SIZE_SMALL
     else: 
-        fontSize = _definitions.FONT_SIZE_VERY_SMALL
+        fontSize = definitions.FONT_SIZE_VERY_SMALL
 
     return fontSize
 

@@ -73,22 +73,26 @@ def clear( gqe):
         if gqe.labelArrowMotorCurrent is not None: 
             if debug: print( "pqtgraphics.clear removing label %s from %d" % 
                    (id( gqe.labelArrowMotorCurrent), id( _graphicsWindow.scene())))
-            _graphicsWindow.scene().removeItem( gqe.labelArrowMotorCurrent)
+            #_graphicsWindow.scene().removeItem( gqe.labelArrowMotorCurrent)
+            gqe.plotItem.removeItem( gqe.labelArrowMotorCurrent)
             gqe.labelArrowMotorCurrent = None
         if gqe.arrowMotorCurrent is not None: 
             if debug: print( "pqtgraphics.clear removing arrowCurr %s from %d" % 
                    ( id(gqe.arrowMotorCurrent), id( _graphicsWindow.scene())))
-            _graphicsWindow.scene().removeItem( gqe.arrowMotorCurrent)
+            #_graphicsWindow.scene().removeItem( gqe.arrowMotorCurrent)
+            gqe.plotItem.removeItem( gqe.arrowMotorCurrent)
             gqe.arrowMotorCurrent = None
         if gqe.arrowMotorSetPoint is not None: 
             if debug: print( "pqtgraphics.clear removing arrowSetP %s from %d" % 
                    ( id( gqe.arrowMotorSetPoint), id( _graphicsWindow.scene())))
-            _graphicsWindow.scene().removeItem( gqe.arrowMotorSetPoint)
+            #_graphicsWindow.scene().removeItem( gqe.arrowMotorSetPoint)
+            gqe.plotItem.removeItem( gqe.arrowMotorSetPoint)
             gqe.arrowMotorSetPoint = None
         if gqe.arrowMotorMisc is not None: 
             if debug: print( "pqtgraphics.clear removing arrowMisc %s from %d" % 
                    ( id( gqe.arrowMotorMisc), id( _graphicsWindow.scene())))
-            _graphicsWindow.scene().removeItem( gqe.arrowMotorMisc)
+            #_graphicsWindow.scene().removeItem( gqe.arrowMotorMisc)
+            gqe.plotItem.removeItem( gqe.arrowMotorMisc)
             gqe.arrowMotorMisc = None
         if gqe.infLineLeft is not None: 
             gqe.plotItem.removeItem( gqe.infLineLeft)
@@ -420,11 +424,16 @@ def _addArrowsMotor( gqe, nameList):
                ( gqe.name, id( gqe.arrowMotorSetPoint), id( _graphicsWindow.scene()))) 
         print( "addArrow %s arrowMisc %s to %d" % 
                ( gqe.name, id( gqe.arrowMotorMisc), id( _graphicsWindow.scene()))) 
-
+    """
     _graphicsWindow.scene().addItem( gqe.arrowMotorMisc)
     _graphicsWindow.scene().addItem( gqe.arrowMotorSetPoint)
     _graphicsWindow.scene().addItem( gqe.arrowMotorCurrent)
     _graphicsWindow.scene().addItem( gqe.labelArrowMotorCurrent)
+    """
+    gqe.plotItem.addItem( gqe.arrowMotorMisc)
+    gqe.plotItem.addItem( gqe.arrowMotorSetPoint)
+    gqe.plotItem.addItem( gqe.arrowMotorCurrent)
+    gqe.plotItem.addItem( gqe.labelArrowMotorCurrent)
 
     gqe.arrowMotorCurrent.hide()
     gqe.arrowMotorMisc.hide()
@@ -1206,6 +1215,7 @@ def _createPlotItem( gqe, nameList):
     # the visible range of the ViewBox.
     #
     gqe.plotItem.setClipToView( False)
+    #gqe.plotItem.setAutoPan( x = True, y = True)
     #
     # we want a closed axis box and we want tick marks 
     # at the top and right axis, but no tick mark texts
@@ -1254,7 +1264,7 @@ def _createPlotItem( gqe, nameList):
             gqe.setLimits()
 
         if gqe.yMin is None or gqe.yMax is None:
-            arY = True
+            arY = Trueo
         #
         # autoRange, search below
         #
@@ -1498,8 +1508,8 @@ def display( nameList = None):
         # to put text strings on the screen
         # 3.4.2020 not so sure, seems to be workin
         #
-        # if not scan.textOnly and scan.currentIndex == 0:
-        #     continue
+        if not scan.textOnly and scan.currentIndex == 0:
+            continue
 
         #
         # overlay? - don't create a plot for this scan. Plot it
@@ -1554,6 +1564,9 @@ def display( nameList = None):
         #
         # pyqtgraph cannot respect limits for log-scales
         #
+
+        #print( "+++pqtgraphics.display: data %s " % repr( scan.y[:(scan.currentIndex + 1)]))
+
         scan.plotDataItem.setData( scan.x[:(scan.currentIndex + 1)], 
                                    scan.y[:(scan.currentIndex + 1)])
         #

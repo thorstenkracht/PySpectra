@@ -1,13 +1,25 @@
 #!/usr/bin/env python
 '''
-An interface to PySpectra, used by ipython, see 00-start.py, 
-and by pyspViewer.py
+An interface to PySpectra, used by 
+
+  - pyspMonitor.py to execute the commands received via ZMQ 
+    pyspMonitorClass.py
+      zmqIfc.execHsh( hsh)
+        zmqIfc.commandIfc( hsh): 
+          ifc.command( cmd)
+
+  - pyspDoor.py
+      sendHshQueue() 
+        pyspMonitorClass.py
+          execHshLocal( hsh)
+            zmqIfc.execHsh( hsh)
+              zmqIfc.commandIfc( hsh): 
+                ifc.command( cmd)
+
+  - ipython, see 00-start.py, 
 
   #!/usr/bin/env python
-  import __builtin__
-  #__builtin__.__dict__[ 'graphicsLib'] = 'matplotlib'
-  __builtin__.__dict__[ 'graphicsLib'] = 'pyqtgraph'
-  import PySpectra as pysp
+  import PySpectra 
   import PySpectra.ipython.startup
  
   PySpectra.ipython.startup contains the macro definitions
@@ -55,8 +67,8 @@ and by pyspViewer.py
 import itertools
 import PySpectra
 import PySpectra.mtpltlb.graphics as _mpl_graphics # to create postscript
-import PySpectra.dMgt.calc as _calc
-import PySpectra.dMgt.GQE as _gqe
+import PySpectra.dMgt.calc as calc
+import PySpectra.dMgt.GQE as GQE
 
 def command( line):
     '''
@@ -162,9 +174,9 @@ def antiderivative( line):
 
         
     if len( lst) == 1: 
-        _calc.antiderivative( lst[0])
+        calc.antiderivative( lst[0])
     elif len( lst) == 2: 
-        _calc.antiderivative( lst[0], lst[1])
+        calc.antiderivative( lst[0], lst[1])
     else:
         raise ValueError( "ifc.antiderivative: wrong syntax %s" % line)
 
@@ -208,7 +220,7 @@ def create( line):
     else:
         raise ValueError( "ifs.createScan: wrong syntax %s" % line)
         
-    _gqe.Scan( **hsh)
+    GQE.Scan( **hsh)
 
 def createPDF( line):
     '''
@@ -236,9 +248,9 @@ def derivative( line):
             lst = line.split( ' ')
         
     if len( lst) == 1: 
-        _calc.derivative( lst[0])
+        calc.derivative( lst[0])
     elif len( lst) == 2: 
-        _calc.derivative( lst[0], lst[1])
+        calc.derivative( lst[0], lst[1])
     else:
         raise ValueError( "ifc.derivative: wrong syntax %s" % line)
 
@@ -258,7 +270,7 @@ def delete( line):
     lst = None
     if line: 
         lst = line.split(' ')
-    _gqe.delete( lst)
+    GQE.delete( lst)
 
 def info( line):
     '''
@@ -274,7 +286,7 @@ def overlay( line):
     lst = line.split( ' ')
     if len( lst) != 2:
         raise ValueError( "ifc.overlay: expecting two scan names")
-    _gqe.overlay( lst[0], lst[1])
+    GQE.overlay( lst[0], lst[1])
 
 def read( line):
     '''
@@ -287,13 +299,13 @@ def read( line):
     if len( lst) == 0:
         raise ValueError( "ifc.read: expecting a file name and optionally '-mca'")
         return 
-    _gqe.read( lst)
+    GQE.read( lst)
 
 def setComment( line):
     '''
     set the comment string for the whole plot
     '''
-    _gqe.setComment( line)
+    GQE.setComment( line)
 
 def _pairs( lst): 
     a = iter(lst)
@@ -338,7 +350,7 @@ def setText( line):
     '''
     lst = _mySplit( line)
     try:
-        o = _gqe.getGqe( lst[0])
+        o = GQE.getGqe( lst[0])
     except Exception as e: 
         raise ValueError( "ifc.setText: failed to gqeGqe %s" % lst[0])
         return
@@ -395,7 +407,7 @@ def setTitle( line):
     '''
     set the title of the whole plot
     '''
-    _gqe.setTitle( line)
+    GQE.setTitle( line)
 
 def setPixelImage( line): 
     '''
@@ -405,7 +417,7 @@ def setPixelImage( line):
         iy > 0 and iy < height
     '''
     lst = line.split( ' ')
-    o = _gqe.getGqe( lst[0])
+    o = GQE.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setPixelImage: failed to find %s" % lst[0])
     ix = int( lst[1])
@@ -424,7 +436,7 @@ def setArrowMotorCurrent( line):
       position: the motor current position, maybe from mvsa
     '''
     lst = line.split( ' ')
-    o = _gqe.getGqe( lst[0])
+    o = GQE.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setArrowMotorSCurrent: failed to find %s" % lst[0])
     o.setArrowMotorCurrent( lst[1:])
@@ -440,7 +452,7 @@ def setArrowMotorSetPoint( line):
       position: the motor target position, mayby from mouse-click
     '''
     lst = line.split( ' ')
-    o = _gqe.getGqe( lst[0])
+    o = GQE.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setArrowMotorSetPoint: failed to find %s" % lst[0])
     o.setArrowMotorSetPoint( lst[1:])
@@ -456,7 +468,7 @@ def setArrowMotorMisc( line):
       position: the motor target position, maybe from mvsa
     '''
     lst = line.split( ' ')
-    o = _gqe.getGqe( lst[0])
+    o = GQE.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setArrowMotorMisc: failed to find %s" % lst[0])
     o.setArrowMotorMisc( lst[1:])
@@ -470,7 +482,7 @@ def setPixelWorld( line):
         y >= yMin and y <= yMax
     '''
     lst = line.split( ' ')
-    o = _gqe.getGqe( lst[0])
+    o = GQE.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setPixelWorld: failed to find %s" % lst[0])
     x = float( lst[1])
@@ -484,7 +496,7 @@ def setX( line):
     setX nameGqe index x
     '''
     lst = line.split( ' ')
-    o = _gqe.getGqe( lst[0])
+    o = GQE.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setX: failed to find %s" % lst[0])
     index = int( lst[1])
@@ -500,7 +512,7 @@ def setY( line):
     setY nameGqe index y
     '''
     lst = line.split( ' ')
-    o = _gqe.getGqe( lst[0])
+    o = GQE.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setY: failed to find %s" % lst[0])
     index = int( lst[1])
@@ -516,7 +528,7 @@ def setXY( line):
     setXY nameGqe index x y
     '''
     lst = line.split( ' ')
-    o = _gqe.getGqe( lst[0])
+    o = GQE.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setXY: failed to find %s" % lst[0])
     index = int( lst[1])
@@ -549,7 +561,7 @@ def show( line):
     '''
     show the list of scans
     '''
-    _gqe.show()
+    GQE.show()
 
 def write( line):
     ''' 
@@ -563,7 +575,7 @@ def write( line):
       write selected scans
     '''
     lst = line.split( ' ')
-    _gqe.write( lst)
+    GQE.write( lst)
 
 def y2my( line):
     lst = line.split( ' ')
@@ -573,5 +585,5 @@ def y2my( line):
     hsh[ 'name'] = lst[0]
     if len( lst) == 2:
         hsh[ 'nameNew'] = lst[1]
-    _calc.yToMinusY( **hsh)
+    calc.yToMinusY( **hsh)
     

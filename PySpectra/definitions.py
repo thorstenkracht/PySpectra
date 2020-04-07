@@ -15,8 +15,7 @@ here are the definitions used in various python files of the project
 from PyQt4 import QtCore, QtGui
 
 # y-offset for the currentPos and setPoint arrows (motors)
-ARROW_Y_OFFSET = 50
-
+ARROW_Y_OFFSET = 100
 MANY_GQES = 20
 VERY_MANY_GQES = 30
 

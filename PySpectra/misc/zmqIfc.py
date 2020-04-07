@@ -23,8 +23,7 @@ Functions
 
 '''
 import PySpectra 
-import PySpectra.dMgt.GQE as _gqe
-import PySpectra.ipython.ifc as _ifc
+import PySpectra.dMgt.GQE as GQE
 
 def toPyspMonitor( hsh, node = None):
     '''
@@ -222,7 +221,7 @@ def execHsh( hsh):
         argout[ 'result'] = _putData( hsh[ 'putData'])
     elif 'getData' in hsh:
         try:
-            argout[ 'getData'] = _gqe.getData()
+            argout[ 'getData'] = GQE.getData()
             argout[ 'result'] = 'done'
         except Exception as e:
             argout[ 'getData'] = {}
@@ -237,7 +236,7 @@ def execHsh( hsh):
             #
             # '**hsh': unpacked dictionary
             #
-            _gqe.Image( **hsh[ 'Image']) 
+            GQE.Image( **hsh[ 'Image']) 
             argout[ 'result'] = 'done'
         except Exception as e:
             argout[ 'result'] = "zmqIfc.execHsh: error, %s" % repr( e)
@@ -246,7 +245,7 @@ def execHsh( hsh):
             #
             # '**hsh' unpacked dictionary
             #
-            _gqe.Scan( **hsh[ 'Scan']) 
+            GQE.Scan( **hsh[ 'Scan']) 
             argout[ 'result'] = 'done'
         except Exception as e:
             argout[ 'result'] = "zmqIfc.execHsh: error, %s" % repr( e)
@@ -264,18 +263,18 @@ def _putData( hsh):
 
     argout = 'n.n.'
     if 'title' not in hsh:
-        _gqe.setTitle( "NoTitle")
+        GQE.setTitle( "NoTitle")
     else:
-        _gqe.setTitle( hsh[ 'title'])
+        GQE.setTitle( hsh[ 'title'])
 
     if 'columns' in hsh:
-        _gqe.delete()
+        GQE.delete()
         PySpectra.cls()
-        argout = _gqe.fillDataByColumns( hsh)
+        argout = GQE.fillDataByColumns( hsh)
     elif 'gqes' in hsh:
-        _gqe.delete()
+        GQE.delete()
         PySpectra.cls()
-        argout = _gqe.fillDataByGqes( hsh)
+        argout = GQE.fillDataByGqes( hsh)
     #
     # hsh = { 'putData': 
     #         { 'name': "MandelBrot",
@@ -285,7 +284,7 @@ def _putData( hsh):
     #
     elif 'type' in hsh and hsh[ 'type'] == 'image':
         del hsh[ 'type']
-        _gqe.Image( **hsh)
+        GQE.Image( **hsh)
         argout = "done"
     #
     #_PySpectra.misc.zmqIfc.execHsh( { 'putData': 
@@ -295,12 +294,12 @@ def _putData( hsh):
     #
     elif 'images' in hsh:
         for h in hsh[ 'images']: 
-            _gqe.Image( **h)
+            GQE.Image( **h)
         argout = "done"
     elif 'setPixelImage' in hsh or 'setPixelWorld' in hsh:
-        argout = _gqe.fillDataImage( hsh)
+        argout = GQE.fillDataImage( hsh)
     elif 'setXY' in hsh:
-        argout = _gqe.fillDataXY( hsh)
+        argout = GQE.fillDataXY( hsh)
     else:
         raise Exception( "zmqIfc._putData", "expecting 'columns', 'gqes', 'setPixelImage', 'setPixelWorld'")
 
@@ -317,14 +316,15 @@ def commandIfc( hsh):
     Single commands
     hsh = { 'command': 'display'}
     '''
+    import PySpectra.ipython.ifc as ifc
     argout = "n.n."
     if type( hsh[ 'command']) == list:
         for cmd in hsh[ 'command']: 
-            ret = _ifc.command( cmd)
+            ret = ifc.command( cmd)
             argout += "%s -> %s;" % (cmd, repr( ret))
 
         return "done"
 
-    ret = _ifc.command( hsh[ 'command'])
+    ret = ifc.command( hsh[ 'command'])
     argout = "%s -> %s" % (hsh[ 'command'], repr( ret))
     return argout
