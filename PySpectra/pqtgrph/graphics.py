@@ -343,20 +343,26 @@ def _addInfLineMouse( gqe):
         return 
 
     if not gqe.xLog: 
-        gqe.infLineMouseX = pyqtgraph.InfiniteLine( movable=True, angle=90, label='x={value:g}', 
-                                              pen = pyqtgraph.mkPen( color = (0, 0, 0)))
-        # labelOpts={'position': 0.1, 'color': (0,0,000), 'movable': True})
+        if pyqtgraph.__version__ == '0.10.0': 
+            gqe.infLineMouseX = pyqtgraph.InfiniteLine( movable=True, angle=90, label='x={value:g}', 
+                                                        pen = pyqtgraph.mkPen( color = (0, 0, 0)), 
+                                                        labelOpts={'position': 0.1, 'color': (0,0,000), 'movable': True})
+        else: # make travis happy
+            gqe.infLineMouseX = pyqtgraph.InfiniteLine( movable=True, angle=90,pen = pyqtgraph.mkPen( color = (0, 0, 0)))
     else: 
         gqe.infLineMouseX = pyqtgraph.InfiniteLine( movable=True, angle=90, 
-                                              pen = pyqtgraph.mkPen( color = (0, 0, 0)))
+                                                    pen = pyqtgraph.mkPen( color = (0, 0, 0)))
 
     if not gqe.yLog:
-        gqe.infLineMouseY = pyqtgraph.InfiniteLine( movable=True, angle=0, label='y={value:g}', 
-                                              pen = pyqtgraph.mkPen( color = (0, 0, 0)))
-        #                                              labelOpts={'position':0.1, 'color': (0,0,0), 'movable': True})
+        if pyqtgraph.__version__ == '0.10.0': 
+            gqe.infLineMouseY = pyqtgraph.InfiniteLine( movable=True, angle=0, label='y={value:g}', 
+                                                        pen = pyqtgraph.mkPen( color = (0, 0, 0)), 
+                                                        labelOpts={'position':0.1, 'color': (0,0,0), 'movable': True})
+        else: 
+            gqe.infLineMouseY = pyqtgraph.InfiniteLine( movable=True, angle=0, pen = pyqtgraph.mkPen( color = (0, 0, 0)))
     else: 
         gqe.infLineMouseY = pyqtgraph.InfiniteLine( angle=0, 
-                                              pen = pyqtgraph.mkPen( color = (0, 0, 0)))
+                                                    pen = pyqtgraph.mkPen( color = (0, 0, 0)))
 
     gqe.plotItem.addItem( gqe.infLineMouseX)
     gqe.plotItem.addItem( gqe.infLineMouseY)
