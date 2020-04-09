@@ -882,12 +882,12 @@ class pyspDoor( sms.BaseDoor):
         self.scanNo += 1
         for elm in self.counterAliases:
             self.sendHshQueue( { 'Scan': { 'name': elm,
-                                      'xMin': self.start,
-                                      'xMax': self.stop,
-                                      'lineColor': 'red',
-                                      'nPts': npTemp,
-                                      'motorNameList': self.motorNameList, 
-                                      'autoscaleX': False}})
+                                           'xMin': self.start,
+                                           'xMax': self.stop,
+                                           'lineColor': 'red',
+                                           'nPts': npTemp,
+                                           'motorNameList': self.motorNameList, 
+                                           'autoscaleX': False}})
             
         env = self.getEnvironment()
         if 'SignalCounter' in env:
@@ -1179,6 +1179,8 @@ class pyspDoor( sms.BaseDoor):
             print( "hsh %s" % repr( hsh))
             print( "exception %s" % repr( e))
             raise ValueError( "pyspDoor.sendHshQueue: something went wrong")
+
+        return 
 
     def displayMeshScan( self, pos, posY, signal):
         #self.sendHshQueue( { 'command': ['setXY MeshScan %d %s %s' % (self.indexMesh, repr(pos), repr(posY))]})

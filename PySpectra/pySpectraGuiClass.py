@@ -14,8 +14,6 @@ import PySpectra.examples.exampleCode
 import PySpectra.dMgt.GQE as GQE
 import PySpectra.definitions as definitions
 import PySpectra.dMgt.calc as calc
-import tngGui.lib.devices as devices
-
 import mtpltlb.graphics as mpl_graphics # for pdf output
 
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
@@ -2375,7 +2373,7 @@ class pySpectraGui( QtGui.QMainWindow):
 
         gqeList = GQE.getGqeList()[:]
         #
-        # see if one of the GQEs has an arrowMotorCurrent. 
+        # see, if one of the GQEs has an arrowMotorCurrent. 
         # if so, update it because the motor might have been 
         # moved somehow
         # 

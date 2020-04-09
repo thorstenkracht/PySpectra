@@ -73,15 +73,25 @@ def clear( gqe):
         if gqe.labelArrowMotorCurrent is not None: 
             if debug: print( "pqtgraphics.clear removing label %s from %d" % 
                    (id( gqe.labelArrowMotorCurrent), id( _graphicsWindow.scene())))
-            #_graphicsWindow.scene().removeItem( gqe.labelArrowMotorCurrent)
-            gqe.plotItem.removeItem( gqe.labelArrowMotorCurrent)
+            _graphicsWindow.scene().removeItem( gqe.labelArrowMotorCurrent)
+            #gqe.plotItem.removeItem( gqe.labelArrowMotorCurrent)
             gqe.labelArrowMotorCurrent = None
         if gqe.arrowMotorCurrent is not None: 
             if debug: print( "pqtgraphics.clear removing arrowCurr %s from %d" % 
                    ( id(gqe.arrowMotorCurrent), id( _graphicsWindow.scene())))
-            #_graphicsWindow.scene().removeItem( gqe.arrowMotorCurrent)
-            gqe.plotItem.removeItem( gqe.arrowMotorCurrent)
+            _graphicsWindow.scene().removeItem( gqe.arrowMotorCurrent)
+            #gqe.plotItem.removeItem( gqe.arrowMotorCurrent)
             gqe.arrowMotorCurrent = None
+        if gqe.arrowMotorInvisibleLeft is not None: 
+            if debug: print( "pqtgraphics.clear removing arrowInvisibleLeft %s from %d" % 
+                   ( id(gqe.arrowMotorInvisibleLeft), id( _graphicsWindow.scene())))
+            gqe.plotItem.removeItem( gqe.arrowMotorInvisibleLeft)
+            gqe.arrowMotorInvisibleLeft = None
+        if gqe.arrowMotorInvisibleRight is not None: 
+            if debug: print( "pqtgraphics.clear removing arrowInvisibleRight %s from %d" % 
+                   ( id(gqe.arrowMotorInvisibleRight), id( _graphicsWindow.scene())))
+            gqe.plotItem.removeItem( gqe.arrowMotorInvisibleRight)
+            gqe.arrowMotorInvisibleRight = None
         if gqe.arrowMotorSetPoint is not None: 
             if debug: print( "pqtgraphics.clear removing arrowSetP %s from %d" % 
                    ( id( gqe.arrowMotorSetPoint), id( _graphicsWindow.scene())))
@@ -402,8 +412,9 @@ def _addArrowsMotor( gqe, nameList):
         return 
 
     gqe.arrowMotorCurrent = pyqtgraph.ArrowItem( angle=270, pen = pyqtgraph.mkPen( color = (0, 0, 255)))
+
     gqe.arrowMotorSetPoint = pyqtgraph.ArrowItem( angle=270, pen = pyqtgraph.mkPen( color = (255, 0, 0)),
-                                            brush = pyqtgraph.mkBrush( color = (255, 0, 0)))
+                                                  brush = pyqtgraph.mkBrush( color = (255, 0, 0)))
     #
     # 'Misc' is for mvsa e.g., this arrow is not touched by the
     # refresh callback of the pyspMonitor
@@ -413,9 +424,21 @@ def _addArrowsMotor( gqe, nameList):
     #
     # anchor, (0, 0) -> upper left
     #
-    gqe.labelArrowMotorCurrent = pyqtgraph.TextItem( color='k', anchor = ( 0.5, 2.))
     fontSize = GQE.getFontSize( nameList)
+    gqe.labelArrowMotorCurrent = pyqtgraph.TextItem( color='k', anchor = ( 0.5, 2.))
     gqe.labelArrowMotorCurrent.setHtml( '<div style="font-size:%dpx;">%s</div>' % (fontSize, "n.n."))
+
+    #
+    # look at GQE.setPosArrowMotorCurrentScene() to understand arrowMotorCurrent, ~Left, ~Right
+    #
+    gqe.arrowMotorInvisibleLeft = pyqtgraph.ArrowItem( angle=270, 
+                                                       headLen = 2, 
+                                                       pen = pyqtgraph.mkPen( color = ( 240, 240, 240)), 
+                                                       brush = pyqtgraph.mkBrush( color = ( 240, 240, 240))) 
+    gqe.arrowMotorInvisibleRight = pyqtgraph.ArrowItem( angle=270, 
+                                                        headLen = 2, 
+                                                        pen = pyqtgraph.mkPen( color = ( 240, 240, 240)), 
+                                                        brush = pyqtgraph.mkBrush( color = ( 240, 240, 240))) 
     #
     # the arrows are added to the GraphicsWindow to use pixel coordinates (?)
     #
@@ -431,15 +454,21 @@ def _addArrowsMotor( gqe, nameList):
     """
     _graphicsWindow.scene().addItem( gqe.arrowMotorMisc)
     _graphicsWindow.scene().addItem( gqe.arrowMotorSetPoint)
+    """
     _graphicsWindow.scene().addItem( gqe.arrowMotorCurrent)
     _graphicsWindow.scene().addItem( gqe.labelArrowMotorCurrent)
-    """
+
     gqe.plotItem.addItem( gqe.arrowMotorMisc)
     gqe.plotItem.addItem( gqe.arrowMotorSetPoint)
+    gqe.plotItem.addItem( gqe.arrowMotorInvisibleLeft)
+    gqe.plotItem.addItem( gqe.arrowMotorInvisibleRight)
+    """
     gqe.plotItem.addItem( gqe.arrowMotorCurrent)
     gqe.plotItem.addItem( gqe.labelArrowMotorCurrent)
-
+    """
     gqe.arrowMotorCurrent.hide()
+    gqe.arrowMotorInvisibleLeft.hide()
+    gqe.arrowMotorInvisibleRight.hide()
     gqe.arrowMotorMisc.hide()
     gqe.arrowMotorSetPoint.hide()
     gqe.labelArrowMotorCurrent.hide()
@@ -1245,9 +1274,9 @@ def _createPlotItem( gqe, nameList):
         gqe.plotItem.showGrid( x = gqe.showGridX, y = gqe.showGridY)
 
     if GQE.getNumberOfGqesToBeDisplayed( nameList) <= definitions.MANY_GQES:
-        if hasattr( gqe, 'xLabel') and gqe.xLabel is not None:
+        if gqe.xLabel is not None:
             gqe.plotItem.setLabel( 'bottom', text=gqe.xLabel)
-        if hasattr( gqe, 'yLabel')  and gqe.yLabel is not None:
+        if gqe.yLabel is not None:
             gqe.plotItem.setLabel( 'left', text=gqe.yLabel)
     #
     # autoscale

@@ -99,6 +99,15 @@ def delete():
 
     return 
 
+def getGqe( name): 
+    '''
+    used by moveMotor() to see whether the signal scan is still existing
+    '''
+    if spectraInstalled and useSpectra:
+        return None
+    else: 
+        return GQE.getGqe( name)
+    
 def Scan( **hsh):
     '''
     create a scan and return it

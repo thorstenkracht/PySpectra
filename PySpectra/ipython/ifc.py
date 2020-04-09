@@ -80,80 +80,86 @@ def command( line):
       PySpectra.command( "create s1")
       PySpectra.command( "display")
     '''
+    argout = None
     line = line.strip()
     if len( line) == 0:
-        return
+        return argout
     lst = line.split( ' ')
 
     if len( lst) > 1:
         lineRest = " ".join( lst[1:])
     else:
         lineRest = None
-    #
-    # antiderivative src [target] 
-    #
-    if lst[0] == 'antiderivative':
-        return antiderivative( lineRest)
-    #
-    # cls
-    #
-    elif lst[0] == 'cls':
-        return cls( lineRest)
-    #
-    #  create name scanname xMin 0. xMax 1. nPts 101
-    #  create scanname 0. 1. 101
-    #  create scanname
-    #
-    elif lst[0] == 'create':
-        return create( lineRest)    
-    elif lst[0] == 'createPDF':
-        return createPDF( lineRest)
-    elif lst[0] == 'delete':
-        return delete( lineRest)
-    elif lst[0] == 'derivative':
-        return derivative( lineRest)
-    elif lst[0] == 'display':
-        return display( lineRest)
-    elif lst[0] == 'info':
-        return info( lineRest)
-    elif lst[0] == 'overlay':
-        return overlay( lineRest)
-    elif lst[0] == 'read':
-        return read( lineRest)
-    elif lst[0] == 'setArrowMotorCurrent':
-        return setArrowMotorCurrent( lineRest)
-    elif lst[0] == 'setArrowMotorSetPoint':
-        return setArrowMotorSetPoint( lineRest)
-    elif lst[0] == 'setArrowMotorMisc':
-        return setArrowMotorMisc( lineRest)
-    elif lst[0] == 'setComment':
-        return setComment( lineRest)
-    elif lst[0] == 'setPixelImage':
-        return setPixelImage( lineRest)
-    elif lst[0] == 'setPixelWorld':
-        return setPixelWorld( lineRest)
-    elif lst[0] == 'setText':
-        return setText( lineRest)
-    elif lst[0] == 'setTitle':
-        return setTitle( lineRest)
-    elif lst[0] == 'setWsViewport':
-        return setWsViewport( lineRest)
-    elif lst[0] == 'setX':
-        return setX( lineRest)
-    elif lst[0] == 'setXY':
-        return setXY( lineRest)
-    elif lst[0] == 'setY':
-        return setY( lineRest)
-    elif lst[0] == 'show':
-        return show( lineRest)
-    elif lst[0] == 'write':
-        return write( lineRest)
-    elif lst[0] == 'y2my':
-        return y2my( lineRest)
-    else:
-        raise ValueError( "ifc.command: failed to identify %s" % line)
-
-    return 
+    try: 
+        #
+        # antiderivative src [target] 
+        #
+        if lst[0] == 'antiderivative':
+            return antiderivative( lineRest)
+        #
+        # cls
+        #
+        elif lst[0] == 'cls':
+            argout = cls( lineRest)
+            #
+            #  create name scanname xMin 0. xMax 1. nPts 101
+            #  create scanname 0. 1. 101
+            #  create scanname
+            #
+        elif lst[0] == 'create':
+            argout = create( lineRest)    
+        elif lst[0] == 'createPDF':
+            argout = createPDF( lineRest)
+        elif lst[0] == 'delete':
+            argout = delete( lineRest)
+        elif lst[0] == 'derivative':
+            argout = derivative( lineRest)
+        elif lst[0] == 'display':
+            argout = display( lineRest)
+        elif lst[0] == 'info':
+            argout = info( lineRest)
+        elif lst[0] == 'overlay':
+            argout = overlay( lineRest)
+        elif lst[0] == 'read':
+            argout = read( lineRest)
+        elif lst[0] == 'setArrowMotorCurrent':
+            argout = setArrowMotorCurrent( lineRest)
+        elif lst[0] == 'setArrowMotorSetPoint':
+            argout = setArrowMotorSetPoint( lineRest)
+        elif lst[0] == 'setArrowMotorMisc':
+            argout = setArrowMotorMisc( lineRest)
+        elif lst[0] == 'setComment':
+            argout = setComment( lineRest)
+        elif lst[0] == 'setPixelImage':
+            argout = setPixelImage( lineRest)
+        elif lst[0] == 'setPixelWorld':
+            argout = setPixelWorld( lineRest)
+        elif lst[0] == 'setText':
+            argout = setText( lineRest)
+        elif lst[0] == 'setTitle':
+            argout = setTitle( lineRest)
+        elif lst[0] == 'setWsViewport':
+            argout = setWsViewport( lineRest)
+        elif lst[0] == 'setX':
+            argout = setX( lineRest)
+        elif lst[0] == 'setXY':
+            argout = setXY( lineRest)
+        elif lst[0] == 'setY':
+            argout = setY( lineRest)
+        elif lst[0] == 'show':
+            argout = show( lineRest)
+        elif lst[0] == 'write':
+            argout = write( lineRest)
+        elif lst[0] == 'y2my':
+            argout = y2my( lineRest)
+        else:
+            raise ValueError( "ifc.command: failed to identify %s" % line)
+    except Exception, e: 
+        print( "ifc.command: error for '%s'" % line)
+        print( "ifc.command: %s" % repr( e))
+        argout = None
+    
+    return argout
 
 def antiderivative( line):
     '''
@@ -191,9 +197,9 @@ def create( line):
     creates a scan 
    
     Examples:     
-      create name scanname xMin 0. xMax 1. nPts 101
-      create scanname 0. 1. 101
-      create scanname
+      create name <scanname> xMin 0. xMax 1. nPts 101
+      create <scanname> 0. 1. 101
+      create <scanname>
     '''
     l = line.split( ' ')
 
@@ -235,7 +241,7 @@ def createPDF( line):
 
 def derivative( line):
     '''
-    derivative src [target] 
+    derivative <src> [<target>] 
       the default target name is <src>_derivative
       
       Examples: 
@@ -257,7 +263,7 @@ def derivative( line):
 def display( line):
     '''
     display 
-    display nameGqe ...
+    display <nameGqe> ...
     '''
     lst = None
     if line is not None:
@@ -280,7 +286,7 @@ def info( line):
 
 def overlay( line):
     '''
-    overlay s1 s2
+    overlay <s1> <s2>
       s1 is plotted in the viewport of s2
     '''
     lst = line.split( ' ')
@@ -290,8 +296,8 @@ def overlay( line):
 
 def read( line):
     '''
-    read fileName 
-    read fileName -mca
+    read <fileName> 
+    read <fileName> -mca
     '''
     lst = None
     if line: 
@@ -303,7 +309,8 @@ def read( line):
 
 def setComment( line):
     '''
-    set the comment string for the whole plot
+    setComment "some comment"
+      set the comment string for the whole plot
     '''
     GQE.setComment( line)
 
@@ -411,7 +418,7 @@ def setTitle( line):
 
 def setPixelImage( line): 
     '''
-    setPixelImage nameGqe ix iy value
+    setPixelImage <nameGqe> <ix> iy value
       ix, iy: indices, image coordinate frame
         ix > 0 and ix < width
         iy > 0 and iy < height
@@ -429,9 +436,9 @@ def setPixelImage( line):
 def setArrowMotorCurrent( line): 
     '''
     handle the arrowMotorCurrent
-      setArrowMotorCurrent nameGqe position <targetPos>
-      setArrowMotorCurrent nameGqe hide
-      setArrowMotorCurrent nameGqe show
+      setArrowMotorCurrent <nameGqe> position <motName> <targetPos>
+      setArrowMotorCurrent <nameGqe> hide
+      setArrowMotorCurrent <nameGqe> show
 
       position: the motor current position, maybe from mvsa
     '''
@@ -445,9 +452,9 @@ def setArrowMotorCurrent( line):
 def setArrowMotorSetPoint( line): 
     '''
     handle the arrowMotorSetPoint
-      setArrowMotorSetPoint nameGqe position <targetPos>
-      setArrowMotorSetPoint nameGqe hide
-      setArrowMotorSetPoint nameGqe show
+      setArrowMotorSetPoint <nameGqe> position <motName> <targetPos>
+      setArrowMotorSetPoint <nameGqe> hide
+      setArrowMotorSetPoint <nameGqe> show
 
       position: the motor target position, mayby from mouse-click
     '''
@@ -461,9 +468,9 @@ def setArrowMotorSetPoint( line):
 def setArrowMotorMisc( line): 
     '''
     handle the arrowMotorMisc
-      setArrowMotorMisc nameGqe position <targetPos>
-      setArrowMotorMisc nameGqe hide
-      setArrowMotorMisc nameGqe show
+      setArrowMotorMisc <nameGqe> position <motName> <targetPos>
+      setArrowMotorMisc <nameGqe> hide
+      setArrowMotorMisc <nameGqe> show
 
       position: the motor target position, maybe from mvsa
     '''
@@ -476,7 +483,7 @@ def setArrowMotorMisc( line):
 
 def setPixelWorld( line): 
     '''
-    setPixelWorld nameGqe x y value
+    setPixelWorld <nameGqe> x y value
       x, y: in world coordinates
         x >= xMin and x <= xMax
         y >= yMin and y <= yMax
@@ -493,7 +500,7 @@ def setPixelWorld( line):
 
 def setX( line): 
     '''
-    setX nameGqe index x
+    setX <nameGqe> index x
     '''
     lst = line.split( ' ')
     o = GQE.getGqe( lst[0])
@@ -509,7 +516,7 @@ def setX( line):
 
 def setY( line): 
     '''
-    setY nameGqe index y
+    setY <nameGqe> index y
     '''
     lst = line.split( ' ')
     o = GQE.getGqe( lst[0])
@@ -525,7 +532,7 @@ def setY( line):
 
 def setXY( line): 
     '''
-    setXY nameGqe index x y
+    setXY <nameGqe> index x y
     '''
     lst = line.split( ' ')
     o = GQE.getGqe( lst[0])

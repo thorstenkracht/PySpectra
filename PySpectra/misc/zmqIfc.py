@@ -251,6 +251,12 @@ def execHsh( hsh):
             argout[ 'result'] = "zmqIfc.execHsh: error, %s" % repr( e)
     else:
         argout[ 'result'] = "zmqIfc.execHsh: error, failed to identify %s" % repr( hsh)
+    #
+    # here errors like, see below, have been detected
+    #   - ValueError('GQE.Scan.__setattr__: eh_c01 unknown attribute xOld',)
+    #
+    if argout[ 'result'].upper() != "DONE":
+        print( "zmqIfc.execHsh: error %s " % argout[ 'result'])
 
     #print( "zmqIfc.execHsh: return %s" % repr( argout))
     return argout

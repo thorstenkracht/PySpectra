@@ -42,6 +42,7 @@ _ScanAttrsPublic = [ 'at', 'autoscaleX', 'autoscaleY', 'colSpan', 'currentIndex'
 
 _ScanAttrsPrivate = [ 'attributeWidget', 'infLineLeft', 'infLineRight', 'infLineMouseX', 'infLineMouseY', 
                       'arrowMotorCurrent', 'labelArrowMotorCurrent', 'arrowMotorSetPoint', 'arrowMotorMisc',    
+                      'arrowMotorInvisibleLeft', 'arrowMotorInvisibleRight', 
                       'mousePrepared', 'mouseLabel', 'cb_mouseLabel', 
                       'plotItem', 'plotDataItem', 'scene', 'xDateMpl']
 
@@ -321,7 +322,7 @@ class Scan( object):
         self.nPts = len( self.x)
         self.lastIndex = -1
         #
-        # currentIndex refers to the last valid x-, y-value; nPts == currentIndex + 1
+        # currentIndex points to the last valid x- or y-value with nPts == currentIndex + 1
         #
         self.currentIndex = self.nPts - 1
 
@@ -397,6 +398,8 @@ class Scan( object):
         self.arrowMotorSetPoint = None
         self.arrowMotorMisc = None # for e.g. mvsa
         self.labelArrowMotorCurrent = None
+        self.arrowMotorInvisibleLeft = None
+        self.arrowMotorInvisibleRight = None
         self.at = None
         self.attributeWidget = None
         self.autoscaleX = True
@@ -697,7 +700,7 @@ class Scan( object):
         # currentIndex refers to the last valid x-, y-value; nPts == currentIndex + 1
         return _np.max( self.y[:self.currentIndex + 1])
 
-    def setPosArrowMotorCurrent( self, motName, x): 
+    def setPosArrowMotorCurrentViewBox( self, motName, x): 
         '''
         set the position of the arrow pointing to the current motor position
 
@@ -721,12 +724,53 @@ class Scan( object):
 
         return
 
+    def setPosArrowMotorCurrentScene( self, motName, x): 
+        '''
+        set the position of the arrow pointing to the current motor position
+
+        to be taken into account: 
+          - try to plot the arrow at a constant height
+          - the arrow should always by visible, esp. when used from moveMotor(). 
+            In this case the motor always is heading towards outside of the
+            plot. To ensure that it stays visible, the arrow is plotted to 
+            the ViewBox and there are 2 invisible arrows left and right of its 
+            position which should be taken into account by the autoscale 
+            procedure.
+        '''
+        if self.arrowMotorInvisibleLeft is not None: 
+            delta = 1.
+            if self.currentIndex > 0: 
+                delta = (self.x[ self.currentIndex] - self.x[self.currentIndex - 1])*2.
+            xScene = 300
+            yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET*2
+            posVb = self.plotItem.vb.mapSceneToView( pg.Point( xScene, yScene))
+            self.arrowMotorInvisibleLeft.setPos( x - delta, posVb.y())
+            self.arrowMotorInvisibleRight.setPos( x + delta, posVb.y())
+            self.arrowMotorInvisibleLeft.show()
+            self.arrowMotorInvisibleRight.show()
+
+        yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET
+        if self.xLabel is not None: 
+            yScene = yScene - definitions.ARROW_Y_OFFSET_EXTRA
+        posScene = self.plotItem.vb.mapViewToScene( pg.Point( x, self.getYMin()))
+        self.arrowMotorCurrent.setPos( posScene.x(), yScene)
+        self.labelArrowMotorCurrent.setPos(  posScene.x(), yScene)
+        self.labelArrowMotorCurrent.setHtml( '<div>%s: %g</div>' % ( motName, x))
+
+        self.arrowMotorCurrent.show()
+        self.labelArrowMotorCurrent.show()
+
+
+        return
+
     def setPosArrowMotorSetPoint( self, motName, x): 
         '''
         set the position of the arrow pointing to the set-point
         '''
         xScene = 300
         yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET
+        if self.xLabel is not None: 
+            yScene = yScene - definitions.ARROW_Y_OFFSET_EXTRA
         posVb = self.plotItem.vb.mapSceneToView( pg.Point( xScene, yScene)).toPoint()
         self.arrowMotorSetPoint.setPos( x, posVb.y())
         self.arrowMotorSetPoint.show()
@@ -739,6 +783,8 @@ class Scan( object):
         '''
         xScene = 300
         yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET
+        if self.xLabel is not None: 
+            yScene = yScene - definitions.ARROW_Y_OFFSET_EXTRA
         posVb = self.plotItem.vb.mapSceneToView( pg.Point( xScene, yScene)).toPoint()
         self.arrowMotorMisc.setPos( x, posVb.y())
         self.arrowMotorMisc.show()
@@ -783,18 +829,24 @@ class Scan( object):
             proxy = _PyTango.DeviceProxy( motorArr[0]['name'])
             motName = motorArr[0]['name']
 
-        self.setPosArrowMotorCurrent( motName, proxy.position)
+        self.setPosArrowMotorCurrentScene( motName, proxy.position)
 
         if proxy.state() == _PyTango.DevState.ON: 
             self.arrowMotorSetPoint.hide()
+
+        PySpectra.processEvents()
 
         return
 
     def setArrowMotorCurrent( self, lst): 
         '''
         handle the arrow pointing to the current position
+          'setArrowMotorCurrent sig_gen position motName 50.6'
+          'setArrowMotorCurrent sig_gen hide'
+          'setArrowMotorCurrent sig_gen show'
+
           lst: 
-            - 'position', 'pos'
+            - 'position', '<motName>', '<pos>'
             - 'hide'
             - 'show'
         used from mvsa, via toPyspMonitor(). 
@@ -803,13 +855,13 @@ class Scan( object):
         if self.arrowMotorSetPoint is None:
             self.display()
 
-        if lst[0].upper() == 'HIDE': 
+        if len( lst) == 1 and lst[0].upper() == 'HIDE': 
             self.arrowMotorCurrent.hide()
-        elif lst[0].upper() == 'SHOW': 
+        elif len( lst) == 1 and lst[0].upper() == 'SHOW': 
             self.arrowMotorCurrent.show()
-        elif lst[0].upper() == 'POSITION': 
-            x = float( lst[1])
-            self.setPosArrowMotorCurrent( self.motorNameList[0], x)
+        elif len( lst) == 3 and lst[0].upper() == 'POSITION': 
+            x = float( lst[2])
+            self.setPosArrowMotorCurrent( lst[1], x)
         else: 
             raise ValueError( "GQE.setArrowMotorCurrent: strange list %s" % str( lst))
                                     
@@ -818,8 +870,11 @@ class Scan( object):
     def setArrowMotorSetPoint( self, lst): 
         '''
         handle the arrow pointing to the target position
+          'setArrowMotorSetPoint sig_gen position motName 50.6'
+          'setArrowMotorSetPoint sig_gen hide'
+          'setArrowMotorSetPoint sig_gen show'
           lst: 
-            - 'position', 'pos'
+            - 'position', '<motName>', '<pos>'
             - 'hide'
             - 'show'
         used from 
@@ -829,13 +884,13 @@ class Scan( object):
         if self.arrowMotorSetPoint is None:
             self.display()
 
-        if lst[0].upper() == 'HIDE': 
+        if len( lst) == 1 and lst[0].upper() == 'HIDE': 
             self.arrowMotorSetPoint.hide()
-        elif lst[0].upper() == 'SHOW': 
+        elif len( lst) == 1 and lst[0].upper() == 'SHOW': 
             self.arrowMotorSetPoint.show()
-        elif lst[0].upper() == 'POSITION': 
-            x = float( lst[1])
-            self.setPosArrowMotorSetPoint( x)
+        elif len( lst) == 3 and lst[0].upper() == 'POSITION': 
+            x = float( lst[2])
+            self.setPosArrowMotorSetPoint( lst[1], x)
         else: 
             raise ValueError( "GQE.setArrowMotorSetPoint: strange list %s" % str( lst))
                                     
@@ -844,8 +899,11 @@ class Scan( object):
     def setArrowMotorMisc( self, lst): 
         '''
         handle the arrow pointing to a target position defined by e.g. mvsa
+          'setArrowMotorMisc sig_gen position motName 50.6'
+          'setArrowMotorMisc sig_gen hide'
+          'setArrowMotorMisc sig_gen show'
           lst: 
-            - 'position', 'pos'
+            - 'position', '<motName>', '<pos>'
             - 'hide'
             - 'show'
         used from 
@@ -855,13 +913,13 @@ class Scan( object):
         if self.arrowMotorSetPoint is None:
             self.display()
 
-        if lst[0].upper() == 'HIDE': 
+        if len( lst) == 1 and lst[0].upper() == 'HIDE': 
             self.arrowMotorMisc.hide()
-        elif lst[0].upper() == 'SHOW': 
+        elif len( lst) == 1 and lst[0].upper() == 'SHOW': 
             self.arrowMotorMisc.show()
-        elif lst[0].upper() == 'POSITION': 
-            x = float( lst[1])
-            self.setPosArrowMotorMisc( x)
+        elif len( lst) == 3 and lst[0].upper() == 'POSITION':
+            x = float( lst[2])
+            self.setPosArrowMotorMisc( lst[1], x)
         else: 
             raise ValueError( "GQE.setArrowMotorMisc: strange list %s" % str( lst))
                                     
@@ -1175,6 +1233,7 @@ def delete( nameLst = None):
             del _gqeList[i]
             break
         else:
+            print( "GQE.delete (single): %s" % repr( HasyUtils.getTraceBackList()))
             raise ValueError( "GQE.delete: not found %s" % name)
         return 
     #
