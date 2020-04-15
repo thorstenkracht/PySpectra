@@ -21,21 +21,22 @@ python ./test/dMgt/testGQE.py testGQE.test_titleAndComment
 python ./test/dMgt/testGQE.py testGQE.testSSA
 python ./test/dMgt/testGQE.py testGQE.testFillData
 python ./test/dMgt/testGQE.py testGQE.testGetIndex
+python ./test/dMgt/testGQE.py testGQE.testMotorArrowCurrentAndSetPoint
+python ./test/dMgt/testGQE.py testGQE.testMotorArrowMisc
+python ./test/dMgt/testGQE.py testGQE.testCheckTargetWithinLimits
 '''
-import sys
-#pySpectraPath = "/home/kracht/Misc/pySpectra"
-pySpectraPath = "."
-sys.path.append( pySpectraPath)
-
+import sys, time
+import PyTango
 import PySpectra
-import PySpectra.dMgt.GQE as gqe
+import PySpectra.dMgt.GQE as GQE
 import numpy as np
 import unittest
 import time, sys, os
 import math 
 import pyqtgraph as pg
 
-
+#
+pySpectraPath = "/home/kracht/Misc/pySpectra"
 
 def mandelbrot( c, maxiter):
     z = c
@@ -59,43 +60,43 @@ class testGQE( unittest.TestCase):
 
         PySpectra.cls()
 
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.setTitle( "a_title")
-        self.assertEqual( PySpectra.dMgt.GQE.getTitle(), "a_title")
-        PySpectra.dMgt.GQE.delete()
-        self.assertEqual( PySpectra.dMgt.GQE.getTitle(), None)
-        PySpectra.dMgt.GQE.setTitle( "a_title")
-        PySpectra.dMgt.GQE.setTitle( None)
-        self.assertEqual( PySpectra.dMgt.GQE.getTitle(), None)
+        GQE.delete()
+        GQE.setTitle( "a_title")
+        self.assertEqual( GQE.getTitle(), "a_title")
+        GQE.delete()
+        self.assertEqual( GQE.getTitle(), None)
+        GQE.setTitle( "a_title")
+        GQE.setTitle( None)
+        self.assertEqual( GQE.getTitle(), None)
 
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.setComment( "a_comment")
-        self.assertEqual( PySpectra.dMgt.GQE.getComment(), "a_comment")
-        PySpectra.dMgt.GQE.delete()
-        self.assertEqual( PySpectra.dMgt.GQE.getComment(), None)
-        PySpectra.dMgt.GQE.setComment( "a_comment")
-        PySpectra.dMgt.GQE.setComment( None)
-        self.assertEqual( PySpectra.dMgt.GQE.getComment(), None)
+        GQE.delete()
+        GQE.setComment( "a_comment")
+        self.assertEqual( GQE.getComment(), "a_comment")
+        GQE.delete()
+        self.assertEqual( GQE.getComment(), None)
+        GQE.setComment( "a_comment")
+        GQE.setComment( None)
+        self.assertEqual( GQE.getComment(), None)
 
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.setTitle( "there must be this title")
-        PySpectra.dMgt.GQE.setComment( "and there must be this comment")
-        PySpectra.dMgt.GQE.Scan( "t1")
+        GQE.delete()
+        GQE.setTitle( "there must be this title")
+        GQE.setComment( "and there must be this comment")
+        GQE.Scan( "t1")
         PySpectra.display()
-        PySpectra.dMgt.GQE.show()
+        GQE.show()
         PySpectra.procEventsLoop( 1)
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.setTitle( "there is only a title, no comment")
-        PySpectra.dMgt.GQE.Scan( "t1")
+        GQE.delete()
+        GQE.setTitle( "there is only a title, no comment")
+        GQE.Scan( "t1")
         PySpectra.display()
         PySpectra.procEventsLoop( 1)
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.setComment( "there is only a comment")
-        PySpectra.dMgt.GQE.Scan( "t1")
+        GQE.delete()
+        GQE.setComment( "there is only a comment")
+        GQE.Scan( "t1")
         PySpectra.display()
         PySpectra.procEventsLoop( 1)
 
@@ -106,15 +107,15 @@ class testGQE( unittest.TestCase):
         print "testGQE.test_readMca_v1"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.read( "%s/test/data/tst_09153_mca_s1.fio" % pySpectraPath, flagMCA = True)
-        lst = PySpectra.dMgt.GQE.getGqeList()
+        GQE.delete()
+        GQE.read( "%s/test/data/tst_09153_mca_s1.fio" % pySpectraPath, flagMCA = True)
+        lst = GQE.getGqeList()
         self.assertEqual( len( lst), 1)
         self.assertEqual( lst[0].name, "d1_mca01")
         self.assertEqual( lst[0].nPts, 2048)
         
         PySpectra.display()
-        #PySpectra.dMgt.GQE.show()
+        #GQE.show()
         print "the graphics window should contain 1 MCA plot now"
         PySpectra.procEventsLoop( 1)
 
@@ -125,9 +126,9 @@ class testGQE( unittest.TestCase):
         print "testGQE.test_readMca_v2"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.read( "%s/test/data/tst_09154_mca_s1.fio" % pySpectraPath, flagMCA = True)
-        lst = PySpectra.dMgt.GQE.getGqeList()
+        GQE.delete()
+        GQE.read( "%s/test/data/tst_09154_mca_s1.fio" % pySpectraPath, flagMCA = True)
+        lst = GQE.getGqeList()
         self.assertEqual( len( lst), 2)
         self.assertEqual( lst[0].name, "d1_mca01")
         self.assertEqual( lst[0].nPts, 8192)
@@ -135,7 +136,7 @@ class testGQE( unittest.TestCase):
         self.assertEqual( lst[1].nPts, 8192)
         
         PySpectra.display()
-        #PySpectra.dMgt.GQE.show()
+        #GQE.show()
         print "the graphics window should contain 2 MCA plots now"
         PySpectra.procEventsLoop( 1)
 
@@ -146,22 +147,22 @@ class testGQE( unittest.TestCase):
         print "testGQE.test_read"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.read( "%s/test/data/ti_au_tio2_sio2_kat55a_0001.fio" % pySpectraPath)
-        lst = PySpectra.dMgt.GQE.getGqeList()
+        GQE.delete()
+        GQE.read( "%s/test/data/ti_au_tio2_sio2_kat55a_0001.fio" % pySpectraPath)
+        lst = GQE.getGqeList()
         self.assertEqual( len( lst), 24)
         self.assertEqual( lst[0].name, "TI_AU_TIO2_SIO2_KAT55A_0001")
         self.assertEqual( lst[1].name, "TI_AU_TIO2_SIO2_KAT55A_0001_RING")
         
         PySpectra.display()
-        #PySpectra.dMgt.GQE.show()
+        #GQE.show()
         print "the graphics window should contain 24 plots now"
         PySpectra.procEventsLoop( 1)
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.read( "%s/test/data/SPLITTER_PXE_BL_22_2.dat" % pySpectraPath)
-        lst = PySpectra.dMgt.GQE.getGqeList()
+        GQE.delete()
+        GQE.read( "%s/test/data/SPLITTER_PXE_BL_22_2.dat" % pySpectraPath)
+        lst = GQE.getGqeList()
         self.assertEqual( len( lst), 4)
         self.assertEqual( lst[0].name, "scan1")
         self.assertEqual( lst[1].name, "scan2")
@@ -169,7 +170,7 @@ class testGQE( unittest.TestCase):
         self.assertEqual( lst[3].name, "scan4")
         
         PySpectra.display()
-        #PySpectra.dMgt.GQE.show()
+        #GQE.show()
         PySpectra.procEventsLoop( 1)
 
         print "testGQE.test_read DONE"
@@ -179,14 +180,14 @@ class testGQE( unittest.TestCase):
         print "testGQE.test_doty"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
-        scan1 = PySpectra.dMgt.GQE.Scan( name = "notdotyscan", xMin = 10., xMax = 30.0, 
+        scan1 = GQE.Scan( name = "notdotyscan", xMin = 10., xMax = 30.0, 
                                nPts = 101, dType = np.float64,
                                lineColor = 'red', lineStyle = 'solidLine')
         self.assertEqual( scan1.doty, False)
 
-        scan2 = PySpectra.dMgt.GQE.Scan( name = "dotyscan", xMin = 10., xMax = 30.0, 
+        scan2 = GQE.Scan( name = "dotyscan", xMin = 10., xMax = 30.0, 
                                nPts = 101, dType = np.float64,
                                doty = True,lineColor = 'red', lineStyle = 'solidLine')
 
@@ -203,9 +204,9 @@ class testGQE( unittest.TestCase):
         print "testGQE.test_createScanByLimit"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
-        scan = PySpectra.dMgt.GQE.Scan( name = "test1", xMin = 0., xMax = 1.0, 
+        scan = GQE.Scan( name = "test1", xMin = 0., xMax = 1.0, 
                                nPts = 101, dType = np.float64,
                                at = (2,2,3), lineColor = 'red', lineStyle = 'solidLine')
         self.assertEqual( scan.xMin, 0.)
@@ -226,20 +227,20 @@ class testGQE( unittest.TestCase):
         print "testGQE.test_createScanByData"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
         try:
-            scan = PySpectra.dMgt.GQE.Scan( name = 't1', x = [0, 1, 2, 3, 4])
+            scan = GQE.Scan( name = 't1', x = [0, 1, 2, 3, 4])
         except ValueError, e:
             self.assertEqual( str( e), "GQE.Scan.__init__(): if 'x' or 'y' then both have to be supplied")
         try:
-            scan = PySpectra.dMgt.GQE.Scan( name = 't1', y = [0, 1, 2, 3, 4])
+            scan = GQE.Scan( name = 't1', y = [0, 1, 2, 3, 4])
         except ValueError, e:
             self.assertEqual( str( e), "GQE.Scan.__init__(): if 'x' or 'y' then both have to be supplied")
 
-        lst = PySpectra.dMgt.GQE.getGqeList()
+        lst = GQE.getGqeList()
         self.assertEqual( len( lst), 0)
         
-        scan = PySpectra.dMgt.GQE.Scan( name = 't1', x = [0, 1, 2, 3, 4], y = [10, 12, 11, 14, 12])
+        scan = GQE.Scan( name = 't1', x = [0, 1, 2, 3, 4], y = [10, 12, 11, 14, 12])
 
         self.assertEqual( scan.name, 't1')
         self.assertEqual( scan.xMin, 0.)
@@ -260,57 +261,57 @@ class testGQE( unittest.TestCase):
         
     def testCreateDelete( self): 
         print "testGQE.testCreateDelete"
-        PySpectra.dMgt.GQE.delete()
-        scanLst = PySpectra.dMgt.GQE.getGqeList()
+        GQE.delete()
+        scanLst = GQE.getGqeList()
         self.assertEqual( len( scanLst), 0)
-        PySpectra.dMgt.GQE.Scan( name = 't1')
-        PySpectra.dMgt.GQE.Scan( name = 't2')
-        PySpectra.dMgt.GQE.Scan( name = 't3')
-        PySpectra.dMgt.GQE.Scan( name = 't4')
+        GQE.Scan( name = 't1')
+        GQE.Scan( name = 't2')
+        GQE.Scan( name = 't3')
+        GQE.Scan( name = 't4')
         PySpectra.display()
-        scanLst = PySpectra.dMgt.GQE.getGqeList()
+        scanLst = GQE.getGqeList()
         self.assertEqual( len( scanLst), 4)
-        PySpectra.dMgt.GQE.delete( [ 't1', 't2'])
-        scanLst = PySpectra.dMgt.GQE.getGqeList()
+        GQE.delete( [ 't1', 't2'])
+        scanLst = GQE.getGqeList()
         self.assertEqual( len( scanLst), 2)
         self.assertEqual( scanLst[0].name, 't3')
         self.assertEqual( scanLst[1].name, 't4')
-        PySpectra.dMgt.GQE.delete()
-        scanLst = PySpectra.dMgt.GQE.getGqeList()
+        GQE.delete()
+        scanLst = GQE.getGqeList()
         self.assertEqual( len( scanLst), 0)
 
         print "testGQE.testCreateDelete, DONE"
         
     def testNextPrev( self):
         print "testGQE.testNextPrev"
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.Scan( name = 't1')
-        PySpectra.dMgt.GQE.Scan( name = 't2')
-        PySpectra.dMgt.GQE.Scan( name = 't3')
-        PySpectra.dMgt.GQE.Scan( name = 't4')
-        self.assertEqual( gqe.nextScan().name, 't1')
-        self.assertEqual( gqe.nextScan().name, 't2')
-        self.assertEqual( gqe.nextScan().name, 't3')
-        self.assertEqual( gqe.nextScan().name, 't4')
-        self.assertEqual( gqe.nextScan().name, 't1')
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.Scan( name = 't1')
-        PySpectra.dMgt.GQE.Scan( name = 't2')
-        PySpectra.dMgt.GQE.Scan( name = 't3')
-        PySpectra.dMgt.GQE.Scan( name = 't4')
-        self.assertEqual( gqe.prevScan().name, 't1')
-        self.assertEqual( gqe.prevScan().name, 't4')
-        self.assertEqual( gqe.prevScan().name, 't3')
-        self.assertEqual( gqe.prevScan().name, 't2')
-        self.assertEqual( gqe.prevScan().name, 't1')
+        GQE.delete()
+        GQE.Scan( name = 't1')
+        GQE.Scan( name = 't2')
+        GQE.Scan( name = 't3')
+        GQE.Scan( name = 't4')
+        self.assertEqual( GQE.nextScan().name, 't1')
+        self.assertEqual( GQE.nextScan().name, 't2')
+        self.assertEqual( GQE.nextScan().name, 't3')
+        self.assertEqual( GQE.nextScan().name, 't4')
+        self.assertEqual( GQE.nextScan().name, 't1')
+        GQE.delete()
+        GQE.Scan( name = 't1')
+        GQE.Scan( name = 't2')
+        GQE.Scan( name = 't3')
+        GQE.Scan( name = 't4')
+        self.assertEqual( GQE.prevScan().name, 't1')
+        self.assertEqual( GQE.prevScan().name, 't4')
+        self.assertEqual( GQE.prevScan().name, 't3')
+        self.assertEqual( GQE.prevScan().name, 't2')
+        self.assertEqual( GQE.prevScan().name, 't1')
 
         print "testGQE.testNextPrev, DONE"
 
     def testFillData( self):
         print "testGQE.testFillData"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        scan = PySpectra.dMgt.GQE.Scan( name = 't1', xLabel = "up to 200 pts", 
+        GQE.delete()
+        scan = GQE.Scan( name = 't1', xLabel = "up to 200 pts", 
                                nPts = 201, yMin = -10., yMax = 10.)
         self.assertEqual( scan.currentIndex, 200)
         #scan.y = np.tan( scan.x)
@@ -328,18 +329,18 @@ class testGQE( unittest.TestCase):
     def testWrite( self): 
         print "testGQE.testWrite"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        scan = PySpectra.dMgt.GQE.Scan( name = 't1', xLabel = "up to 200 pts", 
+        GQE.delete()
+        scan = GQE.Scan( name = 't1', xLabel = "up to 200 pts", 
                                nPts = 201, yMin = -10., yMax = 10.)
-        ret = PySpectra.dMgt.GQE.write( ['t1'])
+        ret = GQE.write( ['t1'])
 
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
         self.assertEqual( os.path.exists( ret), True)
 
-        PySpectra.dMgt.GQE.read( ret)
+        GQE.read( ret)
 
-        scanLst = PySpectra.dMgt.GQE.getGqeList()
+        scanLst = GQE.getGqeList()
         self.assertEqual( len( scanLst), 1)
         self.assertEqual( scanLst[0].name, "t1")
         self.assertEqual( scanLst[0].nPts, 201)
@@ -347,18 +348,18 @@ class testGQE( unittest.TestCase):
     def testRead( self): 
         print "testGQE.testRead"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        scan = PySpectra.dMgt.GQE.Scan( name = 't1', xLabel = "up to 200 pts", 
+        GQE.delete()
+        scan = GQE.Scan( name = 't1', xLabel = "up to 200 pts", 
                                nPts = 201, yMin = -10., yMax = 10.)
-        ret = PySpectra.dMgt.GQE.write( ['t1'])
+        ret = GQE.write( ['t1'])
 
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
         self.assertEqual( os.path.exists( ret), True)
 
-        scan = PySpectra.dMgt.GQE.Scan( name = 't1', fileName = ret, x = 1, y = 2)
+        scan = GQE.Scan( name = 't1', fileName = ret, x = 1, y = 2)
 
-        scanLst = PySpectra.dMgt.GQE.getGqeList()
+        scanLst = GQE.getGqeList()
         self.assertEqual( len( scanLst), 1)
         self.assertEqual( scanLst[0].name, "t1")
         self.assertEqual( scanLst[0].nPts, 201)
@@ -367,8 +368,8 @@ class testGQE( unittest.TestCase):
     def testReuse( self): 
         print "testGQE.testReuse"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        scan = PySpectra.dMgt.GQE.Scan( name = 't1', xLabel = "100 pts, going to be re-used", 
+        GQE.delete()
+        scan = GQE.Scan( name = 't1', xLabel = "100 pts, going to be re-used", 
                                nPts = 100, yMin = -10., yMax = 10.)
 
         for i in range( 10):
@@ -376,13 +377,13 @@ class testGQE( unittest.TestCase):
             x1  = np.linspace( 0., 10., 100)
             PySpectra.display()
             PySpectra.procEventsLoop( 1)
-            scan = PySpectra.dMgt.GQE.Scan( name = 't1', reUse = True, x = x1, y = data[0])
+            scan = GQE.Scan( name = 't1', reUse = True, x = x1, y = data[0])
 
     def testYGreaterThanZero( self): 
         print "testGQE.testYGreaterThanZero"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        scan = PySpectra.dMgt.GQE.Scan( name = 't1', xLabel = "11 pts, going to be re-used", 
+        GQE.delete()
+        scan = GQE.Scan( name = 't1', xLabel = "11 pts, going to be re-used", 
                                xMin = 0, yMin = 10, 
                                nPts = 11, )
 
@@ -411,8 +412,8 @@ class testGQE( unittest.TestCase):
     def testSetLimits( self): 
         print "testGQE.testSetLimits"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        scan = PySpectra.dMgt.GQE.Scan( name = 't1', 
+        GQE.delete()
+        scan = GQE.Scan( name = 't1', 
                                xMin = 0, xMax = 10, 
                                nPts = 11, )
 
@@ -436,10 +437,10 @@ class testGQE( unittest.TestCase):
     def testSetXY( self) : 
         print "testGQE.testSetXY"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
         x  = np.linspace( 0., 10., 100)
         y  = np.linspace( 0., 10., 100)
-        scan = PySpectra.dMgt.GQE.Scan( 't1', x = x, y = y)
+        scan = GQE.Scan( 't1', x = x, y = y)
 
         scan.setX( 0, 12)
         self.assertEqual( scan.x[0], 12)
@@ -459,10 +460,10 @@ class testGQE( unittest.TestCase):
     def testGetXY( self) : 
         print "testGQE.testSetXY"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
         x  = np.linspace( 0., 10., 100)
         y  = np.linspace( 0., 10., 100)
-        scan = PySpectra.dMgt.GQE.Scan( 't1', x = x, y = y)
+        scan = GQE.Scan( 't1', x = x, y = y)
 
         scan.setX( 0, 12)
         self.assertEqual( scan.getX( 0), 12)
@@ -472,109 +473,109 @@ class testGQE( unittest.TestCase):
     def testExceptions( self): 
         print "testGQE.testExceptions"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
         with self.assertRaises( ValueError) as context:
-            PySpectra.dMgt.GQE.delete()
-            scan = PySpectra.dMgt.GQE.Scan()
+            GQE.delete()
+            scan = GQE.Scan()
         self.assertTrue( "GQE.Scan: 'name' is missing" in context.exception)
 
         with self.assertRaises( ValueError) as context:
-            PySpectra.dMgt.GQE.delete()
-            scan = PySpectra.dMgt.GQE.Scan( name = 't1')
-            PySpectra.dMgt.GQE.delete( 't2')
+            GQE.delete()
+            scan = GQE.Scan( name = 't1')
+            GQE.delete( 't2')
         #print repr( context.exception)
         self.assertTrue( "GQE.delete: not found t2" in context.exception)
 
         with self.assertRaises( ValueError) as context:
-            PySpectra.dMgt.GQE.delete()
-            scan = PySpectra.dMgt.GQE.Scan( 't1')
-            scan = PySpectra.dMgt.GQE.Scan( 't1')
+            GQE.delete()
+            scan = GQE.Scan( 't1')
+            scan = GQE.Scan( 't1')
         #print repr( context.exception)
         self.assertTrue( "GQE.Scan.__init__(): t1 exists already" in context.exception)
 
         with self.assertRaises( ValueError) as context:
-            PySpectra.dMgt.GQE.delete()
-            scan = PySpectra.dMgt.GQE.Scan( 't1')
-            scan = PySpectra.dMgt.GQE.Scan( 't1')
+            GQE.delete()
+            scan = GQE.Scan( 't1')
+            scan = GQE.Scan( 't1')
         #print repr( context.exception)
         self.assertTrue( "GQE.Scan.__init__(): t1 exists already" in context.exception)
 
         with self.assertRaises( ValueError) as context:
-            PySpectra.dMgt.GQE.delete()
-            scan = PySpectra.dMgt.GQE.Scan( 't1', y = None)
+            GQE.delete()
+            scan = GQE.Scan( 't1', y = None)
         #print repr( context.exception)
         self.assertTrue( "GQE.Scan.__init__(): if 'x' or 'y' then both have to be supplied"
                          in context.exception)
 
         with self.assertRaises( ValueError) as context:
-            PySpectra.dMgt.GQE.delete()
-            scan = PySpectra.dMgt.GQE.Scan( 't1', fileName = 'hallo')
+            GQE.delete()
+            scan = GQE.Scan( 't1', fileName = 'hallo')
         #print repr( context.exception)
         self.assertTrue( "GQE.Scan.__init__: 'fileName' but no 'x' and no 'y', hallo"
                          in context.exception)
 
         with self.assertRaises( ValueError) as context:
-            PySpectra.dMgt.GQE.delete()
-            scan = PySpectra.dMgt.GQE.Scan( 't1', unknown = 't1')
+            GQE.delete()
+            scan = GQE.Scan( 't1', unknown = 't1')
         #print repr( context.exception)
         self.assertTrue( "GQE.Scan.__init__(): dct not empty {'unknown': 't1'}"
                          in context.exception)
 
         with self.assertRaises( ValueError) as context:
-            PySpectra.dMgt.GQE.delete()
+            GQE.delete()
             x1  = np.linspace( 0., 10., 100)
             y1  = np.linspace( 0., 10., 101)
-            scan = PySpectra.dMgt.GQE.Scan( 't1', x = x1, y = y1)
+            scan = GQE.Scan( 't1', x = x1, y = y1)
         #print repr( context.exception)
         self.assertTrue( "GQE.Scan._createScanFromData: 'x' and 'y' differ in length 100 (x) 101 (y)"
                          in context.exception)
 
         with self.assertRaises( ValueError) as context:
-            PySpectra.dMgt.GQE.delete()
+            GQE.delete()
             x1  = np.linspace( 0., 10., 100)
             y1  = np.linspace( 0., 10., 100)
-            scan = PySpectra.dMgt.GQE.Scan( 't1', x = x1, y = y1)
+            scan = GQE.Scan( 't1', x = x1, y = y1)
             scan.setX( 100, 1.)
         #print repr( context.exception)
         self.assertTrue( "GQE.Scan.setX: t1, index 100 out of range [0, 99]"
                          in context.exception)
 
         with self.assertRaises( ValueError) as context:
-            PySpectra.dMgt.GQE.delete()
+            GQE.delete()
             x1  = np.linspace( 0., 10., 100)
             y1  = np.linspace( 0., 10., 100)
-            scan = PySpectra.dMgt.GQE.Scan( 't1', x = x1, y = y1)
+            scan = GQE.Scan( 't1', x = x1, y = y1)
             scan.setY( 100, 1.)
         #print repr( context.exception)
         self.assertTrue( "GQE.Scan.setY: t1, index 100 out of range [0, 99]"
                          in context.exception)
 
         with self.assertRaises( ValueError) as context:
-            PySpectra.dMgt.GQE.delete()
+            GQE.delete()
             x1  = np.linspace( 0., 10., 100)
             y1  = np.linspace( 0., 10., 100)
-            scan = PySpectra.dMgt.GQE.Scan( 't1', x = x1, y = y1)
-            scan = PySpectra.dMgt.GQE.Scan( 't1', reUse = True, x = x1[:99], y = y1[:99])
+            scan = GQE.Scan( 't1', x = x1, y = y1)
+            scan = GQE.Scan( 't1', reUse = True, x = x1[:99], y = y1[:99])
         #print repr( context.exception)
         self.assertTrue( "GQE.Scan: len( scan.x) 100 != len( kwargs[ 'x']) 99"
                          in context.exception)
 
         with self.assertRaises( ValueError) as context:
-            PySpectra.dMgt.GQE.delete()
+            GQE.delete()
             x1  = np.linspace( 0., 10., 100)
             y1  = np.linspace( 0., 10., 100)
-            scan = PySpectra.dMgt.GQE.Scan( 't1', x = x1, y = y1)
-            scan = PySpectra.dMgt.GQE.Scan( 't1', reUse = True, x = x1, y = y1[:99])
+            scan = GQE.Scan( 't1', x = x1, y = y1)
+            scan = GQE.Scan( 't1', reUse = True, x = x1, y = y1[:99])
         #print repr( context.exception)
         self.assertTrue( "GQE.Scan: len( scan.y) 100 != len( kwargs[ 'y']) 99"
                          in context.exception)
 
         with self.assertRaises( ValueError) as context:
-            PySpectra.dMgt.GQE.delete()
+            GQE.delete()
             x1  = np.linspace( 0., 10., 100)
             y1  = np.linspace( 0., 10., 100)
-            scan = PySpectra.dMgt.GQE.Scan( 't1', x = x1, y = y1)
+            scan = GQE.Scan( 't1', x = x1, y = y1)
             scan.attrNotExist = 12
         #print repr( context.exception)
         self.assertTrue( "GQE.Scan.__setattr__: t1 unknown attribute attrNotExist"
@@ -582,10 +583,10 @@ class testGQE( unittest.TestCase):
 
 
         with self.assertRaises( ValueError) as context:
-            PySpectra.dMgt.GQE.delete()
+            GQE.delete()
             x1  = np.linspace( 0., 10., 100)
             y1  = np.linspace( 0., 10., 100)
-            scan = PySpectra.dMgt.GQE.Scan( 't1', x = x1, y = y1)
+            scan = GQE.Scan( 't1', x = x1, y = y1)
             temp = scan.attrNotExist
         #print repr( context.exception)
         self.assertTrue( "GQE.Scan.__getattr__: t1 unknown attribute attrNotExist"
@@ -594,8 +595,8 @@ class testGQE( unittest.TestCase):
     def testSSA( self) : 
         print "testGQE.testSSA"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        g = PySpectra.dMgt.GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
+        GQE.delete()
+        g = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
         mu = 0.
         sigma = 1.
         g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2*sigma**2))
@@ -630,37 +631,37 @@ class testGQE( unittest.TestCase):
     def testMisc( self) : 
         print "testGQE.testMisc"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        t1 = PySpectra.dMgt.GQE.Scan( name = "t1", xMin = -5., xMax = 5., nPts = 101)
-        t2 = PySpectra.dMgt.GQE.Scan( name = "t2", xMin = -5., xMax = 5., nPts = 101)
+        GQE.delete()
+        t1 = GQE.Scan( name = "t1", xMin = -5., xMax = 5., nPts = 101)
+        t2 = GQE.Scan( name = "t2", xMin = -5., xMax = 5., nPts = 101)
         PySpectra.display()
 
-        lst = PySpectra.dMgt.GQE.getDisplayList()
+        lst = GQE.getDisplayList()
 
         self.assertTrue( len(lst) == 2)
 
-        self.assertTrue( PySpectra.dMgt.GQE.info() == 2)
+        self.assertTrue( GQE.info() == 2)
 
-        self.assertTrue( PySpectra.dMgt.GQE.getIndex( 't1') == 0)
+        self.assertTrue( GQE.getIndex( 't1') == 0)
 
         
     def testDoubles( self) : 
 
         print "testGQE.testDoubles"
 
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
         with self.assertRaises( ValueError) as context:
-            t1 = PySpectra.dMgt.GQE.Scan( name = "t1", xMin = -5., xMax = 5., nPts = 101)
-            t2 = PySpectra.dMgt.GQE.Scan( name = "t1", xMin = -5., xMax = 5., nPts = 101)
+            t1 = GQE.Scan( name = "t1", xMin = -5., xMax = 5., nPts = 101)
+            t2 = GQE.Scan( name = "t1", xMin = -5., xMax = 5., nPts = 101)
 
         #print repr( context.exception)
         self.assertTrue( "GQE.Scan.__init__(): t1 exists already"
                          in context.exception)
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
         with self.assertRaises( ValueError) as context:
-            t1 = PySpectra.dMgt.GQE.Image( name = "t1", data = np.empty((100, 100)))
-            t1 = PySpectra.dMgt.GQE.Image( name = "t1", data = np.empty((100, 100)))
+            t1 = GQE.Image( name = "t1", data = np.empty((100, 100)))
+            t1 = GQE.Image( name = "t1", data = np.empty((100, 100)))
 
         #print repr( context.exception)
         self.assertTrue( "GQE.Image.__init__(): t1 exists already"
@@ -670,13 +671,13 @@ class testGQE( unittest.TestCase):
 
         print "testGQE.testGetIndex"
 
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
         #
         # left-right 
         #
         x1  = np.linspace( 0., 10., 11)
         y1  = np.linspace( 0., 10., 11)
-        scan1 = PySpectra.dMgt.GQE.Scan( 't1', x = x1, y = y1)
+        scan1 = GQE.Scan( 't1', x = x1, y = y1)
         self.assertEqual( scan1.getIndex( 4.2), 4)
         self.assertEqual( scan1.getIndex( 4.8), 5)
 
@@ -697,7 +698,7 @@ class testGQE( unittest.TestCase):
         # reverse the x-axis
         #
         x2 = x1[::-1]
-        scan2 = PySpectra.dMgt.GQE.Scan( 't2', x = x2, y = y1)
+        scan2 = GQE.Scan( 't2', x = x2, y = y1)
 
         self.assertEqual( scan2.getIndex( 4.2), 6)
         self.assertEqual( scan2.getIndex( 4.8), 5)
@@ -718,6 +719,91 @@ class testGQE( unittest.TestCase):
 
         return 
 
+    def testMotorArrowCurrentAndSetPoint( self) : 
+
+        PySpectra.cls()
+        GQE.delete()
+
+        g = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
+                      lineColor = 'red')
+        mu = 0.
+        sigma = 1.
+        g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2.*sigma**2))
+
+        g.x += 50
+
+        g.motorNameList = ["eh_mot66"]
+        proxy = PyTango.DeviceProxy( "eh_mot66")
+
+        g.display()
+
+        POSI = 50
+        g.setPosArrowMotorMisc( proxy.position)
+        proxy.position = POSI
+        print( "testGQE.testArrowMotor: moving %s to %g" % (proxy.name(), POSI))
+        g.setPosArrowMotorSetPoint( POSI)
+        while proxy.state() == PyTango.DevState.MOVING:
+            g.updateArrowMotorCurrent()
+            time.sleep(1.0)
+
+        g.display()
+            
+        POSI = 51
+        g.setPosArrowMotorMisc( proxy.position)
+        proxy.position = POSI
+        print( "testGQE.testArrowMotor: moving %s to %g" % (proxy.name(), POSI))
+        g.setPosArrowMotorSetPoint( POSI)
+        while proxy.state() == PyTango.DevState.MOVING:
+            g.setPosArrowMotorCurrent( proxy.position)
+            time.sleep(1.0)
+        return 
+
+    def testMotorArrowMisc( self) : 
+
+        PySpectra.cls()
+        GQE.delete()
+
+        g = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
+                      lineColor = 'red')
+        mu = 0.
+        sigma = 1.
+        g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2.*sigma**2))
+        g.x += 50
+
+
+        g.motorNameList = ["eh_mot66"]
+        g.display()
+
+        print( "testGQE.testArrowMotorMisc: an arrow should appear at 50.3")
+        g.setPosArrowMotorMisc( 50.3)
+
+        g.display()
+        time.sleep(3.0)
+        return 
+
+    def testCheckTargetWithinLimits( self): 
+        PySpectra.cls()
+        GQE.delete()
+
+        g = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
+                      lineColor = 'red')
+        mu = 0.
+        sigma = 1.
+        g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2.*sigma**2))
+        g.x += 50
+
+        g.motorNameList = ["eh_mot66"]
+        proxy = PyTango.DeviceProxy( g.motorNameList[ 0])
+
+        #
+        # [ 0.0, 149.4232]
+        #
+
+        self.assertEqual( g.checkTargetWithinLimits( g.motorNameList[ 0], 51., proxy), True)
+        self.assertEqual( g.checkTargetWithinLimits( g.motorNameList[ 0], -1., proxy), False)
+        self.assertEqual( g.checkTargetWithinLimits( g.motorNameList[ 0], 151., proxy), False)
+        
+        return 
          
 if __name__ == "__main__":
     unittest.main()

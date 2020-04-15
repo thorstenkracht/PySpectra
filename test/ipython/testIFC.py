@@ -15,6 +15,7 @@ python ./test/ipython/testIFC.py testIFC.test_setX_Y
 python ./test/ipython/testIFC.py testIFC.test_setXY
 python ./test/ipython/testIFC.py testIFC.test_y2my
 python ./test/ipython/testIFC.py testIFC.test_delete
+python ./test/ipython/testIFC.py testIFC.test_setArrowMotor
 python ./test/ipython/testIFC.py testIFC.test_execHsh
 python ./test/ipython/testIFC.py testIFC.test_execHshScan
 python ./test/ipython/testIFC.py testIFC.test_execHshSetPixelImage
@@ -63,6 +64,8 @@ class testIFC( unittest.TestCase):
         GQE.delete()
         print "testIFC.test_create1 DONE"
 
+        return 
+
     def test_create( self):
 
         print "testIFC.test_create"
@@ -92,11 +95,15 @@ class testIFC( unittest.TestCase):
         self.assertEqual( len( lst), 0)
         print "testIFC.test_create DONE"
 
+        return 
+
     def test_cls( self):
 
         print "testIFC.test_cls"
         ifc.command( "cls")
         print "testIFC.test_cls DONE"
+
+        return 
 
     def test_show( self):
 
@@ -107,6 +114,8 @@ class testIFC( unittest.TestCase):
         ifc.command( "create s1")
         ifc.command( "show s1")
         print "testIFC.test_show DONE"
+
+        return 
 
     def test_title( self): 
         print "testIFC.test_title"
@@ -119,6 +128,8 @@ class testIFC( unittest.TestCase):
         self.assertEqual( ret, "hallo")
         print "testIFC.test_title DONE"
 
+        return 
+
     def test_comment( self): 
         print "testIFC.test_comment"
         PySpectra.cls()
@@ -128,6 +139,8 @@ class testIFC( unittest.TestCase):
         ret = GQE.getComment()
         self.assertEqual( ret, "AComment")
         print "testIFC.test_comment DONE"
+
+        return 
 
     def test_y2my( self): 
         print "testIFC.test_y2my"
@@ -140,6 +153,8 @@ class testIFC( unittest.TestCase):
         self.assertEqual( lst[1].name, "s1_y2my")
         self.assertEqual( len( lst), 2)
         print "testIFC.test_y2my DONE"
+
+        return 
 
     def test_wsViewPort( self): 
         print "testIFC.test_wsViewPort"
@@ -159,6 +174,8 @@ class testIFC( unittest.TestCase):
         PySpectra.procEventsLoop( 1)
         print "testIFC.test_wsViewPort DONE"
 
+        return 
+
     def test_overlay( self): 
         print "testIFC.test_overlay"
         PySpectra.cls()
@@ -170,6 +187,8 @@ class testIFC( unittest.TestCase):
         self.assertEqual( s1.overlay, "s2")
         print "testIFC.test_overlay DONE"
 
+        return 
+
     def test_pdf( self): 
         print "testIFC.test_pdf"
         ifc.command( "cls")
@@ -179,6 +198,8 @@ class testIFC( unittest.TestCase):
         self.assertEqual( os.path.exists( 'testPDF.pdf'), True)
         os.remove( 'testPDF.pdf') 
         print "testIFC.test_pdf DONE"
+
+        return 
 
     def test_setText( self): 
         print "testIFC.test_setText"
@@ -200,6 +221,8 @@ class testIFC( unittest.TestCase):
         PySpectra.display()
         PySpectra.procEventsLoop( 1)
         print "testIFC.test_setText DONE"
+
+        return 
 
     def test_setX_Y( self): 
         import random
@@ -227,6 +250,8 @@ class testIFC( unittest.TestCase):
         PySpectra.procEventsLoop( 1)
         print "testIFC.test_setX_Y DONE"
 
+        return 
+
     def test_setXY( self): 
         import random
 
@@ -245,6 +270,7 @@ class testIFC( unittest.TestCase):
             
         PySpectra.procEventsLoop( 1)
         print "testIFC.test_setXY DONE"
+        return 
 
     def test_delete( self): 
 
@@ -286,6 +312,34 @@ class testIFC( unittest.TestCase):
         self.assertEqual( len( gqeList), 1)
         self.assertEqual( gqeList[0].name, "s1")
         print "testIFC.test_delete DONE"
+        return 
+
+    def test_setArrowMotor( self): 
+
+        print "testIFC.test_setArrowMotor"
+        ifc.command( "cls")
+        ifc.command( "delete")
+        max = 20
+        ifc.command( "setComment \"Arrows: Current: 5, Misc: 2, SetPoint: 6\"")
+        ifc.command( "create s1 0 10 %d" % max)
+
+        gqe = GQE.getGqe( "s1")
+        gqe.motorNameList = ["eh_mot66"] 
+
+        ifc.command( "setArrowMotorCurrent s1 position 5.") 
+        ifc.command( "setArrowMotorMisc s1 position 2.") 
+        ifc.command( "setArrowMotorSetPoint s1 position 6.") 
+        ifc.command( "display")
+        PySpectra.procEventsLoop( 1)
+
+        pos = 5
+        for i in range( 20): 
+            pos = 5 + float(i)*0.05
+            ifc.command( "setArrowMotorCurrent s1 position %g" % pos) 
+            time.sleep( 0.1)
+            
+        print "testIFC.test_setArrowMotor DONE"
+        return 
 
 
     def test_execHshScan( self): 
@@ -327,6 +381,8 @@ class testIFC( unittest.TestCase):
             time.sleep( 0.1)
 
         print "testIFC.test_execHsh DONE"
+
+        return 
 
 
     def test_execHshSetPixelImage( self): 
@@ -514,6 +570,8 @@ class testIFC( unittest.TestCase):
             time.sleep( 0.1)
 
         print "testIFC.test_toPyspMonitorScan DONE"
+
+        return 
 
 if __name__ == "__main__":
     unittest.main()

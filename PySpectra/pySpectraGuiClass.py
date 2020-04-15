@@ -1231,8 +1231,11 @@ class ScanAttributes( QtGui.QMainWindow):
         return 
 
     def cb_showScan( self): 
+        print( "showScan: %s " % self.scan.name)
         for i in range( 0, self.scan.currentIndex + 1): 
             print( "%5d %15g %15g " % ( i, self.scan.x[i], self.scan.y[i]))
+        if self.scan.motorNameList is not None and len( self.scan.motorNameList) > 0:
+            print( "\nmotorNameList: %s" % repr( self.scan.motorNameList) )
         return 
 
     def cb_display( self): 
@@ -2382,6 +2385,7 @@ class pySpectraGui( QtGui.QMainWindow):
                 continue
             if gqe.arrowMotorCurrent is None: 
                 continue
+            print( "+++ pySpectraGuiClass.updateScansList")
             gqe.updateArrowMotorCurrent()
 
         flagUpdate = False

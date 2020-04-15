@@ -87,7 +87,7 @@ def toPyspMonitor( hsh, node = None):
         else: 
             sckt.close()
             context.term()
-            return { 'result': 'utils: no reply from pyspMonitor'}
+            return { 'result': 'utils.zmqIfc: no reply from pyspMonitor'}
 
 def isPyspMonitorAlive( node = None):
     '''
@@ -273,41 +273,45 @@ def _putData( hsh):
     else:
         GQE.setTitle( hsh[ 'title'])
 
-    if 'columns' in hsh:
-        GQE.delete()
-        PySpectra.cls()
-        argout = GQE.fillDataByColumns( hsh)
-    elif 'gqes' in hsh:
-        GQE.delete()
-        PySpectra.cls()
-        argout = GQE.fillDataByGqes( hsh)
-    #
-    # hsh = { 'putData': 
-    #         { 'name': "MandelBrot",
-    #           'type': 'image', 
-    #           'xMin': xmin, 'xMax': xmax, 'width': width, 
-    #           'yMin': ymin, 'yMax': ymax, 'height': height}}
-    #
-    elif 'type' in hsh and hsh[ 'type'] == 'image':
-        del hsh[ 'type']
-        GQE.Image( **hsh)
-        argout = "done"
-    #
-    #_PySpectra.misc.zmqIfc.execHsh( { 'putData': 
-    #                { 'images': [{'name': "Mandelbrot", 'data': data,
-    #                              'xMin': xmin, 'xMax': xmax, 
-    #                              'yMin': ymin, 'yMax': ymax}]}})
-    #
-    elif 'images' in hsh:
-        for h in hsh[ 'images']: 
-            GQE.Image( **h)
-        argout = "done"
-    elif 'setPixelImage' in hsh or 'setPixelWorld' in hsh:
-        argout = GQE.fillDataImage( hsh)
-    elif 'setXY' in hsh:
-        argout = GQE.fillDataXY( hsh)
-    else:
-        raise Exception( "zmqIfc._putData", "expecting 'columns', 'gqes', 'setPixelImage', 'setPixelWorld'")
+    try: 
+        if 'columns' in hsh:
+            GQE.delete()
+            PySpectra.cls()
+            argout = GQE.fillDataByColumns( hsh)
+        elif 'gqes' in hsh:
+            GQE.delete()
+            PySpectra.cls()
+            argout = GQE.fillDataByGqes( hsh)
+        
+        #
+        # hsh = { 'putData': 
+        #         { 'name': "MandelBrot",
+        #           'type': 'image', 
+        #           'xMin': xmin, 'xMax': xmax, 'width': width, 
+        #           'yMin': ymin, 'yMax': ymax, 'height': height}}
+        #
+        elif 'type' in hsh and hsh[ 'type'] == 'image':
+            del hsh[ 'type']
+            GQE.Image( **hsh)
+            argout = "done"
+        #
+        #_PySpectra.misc.zmqIfc.execHsh( { 'putData': 
+        #                { 'images': [{'name': "Mandelbrot", 'data': data,
+        #                              'xMin': xmin, 'xMax': xmax, 
+        #                              'yMin': ymin, 'yMax': ymax}]}})
+        #
+        elif 'images' in hsh:
+            for h in hsh[ 'images']: 
+                GQE.Image( **h)
+            argout = "done"
+        elif 'setPixelImage' in hsh or 'setPixelWorld' in hsh:
+            argout = GQE.fillDataImage( hsh)
+        elif 'setXY' in hsh:
+            argout = GQE.fillDataXY( hsh)
+        else:
+            raise Exception( "zmqIfc._putData", "expecting 'columns', 'gqes', 'setPixelImage', 'setPixelWorld'")
+    except Exception as e: 
+        argout = "utils.zmqIfc._putData: %s" % repr( e)
 
     return argout
 

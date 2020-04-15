@@ -21,7 +21,7 @@ import queue, argparse, sys, os
 from PyQt4 import QtCore 
 from PyQt4 import QtGui 
 
-import PyTango as _PyTango
+import PyTango
 import zmq, json, socket
 
 import tngGui.lib.tngGuiClass
@@ -48,6 +48,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         self.queue = queue.Queue()
         builtins.__dict__[ 'queue'] = self.queue
 
+        self.setWindowTitle( "pyspMonitor")
         self.app = app
         self.refreshCount = 0
         self.flagIsBusy = False
@@ -64,7 +65,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
                     print( "pyspMonitor.__init__: no doors")
                     sys.exit( 255)
                     
-                self.door = _PyTango.DeviceProxy( HasyUtils.getDoorNames()[0])
+                self.door = PyTango.DeviceProxy( HasyUtils.getDoorNames()[0])
             except Exception as e:
                 print( "pyspMonitor.__init__: failed to get Door proxy %s" % repr(HasyUtils.getDoorNames()[0]))
 
@@ -114,8 +115,9 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             msg = self.sckt.recv()
             hsh = json.loads( msg)
             if self.flagIsBusy:
-                return "pyspMonitor: rejecting dct while scanning"
-            argout = zmqIfc.execHsh( hsh)
+                argout = { 'result': "pyspMonitor: rejecting dct while scanning"}
+            else: 
+                argout = zmqIfc.execHsh( hsh)
             msg = json.dumps( argout)
             self.sckt.send( msg)
         #
@@ -205,7 +207,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
                 # invode TngGui for all motors
                 #
                 self.motorNameButtons[i].clicked.connect( self.makeMotorCb( motorArr[i]))
-                self.motProxies[i] = _PyTango.DeviceProxy( motorArr[i]['name'])
+                self.motProxies[i] = PyTango.DeviceProxy( motorArr[i]['name'])
                 self.motorNameButtons[i].show()
                 self.motPosLabels[i].show()
             else:

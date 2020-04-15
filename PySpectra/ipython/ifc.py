@@ -436,7 +436,7 @@ def setPixelImage( line):
 def setArrowMotorCurrent( line): 
     '''
     handle the arrowMotorCurrent
-      setArrowMotorCurrent <nameGqe> position <motName> <targetPos>
+      setArrowMotorCurrent <nameGqe> position <targetPos>
       setArrowMotorCurrent <nameGqe> hide
       setArrowMotorCurrent <nameGqe> show
 
@@ -452,7 +452,7 @@ def setArrowMotorCurrent( line):
 def setArrowMotorSetPoint( line): 
     '''
     handle the arrowMotorSetPoint
-      setArrowMotorSetPoint <nameGqe> position <motName> <targetPos>
+      setArrowMotorSetPoint <nameGqe> position <targetPos>
       setArrowMotorSetPoint <nameGqe> hide
       setArrowMotorSetPoint <nameGqe> show
 
@@ -468,7 +468,7 @@ def setArrowMotorSetPoint( line):
 def setArrowMotorMisc( line): 
     '''
     handle the arrowMotorMisc
-      setArrowMotorMisc <nameGqe> position <motName> <targetPos>
+      setArrowMotorMisc <nameGqe> position <targetPos>
       setArrowMotorMisc <nameGqe> hide
       setArrowMotorMisc <nameGqe> show
 

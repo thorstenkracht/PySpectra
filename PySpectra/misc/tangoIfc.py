@@ -133,7 +133,7 @@ def moveScan( scan, target):
 
     if length == 1:
         p0 = _PyTango.DeviceProxy( motorArr[0]['name'])
-        if not scan._checkTargetWithinLimits( motorArr[0]['name'], float( motorArr[0]['targetPos']), p0): 
+        if not scan.checkTargetWithinLimits( motorArr[0]['name'], float( motorArr[0]['targetPos']), p0): 
             return 
                 
         msg = "Move %s from %g to %g" % (motorArr[0]['name'], 
@@ -148,9 +148,9 @@ def moveScan( scan, target):
         motorArr[1]['targetPos'] = (motorArr[1]['stop'] - motorArr[1]['start'])*r + motorArr[1]['start']
         p0 = _PyTango.DeviceProxy( motorArr[0]['name'])
         p1 = _PyTango.DeviceProxy( motorArr[1]['name'])
-        if not scan._checkTargetWithinLimits( motorArr[0]['name'], float( motorArr[0]['targetPos']), p0): 
+        if not scan.checkTargetWithinLimits( motorArr[0]['name'], float( motorArr[0]['targetPos']), p0): 
             return 
-        if not scan._checkTargetWithinLimits( motorArr[1]['name'], float( motorArr[1]['targetPos']), p1): 
+        if not scan.checkTargetWithinLimits( motorArr[1]['name'], float( motorArr[1]['targetPos']), p1): 
             return 
         msg = "Move\n  %s from %g to %g\n  %s from %g to %g " % \
               (motorArr[0]['name'], p0.read_attribute( 'Position').value, motorArr[0]['targetPos'],
@@ -168,11 +168,11 @@ def moveScan( scan, target):
         p0 = _PyTango.DeviceProxy( motorArr[0]['name'])
         p1 = _PyTango.DeviceProxy( motorArr[1]['name'])
         p2 = _PyTango.DeviceProxy( motorArr[2]['name'])
-        if not scan._checkTargetWithinLimits( motorArr[0]['name'], float( motorArr[0]['targetPos']), p0): 
+        if not scan.checkTargetWithinLimits( motorArr[0]['name'], float( motorArr[0]['targetPos']), p0): 
             return 
-        if not scan._checkTargetWithinLimits( motorArr[1]['name'], float( motorArr[1]['targetPos']), p1): 
+        if not scan.checkTargetWithinLimits( motorArr[1]['name'], float( motorArr[1]['targetPos']), p1): 
             return 
-        if not scan._checkTargetWithinLimits( motorArr[2]['name'], float( motorArr[2]['targetPos']), p2): 
+        if not scan.checkTargetWithinLimits( motorArr[2]['name'], float( motorArr[2]['targetPos']), p2): 
             return 
         msg = "Move\n  %s from %g to %g\n  %s from %g to %g\n  %s from %g to %g " % \
               (motorArr[0]['name'], p0.read_attribute( 'Position').value, motorArr[0]['targetPos'],
