@@ -62,7 +62,7 @@ class testZmqIfc( unittest.TestCase):
         self.assertEqual( hsh[ 'result'], 'done')
         _zmqIfc.execHsh( { 'command': ['display']})
         self.assertEqual( hsh[ 'result'], 'done')
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
         lst = PySpectra.dMgt.GQE.getGqeList()
         self.assertEqual( len( lst), 2)
         self.assertEqual( lst[0].name, "eh_c01")
@@ -104,7 +104,7 @@ class testZmqIfc( unittest.TestCase):
         self.assertEqual( hsh[ 'result'], 'done')
         _zmqIfc.execHsh( { 'command': ['display']})
         self.assertEqual( hsh[ 'result'], 'done')
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
         lst = PySpectra.dMgt.GQE.getGqeList()
         self.assertEqual( len( lst), 2)
         self.assertEqual( lst[0].name, "d1")
@@ -132,7 +132,7 @@ class testZmqIfc( unittest.TestCase):
         
         _zmqIfc.execHsh( { 'command': ['cls', 'display']})
         self.assertEqual( hsh[ 'result'], 'done')
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
         
         print "testZmqIfc.testExecHsh2 DONE"
@@ -181,7 +181,7 @@ class testZmqIfc( unittest.TestCase):
                 self.assertEqual( hsh[ 'result'], 'done')
             hsh =  _zmqIfc.execHsh( { 'command': ['cls', 'display']})
             self.assertEqual( hsh[ 'result'], 'done')
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
     def testExecHsh4( self) : 
         '''
@@ -226,7 +226,7 @@ class testZmqIfc( unittest.TestCase):
                 self.assertEqual( hsh[ 'result'], 'done')
             hsh =  _zmqIfc.execHsh( { 'command': ['cls', 'display']})
             self.assertEqual( hsh[ 'result'], 'done')
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
     def testExecHsh5( self) : 
         hsh = _zmqIfc.execHsh( { 'command': ['cls', 'delete']})
@@ -271,7 +271,7 @@ class testZmqIfc( unittest.TestCase):
                 self.assertEqual( hsh[ 'result'], 'done')
             hsh =  _zmqIfc.execHsh( { 'command': ['cls', 'display']})
             self.assertEqual( hsh[ 'result'], 'done')
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
     def testExecHsh6( self) : 
         '''
@@ -312,7 +312,7 @@ class testZmqIfc( unittest.TestCase):
 
         hsh =  _zmqIfc.execHsh( { 'command': ['cls', 'display']})
         self.assertEqual( hsh[ 'result'], 'done')
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
     def testExecHsh7( self) : 
         '''
@@ -361,7 +361,7 @@ class testZmqIfc( unittest.TestCase):
         self.assertEqual( o.xMax, xmax)
         self.assertEqual( o.yMin, ymin)
         self.assertEqual( o.yMax, ymax)
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
 if __name__ == "__main__":
     unittest.main()

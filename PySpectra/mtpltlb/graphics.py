@@ -242,7 +242,7 @@ def close():
     Fig = None
     return 
 
-def procEventsLoop( timeOut = None):
+def processEventsLoop( timeOut = None):
     '''
     loops over QApp.processEvents until a <return> is entered
     '''

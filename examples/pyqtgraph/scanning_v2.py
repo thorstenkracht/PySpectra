@@ -18,7 +18,7 @@ def main():
         t2.y = np.random.random_sample( (len( t2.x), ))
         t2.lastIndex = 0
 
-    pysp.procEventsLoop()
+    pysp.processEventsLoop()
     
 if __name__ == "__main__":
     main()    

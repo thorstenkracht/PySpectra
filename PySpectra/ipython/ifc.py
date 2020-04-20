@@ -5,7 +5,7 @@ An interface to PySpectra, used by
   - pyspMonitor.py to execute the commands received via ZMQ 
     pyspMonitorClass.py
       zmqIfc.execHsh( hsh)
-        zmqIfc.commandIfc( hsh): 
+        zmqIfc.execCommand( hsh): 
           ifc.command( cmd)
 
   - pyspDoor.py
@@ -13,7 +13,7 @@ An interface to PySpectra, used by
         pyspMonitorClass.py
           execHshLocal( hsh)
             zmqIfc.execHsh( hsh)
-              zmqIfc.commandIfc( hsh): 
+              zmqIfc.execCommand( hsh): 
                 ifc.command( cmd)
 
   - ipython, see 00-start.py, 
@@ -41,14 +41,17 @@ An interface to PySpectra, used by
     display
     delete
     info
+    move s1 51 [flagConfirm]
+    moveStart s1 51 [flagConfirm]
+      display s1 and move the first motor of s1.motorNameList
     overlay s1 s2
       s1 is plotted in the viewport of s2
     read fileName
     setComment
-    setArrowMotorCurrent
-    setArrowMotorSetPoint
+    setArrowCurrent
+    setArrowSetPoint
       used by the mouse-click callback
-    setArrowMotorMisc  
+    setArrowMisc  
       this arrow is ignored by the refresh() of pyspMonitor, 
       used by e.g. mvsa
     setPixelImage
@@ -69,6 +72,7 @@ import PySpectra
 import PySpectra.mtpltlb.graphics as _mpl_graphics # to create postscript
 import PySpectra.dMgt.calc as calc
 import PySpectra.dMgt.GQE as GQE
+import PySpectra.misc.tangoIfc as tangoIfc
 
 def command( line):
     '''
@@ -118,16 +122,20 @@ def command( line):
             argout = display( lineRest)
         elif lst[0] == 'info':
             argout = info( lineRest)
+        elif lst[0] == 'move':
+            argout = move( lineRest)
+        elif lst[0] == 'moveStart':
+            argout = moveStart( lineRest)
         elif lst[0] == 'overlay':
             argout = overlay( lineRest)
         elif lst[0] == 'read':
             argout = read( lineRest)
-        elif lst[0] == 'setArrowMotorCurrent':
-            argout = setArrowMotorCurrent( lineRest)
-        elif lst[0] == 'setArrowMotorSetPoint':
-            argout = setArrowMotorSetPoint( lineRest)
-        elif lst[0] == 'setArrowMotorMisc':
-            argout = setArrowMotorMisc( lineRest)
+        elif lst[0] == 'setArrowCurrent':
+            argout = setArrowCurrent( lineRest)
+        elif lst[0] == 'setArrowSetPoint':
+            argout = setArrowSetPoint( lineRest)
+        elif lst[0] == 'setArrowMisc':
+            argout = setArrowMisc( lineRest)
         elif lst[0] == 'setComment':
             argout = setComment( lineRest)
         elif lst[0] == 'setPixelImage':
@@ -192,6 +200,8 @@ def cls( line):
     '''
     PySpectra.cls()
 
+    return "done"
+
 def create( line):
     '''
     creates a scan 
@@ -227,6 +237,7 @@ def create( line):
         raise ValueError( "ifs.createScan: wrong syntax %s" % line)
         
     GQE.Scan( **hsh)
+    return "done"
 
 def createPDF( line):
     '''
@@ -238,6 +249,7 @@ def createPDF( line):
         if l is not None and len(l) > 0:
             fName = l[0]
     _mpl_graphics.createPDF( fileName = fName)
+    return "done"
 
 def derivative( line):
     '''
@@ -259,6 +271,7 @@ def derivative( line):
         calc.derivative( lst[0], lst[1])
     else:
         raise ValueError( "ifc.derivative: wrong syntax %s" % line)
+    return "done"
 
 def display( line):
     '''
@@ -271,18 +284,59 @@ def display( line):
             lst = line.split( ' ')
         
     PySpectra.display( lst)
+    return "done"
 
 def delete( line):
     lst = None
     if line: 
         lst = line.split(' ')
     GQE.delete( lst)
+    return "done"
 
 def info( line):
     '''
     displays some information
     '''
     PySpectra.info()
+    return "done"
+
+def move( line):
+    '''
+    move s1 50 <flagConfirm> 
+
+    <flagConfirm> - specify whether the user is prompted for 
+                    confirmation before the move is executed, 
+                    def.: True, safety first
+    '''
+    lst = line.split( ' ')
+    if len( lst) < 2:
+        raise ValueError( "ifc.move: expecting at least a scan name and the destination")
+    gqe = GQE.getGqe( lst[0])
+    flagConfirm = True
+    if len( lst) == 3:
+        if lst[2].upper() == "FALSE": 
+            flagConfirm = False
+    tangoIfc.move( gqe, float( lst[1]), flagConfirm = flagConfirm)
+    return "done"
+
+def moveStart( line):
+    '''
+    moveStart s1 50 <flagConfirm>
+
+    <flagConfirm> - specify whether the user is prompted for 
+                    confirmation before the move is executed, 
+                    def.: True, safety first
+    '''
+    lst = line.split( ' ')
+    if len( lst) < 2:
+        raise ValueError( "ifc.moveStart: expecting at least a scan name and the destination")
+    gqe = GQE.getGqe( lst[0])
+    flagConfirm = True
+    if len( lst) == 3:
+        if lst[2].upper() == "FALSE": 
+            flagConfirm = False
+    tangoIfc.moveStart( gqe, float( lst[1]), flagConfirm = flagConfirm)
+    return "done"
 
 def overlay( line):
     '''
@@ -293,6 +347,7 @@ def overlay( line):
     if len( lst) != 2:
         raise ValueError( "ifc.overlay: expecting two scan names")
     GQE.overlay( lst[0], lst[1])
+    return "done"
 
 def read( line):
     '''
@@ -304,15 +359,18 @@ def read( line):
         lst = line.split(' ')
     if len( lst) == 0:
         raise ValueError( "ifc.read: expecting a file name and optionally '-mca'")
-        return 
     GQE.read( lst)
+    return "done"
 
 def setComment( line):
     '''
     setComment "some comment"
       set the comment string for the whole plot
     '''
-    GQE.setComment( line)
+    argout = "done"
+    if not GQE.setComment( line): 
+        argout = "trouble from GQE.setComment()"
+    return argout
 
 def _pairs( lst): 
     a = iter(lst)
@@ -360,7 +418,7 @@ def setText( line):
         o = GQE.getGqe( lst[0])
     except Exception as e: 
         raise ValueError( "ifc.setText: failed to gqeGqe %s" % lst[0])
-        return
+
     flag = False
     #
     # first run: see, if textName is in textList
@@ -409,12 +467,16 @@ def setText( line):
                     raise ValueError(" ifc.setText: failed to identify %s" % k)
             flag = True
             break
+    return "done"
 
 def setTitle( line):
     '''
     set the title of the whole plot
     '''
-    GQE.setTitle( line)
+    argout = "done"
+    if not GQE.setTitle( line): 
+        argout = "trouble from GQE.setTitle()"
+    return argout
 
 def setPixelImage( line): 
     '''
@@ -431,55 +493,55 @@ def setPixelImage( line):
     iy = int( lst[2])
     val = float( lst[3])
     o.setPixelImage( ix, iy, val)
-    return 
+    return "done"
 
-def setArrowMotorCurrent( line): 
+def setArrowCurrent( line): 
     '''
-    handle the arrowMotorCurrent
-      setArrowMotorCurrent <nameGqe> position <targetPos>
-      setArrowMotorCurrent <nameGqe> hide
-      setArrowMotorCurrent <nameGqe> show
+    handle the arrowCurrent
+      setArrowCurrent <nameGqe> position <targetPos>
+      setArrowCurrent <nameGqe> hide
+      setArrowCurrent <nameGqe> show
 
       position: the motor current position, maybe from mvsa
     '''
     lst = line.split( ' ')
     o = GQE.getGqe( lst[0])
     if o is None: 
-        raise ValueError(" ifc.setArrowMotorSCurrent: failed to find %s" % lst[0])
-    o.setArrowMotorCurrent( lst[1:])
-    return 
+        raise ValueError(" ifc.setArrowSCurrent: failed to find %s" % lst[0])
+    o.setArrowCurrent( lst[1:])
+    return "done"
 
-def setArrowMotorSetPoint( line): 
+def setArrowSetPoint( line): 
     '''
-    handle the arrowMotorSetPoint
-      setArrowMotorSetPoint <nameGqe> position <targetPos>
-      setArrowMotorSetPoint <nameGqe> hide
-      setArrowMotorSetPoint <nameGqe> show
+    handle the arrowSetPoint
+      setArrowSetPoint <nameGqe> position <targetPos>
+      setArrowSetPoint <nameGqe> hide
+      setArrowSetPoint <nameGqe> show
 
       position: the motor target position, mayby from mouse-click
     '''
     lst = line.split( ' ')
     o = GQE.getGqe( lst[0])
     if o is None: 
-        raise ValueError(" ifc.setArrowMotorSetPoint: failed to find %s" % lst[0])
-    o.setArrowMotorSetPoint( lst[1:])
-    return 
+        raise ValueError(" ifc.setArrowSetPoint: failed to find %s" % lst[0])
+    o.setArrowSetPoint( lst[1:])
+    return "done"
 
-def setArrowMotorMisc( line): 
+def setArrowMisc( line): 
     '''
-    handle the arrowMotorMisc
-      setArrowMotorMisc <nameGqe> position <targetPos>
-      setArrowMotorMisc <nameGqe> hide
-      setArrowMotorMisc <nameGqe> show
+    handle the arrowMisc
+      setArrowMisc <nameGqe> position <targetPos>
+      setArrowMisc <nameGqe> hide
+      setArrowMisc <nameGqe> show
 
       position: the motor target position, maybe from mvsa
     '''
     lst = line.split( ' ')
     o = GQE.getGqe( lst[0])
     if o is None: 
-        raise ValueError(" ifc.setArrowMotorMisc: failed to find %s" % lst[0])
-    o.setArrowMotorMisc( lst[1:])
-    return 
+        raise ValueError(" ifc.setArrowMisc: failed to find %s" % lst[0])
+    o.setArrowMisc( lst[1:])
+    return "done"
 
 def setPixelWorld( line): 
     '''
@@ -496,7 +558,7 @@ def setPixelWorld( line):
     y = float( lst[2])
     val = float( lst[3])
     o.setPixelWorld( x, y, val)
-    return 
+    return "done"
 
 def setX( line): 
     '''
@@ -512,7 +574,7 @@ def setX( line):
         
     o.x[index] = float( lst[2]) 
     o.currentIndex = index
-    return 
+    return "done"
 
 def setY( line): 
     '''
@@ -528,7 +590,7 @@ def setY( line):
         
     o.y[index] = float( lst[2]) 
     o.currentIndex = index
-    return 
+    return "done"
 
 def setXY( line): 
     '''
@@ -545,7 +607,7 @@ def setXY( line):
     o.x[index] = float( lst[2]) 
     o.y[index] = float( lst[3]) 
     o.currentIndex = index
-    return 
+    return "done"
     
 def setWsViewport( line):
     '''
@@ -557,18 +619,20 @@ def setWsViewport( line):
         lst = line.split( ' ')
     if len( lst) > 1:
         raise ValueError( "ifc.setWsViewport: expecting zero or one arguments")
-        return 
 
     if len( lst) == 0:
         PySpectra.setWsViewport( None)
     else:
         PySpectra.setWsViewport( lst[0])
 
+    return "done"
+
 def show( line):
     '''
     show the list of scans
     '''
     GQE.show()
+    return "done"
 
 def write( line):
     ''' 
@@ -583,6 +647,7 @@ def write( line):
     '''
     lst = line.split( ' ')
     GQE.write( lst)
+    return "done"
 
 def y2my( line):
     lst = line.split( ' ')
@@ -593,4 +658,5 @@ def y2my( line):
     if len( lst) == 2:
         hsh[ 'nameNew'] = lst[1]
     calc.yToMinusY( **hsh)
+    return "done"
     

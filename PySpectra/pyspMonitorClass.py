@@ -50,6 +50,11 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
 
         self.setWindowTitle( "pyspMonitor")
         self.app = app
+        #
+        # create the door member before setMonitorGui()
+        #
+        self.door = None
+        GQE.InfoBlock.setMonitorGui( self)
         self.refreshCount = 0
         self.flagIsBusy = False
         #
@@ -191,7 +196,6 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         we received a scanInfo block indicating that a new scan has started
         now we configure the motors widget using information from the scanInfo block
         '''
-        GQE.InfoBlock.setMonitorGui( self)
 
         length = len( self.scanInfo['motors'])
         if  length == 0 or length > 3:

@@ -47,7 +47,7 @@ class testCalc( unittest.TestCase):
         
         PySpectra.display()
         #PySpectra.show()
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
         print "testCalc.testYToMinusY, DONE"
         
@@ -77,7 +77,7 @@ class testCalc( unittest.TestCase):
         _calc.derivative( name = scan.name, nameNew = "t1_d")
         PySpectra.display()
         #PySpectra.show()
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
         PySpectra.cls()
         _gqe.delete()
@@ -86,7 +86,7 @@ class testCalc( unittest.TestCase):
         _calc.derivative( name = scan.name)
         PySpectra.display()
         #PySpectra.show()
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
         PySpectra.cls()
         _gqe.delete()
@@ -95,7 +95,7 @@ class testCalc( unittest.TestCase):
         _calc.derivative( scan.name, "t1_d")
         PySpectra.display()
         #PySpectra.show()
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
         print "testCalc.testDerivative, DONE"
         
@@ -110,7 +110,7 @@ class testCalc( unittest.TestCase):
         _calc.antiderivative( name = scan.name, nameNew = "t1_ad")
         PySpectra.display()
         #PySpectra.show()
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
         print "testCalc.testAntiDerivative, DONE"
         
@@ -146,7 +146,7 @@ class testCalc( unittest.TestCase):
         PySpectra.display()
 
         #PySpectra.launchGui()
-        PySpectra.procEventsLoop( 3)
+        PySpectra.processEventsLoop( 3)
 
         print "testCalc.testDerivativeAntiDerivative, DONE"
 

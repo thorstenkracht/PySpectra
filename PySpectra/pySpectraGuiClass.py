@@ -1221,9 +1221,9 @@ class ScanAttributes( QtGui.QMainWindow):
 
     def cb_details( self): 
         print( "\n %s " % self.scan.name)
-        print( "arrowMotorCurrent %s" % repr( self.scan.arrowMotorCurrent))
-        print( "labelArrowMotorCurrent %s" % repr( self.scan.labelArrowMotorCurrent))
-        print( "arrowMotorSetPoint %s" % repr( self.scan.arrowMotorSetPoint))
+        print( "arrowCurrent %s" % repr( self.scan.arrowCurrent))
+        print( "labelArrowCurrent %s" % repr( self.scan.labelArrowCurrent))
+        print( "arrowSetPoint %s" % repr( self.scan.arrowSetPoint))
         print( "infLineMouseX %s" % repr( self.scan.infLineMouseX))
         print( "infLineMouseY %s" % repr( self.scan.infLineMouseY))
         print( "infLineLeft %s" % repr( self.scan.infLineLeft))
@@ -2362,7 +2362,7 @@ class pySpectraGui( QtGui.QMainWindow):
             return 
 
         #gqe = GQE.getGqe( self.getCheckedNameList()[0])
-        #gqe.updateArrowMotorCurrent()
+        #gqe.updateArrowCurrent()
         
         #self.updateTimerPySpectraGui.start( int( updateTime*1000))
         return 
@@ -2376,17 +2376,16 @@ class pySpectraGui( QtGui.QMainWindow):
 
         gqeList = GQE.getGqeList()[:]
         #
-        # see, if one of the GQEs has an arrowMotorCurrent. 
+        # see, if one of the GQEs has an arrowCurrent. 
         # if so, update it because the motor might have been 
         # moved somehow
         # 
         for gqe in gqeList: 
             if type( gqe) != GQE.Scan:            
                 continue
-            if gqe.arrowMotorCurrent is None: 
+            if gqe.arrowCurrent is None: 
                 continue
-            print( "+++ pySpectraGuiClass.updateScansList")
-            gqe.updateArrowMotorCurrent()
+            gqe.updateArrowCurrent()
 
         flagUpdate = False
         if self.gqeList is None:

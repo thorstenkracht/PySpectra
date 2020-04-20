@@ -7,13 +7,13 @@ GQE - contains the Scan() class and functions to handle scans:
 
 import numpy as _np
 from PyQt4 import QtCore, QtGui
-import HasyUtils
 import PyTango as _PyTango
 import PySpectra 
 import PySpectra.definitions as definitions 
 import PySpectra.misc.utils as utils
 import pyqtgraph as pg
 import time
+import HasyUtils as _HasyUtils
 
 _gqeList = []
 _gqeIndex = None  # used by next/back
@@ -41,8 +41,8 @@ _ScanAttrsPublic = [ 'at', 'autoscaleX', 'autoscaleY', 'colSpan', 'currentIndex'
                      'yTicksVisible'] 
 
 _ScanAttrsPrivate = [ 'attributeWidget', 'infLineLeft', 'infLineRight', 'infLineMouseX', 'infLineMouseY', 
-                      'arrowMotorCurrent', 'labelArrowMotorCurrent', 'arrowMotorSetPoint', 'arrowMotorMisc',    
-                      'arrowMotorInvisibleLeft', 'arrowMotorInvisibleRight', 
+                      'arrowCurrent', 'labelArrowCurrent', 'arrowSetPoint', 'arrowMisc',    
+                      'arrowInvisibleLeft', 'arrowInvisibleRight', 
                       'mousePrepared', 'mouseLabel', 'cb_mouseLabel', 
                       'plotItem', 'plotDataItem', 'scene', 'xDateMpl']
 
@@ -58,16 +58,40 @@ _ImageAttrsPrivate = [ 'attributeWidget', 'cbZoomProgress', 'flagZooming', 'flag
 
 class InfoBlock( object): 
     monitorGui = None
+    doorProxy = None
 
     def __init__( self):
         pass
     #
-    # called from pyspMonitorClass, if scanInfo is received
+    # the monitorGui is set from pyspMonitorClass.__init__()
+    # it is used by misc/tangoIfc.py 
     #
     @staticmethod
     def setMonitorGui( monitorGui): 
         InfoBlock.monitorGui = monitorGui
+        InfoBlock.doorProxy = monitorGui.door
         return 
+    #
+    # the monitorGui is set from pyspMonitorClass.__init__()
+    # it is used by misc/tangoIfc.py 
+    #
+    @staticmethod
+    def getDoorProxy():
+
+        if InfoBlock.doorProxy is not None:
+            return InfoBlock.doorProxy
+
+        doorNames = _HasyUtils.getDoorNames()
+        if doorNames is None or len( doorNames) == 0: 
+            raise ValueError( "GQE.InfoBlocl.setDoorProxy: no doorNames")
+
+        try: 
+            InfoBlock.doorProxy = _PyTango.DeviceProxy( doorNames[0])
+        except exception as e: 
+            print( "GQE.InfoBlock.getDoorProxy: exception %s" % repr( e))
+            return None 
+
+        return InfoBlock.doorProxy
 
 class Text(): 
     '''
@@ -260,7 +284,7 @@ class Scan( object):
         #else: 
         #    raise ValueError( "GQE.Scan.__getattr__: Scan %s unknown attribute name %s" % ( self.name, name))
         
-    def checkTargetWithinLimits( self, name, target, proxy): 
+    def checkTargetWithinLimits( self, name, target, proxy, flagConfirm = True): 
         '''
         return False, if the target position is outside the limits
         '''
@@ -270,16 +294,27 @@ class Scan( object):
         if hasattr( proxy, "UnitLimitMin"): 
             try: 
                 if target < proxy.UnitLimitMin: 
-                    QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g < unitLimitMin %g" % 
-                                              ( name, target, proxy.UnitLimitMin))
+                    if flagConfirm: 
+                        QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g < unitLimitMin %g" % 
+                                                 ( name, target, proxy.UnitLimitMin))
+                    else: 
+                        print( "GQE.checkTargetWithinLimits: %s, target %g < unitLimitMin %g" % 
+                                                 ( name, target, proxy.UnitLimitMin))
                     return False
                 if target > proxy.UnitLimitMax: 
-                    QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g > unitLimitMax %g" % 
-                                              ( name, target, proxy.UnitLimitMax))
+                    if flagConfirm: 
+                        QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g > unitLimitMax %g" % 
+                                                 ( name, target, proxy.UnitLimitMax))
+                    else: 
+                        print( "GQE.checkTargetWithinLimits: %s, target %g > unitLimitMax %g" % 
+                                                 ( name, target, proxy.UnitLimitMax))
                     return False
             except Exception as e: 
-                QtGui.QMessageBox.about( None, 'Info Box', "CheckTargetWithinLimits: %s %s" % 
-                                          ( name, repr( e)))
+                if flagConfirm: 
+                    QtGui.QMessageBox.about( None, 'Info Box', "CheckTargetWithinLimits: %s %s" % 
+                                             ( name, repr( e)))
+                else: 
+                    print( "GQE.checkTargetWithinLimits: error %s, %s" % ( name, repr( e)))
                 return False
         #
         # pool motors: need to check the attribute configuration
@@ -287,12 +322,20 @@ class Scan( object):
         else: 
             attrConfig = proxy.get_attribute_config_ex( "Position")
             if target < float( attrConfig[0].min_value): 
-                QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g < attrConf.min_value %g" % 
-                                          ( name, target, float( attrConfig[0].min_value)))
+                if flagConfirm: 
+                    QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g < attrConf.min_value %g" % 
+                                             ( name, target, float( attrConfig[0].min_value)))
+                else: 
+                    print( "GQE.checkTargetWithinLimits: %s, target %g < attrConf.min_value %g" % 
+                           ( name, target, float( attrConfig[0].min_value)))
                 return False
             if target > float( attrConfig[0].max_value): 
-                QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g > attrConf.max_value %g" % 
-                                          ( name, target, float( attrConfig[0].max_value)))
+                if flagConfirm: 
+                    QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g > attrConf.max_value %g" % 
+                                             ( name, target, float( attrConfig[0].max_value)))
+                else: 
+                    print( "GQE.checkTargetWithinLimits: %s, target %g > attrConf.max_value %g" % 
+                           ( name, target, float( attrConfig[0].max_value)))
                 return False
         return True
             
@@ -394,12 +437,12 @@ class Scan( object):
         Returns None
         '''
 
-        self.arrowMotorCurrent = None
-        self.arrowMotorSetPoint = None
-        self.arrowMotorMisc = None # for e.g. mvsa
-        self.labelArrowMotorCurrent = None
-        self.arrowMotorInvisibleLeft = None
-        self.arrowMotorInvisibleRight = None
+        self.arrowCurrent = None
+        self.arrowSetPoint = None
+        self.arrowMisc = None # for e.g. mvsa
+        self.labelArrowCurrent = None
+        self.arrowInvisibleLeft = None
+        self.arrowInvisibleRight = None
         self.at = None
         self.attributeWidget = None
         self.autoscaleX = True
@@ -700,7 +743,7 @@ class Scan( object):
         # currentIndex refers to the last valid x-, y-value; nPts == currentIndex + 1
         return _np.max( self.y[:self.currentIndex + 1])
 
-    def setPosArrowMotorCurrent( self, x): 
+    def setPosArrowCurrent( self, x): 
         '''
         set the position of the arrow pointing to the current motor position
 
@@ -714,37 +757,37 @@ class Scan( object):
             procedure.
         '''
 
-        if self.arrowMotorInvisibleLeft is not None: 
+        if self.arrowInvisibleLeft is not None: 
             delta = 1.
             if self.currentIndex > 0: 
                 delta = (self.x[ self.currentIndex] - self.x[self.currentIndex - 1])*2.
             xScene = 300
             yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET*2
             posVb = self.plotItem.vb.mapSceneToView( pg.Point( xScene, yScene))
-            self.arrowMotorInvisibleLeft.setPos( x - delta, posVb.y())
-            self.arrowMotorInvisibleRight.setPos( x + delta, posVb.y())
-            self.arrowMotorInvisibleLeft.show()
-            self.arrowMotorInvisibleRight.show()
+            self.arrowInvisibleLeft.setPos( x - delta, posVb.y())
+            self.arrowInvisibleRight.setPos( x + delta, posVb.y())
+            self.arrowInvisibleLeft.show()
+            self.arrowInvisibleRight.show()
 
         if self.motorNameList is None or len( self.motorNameList) == 0:
-            raise ValueError( "GQE.setPosArrowMotorCurrent: motorNameList empty or None")
+            raise ValueError( "GQE.setPosArrowCurrent: motorNameList empty or None")
 
         yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET
         if self.xLabel is not None: 
             yScene = yScene - definitions.ARROW_Y_OFFSET_EXTRA
         posScene = self.plotItem.vb.mapViewToScene( pg.Point( x, self.getYMin()))
-        self.arrowMotorCurrent.setPos( posScene.x(), yScene)
-        self.labelArrowMotorCurrent.setPos(  posScene.x(), yScene)
-        self.labelArrowMotorCurrent.setHtml( '<div>%s: %g</div>' % ( self.motorNameList[0], x))
+        self.arrowCurrent.setPos( posScene.x(), yScene)
+        self.labelArrowCurrent.setPos(  posScene.x(), yScene)
+        self.labelArrowCurrent.setHtml( '<div>%s: %g</div>' % ( self.motorNameList[0], x))
 
-        self.arrowMotorCurrent.show()
-        self.labelArrowMotorCurrent.show()
+        self.arrowCurrent.show()
+        self.labelArrowCurrent.show()
 
         PySpectra.processEvents()
 
         return
 
-    def setPosArrowMotorSetPoint( self, x): 
+    def setPosArrowSetPoint( self, x): 
         '''
         set the position of the arrow pointing to the set-point
         '''
@@ -753,16 +796,16 @@ class Scan( object):
         if self.xLabel is not None: 
             yScene = yScene - definitions.ARROW_Y_OFFSET_EXTRA
         posScene = self.plotItem.vb.mapViewToScene( pg.Point( x, self.getYMin()))
-        self.arrowMotorSetPoint.setPos( posScene.x(), yScene)
+        self.arrowSetPoint.setPos( posScene.x(), yScene)
         #posVb = self.plotItem.vb.mapSceneToView( pg.Point( xScene, yScene)).toPoint()
-        #self.arrowMotorSetPoint.setPos( x, posVb.y())
-        self.arrowMotorSetPoint.show()
+        #self.arrowSetPoint.setPos( x, posVb.y())
+        self.arrowSetPoint.show()
 
         PySpectra.processEvents()
 
         return
 
-    def setPosArrowMotorMisc( self, x): 
+    def setPosArrowMisc( self, x): 
         '''
         set the position of the arrow pointing to Misc
         '''
@@ -771,70 +814,53 @@ class Scan( object):
         if self.xLabel is not None: 
             yScene = yScene - definitions.ARROW_Y_OFFSET_EXTRA
         posScene = self.plotItem.vb.mapViewToScene( pg.Point( x, self.getYMin()))
-        self.arrowMotorMisc.setPos( posScene.x(), yScene)
+        self.arrowMisc.setPos( posScene.x(), yScene)
 
         #posVb = self.plotItem.vb.mapSceneToView( pg.Point( xScene, yScene)).toPoint()
-        #self.arrowMotorMisc.setPos( x, posVb.y())
-        self.arrowMotorMisc.show()
+        #self.arrowMisc.setPos( x, posVb.y())
+        self.arrowMisc.show()
 
         PySpectra.processEvents()
 
         return
 
-    def updateArrowMotorCurrent( self):
+    def updateArrowCurrent( self):
         '''
-        updates the arrow pointing to the current position 
-        of the motor. 
+        updates the arrow pointing to the current position of the motor. 
         called from: 
-          pySpectraGuiClass.py, time-out callback
+          - pySpectraGuiClass.py, time-out callback
+          - tngGui/lib/moveMotor.py
         '''
         #
-        # 
+        # arrowCurrent can be None, if
+        #   - display() hasn't been called yet
+        #   - more than one Scan is on the display
         #
-        if self.arrowMotorCurrent is None:
+        if self.arrowCurrent is None:
             return
 
         #
         # called from the moveMotor menu
         #
-        if self.motorNameList is not None and len( self.motorNameList) == 1:
-            print( "+++GQE.updateArrorMotorCurrent: case-1")
-            proxy = _PyTango.DeviceProxy( self.motorNameList[0])
-            motName = self.motorNameList[0]
-        else: 
-            print( "+++GQE.updateArrorMotorCurrent: case-2")
-            #
-            # ---
-            # from the pyspMonitor application
-            # ---
-            #
-            if InfoBlock.monitorGui is None or InfoBlock.monitorGui.scanInfo is None: 
-                QtGui.QMessageBox.about( None, "Info Box", 
-                                          "GQE.updateMotorArrowCurrent: InfoBlock.monitorGui is None or InfoBlock.monitorGui.scanInfo is None")
-                return
+        if self.motorNameList is None or len( self.motorNameList) == 0:
+            raise ValueError( "GQE.updateArrowCurrent: motorNameList is None or empty")
 
-            motorArr = _scanInfo['motors']        
-            length = len( motorArr)
-            if  length == 0 or length > 3:
-                QtGui.QMessageBox.about( None, 'Info Box', "no. of motors == 0 or > 3") 
-                return
-            proxy = _PyTango.DeviceProxy( motorArr[0]['name'])
-            motName = motorArr[0]['name']
+        proxy = _PyTango.DeviceProxy( self.motorNameList[0])
+        motName = self.motorNameList[0]
 
-        self.setPosArrowMotorCurrent( proxy.position)
+        self.setPosArrowCurrent( proxy.position)
 
         if proxy.state() == _PyTango.DevState.ON: 
-            self.arrowMotorSetPoint.hide()
-
+            self.arrowSetPoint.hide()
 
         return
 
-    def setArrowMotorCurrent( self, lst): 
+    def setArrowCurrent( self, lst): 
         '''
         handle the arrow pointing to the current position
-          'setArrowMotorCurrent sig_gen position 50.6'
-          'setArrowMotorCurrent sig_gen hide'
-          'setArrowMotorCurrent sig_gen show'
+          'setArrowCurrent sig_gen position 50.6'
+          'setArrowCurrent sig_gen hide'
+          'setArrowCurrent sig_gen show'
 
           lst: 
             - 'position', '<motName>', '<pos>'
@@ -843,27 +869,27 @@ class Scan( object):
         used from mvsa, via toPyspMonitor(). 
         '''
         
-        if self.arrowMotorSetPoint is None:
+        if self.arrowSetPoint is None:
             self.display()
 
         if len( lst) == 1 and lst[0].upper() == 'HIDE': 
-            self.arrowMotorCurrent.hide()
+            self.arrowCurrent.hide()
         elif len( lst) == 1 and lst[0].upper() == 'SHOW': 
-            self.arrowMotorCurrent.show()
+            self.arrowCurrent.show()
         elif len( lst) == 2 and lst[0].upper() == 'POSITION': 
             x = float( lst[1])
-            self.setPosArrowMotorCurrent( x)
+            self.setPosArrowCurrent( x)
         else: 
-            raise ValueError( "GQE.setArrowMotorCurrent: strange list %s" % str( lst))
+            raise ValueError( "GQE.setArrowCurrent: strange list %s" % str( lst))
                                     
         return 
 
-    def setArrowMotorSetPoint( self, lst): 
+    def setArrowSetPoint( self, lst): 
         '''
         handle the arrow pointing to the target position
-          'setArrowMotorSetPoint sig_gen position 50.6'
-          'setArrowMotorSetPoint sig_gen hide'
-          'setArrowMotorSetPoint sig_gen show'
+          'setArrowSetPoint sig_gen position 50.6'
+          'setArrowSetPoint sig_gen hide'
+          'setArrowSetPoint sig_gen show'
           lst: 
             - 'position', '<pos>'
             - 'hide'
@@ -872,27 +898,27 @@ class Scan( object):
           - pqtgraphic, mouse click
         '''
         
-        if self.arrowMotorSetPoint is None:
+        if self.arrowSetPoint is None:
             self.display()
 
         if len( lst) == 1 and lst[0].upper() == 'HIDE': 
-            self.arrowMotorSetPoint.hide()
+            self.arrowSetPoint.hide()
         elif len( lst) == 1 and lst[0].upper() == 'SHOW': 
-            self.arrowMotorSetPoint.show()
+            self.arrowSetPoint.show()
         elif len( lst) == 2 and lst[0].upper() == 'POSITION': 
             x = float( lst[1])
-            self.setPosArrowMotorSetPoint( x)
+            self.setPosArrowSetPoint( x)
         else: 
-            raise ValueError( "GQE.setArrowMotorSetPoint: strange list %s" % str( lst))
+            raise ValueError( "GQE.setArrowSetPoint: strange list %s" % str( lst))
                                     
         return 
 
-    def setArrowMotorMisc( self, lst): 
+    def setArrowMisc( self, lst): 
         '''
         handle the arrow pointing to a target position defined by e.g. mvsa
-          'setArrowMotorMisc sig_gen position 50.6'
-          'setArrowMotorMisc sig_gen hide'
-          'setArrowMotorMisc sig_gen show'
+          'setArrowMisc sig_gen position 50.6'
+          'setArrowMisc sig_gen hide'
+          'setArrowMisc sig_gen show'
           lst: 
             - 'position', '<pos>'
             - 'hide'
@@ -901,18 +927,18 @@ class Scan( object):
           - mvsa
         '''
 
-        if self.arrowMotorSetPoint is None:
+        if self.arrowSetPoint is None:
             self.display()
 
         if len( lst) == 1 and lst[0].upper() == 'HIDE': 
-            self.arrowMotorMisc.hide()
+            self.arrowMisc.hide()
         elif len( lst) == 1 and lst[0].upper() == 'SHOW': 
-            self.arrowMotorMisc.show()
+            self.arrowMisc.show()
         elif len( lst) == 2 and lst[0].upper() == 'POSITION':
             x = float( lst[1])
-            self.setPosArrowMotorMisc( x)
+            self.setPosArrowMisc( x)
         else: 
-            raise ValueError( "GQE.setArrowMotorMisc: strange list %s" % str( lst))
+            raise ValueError( "GQE.setArrowMisc: strange list %s" % str( lst))
                                     
         return 
         
@@ -1047,7 +1073,8 @@ class Scan( object):
 
     def fsa( self, logWidget = None):
         '''
-
+        calls HasyUtils.fastscananalysis(), author Michael Sprung
+        returns: (message, xpos, xpeak, xcms, xcen)
         '''
         #
         # 'peak','cms','cen',  'dip','dipm','dipc',  'slit', 'slitm', 'slitc',   'step','stepm' and 'stepc'
@@ -1102,7 +1129,7 @@ class Scan( object):
         else:
             print( "GQE.fsa: message %s xpos %g xpeak %g xmcs %g xcen %g" % (message, xpos, xpeak, xcms, xcen))
 
-        return 
+        return (message, xpos, xpeak, xcms, xcen)
 
 
 def getGqeList():
@@ -1143,11 +1170,11 @@ def setTitle( text = None):
     global _title 
     if text is None or len( text) == 0:
         _title = None
-        return 
+        return True
     text = text.replace( "'", "")
     text = text.replace( '"', '')
     _title = text
-    return 
+    return True
 
 def getTitle():
     return _title
@@ -1164,12 +1191,12 @@ def setComment( text = None):
     global _comment 
     if text is None or len( text) == 0:
         _comment = None
-        return 
+        return True
     text = text.replace( "'", "")
     text = text.replace( '"', '')
 
     _comment = text
-    return 
+    return True
 
 def getComment():
     return _comment
@@ -1194,7 +1221,7 @@ def delete( nameLst = None):
     global _gqeIndex
 
     #print( "GQE.delete, nameList: %s" % repr( nameLst))
-    #print( "GQE.delete: %s" % repr( HasyUtils.getTraceBackList()))
+    #print( "GQE.delete: %s" % repr( _HasyUtils.getTraceBackList()))
 
     #
     # delete everything
@@ -1224,7 +1251,7 @@ def delete( nameLst = None):
             del _gqeList[i]
             break
         else:
-            print( "GQE.delete (single): %s" % repr( HasyUtils.getTraceBackList()))
+            print( "GQE.delete (single): %s" % repr( _HasyUtils.getTraceBackList()))
             raise ValueError( "GQE.delete: not found %s" % name)
         return 
     #
@@ -1580,7 +1607,6 @@ def read( fileName, x = 1, y = None, flagMCA = False):
     # fioReader may throw an exception, e.g. if the file does not exist.
     # Do not catch it here, leave it to the application
     #
-    import HasyUtils as _HasyUtils
 
     fioObj = _HasyUtils.fioReader( fileName, flagMCA)
 
@@ -1614,7 +1640,6 @@ def write( lst = None):
     PySpectra.write( [ 's1', 's2'])
       write selected scans
     '''
-    import HasyUtils as _HasyUtils
     if len(_gqeList) == 0: 
         raise ValueError( "GQE.write: scan list is empty")
     #
@@ -1863,6 +1888,17 @@ def fillDataXY( hsh):
     return "done"
     
 def fillDataByColumns( hsh):
+    """
+
+        hsh = { 'putData': {'columns': [{'data': x, 'name': 'xaxis'},
+                                        {'data': tan, 'name': 'tan'},
+                                        {'data': cos, 'name': 'cos'},
+                                        {'data': sin, 'name': 'sin',
+                                         'showGridY': False, 'symbolColor': 'blue', 'showGridX': False, 
+                                         'yLog': False, 'symbol': '+', 
+                                         'xLog': False, 'symbolSize':5}]}}
+    """
+
     if len( hsh[ 'columns']) < 2: 
         raise Exception( "GQE.fillDataByColumns", "less than 2 columns")
 
@@ -1876,13 +1912,13 @@ def fillDataByColumns( hsh):
     xcol = hsh[ 'columns'][0]
     for elm in hsh[ 'columns'][1:]:
         if 'name' not in elm:
-            raise Exception( "GQE.fillDataByGqes", "missing 'name'")
+            raise Exception( "GQE.fillDataByColumns", "missing 'name'")
         if 'data' not in elm:
-            raise Exception( "GQE.fillDataByGqes", "missing 'data'")
+            raise Exception( "GQE.fillDataByColumns", "missing 'data'")
         data = elm[ 'data']
         del elm[ 'data']
         if len( data) != len( xcol[ 'data']):
-            raise Exception( "GQE.fillDataByGqes", 
+            raise Exception( "GQE.fillDataByColumns", 
                              "column length differ %s: %d, %s: %d" % ( xcol[ 'name'], len( xcol[ 'data']),
                                                                        elm[ 'name'], len( data)))
 
@@ -1955,6 +1991,95 @@ def fillDataByColumns( hsh):
 
     return "done"
 
+def fillDataByGqes( hsh):
+
+    flagAtFound = False
+    flagOverlayFound = False
+    gqes = []
+    for elm in hsh[ 'gqes']:
+        if 'name' not in elm:
+            raise Exception( "GQE.fillDataByGqes", "missing 'name'")
+        if 'x' not in elm:
+            raise Exception( "GQE.fillDataByGqes", "missing 'x' for %s" % elm[ 'name'])
+        if 'y' not in elm:
+            raise Exception( "GQE.fillDataByGqes", "missing 'y' for %s" % elm[ 'name'])
+        if len( elm[ 'x']) != len( elm[ 'y']):
+            raise Exception( "GQE.fillDataByGqes", "%s, x and y have different length %d != %d" % \
+                             (elm[ 'name'], len( elm[ 'x']), len( elm[ 'y'])))
+        #at = '(1,1,1)'
+        #if 'at' in elm:
+        #    flagAtFound = True
+        #    at = elm[ 'at']
+        xLabel = 'x-axis'
+        if 'xlabel' in elm:
+            xLabel = elm[ 'xlabel']
+        yLabel = 'y-axis'
+        if 'ylabel' in elm:
+            yLabel = elm[ 'ylabel']
+        color = 'red'
+        if 'color' in elm:
+            color = elm[ 'color']
+            color = _colorSpectraToPysp( color)
+
+
+        lineColor = 'red'
+        if 'lineColor' in elm:
+            lineColor = elm[ 'lineColor']
+            symbolColor = 'NONE'
+        elif 'symbolColor' not in elm:
+            lineColor = 'red'
+            symbolColor = 'NONE'
+        else: 
+            symbolColor= 'red'
+            lineColor = 'NONE'
+            if 'symbolColor' in elm:
+                symbolColor = elm[ 'symbolColor']
+
+        lineWidth = 1
+        if 'lineWidth' in elm:
+            lineWidth = elm[ 'lineWidth']
+        lineStyle = 'SOLID'
+        if 'lineStyle' in elm:
+            lineStyle = elm[ 'lineStyle']
+        showGridX = False
+        if 'showGridX' in elm:
+            showGridX = elm[ 'showGridX']
+        showGridY = False
+        if 'showGridY' in elm:
+            showGridY = elm[ 'showGridY']
+        xLog = False
+        if 'xLog' in elm:
+            xLog = elm[ 'xLog']
+        yLog = False
+        if 'yLog' in elm:
+            yLog = elm[ 'yLog']
+        symbol = '+'
+        if 'symbol' in elm:
+            symbol = elm[ 'symbol']
+        symbolSize= 10
+        if 'symbolSize' in elm:
+            symbolSize = elm[ 'symbolSize']
+        
+        x = elm[ 'x']
+        y = elm[ 'y']
+        gqe = Scan( name = elm[ 'name'],
+                    xMin = x[0], xMax = x[-1], nPts = len(x),
+                    xLabel = xLabel, yLabel = yLabel,
+                    lineColor = lineColor, lineWidth = lineWidth, lineStyle = lineStyle,
+                    showGridX = showGridX, showGridY = showGridY, 
+                    xLog = xLog, yLog = yLog, 
+                    symbol = symbol, symbolColor = symbolColor, symbolSize = symbolSize, 
+                )
+        for i in range(len(x)):
+            gqe.setX( i, x[i])
+            gqe.setY( i, y[i])
+
+
+    PySpectra.display()
+
+    return "done"
+
+
 def colorSpectraToPysp( color): 
     '''
     this functions translates color numbers (a ls Spectra) to strings a la Pysp
@@ -1985,54 +2110,6 @@ def colorSpectraToPysp( color):
         color = 'black'
 
     return color
-
-def fillDataByGqes( hsh):
-
-    flagAtFound = False
-    flagOverlayFound = False
-    
-    gqes = []
-    for elm in hsh[ 'gqes']:
-        if 'name' not in elm:
-            raise Exception( "GQE.fillDataByGqes", "missing 'name'")
-        if 'x' not in elm:
-            raise Exception( "GQE.fillDataByGqes", "missing 'x' for %s" % elm[ 'name'])
-        if 'y' not in elm:
-            raise Exception( "GQE.fillDataByGqes", "missing 'y' for %s" % elm[ 'name'])
-        if len( elm[ 'x']) != len( elm[ 'y']):
-            raise Exception( "GQE.fillDataByGqes", "%s, x and y have different length %d != %d" % \
-                             (elm[ 'name'], len( elm[ 'x']), len( elm[ 'y'])))
-        at = '(1,1,1)'
-        if 'at' in elm:
-            flagAtFound = True
-            at = elm[ 'at']
-        xLabel = 'x-axis'
-        if 'xlabel' in elm:
-            xLabel = elm[ 'xlabel']
-        yLabel = 'y-axis'
-        if 'ylabel' in elm:
-            yLabel = elm[ 'ylabel']
-        color = 'red'
-        if 'color' in elm:
-            color = elm[ 'color']
-            color = _colorSpectraToPysp( color)
-        
-        x = elm[ 'x']
-        y = elm[ 'y']
-        gqe = SCAN( name = elm[ 'name'],
-                    at = at, 
-                    xMin = x[0], xMax = x[-1], nPts = len(x),
-                    xLabel = xLabel, yLabel = yLabel,
-                    lineColor = color,
-                )
-        for i in range(len(x)):
-            gqe.setX( i, x[i])
-            gqe.setY( i, y[i])
-
-
-    PySpectra.display()
-
-    return "done"
 
 #
 # to understand, why object is needed, goto 'def __setattr__( ...)'
@@ -2239,13 +2316,13 @@ class Image( object):
         if ix < 0 or ix >= self.width:
             raise ValueError( "GQE.Image.setPixelImage: ix %d not in [%d, %d]" % \
                               (ix, 0, self.width))
+
         if iy < 0 or iy >= self.height:
             raise ValueError( "GQE.Image.setPixelImage: iy %d not in [%d, %d]" % \
                               (iy, 0, self.height))
-
         self.data[ix][iy] = value
 
-        return 
+        return True
 
     def setPixelWorld( self, x = None, y = None, value = None):
         '''

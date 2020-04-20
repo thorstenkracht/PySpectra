@@ -123,6 +123,22 @@ def info(line):
     ifc.command( "info " + line)
 
 @register_line_magic
+def move(line):
+    '''
+    move scan1 destination
+      moves the scan1.motorNameList[0] to destination
+    '''
+    ifc.command( "move " + line)
+
+@register_line_magic
+def moveStart(line):
+    '''
+    moveStart scan1 destination
+      startes the move of scan1.motorNameList[0] to destination
+    '''
+    ifc.command( "moveStart " + line)
+
+@register_line_magic
 def overlay(line):
     '''
     overlay scan1 scan2
@@ -132,8 +148,8 @@ def overlay(line):
     ifc.command( "overlay " + line)
 
 @register_line_magic
-def procEventsLoop(line):
-    PySpectra.ipython.procEventsLoop( line)
+def processEventsLoop(line):
+    PySpectra.ipython.processEventsLoop( line)
 
 @register_line_magic
 def pyspectra_help( line):
@@ -142,7 +158,8 @@ def pyspectra_help( line):
     print( " ---------------------------------")
     print( " These are the available commands")
     print( "   antiderivative, cls, create, delete, derivative,")
-    print( "   display, info, overlay, procEventsLoop, read, setTitle, ")
+    print( "   display, info, move, moveStart, overlay, ")
+    print( "   processEventsLoop, read, setTitle, ")
     print( "   setComment, show, write, y2my")
     print( "")
     print( "  for more help use, e.g.: create?")
@@ -331,8 +348,10 @@ del delete
 del derivative
 del display
 del info
+del move
+del moveStart
 del overlay
-del procEventsLoop
+del processEventsLoop
 del pyspectra_help
 del read
 del show

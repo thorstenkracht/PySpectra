@@ -29,7 +29,7 @@ class testExamples( unittest.TestCase):
             print( "testExamples: executing %s" % cmd)
             exec cmd
             print( "%s DONE" %  cmd)
-            PySpectra.procEventsLoop( 1)
+            PySpectra.processEventsLoop( 1)
         return 
 
          

@@ -66,7 +66,7 @@ class testMplGraphics( unittest.TestCase):
         sinus.y = np.sin( sinus.y)
 
         PySpectra.mtpltlb.graphics.display()
-        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+        PySpectra.mtpltlb.graphics.processEventsLoop( 1)
 
         PySpectra.mtpltlb.graphics.close()
 
@@ -79,7 +79,7 @@ class testMplGraphics( unittest.TestCase):
         sinus.y = np.sin( sinus.y)
 
         PySpectra.mtpltlb.graphics.display()
-        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+        PySpectra.mtpltlb.graphics.processEventsLoop( 1)
 
         print "testMplGraphics.testClose, DONE"
 
@@ -100,7 +100,7 @@ class testMplGraphics( unittest.TestCase):
         PySpectra.mtpltlb.graphics.display()
 
         #PySpectra.show()
-        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+        PySpectra.mtpltlb.graphics.processEventsLoop( 1)
 
         print "testMplGraphics.testDoty, DONE"
 
@@ -127,7 +127,7 @@ class testMplGraphics( unittest.TestCase):
         PySpectra.mtpltlb.graphics.display()
         PySpectra.mtpltlb.graphics.display()
         #PySpectra.show()
-        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+        PySpectra.mtpltlb.graphics.processEventsLoop( 1)
 
         print "testMplGraphics.testGrid, DONE"
 
@@ -278,7 +278,7 @@ class testMplGraphics( unittest.TestCase):
 
         sinus.y = np.sin( sinus.y)
         PySpectra.mtpltlb.graphics.display( ['sinus'])
-        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+        PySpectra.mtpltlb.graphics.processEventsLoop( 1)
 
         print "testMplGraphics.testDisplaySingle, DONE"
 
@@ -298,7 +298,7 @@ class testMplGraphics( unittest.TestCase):
         #PySpectra.show()
 
 
-        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+        PySpectra.mtpltlb.graphics.processEventsLoop( 1)
         print "testMplGraphics.testDisplaySymbol. DONE"
 
     def testDisplayTwo( self): 
@@ -323,7 +323,7 @@ class testMplGraphics( unittest.TestCase):
 
         PySpectra.mtpltlb.graphics.display()
         #PySpectra.show()
-        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+        PySpectra.mtpltlb.graphics.processEventsLoop( 1)
 
         print "testMplGraphics.testDisplayTwo, DONE"
 
@@ -373,7 +373,7 @@ class testMplGraphics( unittest.TestCase):
 
         PySpectra.mtpltlb.graphics.display()
         #PySpectra.show()
-        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+        PySpectra.mtpltlb.graphics.processEventsLoop( 1)
 
         print "testMplGraphics.testOverlay, DONE"
 
@@ -394,7 +394,7 @@ class testMplGraphics( unittest.TestCase):
 
         PySpectra.mtpltlb.graphics.display()
 
-        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+        PySpectra.mtpltlb.graphics.processEventsLoop( 1)
 
         print "testMplGraphics.testDisplayFour, DONE"
 
@@ -417,7 +417,7 @@ class testMplGraphics( unittest.TestCase):
 
         #PySpectra.show()
 
-        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+        PySpectra.mtpltlb.graphics.processEventsLoop( 1)
 
         print "testMplGraphics.testDisplayMany, DONE"
 
@@ -474,7 +474,7 @@ class testMplGraphics( unittest.TestCase):
         PySpectra.mtpltlb.graphics.display()
 
         #PySpectra.show()
-        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+        PySpectra.mtpltlb.graphics.processEventsLoop( 1)
 
         print "testMplGraphics.testCommentTitle, DONE"
 
@@ -496,7 +496,7 @@ class testMplGraphics( unittest.TestCase):
                      'DINA6', 'DINA6P', 'DINA6S']: 
             PySpectra.mtpltlb.graphics.setWsViewport( elm)
             PySpectra.mtpltlb.graphics.display()
-            PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+            PySpectra.mtpltlb.graphics.processEventsLoop( 1)
 
         print "testMplGrphics.testWsViewport, DONE"
 
@@ -547,7 +547,7 @@ class testMplGraphics( unittest.TestCase):
         for elm in [ 'DINA4', 'DINA4P', 'DINA5', 'DINA5P', 'DINA6', 'DINA6P']: 
             PySpectra.mtpltlb.graphics.setWsViewport( elm)
             PySpectra.mtpltlb.graphics.display()
-            PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+            PySpectra.mtpltlb.graphics.processEventsLoop( 1)
 
         print "testGrphics.testWsViewport, DONE"
 
@@ -573,7 +573,7 @@ class testMplGraphics( unittest.TestCase):
         
         PySpectra.dMgt.GQE.overlay( "gauss2", "gauss")
         PySpectra.mtpltlb.graphics.display()
-        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+        PySpectra.mtpltlb.graphics.processEventsLoop( 1)
 
     def testOverlay2FirstLog( self):
         '''
@@ -596,7 +596,7 @@ class testMplGraphics( unittest.TestCase):
         
         PySpectra.dMgt.GQE.overlay( "gauss2", "gauss")
         PySpectra.mtpltlb.graphics.display()
-        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+        PySpectra.mtpltlb.graphics.processEventsLoop( 1)
 
         print "testGrphics.testOverly2FirstLog DONE"
 
@@ -621,7 +621,7 @@ class testMplGraphics( unittest.TestCase):
         
         PySpectra.dMgt.GQE.overlay( "gauss2", "gauss")
         PySpectra.mtpltlb.graphics.display()
-        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+        PySpectra.mtpltlb.graphics.processEventsLoop( 1)
 
         print "testGrphics.testOverly2SecondLog"
 
@@ -667,7 +667,7 @@ class testMplGraphics( unittest.TestCase):
         self.assertEqual( m.data.shape[1], height)
 
         PySpectra.mtpltlb.graphics.display()
-        PySpectra.mtpltlb.graphics.procEventsLoop( 1)
+        PySpectra.mtpltlb.graphics.processEventsLoop( 1)
 
     def testImageMB2( self): 
         print "testGQE.testImageMB2"
@@ -692,7 +692,7 @@ class testMplGraphics( unittest.TestCase):
                 m.setPixelWorld( x = r1[i], y = r2[j], value = res)
             PySpectra.mtpltlb.graphics.cls()
             PySpectra.mtpltlb.graphics.display()
-        PySpectra.mtpltlb.graphics.procEventsLoop( 1.)
+        PySpectra.mtpltlb.graphics.processEventsLoop( 1.)
 
 if __name__ == "__main__":
     unittest.main()

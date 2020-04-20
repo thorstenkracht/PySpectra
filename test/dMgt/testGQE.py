@@ -5,6 +5,8 @@ python -m unittest discover -v
 
 python ./test/dMgt/testGQE.py testGQE.testNextPrev
 python ./test/dMgt/testGQE.py testGQE.testFillData
+python ./test/dMgt/testGQE.py testGQE.testFillDataByColumns
+python ./test/dMgt/testGQE.py testGQE.testFillDataByGqes
 python ./test/dMgt/testGQE.py testGQE.testCreateDelete
 python ./test/dMgt/testGQE.py testGQE.testWrite
 python ./test/dMgt/testGQE.py testGQE.testRead
@@ -19,7 +21,7 @@ python ./test/dMgt/testGQE.py testGQE.testMisc
 python ./test/dMgt/testGQE.py testGQE.testDoubles
 python ./test/dMgt/testGQE.py testGQE.test_titleAndComment
 python ./test/dMgt/testGQE.py testGQE.testSSA
-python ./test/dMgt/testGQE.py testGQE.testFillData
+python ./test/dMgt/testGQE.py testGQE.testFsa
 python ./test/dMgt/testGQE.py testGQE.testGetIndex
 python ./test/dMgt/testGQE.py testGQE.testMotorArrowCurrentAndSetPoint
 python ./test/dMgt/testGQE.py testGQE.testMotorArrowMisc
@@ -29,6 +31,8 @@ import sys, time
 import PyTango
 import PySpectra
 import PySpectra.dMgt.GQE as GQE
+import PySpectra.misc.zmqIfc as zmqIfc
+import PySpectra.misc.utils as utils
 import numpy as np
 import unittest
 import time, sys, os
@@ -84,21 +88,21 @@ class testGQE( unittest.TestCase):
         GQE.Scan( "t1")
         PySpectra.display()
         GQE.show()
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
         PySpectra.cls()
         GQE.delete()
         GQE.setTitle( "there is only a title, no comment")
         GQE.Scan( "t1")
         PySpectra.display()
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
         PySpectra.cls()
         GQE.delete()
         GQE.setComment( "there is only a comment")
         GQE.Scan( "t1")
         PySpectra.display()
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
         print "testGQE.test_titleAndComment DONE"
     
@@ -117,7 +121,7 @@ class testGQE( unittest.TestCase):
         PySpectra.display()
         #GQE.show()
         print "the graphics window should contain 1 MCA plot now"
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
         print "testGQE.test_readMca_v1 DONE"
 
@@ -138,7 +142,7 @@ class testGQE( unittest.TestCase):
         PySpectra.display()
         #GQE.show()
         print "the graphics window should contain 2 MCA plots now"
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
         print "testGQE.test_readMca_v2 DONE"
 
@@ -157,7 +161,7 @@ class testGQE( unittest.TestCase):
         PySpectra.display()
         #GQE.show()
         print "the graphics window should contain 24 plots now"
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
         PySpectra.cls()
         GQE.delete()
@@ -171,7 +175,7 @@ class testGQE( unittest.TestCase):
         
         PySpectra.display()
         #GQE.show()
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
         print "testGQE.test_read DONE"
 
@@ -195,7 +199,7 @@ class testGQE( unittest.TestCase):
 
         PySpectra.display()
         #PySpectra.show()
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
         print "testGQE.test_doty DONE"
         
@@ -326,6 +330,89 @@ class testGQE( unittest.TestCase):
 
         print "testGQE.testFillData, DONE"
 
+    def testFillDataByColumns( self):
+
+        print "testGQE.testFillDataByColumns"
+        PySpectra.cls()
+        GQE.delete()
+        x  = np.linspace( 0., 10., 100)
+        tan = np.tan( x)
+        sin = np.sin( x)
+        cos = np.cos( x)
+
+        hsh = { 'putData': {'columns': [{'data': x, 'name': 'xaxis'},
+                                        {'data': tan, 'name': 'tan'},
+                                        {'data': cos, 'name': 'cos'},
+                                        {'data': sin, 'name': 'sin',
+                                         'showGridY': False, 'symbolColor': 'blue', 'showGridX': False, 
+                                         'yLog': False, 'symbol': '+', 
+                                         'xLog': False, 'symbolSize':5}]}}
+
+        zmqIfc.execHsh( hsh)
+
+        lst = GQE.getGqeList()
+        self.assertEqual( len( lst), 3)
+
+        self.assertEqual( lst[0].name, 'tan')
+        self.assertEqual( lst[1].name, 'cos')
+        self.assertEqual( lst[2].name, 'sin')
+        
+        comparison = x == lst[0].x
+        self.assertTrue( comparison.all())
+        comparison = tan == lst[0].y
+        self.assertTrue( comparison.all())
+        comparison = cos == lst[1].y
+        self.assertTrue( comparison.all())
+        comparison = sin == lst[2].y
+        self.assertTrue( comparison.all())
+        PySpectra.display()
+
+        PySpectra.processEventsLoop( 1)
+
+        # utils.launchGui()
+        print "testGQE.testFillDataByColumns, DONE"
+
+    def testFillDataByGqes( self):
+
+        print "testGQE.testFillDataByGqes"
+        PySpectra.cls()
+        GQE.delete()
+        x  = np.linspace( 0., 10., 100)
+        tan = np.tan( x)
+        sin = np.sin( x)
+        cos = np.cos( x)
+
+        hsh = { 'putData': {'gqes': [ {'x': x, 'y': tan, 'name': 'tan'},
+                                      {'x': x, 'y': cos, 'name': 'cos'},
+                                      {'x': x, 'y': sin, 'name': 'sin', 
+                                       'showGridY': False, 'symbolColor': 'blue', 'showGridX': True, 
+                                       'yLog': False, 'symbol': '+', 
+                                       'xLog': False, 'symbolSize':5}]}}
+
+        zmqIfc.execHsh( hsh)
+
+        lst = GQE.getGqeList()
+        self.assertEqual( len( lst), 3)
+
+        self.assertEqual( lst[0].name, 'tan')
+        self.assertEqual( lst[1].name, 'cos')
+        self.assertEqual( lst[2].name, 'sin')
+        
+        comparison = x == lst[0].x
+        self.assertTrue( comparison.all())
+        comparison = tan == lst[0].y
+        self.assertTrue( comparison.all())
+        comparison = cos == lst[1].y
+        self.assertTrue( comparison.all())
+        comparison = sin == lst[2].y
+        self.assertTrue( comparison.all())
+        PySpectra.display()
+
+        PySpectra.processEventsLoop( 1)
+
+        #utils.launchGui()
+        print "testGQE.testFillDataByGqes, DONE"
+
     def testWrite( self): 
         print "testGQE.testWrite"
         PySpectra.cls()
@@ -376,7 +463,7 @@ class testGQE( unittest.TestCase):
             data = np.random.normal(size=(1,100))
             x1  = np.linspace( 0., 10., 100)
             PySpectra.display()
-            PySpectra.procEventsLoop( 1)
+            PySpectra.processEventsLoop( 1)
             scan = GQE.Scan( name = 't1', reUse = True, x = x1, y = data[0])
 
     def testYGreaterThanZero( self): 
@@ -628,6 +715,25 @@ class testGQE( unittest.TestCase):
         self.assertTrue( abs(float(lst[1])) > 2.350)
 
 
+    def testFsa( self): 
+        print "testGQE.testFsa"
+        PySpectra.cls()
+        GQE.delete()
+        g = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
+        mu = 0.12345
+        sigma = 1.2345
+        g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2*sigma**2))
+        
+        (message, xpos, xpeak, xcms, xcen) = g.fsa()
+
+        self.assertEqual( message, 'success')
+        self.assertAlmostEqual( xpos, 0.1)
+        self.assertAlmostEqual( xpeak, 0.1)
+        self.assertAlmostEqual( xcms, 0.1234, 3)
+        self.assertAlmostEqual( xcen, 0.1234, 3)
+
+        return 
+
     def testMisc( self) : 
         print "testGQE.testMisc"
         PySpectra.cls()
@@ -738,23 +844,23 @@ class testGQE( unittest.TestCase):
         g.display()
 
         POSI = 50
-        g.setPosArrowMotorMisc( proxy.position)
+        g.setPosArrowMisc( proxy.position)
         proxy.position = POSI
-        print( "testGQE.testArrowMotor: moving %s to %g" % (proxy.name(), POSI))
-        g.setPosArrowMotorSetPoint( POSI)
+        print( "testGQE.testArrow: moving %s to %g" % (proxy.name(), POSI))
+        g.setPosArrowSetPoint( POSI)
         while proxy.state() == PyTango.DevState.MOVING:
-            g.updateArrowMotorCurrent()
+            g.updateArrowCurrent()
             time.sleep(1.0)
 
         g.display()
             
         POSI = 51
-        g.setPosArrowMotorMisc( proxy.position)
+        g.setPosArrowMisc( proxy.position)
         proxy.position = POSI
-        print( "testGQE.testArrowMotor: moving %s to %g" % (proxy.name(), POSI))
-        g.setPosArrowMotorSetPoint( POSI)
+        print( "testGQE.testArrow: moving %s to %g" % (proxy.name(), POSI))
+        g.setPosArrowSetPoint( POSI)
         while proxy.state() == PyTango.DevState.MOVING:
-            g.setPosArrowMotorCurrent( proxy.position)
+            g.setPosArrowCurrent( proxy.position)
             time.sleep(1.0)
         return 
 
@@ -774,8 +880,8 @@ class testGQE( unittest.TestCase):
         g.motorNameList = ["eh_mot66"]
         g.display()
 
-        print( "testGQE.testArrowMotorMisc: an arrow should appear at 50.3")
-        g.setPosArrowMotorMisc( 50.3)
+        print( "testGQE.testArrowMisc: an arrow should appear at 50.3")
+        g.setPosArrowMisc( 50.3)
 
         g.display()
         time.sleep(3.0)
@@ -799,9 +905,9 @@ class testGQE( unittest.TestCase):
         # [ 0.0, 149.4232]
         #
 
-        self.assertEqual( g.checkTargetWithinLimits( g.motorNameList[ 0], 51., proxy), True)
-        self.assertEqual( g.checkTargetWithinLimits( g.motorNameList[ 0], -1., proxy), False)
-        self.assertEqual( g.checkTargetWithinLimits( g.motorNameList[ 0], 151., proxy), False)
+        self.assertEqual( g.checkTargetWithinLimits( g.motorNameList[ 0], 51., proxy, flagConfirm = False), True)
+        self.assertEqual( g.checkTargetWithinLimits( g.motorNameList[ 0], -1., proxy, flagConfirm = False), False)
+        self.assertEqual( g.checkTargetWithinLimits( g.motorNameList[ 0], 151., proxy, flagConfirm = False), False)
         
         return 
          

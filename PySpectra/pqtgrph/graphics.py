@@ -69,28 +69,28 @@ def clear( gqe):
         gqe.img = None
 
     if type( gqe) == GQE.Scan:
-        if gqe.labelArrowMotorCurrent is not None: 
-            _graphicsWindow.scene().removeItem( gqe.labelArrowMotorCurrent)
-            #gqe.plotItem.removeItem( gqe.labelArrowMotorCurrent)
-            gqe.labelArrowMotorCurrent = None
-        if gqe.arrowMotorCurrent is not None: 
-            _graphicsWindow.scene().removeItem( gqe.arrowMotorCurrent)
-            #gqe.plotItem.removeItem( gqe.arrowMotorCurrent)
-            gqe.arrowMotorCurrent = None
-        if gqe.arrowMotorInvisibleLeft is not None: 
-            gqe.plotItem.removeItem( gqe.arrowMotorInvisibleLeft)
-            gqe.arrowMotorInvisibleLeft = None
-        if gqe.arrowMotorInvisibleRight is not None: 
-            gqe.plotItem.removeItem( gqe.arrowMotorInvisibleRight)
-            gqe.arrowMotorInvisibleRight = None
-        if gqe.arrowMotorSetPoint is not None: 
-            _graphicsWindow.scene().removeItem( gqe.arrowMotorSetPoint)
-            #gqe.plotItem.removeItem( gqe.arrowMotorSetPoint)
-            gqe.arrowMotorSetPoint = None
-        if gqe.arrowMotorMisc is not None: 
-            _graphicsWindow.scene().removeItem( gqe.arrowMotorMisc)
-            #gqe.plotItem.removeItem( gqe.arrowMotorMisc)
-            gqe.arrowMotorMisc = None
+        if gqe.labelArrowCurrent is not None: 
+            _graphicsWindow.scene().removeItem( gqe.labelArrowCurrent)
+            #gqe.plotItem.removeItem( gqe.labelArrowCurrent)
+            gqe.labelArrowCurrent = None
+        if gqe.arrowCurrent is not None: 
+            _graphicsWindow.scene().removeItem( gqe.arrowCurrent)
+            #gqe.plotItem.removeItem( gqe.arrowCurrent)
+            gqe.arrowCurrent = None
+        if gqe.arrowInvisibleLeft is not None: 
+            gqe.plotItem.removeItem( gqe.arrowInvisibleLeft)
+            gqe.arrowInvisibleLeft = None
+        if gqe.arrowInvisibleRight is not None: 
+            gqe.plotItem.removeItem( gqe.arrowInvisibleRight)
+            gqe.arrowInvisibleRight = None
+        if gqe.arrowSetPoint is not None: 
+            _graphicsWindow.scene().removeItem( gqe.arrowSetPoint)
+            #gqe.plotItem.removeItem( gqe.arrowSetPoint)
+            gqe.arrowSetPoint = None
+        if gqe.arrowMisc is not None: 
+            _graphicsWindow.scene().removeItem( gqe.arrowMisc)
+            #gqe.plotItem.removeItem( gqe.arrowMisc)
+            gqe.arrowMisc = None
         if gqe.infLineLeft is not None: 
             gqe.plotItem.removeItem( gqe.infLineLeft)
             gqe.infLineLeft = None
@@ -296,7 +296,7 @@ def _getLayout( o):
         if type( item) == pyqtgraph.graphicsItems.GraphicsLayout.GraphicsLayout: 
             return item
 
-def procEventsLoop( timeOut = None):
+def processEventsLoop( timeOut = None):
     '''
     loops over QApp.processEvents until a <return> is entered
     '''
@@ -384,7 +384,7 @@ def _addArrowsMotor( gqe, nameList):
     the arrows pointing to the current position, the setpoint and to misc
     '''
 
-    if gqe.arrowMotorCurrent is not None: 
+    if gqe.arrowCurrent is not None: 
         return 
     #
     # if called from a pure graphics application the position arrow in not created
@@ -398,14 +398,14 @@ def _addArrowsMotor( gqe, nameList):
     if gqe.flagMCA: 
         return 
 
-    gqe.arrowMotorCurrent = pyqtgraph.ArrowItem( angle=270, pen = pyqtgraph.mkPen( color = (0, 0, 255)))
+    gqe.arrowCurrent = pyqtgraph.ArrowItem( angle=270, pen = pyqtgraph.mkPen( color = (0, 0, 255)))
     #
     # if the brushes are not specified, the arrows are at the wrong position
     #
     #
-    gqe.arrowMotorSetPoint = pyqtgraph.ArrowItem( angle=270, pen = pyqtgraph.mkPen( color = (255, 0, 0)), 
+    gqe.arrowSetPoint = pyqtgraph.ArrowItem( angle=270, pen = pyqtgraph.mkPen( color = (255, 0, 0)), 
                                                   brush = pyqtgraph.mkBrush( color = (255, 0, 0)))
-    gqe.arrowMotorMisc = pyqtgraph.ArrowItem( angle=270, pen = pyqtgraph.mkPen( color = ( 255, 0, 0)), 
+    gqe.arrowMisc = pyqtgraph.ArrowItem( angle=270, pen = pyqtgraph.mkPen( color = ( 255, 0, 0)), 
                                               brush = pyqtgraph.mkBrush( color = ( 255, 0, 0)))
 
     #
@@ -416,38 +416,38 @@ def _addArrowsMotor( gqe, nameList):
     # anchor, (0, 0) -> upper left
     #
     fontSize = GQE.getFontSize( nameList)
-    gqe.labelArrowMotorCurrent = pyqtgraph.TextItem( color='k', anchor = ( 0.5, 2.))
-    gqe.labelArrowMotorCurrent.setHtml( '<div style="font-size:%dpx;">%s</div>' % (fontSize, "n.n."))
+    gqe.labelArrowCurrent = pyqtgraph.TextItem( color='k', anchor = ( 0.5, 2.))
+    gqe.labelArrowCurrent.setHtml( '<div style="font-size:%dpx;">%s</div>' % (fontSize, "n.n."))
 
     #
-    # look at GQE.setPosArrowMotorCurrentScene() to understand arrowMotorCurrent, ~Left, ~Right
+    # look at GQE.setPosArrowCurrentScene() to understand arrowCurrent, ~Left, ~Right
     #
-    gqe.arrowMotorInvisibleLeft = pyqtgraph.ArrowItem( angle=270, headLen = 2, 
+    gqe.arrowInvisibleLeft = pyqtgraph.ArrowItem( angle=270, headLen = 2, 
                                                        pen = pyqtgraph.mkPen( color = ( 240, 240, 240)), 
                                                        brush = pyqtgraph.mkBrush( color = ( 240, 240, 240))) 
 
-    gqe.arrowMotorInvisibleRight = pyqtgraph.ArrowItem( angle=270, headLen = 2, 
+    gqe.arrowInvisibleRight = pyqtgraph.ArrowItem( angle=270, headLen = 2, 
                                                         pen = pyqtgraph.mkPen( color = ( 240, 240, 240)), 
                                                         brush = pyqtgraph.mkBrush( color = ( 240, 240, 240))) 
     #
     # the arrows are added to the GraphicsWindow.scene() to use pixel coordinates 
     # a discussion about the arrows can be found in GQE.py in the comment 
-    # of setPosArrowMotorCurrent() 
+    # of setPosArrowCurrent() 
     #
-    _graphicsWindow.scene().addItem( gqe.arrowMotorCurrent)
-    _graphicsWindow.scene().addItem( gqe.labelArrowMotorCurrent)
-    _graphicsWindow.scene().addItem( gqe.arrowMotorMisc)
-    _graphicsWindow.scene().addItem( gqe.arrowMotorSetPoint)
+    _graphicsWindow.scene().addItem( gqe.arrowCurrent)
+    _graphicsWindow.scene().addItem( gqe.labelArrowCurrent)
+    _graphicsWindow.scene().addItem( gqe.arrowMisc)
+    _graphicsWindow.scene().addItem( gqe.arrowSetPoint)
 
-    gqe.plotItem.addItem( gqe.arrowMotorInvisibleLeft)
-    gqe.plotItem.addItem( gqe.arrowMotorInvisibleRight)
+    gqe.plotItem.addItem( gqe.arrowInvisibleLeft)
+    gqe.plotItem.addItem( gqe.arrowInvisibleRight)
 
-    gqe.arrowMotorCurrent.hide()
-    gqe.arrowMotorInvisibleLeft.hide()
-    gqe.arrowMotorInvisibleRight.hide()
-    gqe.arrowMotorMisc.hide()
-    gqe.arrowMotorSetPoint.hide()
-    gqe.labelArrowMotorCurrent.hide()
+    gqe.arrowCurrent.hide()
+    gqe.arrowInvisibleLeft.hide()
+    gqe.arrowInvisibleRight.hide()
+    gqe.arrowMisc.hide()
+    gqe.arrowSetPoint.hide()
+    gqe.labelArrowCurrent.hide()
     return 
 
 def _addVLines( gqe): 

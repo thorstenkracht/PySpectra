@@ -22,6 +22,8 @@ Functions
   - execHsh()
 
 '''
+import PyTango
+import time
 import PySpectra 
 import PySpectra.dMgt.GQE as GQE
 
@@ -87,7 +89,7 @@ def toPyspMonitor( hsh, node = None):
         else: 
             sckt.close()
             context.term()
-            return { 'result': 'utils.zmqIfc: no reply from pyspMonitor'}
+            return { 'result': 'zmqIfc.toPyspMonitor: communication time-out'}
 
 def isPyspMonitorAlive( node = None):
     '''
@@ -122,19 +124,19 @@ def execHsh( hsh):
          {'command': ['display']}
            display all GQEs
 
-         { 'command': ['setArrowMotorCurrent sig_gen position 1.234']}
-         { 'command': ['setArrowMotorCurrent sig_gen show']}
-         { 'command': ['setArrowMotorCurrent sig_gen hide']}
+         { 'command': ['setArrowCurrent sig_gen position 1.234']}
+         { 'command': ['setArrowCurrent sig_gen show']}
+         { 'command': ['setArrowCurrent sig_gen hide']}
            handle the arrow pointing to the current position
 
-         { 'command': ['setArrowMotorSetPoint sig_gen position 1.234']}
-         { 'command': ['setArrowMotorSetPoint sig_gen show']}
-         { 'command': ['setArrowMotorSetPoint sig_gen hide']}
+         { 'command': ['setArrowSetPoint sig_gen position 1.234']}
+         { 'command': ['setArrowSetPoint sig_gen show']}
+         { 'command': ['setArrowSetPoint sig_gen hide']}
            handle the arrow pointing to the setpoint
 
-         { 'command': ['setArrowMotorMisc sig_gen position 1.234']}
-         { 'command': ['setArrowMotorMisc sig_gen show']}
-         { 'command': ['setArrowMotorMisc sig_gen hide']}
+         { 'command': ['setArrowMisc sig_gen position 1.234']}
+         { 'command': ['setArrowMisc sig_gen show']}
+         { 'command': ['setArrowMisc sig_gen hide']}
            handle the arrow pointing to a position defined e.g. by mvsa
 
          {'command': [u'setTitle ascan exp_dmy01 0.0 1.0 3 0.2']}
@@ -142,11 +144,16 @@ def execHsh( hsh):
          {'command': [u'setComment "tst_01366.fio, Wed Dec 18 10:02:09 2019"']}
            set the comment for the whole widget
 
+         {'spock': [ 'umv eh_mot66 51']}
+
        Misc
          {'isAlive': True}
            return values:
              {u'result': u'done'}
              {'result': 'notAlive'}
+         {'getDoorState': True}
+           returns:
+             { 'result': 'ON'}
 
        Scan
          {'Scan': {'name': 'eh_c01', 'xMax': 1.0, 'autoscaleX': False, 'lineColor': 'red', 'xMin': 0.0, 'nPts': 6}}
@@ -215,10 +222,29 @@ def execHsh( hsh):
     '''
     #print( "zmqIfc.execHsh: %s" % repr( hsh))
     argout = {}
+    #
+    # command
+    #
     if 'command' in hsh:
-        argout[ 'result'] = commandIfc( hsh)
+        argout[ 'result'] = _execCommand( hsh)
+    #
+    # spock
+    #
+    elif 'spock' in hsh:
+        argout[ 'result'] = _execSpockCommand( hsh)
+    #
+    # doorState
+    #
+    elif 'getDoorState' in hsh:
+        argout[ 'result'] = _getDoorState()
+    #
+    # putData
+    #
     elif 'putData' in hsh:
         argout[ 'result'] = _putData( hsh[ 'putData'])
+    #
+    # getData
+    #
     elif 'getData' in hsh:
         try:
             argout[ 'getData'] = GQE.getData()
@@ -231,6 +257,9 @@ def execHsh( hsh):
     #
     elif 'isAlive' in hsh:
         argout[ 'result'] = 'done'
+    #
+    # image
+    #
     elif 'Image' in hsh:
         try: 
             #
@@ -240,6 +269,9 @@ def execHsh( hsh):
             argout[ 'result'] = 'done'
         except Exception as e:
             argout[ 'result'] = "zmqIfc.execHsh: error, %s" % repr( e)
+    #
+    # Scan
+    #
     elif 'Scan' in hsh:
         try: 
             #
@@ -249,14 +281,18 @@ def execHsh( hsh):
             argout[ 'result'] = 'done'
         except Exception as e:
             argout[ 'result'] = "zmqIfc.execHsh: error, %s" % repr( e)
+    #
+    # ... else
+    #
     else:
         argout[ 'result'] = "zmqIfc.execHsh: error, failed to identify %s" % repr( hsh)
     #
-    # here errors like, see below, have been detected
-    #   - ValueError('GQE.Scan.__setattr__: eh_c01 unknown attribute xOld',)
+    # getDoorState is answered with a value, not with 'done'
     #
-    if argout[ 'result'].upper() != "DONE":
-        print( "zmqIfc.execHsh: error %s " % argout[ 'result'])
+    if not 'getDoorState' in hsh: 
+        if argout[ 'result'].upper() != "DONE":
+            print( "zmqIfc.execHsh: no 'DONE', instead received '%s' " % argout[ 'result'])
+            print( "zmqIfc.execHsh: input: %s " % repr( hsh))
 
     #print( "zmqIfc.execHsh: return %s" % repr( argout))
     return argout
@@ -274,15 +310,34 @@ def _putData( hsh):
         GQE.setTitle( hsh[ 'title'])
 
     try: 
+        #
+        #hsh = { 'putData': {'columns': [{'data': x, 'name': 'xaxis'},
+        #                                {'data': tan, 'name': 'tan'},
+        #                                {'data': cos, 'name': 'cos'},
+        #                                {'data': sin, 'name': 'sin',
+        #                                 'showGridY': False, 'symbolColor': 'blue', 'showGridX': False, 
+        #                                 'yLog': False, 'symbol': '+', 
+        #                                 'xLog': False, 'symbolSize':5}]}}
+        #
         if 'columns' in hsh:
             GQE.delete()
             PySpectra.cls()
             argout = GQE.fillDataByColumns( hsh)
+        #
+        # hsh = { 'putData': {'gqes': [ {'x': x, 'y': tan, 'name': 'tan'},
+        #                               {'x': x, 'y': cos, 'name': 'cos'},
+        #                               {'x': x, 'y': sin, 'name': 'sin', 
+        #                                'showGridY': False, 'symbolColor': 'blue', 'showGridX': True, 
+        #                                'yLog': False, 'symbol': '+', 
+        #                                'xLog': False, 'symbolSize':5}]}}
+        #
         elif 'gqes' in hsh:
             GQE.delete()
             PySpectra.cls()
-            argout = GQE.fillDataByGqes( hsh)
-        
+            try: 
+                argout = GQE.fillDataByGqes( hsh)
+            except Exception as e: 
+                print( "zmqIfc: %s" % repr( e))
         #
         # hsh = { 'putData': 
         #         { 'name': "MandelBrot",
@@ -315,11 +370,12 @@ def _putData( hsh):
 
     return argout
 
-def commandIfc( hsh): 
+def _execCommand( hsh): 
     '''
-    passes commands to pysp.ipython.ifc.command()
+    passes PySpectra commands to pysp.ipython.ifc.command()
 
-    called from execHsh()
+    called from 
+      - execHsh()
     
     List of commands: 
       hsh = { 'command': ['cls', 'display']}
@@ -331,10 +387,48 @@ def commandIfc( hsh):
     if type( hsh[ 'command']) == list:
         for cmd in hsh[ 'command']: 
             ret = ifc.command( cmd)
-            argout += "%s -> %s;" % (cmd, repr( ret))
-
+            if ret != 'done':
+                return "zmqIfc._execCommand: error from ifc.command %s for %s" % ( ret, cmd)
         return "done"
 
-    ret = ifc.command( hsh[ 'command'])
-    argout = "%s -> %s" % (hsh[ 'command'], repr( ret))
+    argout = ifc.command( hsh[ 'command'])
     return argout
+
+def _execSpockCommand( hsh): 
+    '''
+    sends spock commands to a door
+
+    called from execHsh()
+    
+    It is always a single command because the macroserver
+    will be busy when executing the first command and
+    we don't want to wait for completion
+
+      hsh = { 'spock': 'mv eh_mot66 51'}
+    '''
+    import PySpectra.misc.tangoIfc as tangoIfc
+
+    if type( hsh[ 'spock']) == list:
+        argout = "zmqIfc.execSpockCommand: not expecting a list"
+        return argout
+
+    argout = "done"
+    try: 
+        door = GQE.InfoBlock.getDoorProxy()
+        lst = cmd.split( " ")
+        door.RunMacro( lst)
+    except Exception as e: 
+        argout = "zmqIfc.execSpockCommand: %s" % repr( e)
+    return argout
+
+def _getDoorState():
+    """
+    the client starts a macro by issuing a spock command, 
+    then senses the state of the door to see, if it's done
+    """
+    import PySpectra.misc.tangoIfc as tangoIfc
+
+    door = GQE.InfoBlock.getDoorProxy()
+    argout = "%s" % repr( door.state())
+    return argout.split( '.')[-1]
+

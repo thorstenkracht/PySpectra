@@ -31,7 +31,7 @@ def ssa( xIn, yIn, flagNbs = False, stbr = 3):
       dct['integral'] 
       dct['midpoint'] midpoint
       dct['fwhm'] 
-      dct['peak_x'] 
+      dct['peak_x']  
       dct['peak_y']
       dct['back_int'] background integral
       dct['r_back']   right background
@@ -378,6 +378,101 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
                 print( "utils.setGqeVPs.END: %s overlaid to %s" % \
                     (gqe.name, gqe.overlay))
     return 
+
+#
+# this function is copied from 
+#  /home/kracht/Misc/Sardana/hasyutils/HasyUtils/OtherUtils.py
+#
+def assertProcessRunning(processName): 
+    """
+    returns ( True, False), if processName is running
+    returns ( False, False), if the processName (the file) does not exist
+    returns ( True, True), if processName was launched successfully
+    returns ( False, False), if the launch failed
+
+    example: 
+      (status, wasLaunched) = HasyUtils.assertProcessRunning( '/usr/bin/pyspMonitor.py')
+
+  """
+    #
+    # see, if the pyspMonitor process exists. Otherwise launch it
+    #
+    if findProcessByName( processName): 
+        return (True, False)
+
+    if not _os.path.isfile( processName):
+        print( "OtherUtils.assertProcessRunning: %s does not exist" % processName)
+        return (False, False)
+        
+    if _os.system( "%s &" % processName):
+        print( "OtherUtils.assertProcessRunning: failed to launch %s" % processName)
+        return (False, False)
+
+    count = 0
+    while 1: 
+        count += 1
+        if findProcessByName( processName): 
+            #
+            # we need some extra time. The process appears in
+            # the process list but is not active
+            #
+            _time.sleep( 3) 
+            return (True, True)
+        _time.sleep( 0.1)
+        if count > 15:
+            print( "OtherUtils.assertProcessRunning: %s does not start in time " % processName)
+            return ( False, False)
+
+    return (True, True)
+#
+# this function is copied from 
+#  /home/kracht/Misc/Sardana/hasyutils/HasyUtils/OtherUtils.py
+#
+def findProcessByName( cmdLinePattern):
+    """
+    returns True, if the process list contains a command line
+    containing the pattern specified
+
+    cmdLinePattern, e.g.: 'pyspMonitor.py' 
+      which matches ['python', '/usr/bin/pyspMonitor.py']
+
+    """
+    import psutil
+
+    for p in psutil.process_iter():
+        lst = p.cmdline()
+        if len( lst) == 0:
+            continue
+        for elm in lst: 
+            if elm.find( cmdLinePattern) != -1:
+                return True
+    return False
+
+def runMacro( line): 
+    """
+    send a command to the door and wait for completion
+    """
+    import PyTango
+    import PySpectra.dMgt.GQE as GQE
+    import time
+
+    print( "utils.runMacro: %s" % line)
+
+    door = GQE.InfoBlock.getDoorProxy()
+    if door is None:
+        print( "utils.runMacro: no door")
+        return False
+    #
+    # move the motors to good starting points
+    #
+    door.RunMacro( line.split( ' '))
+    while door.state() == PyTango.DevState.RUNNING: 
+        time.sleep( 0.1)
+
+    print( "utils.runMacro: %s, DONE" % line)
+
+    return True
+
 _initInkey = False
 _initInkeyOldTermAttr = None
 
@@ -467,50 +562,6 @@ def launchGui():
     app.exec_()
 
     #_sys.exit( app.exec_())
-
-
-#def waitAndProcessEvents( waitTime): 
-#    '''
-#    Wait for waitTime seconds to expire. During the wait time 
-#    the QApp events are processed. If 'p' is pressed, the function
-#    waits until another 'p' is pressed. 
-#    implemented to suppress, e.g., new file reads. 
-#
-#    4.7.2019 taken out because it is no longer clear for what this function us useful
-#
-#    startTime = _time.time()
-#    while (time.time() - startTime) < WAIT_TIME:
-#        pysp.processEvents()
-#        key = inkey()
-#        if key == 32:
-#            return 32
-#        if key == 112: # 'p'
-#            print( "paused, press 'p' to resume")
-#            while True:
-#                pysp.processEvents()
-#                if inkey() == 112:
-#                    print( "unpaused, press 'p' to pause")
-#                    break
-#                time.sleep(0.01)
-#        time.sleep(0.01)
-#    '''
-#
-#    startTime = _time.time()
-#    while (_time.time() - startTime) < waitTime:
-#        PySpectra.processEvents()
-#        key = inkey()
-#        if key == 32:
-#            return 32
-#        if key == 112: # 'p'
-#            print( "paused, press 'p' to resume")
-#            while True:
-#                PySpectra.processEvents()
-#                if inkey() == 112:
-#                    print( "unpaused, press 'p' to pause")
-#                    break
-#                _time.sleep(0.01)
-#        _time.sleep(0.01)
-#    return True
 
 def prtc(): 
     _sys.stdout.write( "Prtc ")

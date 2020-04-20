@@ -15,7 +15,7 @@ python ./test/ipython/testIFC.py testIFC.test_setX_Y
 python ./test/ipython/testIFC.py testIFC.test_setXY
 python ./test/ipython/testIFC.py testIFC.test_y2my
 python ./test/ipython/testIFC.py testIFC.test_delete
-python ./test/ipython/testIFC.py testIFC.test_setArrowMotor
+python ./test/ipython/testIFC.py testIFC.test_setArrow
 python ./test/ipython/testIFC.py testIFC.test_execHsh
 python ./test/ipython/testIFC.py testIFC.test_execHshScan
 python ./test/ipython/testIFC.py testIFC.test_execHshSetPixelImage
@@ -161,17 +161,17 @@ class testIFC( unittest.TestCase):
         PySpectra.cls()
         GQE.delete()
         ifc.command( "setWsViewport DINA4")
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
         ifc.command( "setWsViewport DINA4P")
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
         ifc.command( "setWsViewport DINA5")
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
         ifc.command( "setWsViewport DINA5P")
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
         ifc.command( "setWsViewport DINA6")
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
         ifc.command( "setWsViewport DINA6P")
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
         print "testIFC.test_wsViewPort DONE"
 
         return 
@@ -219,7 +219,7 @@ class testIFC( unittest.TestCase):
         
         ifc.command( "display")
         PySpectra.display()
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
         print "testIFC.test_setText DONE"
 
         return 
@@ -247,7 +247,7 @@ class testIFC( unittest.TestCase):
             ifc.command( "display")
             time.sleep(0.1)
 
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
         print "testIFC.test_setX_Y DONE"
 
         return 
@@ -268,7 +268,7 @@ class testIFC( unittest.TestCase):
             ifc.command( "display")
             time.sleep(0.1)
             
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
         print "testIFC.test_setXY DONE"
         return 
 
@@ -284,7 +284,7 @@ class testIFC( unittest.TestCase):
         ifc.command( "create s3 0 10 %d" % max)
         ifc.command( "create s4 0 10 %d" % max)
         ifc.command( "display")
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
         gqeList = GQE.getGqeList()
         self.assertEqual( len( gqeList), 4)
         self.assertEqual( gqeList[0].name, "s1")
@@ -296,7 +296,7 @@ class testIFC( unittest.TestCase):
         ifc.command( "delete s2")
         ifc.command( "setTitle \"s1,s3,s4\"")
         ifc.command( "display")
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
         gqeList = GQE.getGqeList()
         self.assertEqual( len( gqeList), 3)
         self.assertEqual( gqeList[0].name, "s1")
@@ -307,16 +307,16 @@ class testIFC( unittest.TestCase):
         ifc.command( "delete s3 s4")
         ifc.command( "setTitle \"s1\"")
         ifc.command( "display")
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
         gqeList = GQE.getGqeList()
         self.assertEqual( len( gqeList), 1)
         self.assertEqual( gqeList[0].name, "s1")
         print "testIFC.test_delete DONE"
         return 
 
-    def test_setArrowMotor( self): 
+    def test_setArrow( self): 
 
-        print "testIFC.test_setArrowMotor"
+        print "testIFC.test_setArrow"
         ifc.command( "cls")
         ifc.command( "delete")
         max = 20
@@ -326,19 +326,19 @@ class testIFC( unittest.TestCase):
         gqe = GQE.getGqe( "s1")
         gqe.motorNameList = ["eh_mot66"] 
 
-        ifc.command( "setArrowMotorCurrent s1 position 5.") 
-        ifc.command( "setArrowMotorMisc s1 position 2.") 
-        ifc.command( "setArrowMotorSetPoint s1 position 6.") 
+        ifc.command( "setArrowCurrent s1 position 5.") 
+        ifc.command( "setArrowMisc s1 position 2.") 
+        ifc.command( "setArrowSetPoint s1 position 6.") 
         ifc.command( "display")
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
         pos = 5
         for i in range( 20): 
             pos = 5 + float(i)*0.05
-            ifc.command( "setArrowMotorCurrent s1 position %g" % pos) 
+            ifc.command( "setArrowCurrent s1 position %g" % pos) 
             time.sleep( 0.1)
             
-        print "testIFC.test_setArrowMotor DONE"
+        print "testIFC.test_setArrow DONE"
         return 
 
 
@@ -429,7 +429,7 @@ class testIFC( unittest.TestCase):
                     return
             zmqIfc.execHsh( { 'command': ['cls','display']})
         zmqIfc.execHsh( { 'command': ['cls', 'display']})
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
         return 
 
@@ -475,7 +475,7 @@ class testIFC( unittest.TestCase):
             zmqIfc.execHsh( { 'command': ['cls','display']})
         zmqIfc.execHsh( { 'command': ['cls']})
         zmqIfc.execHsh( { 'command': ['display']})
-        PySpectra.procEventsLoop( 1)
+        PySpectra.processEventsLoop( 1)
 
         return 
 

@@ -709,10 +709,10 @@ def example_ImageMB():
     maxiter = 512
     
     m = GQE.Image( name = "MandelbrotSet",
-                     flagAxes = True, 
-                     maxIter = maxiter, 
-                     xMin = xmin, xMax = xmax, width = width, 
-                     yMin = ymin, yMax = ymax, height = height)
+                   flagAxes = True, 
+                   maxIter = maxiter, 
+                   xMin = xmin, xMax = xmax, width = width, 
+                   yMin = ymin, yMax = ymax, height = height)
     m.flagZoomSlow = False
     m.zoom()
     PySpectra.cls()
