@@ -20,6 +20,7 @@ import numpy as np
 import unittest
 import PyTango
 import time, os
+import HasyUtils
 
 class testTangoIfc( unittest.TestCase):
 
@@ -34,6 +35,10 @@ class testTangoIfc( unittest.TestCase):
     def testMoveMotorNameList( self) : 
         import random
         print "testTangoIfc.testMoveMotorNameList"
+
+
+        if HasyUtils.getHostname() != 'haso107tk': 
+            return 
 
         PySpectra.cls()
         GQE.delete()

@@ -11,11 +11,11 @@ import sys
 
 import PySpectra
 import PySpectra.misc.tangoIfc as tangoIfc
+import PySpectra.misc.utils as utils
 import PySpectra.dMgt.GQE as GQE
 import numpy as np
 import unittest
 import PyTango
-import HasyUtils
 import time, os
 
 class testSpock( unittest.TestCase):
@@ -30,6 +30,9 @@ class testSpock( unittest.TestCase):
 
     def testMoveMotor( self) : 
         print "testSpock.testMoveMotor"
+
+        if utils.getHostname() != 'haso107tk': 
+            return 
 
         PySpectra.cls()
         GQE.delete()

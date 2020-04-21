@@ -40,7 +40,8 @@ import math
 import pyqtgraph as pg
 
 #
-pySpectraPath = "/home/kracht/Misc/pySpectra"
+# wrong, think of github: pySpectraPath = "/home/kracht/Misc/pySpectra"
+pySpectraPath = "."
 
 def mandelbrot( c, maxiter):
     z = c
@@ -826,6 +827,9 @@ class testGQE( unittest.TestCase):
         return 
 
     def testMotorArrowCurrentAndSetPoint( self) : 
+
+        if utils.getHostname() != 'haso107tk': 
+            return 
 
         PySpectra.cls()
         GQE.delete()

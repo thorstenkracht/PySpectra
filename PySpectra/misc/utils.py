@@ -448,6 +448,18 @@ def findProcessByName( cmdLinePattern):
                 return True
     return False
 
+def getHostname():
+    '''Return the hostname, short form, e.g.: haspp08 '''
+    import socket 
+    return socket.gethostname()
+
+
+def getHostnameLong():
+    '''return the hostname, long form, e.g.: haspp08.desy.de '''
+    # ('haso107tk.desy.de', ['haso107tk'], ['131.169.221.161'])
+    import socket 
+    return socket.gethostbyname_ex( socket.gethostname())[0]
+
 def runMacro( line): 
     """
     send a command to the door and wait for completion
