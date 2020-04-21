@@ -892,6 +892,10 @@ class testGQE( unittest.TestCase):
         return 
 
     def testCheckTargetWithinLimits( self): 
+
+        if utils.getHostname() != 'haso107tk': 
+            return 
+
         PySpectra.cls()
         GQE.delete()
 
