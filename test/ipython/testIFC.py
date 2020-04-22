@@ -160,11 +160,8 @@ class testIFC( unittest.TestCase):
         print "testIFC.test_wsViewPort"
         PySpectra.cls()
         GQE.delete()
-        print "testIFC.test_wsViewPort-1"
         ifc.command( "setWsViewport DINA4")
-        print "testIFC.test_wsViewPort-2"
         PySpectra.processEventsLoop( 1)
-        print "testIFC.test_wsViewPort-3"
         ifc.command( "setWsViewport DINA4P")
         PySpectra.processEventsLoop( 1)
         ifc.command( "setWsViewport DINA5")

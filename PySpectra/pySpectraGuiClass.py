@@ -1516,7 +1516,7 @@ class ImageAttributes( QtGui.QMainWindow):
 
             self.progressLabel = QtGui.QLabel( "Progress: ")
             self.layout_grid.addWidget( self.progressLabel, row, 3)
-            self.image.cbZoomProgress = self.cb_zoomProgress
+            self.image.cbZoomMbProgress = self.cb_zoomMbProgress
 
             row += 1
 
@@ -1640,14 +1640,14 @@ class ImageAttributes( QtGui.QMainWindow):
     def cb_maxIter( self): 
         temp = self.w_maxIterComboBox.currentText()
         self.image.maxIter = int( temp)
-        self.image.zoom()
+        self.image.zoomMb()
         PySpectra.cls()
         PySpectra.display( [ self.name])
         return
 
-    def cb_zoomProgress( self, line): 
+    def cb_zoomMbProgress( self, line): 
         '''
-        called from image.zoom() to display the progress
+        called from image.zoomMb() to display the progress
         '''
         self.progressLabel.setText( "Progress: %s" % line)
         return 
@@ -1711,7 +1711,7 @@ class ImageAttributes( QtGui.QMainWindow):
         self.image.maxIter = 512
         self.image.modulo = -1
         self.image.indexRotate = 0
-        self.image.zoom()
+        self.image.zoomMb()
 
         return 
 

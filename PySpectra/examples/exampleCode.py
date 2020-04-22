@@ -713,8 +713,8 @@ def example_ImageMB():
                    maxIter = maxiter, 
                    xMin = xmin, xMax = xmax, width = width, 
                    yMin = ymin, yMax = ymax, height = height)
-    m.flagZoomSlow = False
-    m.zoom()
+    m.flagZoomMbSlow = False
+    m.zoomMb()
     PySpectra.cls()
     PySpectra.display()
     return 
@@ -735,8 +735,8 @@ def example_ImageMBSlow():
                     xMin = xmin, xMax = xmax, width = width, 
                     yMin = ymin, yMax = ymax, height = height)
 
-    m.flagZoomSlow = True
-    m.zoom()
+    m.flagZoomMbSlow = True
+    m.zoomMb()
     PySpectra.cls()
     PySpectra.display()
     return 

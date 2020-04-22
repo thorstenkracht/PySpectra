@@ -3,13 +3,15 @@
 cd /home/kracht/Misc/pySpectra
 python -m unittest discover -v
 
-python ./test/dMgt/testGQE.py testGQE.testNextPrev
+python ./test/dMgt/testGQE.py testGQE.testNextPrevScan
+python ./test/dMgt/testGQE.py testGQE.testNextPrevImage
 python ./test/dMgt/testGQE.py testGQE.testFillData
 python ./test/dMgt/testGQE.py testGQE.testFillDataByColumns
 python ./test/dMgt/testGQE.py testGQE.testFillDataByGqes
 python ./test/dMgt/testGQE.py testGQE.testCreateDelete
 python ./test/dMgt/testGQE.py testGQE.testWrite
 python ./test/dMgt/testGQE.py testGQE.testRead
+python ./test/dMgt/testGQE.py testGQE.testWriteReadImage
 python ./test/dMgt/testGQE.py testGQE.test_read
 python ./test/dMgt/testGQE.py testGQE.testReuse
 python ./test/dMgt/testGQE.py testGQE.testYGreaterThanZero
@@ -42,14 +44,6 @@ import pyqtgraph as pg
 #
 # wrong, think of github: pySpectraPath = "/home/kracht/Misc/pySpectra"
 pySpectraPath = "."
-
-def mandelbrot( c, maxiter):
-    z = c
-    for n in range(maxiter):
-        if abs(z) > 2:
-            return n
-        z = z*z + c
-    return 0
 
 class testGQE( unittest.TestCase):
 
@@ -287,8 +281,8 @@ class testGQE( unittest.TestCase):
 
         print "testGQE.testCreateDelete, DONE"
         
-    def testNextPrev( self):
-        print "testGQE.testNextPrev"
+    def testNextPrevScan( self):
+        print "testGQE.testNextPrevScan"
         GQE.delete()
         GQE.Scan( name = 't1')
         GQE.Scan( name = 't2')
@@ -310,7 +304,33 @@ class testGQE( unittest.TestCase):
         self.assertEqual( GQE.prevScan().name, 't2')
         self.assertEqual( GQE.prevScan().name, 't1')
 
-        print "testGQE.testNextPrev, DONE"
+        print "testGQE.testNextPrevScan, DONE"
+        
+    def testNextPrevImage( self):
+
+        print "testGQE.testNextPrevImage"
+        GQE.delete()
+        GQE.Image( name = "t1", data = np.empty((100, 100)))
+        GQE.Image( name = "t2", data = np.empty((100, 100)))
+        GQE.Image( name = "t3", data = np.empty((100, 100)))
+        GQE.Image( name = "t4", data = np.empty((100, 100)))
+        self.assertEqual( GQE.nextImage().name, 't1')
+        self.assertEqual( GQE.nextImage().name, 't2')
+        self.assertEqual( GQE.nextImage().name, 't3')
+        self.assertEqual( GQE.nextImage().name, 't4')
+        self.assertEqual( GQE.nextImage().name, 't1')
+        GQE.delete()
+        GQE.Image( name = "t1", data = np.empty((100, 100)))
+        GQE.Image( name = "t2", data = np.empty((100, 100)))
+        GQE.Image( name = "t3", data = np.empty((100, 100)))
+        GQE.Image( name = "t4", data = np.empty((100, 100)))
+        self.assertEqual( GQE.prevImage().name, 't1')
+        self.assertEqual( GQE.prevImage().name, 't4')
+        self.assertEqual( GQE.prevImage().name, 't3')
+        self.assertEqual( GQE.prevImage().name, 't2')
+        self.assertEqual( GQE.prevImage().name, 't1')
+
+        print "testGQE.testNextPrevImage, DONE"
 
     def testFillData( self):
         print "testGQE.testFillData"
@@ -452,6 +472,60 @@ class testGQE( unittest.TestCase):
         self.assertEqual( scanLst[0].name, "t1")
         self.assertEqual( scanLst[0].nPts, 201)
 
+
+    def testWriteReadImage( self): 
+        print "testGQE.testWrite"
+        PySpectra.cls()
+        GQE.delete()
+
+        (xmin, xmax) = (-2., 1)
+        (ymin, ymax) = (-1.5, 1.5)
+        (width, height) = (200, 200)
+        maxiter = 100
+            
+        m = GQE.Image( name = "MandelbrotSet", colorMap = 'Greys', 
+                       estimatedMax = maxiter, 
+                       xMin = xmin, xMax = xmax, width = width, 
+                       yMin = ymin, yMax = ymax, height = height)
+
+        m.zoomMb( flagDisplay = False)
+
+        ret = GQE.write( ['MandelbrotSet'])
+
+        PySpectra.cls()
+        GQE.delete()
+
+        self.assertEqual( os.path.exists( ret), True)
+
+        GQE.read( ret)
+
+        GQE.setTitle( "The Mandelbrotset")
+        PySpectra.display()
+        PySpectra.processEventsLoop( 2)
+
+        lst = GQE.getGqeList()
+        self.assertEqual( len( lst), 1)
+        
+        ima = lst[0]
+        self.assertEqual( ima.name, "MandelbrotSet")
+        self.assertEqual( type( ima), PySpectra.dMgt.GQE.Image)
+        self.assertEqual( ima.width, width)
+        self.assertEqual( ima.height, height)
+
+        self.assertEqual( ima.xMin, xmin)
+        self.assertEqual( ima.xMax, xmax)
+        self.assertEqual( ima.yMin, ymin)
+        self.assertEqual( ima.yMax, ymax)
+
+        ima.zoomMb( targetIX = 50, targetIY = 100, flagDisplay = False)
+        PySpectra.display()
+        PySpectra.processEventsLoop( 1)
+
+        ima.zoomMb( targetIX = 50, targetIY = 100, flagDisplay = False)
+        PySpectra.display()
+        PySpectra.processEventsLoop( 1)
+
+        return 
 
     def testReuse( self): 
         print "testGQE.testReuse"
@@ -848,10 +922,10 @@ class testGQE( unittest.TestCase):
         g.display()
 
         POSI = 50
-        g.setPosArrowMisc( proxy.position)
+        g.setArrowMisc( proxy.position)
         proxy.position = POSI
         print( "testGQE.testArrow: moving %s to %g" % (proxy.name(), POSI))
-        g.setPosArrowSetPoint( POSI)
+        g.setArrowSetPoint( POSI)
         while proxy.state() == PyTango.DevState.MOVING:
             g.updateArrowCurrent()
             time.sleep(1.0)
@@ -859,12 +933,12 @@ class testGQE( unittest.TestCase):
         g.display()
             
         POSI = 51
-        g.setPosArrowMisc( proxy.position)
+        g.setArrowMisc( proxy.position)
         proxy.position = POSI
         print( "testGQE.testArrow: moving %s to %g" % (proxy.name(), POSI))
-        g.setPosArrowSetPoint( POSI)
+        g.setArrowSetPoint( POSI)
         while proxy.state() == PyTango.DevState.MOVING:
-            g.setPosArrowCurrent( proxy.position)
+            g.setArrowCurrent( proxy.position)
             time.sleep(1.0)
         return 
 
@@ -885,7 +959,7 @@ class testGQE( unittest.TestCase):
         g.display()
 
         print( "testGQE.testArrowMisc: an arrow should appear at 50.3")
-        g.setPosArrowMisc( 50.3)
+        g.setArrowMisc( 50.3)
 
         g.display()
         time.sleep(3.0)

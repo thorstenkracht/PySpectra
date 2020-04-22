@@ -150,7 +150,7 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
         if scan.infLineMouseX is not None: 
             scan.infLineMouseX.hide()
             scan.infLineMouseY.hide()
-            scan.setPosArrowSetPoint( target)
+            scan.setArrowSetPoint( target)
 
         #
         # wait for move completion
@@ -273,7 +273,7 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
         scan.infLineMouseX.hide()
         scan.infLineMouseY.hide()
 
-        scan.setPosArrowSetPoint(  motorArr[0]['targetPos'])
+        scan.setArrowSetPoint(  motorArr[0]['targetPos'])
         scan.arrowSetPoint.show()
 
     if not reply == QtGui.QMessageBox.Yes:
@@ -315,7 +315,7 @@ def moveImage( image, targetIX, targetIY, flagSync, flagConfirm = True):
     import time as _time
 
     if str(image.name).upper().find( "MANDELBROT") != -1:
-        return image.zoom( targetIX, targetIY)
+        return image.zoomMb( targetIX, targetIY)
 
     if not hasattr( image, 'xMin'):
         print( "Gqe.Image.move: %s no attribute xMin" % image.name)

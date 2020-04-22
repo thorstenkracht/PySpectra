@@ -420,7 +420,7 @@ def _addArrowsMotor( gqe, nameList):
     gqe.labelArrowCurrent.setHtml( '<div style="font-size:%dpx;">%s</div>' % (fontSize, "n.n."))
 
     #
-    # look at GQE.setPosArrowCurrentScene() to understand arrowCurrent, ~Left, ~Right
+    # look at GQE.setArrowCurrentScene() to understand arrowCurrent, ~Left, ~Right
     #
     gqe.arrowInvisibleLeft = pyqtgraph.ArrowItem( angle=270, headLen = 2, 
                                                        pen = pyqtgraph.mkPen( color = ( 240, 240, 240)), 
@@ -432,7 +432,7 @@ def _addArrowsMotor( gqe, nameList):
     #
     # the arrows are added to the GraphicsWindow.scene() to use pixel coordinates 
     # a discussion about the arrows can be found in GQE.py in the comment 
-    # of setPosArrowCurrent() 
+    # of setArrowCurrent() 
     #
     _graphicsWindow.scene().addItem( gqe.arrowCurrent)
     _graphicsWindow.scene().addItem( gqe.labelArrowCurrent)
@@ -767,7 +767,7 @@ def _make_cb_mouseClicked( gqe):
                     return 
                 tangoIfc.move( gqe, gqe.x[ index])
             elif type( gqe) == GQE.Image:
-                if gqe.flagZooming: 
+                if gqe.flagZoomingMb: 
                     return 
                 tangoIfc.move( gqe, mousePoint.x(), mousePoint.y())
         # middle button

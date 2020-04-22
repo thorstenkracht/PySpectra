@@ -204,7 +204,7 @@ lineStylePQT = {
 }
 
 colorMaps = [ 
-    'binary', 'blackwhite', 'flag', 'Greys', 'Greys_r', 'Blues', 'Greens', 'Reds',
+    'binary', 'flag', 'Greys', 'Greys_r', 'Blues', 'Greens', 'Reds',
     'prism', 'gist_earth', 'terrain',
     'gnuplot2', 'CMRmap',
     'rainbow', 'jet', 'nipy_spectral', 

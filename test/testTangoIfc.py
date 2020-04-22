@@ -3,9 +3,9 @@
 cd /home/kracht/Misc/pySpectra
 python -m unittest discover -v
 
+python ./test/testTangoIfc.py testTangoIfc.testMoveMotorStart
 python ./test/testTangoIfc.py testTangoIfc.testMoveMotorNameList
 python ./test/testTangoIfc.py testTangoIfc.testMoveScanInfo
-python ./test/testTangoIfc.py testTangoIfc.testMoveExecHsh
 
 '''
 import sys
@@ -31,6 +31,46 @@ class testTangoIfc( unittest.TestCase):
     @classmethod
     def tearDownClass( testTangoIfc): 
         PySpectra.close()
+
+    def testMoveMotorStart( self) : 
+        import random
+        print "testTangoIfc.testMoveMotorTangoIfc"
+
+
+        if HasyUtils.getHostname() != 'haso107tk': 
+            return 
+
+        PySpectra.cls()
+        GQE.delete()
+        g = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
+        mu = 0.
+        sigma = 1.
+        g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2*sigma**2))
+
+        g.motorNameList = ["eh_mot66"]
+        proxyPool = PyTango.DeviceProxy( g.motorNameList[0])
+        proxy = PyTango.DeviceProxy( proxyPool.TangoDevice)
+        POS = proxy.position + 1
+        g.x += POS
+        g.xMin += POS
+        g.xMax += POS
+        print( "testTangoIfc.testMoveMotorNameList: move %s to %g" % ( g.motorNameList[0], POS))
+        tangoIfc.moveStart( g, POS, flagConfirm = False)
+        g.display()
+        g.setArrowSetPoint( POS)
+        while proxy.state() != PyTango.DevState.ON:
+            time.sleep( 0.5)
+            g.updateArrowCurrent()
+
+        POS -= 1
+        print( "testTangoIfc.testMoveMotorNameList: move %s back to %g" % ( g.motorNameList[0], POS))
+        tangoIfc.moveStart( g, POS, flagConfirm = False)
+        g.setArrowSetPoint( POS)
+        while proxy.state() != PyTango.DevState.ON:
+            time.sleep( 0.5)
+            g.updateArrowCurrent()
+
+        return 
 
     def testMoveMotorNameList( self) : 
         import random

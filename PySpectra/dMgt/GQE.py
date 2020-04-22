@@ -53,7 +53,7 @@ _ImageAttrsPublic = [ 'at', 'colorMap', 'colSpan', 'data', 'estimatedMax', 'flag
 #
 # img is used in pqt_graphics
 #
-_ImageAttrsPrivate = [ 'attributeWidget', 'cbZoomProgress', 'flagZooming', 'flagZoomSlow', 'img', 'plotItem', 'mousePrepared', 'mouseLabel', 'cb_mouseLabel']
+_ImageAttrsPrivate = [ 'attributeWidget', 'cbZoomMbProgress', 'flagZoomingMb', 'flagZoomMbSlow', 'img', 'plotItem', 'mousePrepared', 'mouseLabel', 'cb_mouseLabel']
 
 
 class InfoBlock( object): 
@@ -743,7 +743,7 @@ class Scan( object):
         # currentIndex refers to the last valid x-, y-value; nPts == currentIndex + 1
         return _np.max( self.y[:self.currentIndex + 1])
 
-    def setPosArrowCurrent( self, x): 
+    def setArrowCurrent( self, x): 
         '''
         set the position of the arrow pointing to the current motor position
 
@@ -770,7 +770,7 @@ class Scan( object):
             self.arrowInvisibleRight.show()
 
         if self.motorNameList is None or len( self.motorNameList) == 0:
-            raise ValueError( "GQE.setPosArrowCurrent: motorNameList empty or None")
+            raise ValueError( "GQE.setArrowCurrent: motorNameList empty or None")
 
         yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET
         if self.xLabel is not None: 
@@ -787,7 +787,7 @@ class Scan( object):
 
         return
 
-    def setPosArrowSetPoint( self, x): 
+    def setArrowSetPoint( self, x): 
         '''
         set the position of the arrow pointing to the set-point
         '''
@@ -805,7 +805,7 @@ class Scan( object):
 
         return
 
-    def setPosArrowMisc( self, x): 
+    def setArrowMisc( self, x): 
         '''
         set the position of the arrow pointing to Misc
         '''
@@ -848,14 +848,14 @@ class Scan( object):
         proxy = _PyTango.DeviceProxy( self.motorNameList[0])
         motName = self.motorNameList[0]
 
-        self.setPosArrowCurrent( proxy.position)
+        self.setArrowCurrent( proxy.position)
 
         if proxy.state() == _PyTango.DevState.ON: 
             self.arrowSetPoint.hide()
 
         return
 
-    def setArrowCurrent( self, lst): 
+    def setArrowCurrentCmd( self, lst): 
         '''
         handle the arrow pointing to the current position
           'setArrowCurrent sig_gen position 50.6'
@@ -878,13 +878,13 @@ class Scan( object):
             self.arrowCurrent.show()
         elif len( lst) == 2 and lst[0].upper() == 'POSITION': 
             x = float( lst[1])
-            self.setPosArrowCurrent( x)
+            self.setArrowCurrent( x)
         else: 
             raise ValueError( "GQE.setArrowCurrent: strange list %s" % str( lst))
                                     
         return 
 
-    def setArrowSetPoint( self, lst): 
+    def setArrowSetPointCmd( self, lst): 
         '''
         handle the arrow pointing to the target position
           'setArrowSetPoint sig_gen position 50.6'
@@ -907,13 +907,13 @@ class Scan( object):
             self.arrowSetPoint.show()
         elif len( lst) == 2 and lst[0].upper() == 'POSITION': 
             x = float( lst[1])
-            self.setPosArrowSetPoint( x)
+            self.setArrowSetPoint( x)
         else: 
             raise ValueError( "GQE.setArrowSetPoint: strange list %s" % str( lst))
                                     
         return 
 
-    def setArrowMisc( self, lst): 
+    def setArrowMiscCmd( self, lst): 
         '''
         handle the arrow pointing to a target position defined by e.g. mvsa
           'setArrowMisc sig_gen position 50.6'
@@ -936,7 +936,7 @@ class Scan( object):
             self.arrowMisc.show()
         elif len( lst) == 2 and lst[0].upper() == 'POSITION':
             x = float( lst[1])
-            self.setPosArrowMisc( x)
+            self.setArrowMisc( x)
         else: 
             raise ValueError( "GQE.setArrowMisc: strange list %s" % str( lst))
                                     
@@ -1226,7 +1226,7 @@ def delete( nameLst = None):
     #
     # delete everything
     #
-    if not nameLst:    
+    if not nameLst:
         while len( _gqeList) > 0:
             tmp = _gqeList.pop()
             PySpectra.clear( tmp)
@@ -1476,7 +1476,7 @@ def prevScan( name = None):
     while type( _gqeList[ _gqeIndex]) != Scan:
         _gqeIndex += 1
         if _gqeIndex >= len( _gqeList): 
-            raise ValueError( "GQE.nextImage: failed to find the previous Scan")
+            raise ValueError( "GQE.prevScan: failed to find the previous Scan")
 
     return _gqeList[ _gqeIndex]
 
@@ -1487,7 +1487,7 @@ def nextImage( name = None):
     global _gqeIndex
 
     if len( _gqeList) == 0:
-        raise ValueError( "GQE.nextScan: gqe list empty")
+        raise ValueError( "GQE.nextImage: gqe list empty")
 
     if name is not None:
         for i in range( len(_gqeList)): 
@@ -1517,7 +1517,7 @@ def prevImage( name = None):
     global _gqeIndex
 
     if len( _gqeList) == 0:
-        raise ValueError( "GQE.prevScan: scan list empty")
+        raise ValueError( "GQE.prevImage: scan list empty")
 
     if name is not None:
         for i in range( len(_gqeList)): 
@@ -1539,7 +1539,7 @@ def prevImage( name = None):
     while type( _gqeList[ _gqeIndex]) != Image:
         _gqeIndex -= 1
         if _gqeIndex < 0:
-            raise ValueError( "GQE.nextImage: failed to find the previous Image")
+            raise ValueError( "GQE.prevImage: failed to find the previous Image")
 
     return _gqeList[ _gqeIndex]
 
@@ -1555,7 +1555,7 @@ def getIndex( name):
         index += 1
     raise ValueError( "GQE.getIndex: not found %s" % name)
 
-def _insertImage( fioObj):
+def _insertFioObj2Image( fioObj):
     '''
     fioObj contains an image
     '''
@@ -1611,7 +1611,7 @@ def read( fileName, x = 1, y = None, flagMCA = False):
     fioObj = _HasyUtils.fioReader( fileName, flagMCA)
 
     if fioObj.isImage:
-        return _insertImage( fioObj); 
+        return _insertFioObj2Image( fioObj); 
 
     if len( fioObj.columns) == 0:
         raise ValueError( "GQE.read: %s, len( columns) == 0" % ( fileName))
@@ -2151,16 +2151,16 @@ class Image( object):
         for i in range( len( _gqeList)):
             if name == _gqeList[i].name:
                 raise ValueError( "GQE.Image.__init__(): %s exists already" % name)
-   
+
         self.name = name
         self.textOnly = False
         #
         # ccallback function to update the zoom progress in the menu
         #
-        self.cbZoomProgress = None
+        self.cbZoomMbProgress = None
         self.attributeWidget = None
-        self.flagZoomSlow = None
-        self.flagZooming = False
+        self.flagZoomMbSlow = None
+        self.flagZoomingMb = False
 
         self.setAttr( kwargs)
 
@@ -2375,10 +2375,11 @@ class Image( object):
         import time as _time
 
         if str(self.name).upper().find( "MANDELBROT") != -1:
-            return self.zoom( targetIX, targetIY, True)
+            return self.zoomMb( targetIX, targetIY, True)
 
         return 
 
+    '''
     def mandelbrot( self, c, maxiter):
         z = c
         for n in range(maxiter):
@@ -2421,8 +2422,9 @@ class Image( object):
         #    print( "GQE.Image.zoom x %d, y %d, DONE" % (targetIX, targetIY))
         
         return 
+    '''
 
-    def mandelbrot_numpy( self):
+    def mandelbrot_numpy( self, flagDisplay = True):
         
         #print( "GQE.mandelbrot_numpy: xMin %g, xMax %g, width %d" % (self.xMin, self.xMax, self.width))
         #print( "GQE.mandelbrot_numpy: yMin %g, yMax %g, height %d" % (self.yMin, self.yMax, self.height))
@@ -2438,25 +2440,32 @@ class Image( object):
             z[notdone] = z[notdone]**2 + c[notdone]
             if (it % 20) == 0: 
                 self.data = output.transpose()
-                PySpectra.display()
-                if self.cbZoomProgress is not None:
-                    self.cbZoomProgress( "%d/%d" % ( it, self.maxIter))
+                if flagDisplay: 
+                    PySpectra.display()
+                if self.cbZoomMbProgress is not None:
+                    self.cbZoomMbProgress( "%d/%d" % ( it, self.maxIter))
         output[output == self.maxIter-1] = 0
         self.data = output.transpose()
         #print( "GQE.mandelbrot_numpy: data %s" % ( str(self.data.shape)))
         
-        if self.cbZoomProgress is not None:
-            self.cbZoomProgress( "DONE")
-        PySpectra.cls()
-        PySpectra.display()
+        if self.cbZoomMbProgress is not None:
+            self.cbZoomMbProgress( "DONE")
+
+        if flagDisplay: 
+            PySpectra.cls()
+            PySpectra.display()
+
         return 
 
-    def zoom( self, targetIX = None, targetIY = None, flagShift = False): 
-        self.flagZooming = True
+    def zoomMb( self, targetIX = None, targetIY = None, flagShift = False, flagDisplay = True): 
+        """
+        'Mb' because of Mandelbrot
+        """
+        self.flagZoomingMb = True
 
-        #if self.flagZoomSlow:
+        #if self.flagZoomMbSlow:
         #    self.zoomSlow( targetIX, targetIY)
-        #    self.flagZooming = False
+        #    self.flagZoomingMb = False
         #    return 
 
         if targetIX is not None and targetIY is not None: 
@@ -2479,7 +2488,8 @@ class Image( object):
                 self.yMin = targetY - deltaY/2.
                 self.yMax = targetY + deltaX/2.
 
-        self.mandelbrot_numpy()
-        self.flagZooming = False
+        self.mandelbrot_numpy( flagDisplay = flagDisplay)
+        self.flagZoomingMb = False
         return 
+
 

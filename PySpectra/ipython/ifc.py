@@ -131,11 +131,11 @@ def command( line):
         elif lst[0] == 'read':
             argout = read( lineRest)
         elif lst[0] == 'setArrowCurrent':
-            argout = setArrowCurrent( lineRest)
+            argout = setArrowCurrentCmd( lineRest)
         elif lst[0] == 'setArrowSetPoint':
-            argout = setArrowSetPoint( lineRest)
+            argout = setArrowSetPointCmd( lineRest)
         elif lst[0] == 'setArrowMisc':
-            argout = setArrowMisc( lineRest)
+            argout = setArrowMiscCmd( lineRest)
         elif lst[0] == 'setComment':
             argout = setComment( lineRest)
         elif lst[0] == 'setPixelImage':
@@ -495,7 +495,7 @@ def setPixelImage( line):
     o.setPixelImage( ix, iy, val)
     return "done"
 
-def setArrowCurrent( line): 
+def setArrowCurrentCmd( line): 
     '''
     handle the arrowCurrent
       setArrowCurrent <nameGqe> position <targetPos>
@@ -508,10 +508,10 @@ def setArrowCurrent( line):
     o = GQE.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setArrowSCurrent: failed to find %s" % lst[0])
-    o.setArrowCurrent( lst[1:])
+    o.setArrowCurrentCmd( lst[1:])
     return "done"
 
-def setArrowSetPoint( line): 
+def setArrowSetPointCmd( line): 
     '''
     handle the arrowSetPoint
       setArrowSetPoint <nameGqe> position <targetPos>
@@ -524,10 +524,10 @@ def setArrowSetPoint( line):
     o = GQE.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setArrowSetPoint: failed to find %s" % lst[0])
-    o.setArrowSetPoint( lst[1:])
+    o.setArrowSetPointCmd( lst[1:])
     return "done"
 
-def setArrowMisc( line): 
+def setArrowMiscCmd( line): 
     '''
     handle the arrowMisc
       setArrowMisc <nameGqe> position <targetPos>
@@ -540,7 +540,7 @@ def setArrowMisc( line):
     o = GQE.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setArrowMisc: failed to find %s" % lst[0])
-    o.setArrowMisc( lst[1:])
+    o.setArrowMiscCmd( lst[1:])
     return "done"
 
 def setPixelWorld( line): 
