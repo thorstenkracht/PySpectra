@@ -1539,7 +1539,6 @@ def display( nameList = None):
                 if scan.symbolColor.upper() == 'NONE':
                     scan.plotDataItem = scan.plotItem.plot(pen = _getPen( scan))
                 else:
-                    print( "+++pqtgraphics-5")
                     scan.plotDataItem = scan.plotItem.plot(pen = _getPen( scan), 
                                                            symbol = scan.symbol, 
                                                            symbolPen = definitions.colorCode[ scan.symbolColor.lower()], 
@@ -1667,18 +1666,15 @@ def display( nameList = None):
 
         if scan.plotDataItem is None:
             if scan.symbolColor.upper()  == 'NONE':
-                print( "+++pqtgraphics-2")
                 #curveItem = pyqtgraph.PlotCurveItem( x = scan.x, y = scan.y, pen = _getPen( scan))
                 scan.plotDataItem = pyqtgraph.PlotDataItem( x = scan.x, y = scan.y, pen = _getPen( scan))
             else:
                 #scan.plotDataItem = pyqtgraph.PlotDataItem( x = scan.x, y = scan.y, pen = _getPen( scan))
-                print( "+++pqtgraphics-2")
                 scan.plotDataItem = pyqtgraph.ScatterPlotItem( x = scan.x, y = scan.y,
                                                          symbol = scan.symbol, 
                                                          pen = definitions.colorCode[ scan.symbolColor.lower()], 
                                                          brush = definitions.colorCode[ scan.symbolColor.lower()], 
                                                          size = scan.symbolSize)
-                print( "+++pqtgraphics-3")
             scan.viewBox.addItem( scan.plotDataItem )
                 
         if scan.yLog:
