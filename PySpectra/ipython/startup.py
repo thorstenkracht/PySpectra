@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 '''
 This file defines those magic commands that operate PySpectra from ipython. 
-It is imported by 00-start.py
 
-  #!/usr/bin/env python
-  import PySpectra.ipython.startup
+How it is used can be found here: 
+   /home/kracht/Misc/pySpectra/PySpectra/__init__.py
 
-see 'pyspectra_help' 
+For the list of commands: see pyspectra_help() 
 '''
 from IPython.core.magic import (register_line_magic)
 from IPython.core.getipython import get_ipython

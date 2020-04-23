@@ -17,7 +17,7 @@ pySpectraPath = "."
 sys.path.append( pySpectraPath)
 
 import PySpectra
-import PySpectra.misc.zmqIfc as _zmqIfc
+import PySpectra.misc.zmqIfc as zmqIfc
 import numpy as np
 import unittest
 
@@ -43,14 +43,14 @@ class testZmqIfc( unittest.TestCase):
         import random
         print "testZmqIfc.testExecHsh1"
 
-        hsh = _zmqIfc.execHsh( { 'command': ['cls', 'delete']})
+        hsh = zmqIfc.execHsh( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         MAX = 25
         pos = [float(n)/MAX for n in range( MAX)]
         d1 = [random.random() for n in range( MAX)]
         d2 = [random.random() for n in range( MAX)]
-        hsh = _zmqIfc.execHsh( { 'putData': {'title': "Important Data", 
+        hsh = zmqIfc.execHsh( { 'putData': {'title': "Important Data", 
                                               'comment': "a comment", 
                                               'columns': 
                                               [ { 'name': "eh_mot01", 'data' : pos},
@@ -60,7 +60,7 @@ class testZmqIfc( unittest.TestCase):
                                                   'xLog': False, 'yLog': False, 
                                                   'showGridX': False, 'showGridY': False}]}})
         self.assertEqual( hsh[ 'result'], 'done')
-        _zmqIfc.execHsh( { 'command': ['display']})
+        zmqIfc.execHsh( { 'command': ['display']})
         self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 1)
         lst = PySpectra.dMgt.GQE.getGqeList()
@@ -71,7 +71,7 @@ class testZmqIfc( unittest.TestCase):
         #
         # retrieve the data 
         #
-        hsh = _zmqIfc.execHsh( { 'getData': True})
+        hsh = zmqIfc.execHsh( { 'getData': True})
         self.assertEqual( hsh[ 'result'], 'done')
         #
         # ... and compare.
@@ -87,22 +87,22 @@ class testZmqIfc( unittest.TestCase):
         import random
         print "testZmqIfc.testExecHsh1"
 
-        hsh = _zmqIfc.execHsh( { 'command': ['cls', 'delete']})
+        hsh = zmqIfc.execHsh( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
         MAX = 25
         pos = [float(n)/MAX for n in range( MAX)]
         d1 = [random.random() for n in range( MAX)]
         d2 = [random.random() for n in range( MAX)]
-        hsh = _zmqIfc.execHsh( { 'Scan': { 'name': "d1", 'x': pos, 'y': d1}})
+        hsh = zmqIfc.execHsh( { 'Scan': { 'name': "d1", 'x': pos, 'y': d1}})
         self.assertEqual( hsh[ 'result'], 'done')
-        hsh = _zmqIfc.execHsh( { 'Scan': { 'name': "d2", 'x': pos, 'y': d2}})
+        hsh = zmqIfc.execHsh( { 'Scan': { 'name': "d2", 'x': pos, 'y': d2}})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        _zmqIfc.execHsh( { 'command': ['setTitle \"a title\"']})
+        zmqIfc.execHsh( { 'command': ['setTitle \"a title\"']})
         self.assertEqual( hsh[ 'result'], 'done')
-        _zmqIfc.execHsh( { 'command': ['setComment \"a comment\"']})
+        zmqIfc.execHsh( { 'command': ['setComment \"a comment\"']})
         self.assertEqual( hsh[ 'result'], 'done')
-        _zmqIfc.execHsh( { 'command': ['display']})
+        zmqIfc.execHsh( { 'command': ['display']})
         self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 1)
         lst = PySpectra.dMgt.GQE.getGqeList()
@@ -113,7 +113,7 @@ class testZmqIfc( unittest.TestCase):
         #
         # retrieve the data and compare
         #
-        hsh = _zmqIfc.execHsh( { 'getData': True})
+        hsh = zmqIfc.execHsh( { 'getData': True})
         for i in range( MAX):
             self.assertEqual( pos[i], hsh[ 'getData']['D1']['x'][i])
             self.assertEqual( d1[i], hsh[ 'getData']['D1']['y'][i])
@@ -122,7 +122,7 @@ class testZmqIfc( unittest.TestCase):
         # set y-values 
         #
         for i in range( MAX):
-            _zmqIfc.execHsh( { 'command': ['setY d1 %d %g' % (i, float(i)/10.)]})
+            zmqIfc.execHsh( { 'command': ['setY d1 %d %g' % (i, float(i)/10.)]})
         #
         # and compare
         #
@@ -130,7 +130,7 @@ class testZmqIfc( unittest.TestCase):
         for i in range( MAX):
             self.assertEqual( o.y[i], float(i)/10.)
         
-        _zmqIfc.execHsh( { 'command': ['cls', 'display']})
+        zmqIfc.execHsh( { 'command': ['cls', 'display']})
         self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 1)
 
@@ -142,9 +142,9 @@ class testZmqIfc( unittest.TestCase):
         '''
         set the mandelbrot pixel in pixel numbers (whole numbers)
         '''
-        hsh = _zmqIfc.execHsh( { 'command': ['cls', 'delete']})
+        hsh = zmqIfc.execHsh( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
-        hsh = _zmqIfc.execHsh( { 'command': ['setWsViewport dina5s']})
+        hsh = zmqIfc.execHsh( { 'command': ['setWsViewport dina5s']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         (xmin, xmax) = (-2.,-0.5)
@@ -155,7 +155,7 @@ class testZmqIfc( unittest.TestCase):
         #
         # do the clean-up before we start
         #
-        hsh =  _zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        hsh =  zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         #
@@ -166,7 +166,7 @@ class testZmqIfc( unittest.TestCase):
                   'xMin': xmin, 'xMax': xmax, 'width': width, 
                   'yMin': ymin, 'yMax': ymax, 'height': height}}
 
-        hsh = _zmqIfc.execHsh( hsh)
+        hsh = zmqIfc.execHsh( hsh)
         self.assertEqual( hsh[ 'result'], 'done')
         #
         # fill the image, pixel by pixel
@@ -177,9 +177,9 @@ class testZmqIfc( unittest.TestCase):
             for j in range(height):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
                 hsh = { 'command': [ 'setPixelImage MandelBrot %d %d %g' % ( i, j, res)]}
-                hsh = _zmqIfc.execHsh( hsh)
+                hsh = zmqIfc.execHsh( hsh)
                 self.assertEqual( hsh[ 'result'], 'done')
-            hsh =  _zmqIfc.execHsh( { 'command': ['cls', 'display']})
+            hsh =  zmqIfc.execHsh( { 'command': ['cls', 'display']})
             self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 1)
 
@@ -187,9 +187,9 @@ class testZmqIfc( unittest.TestCase):
         '''
         set the mandelbrot pixel in world coordinates
         '''
-        hsh = _zmqIfc.execHsh( { 'command': ['cls', 'delete']})
+        hsh = zmqIfc.execHsh( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
-        hsh = _zmqIfc.execHsh( { 'command': ['setWsViewport dina5s']})
+        hsh = zmqIfc.execHsh( { 'command': ['setWsViewport dina5s']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         (xmin, xmax) = (-2.,-0.5)
@@ -200,7 +200,7 @@ class testZmqIfc( unittest.TestCase):
         #
         # do the clean-up before we start
         #
-        hsh =  _zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        hsh =  zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         #
@@ -211,7 +211,7 @@ class testZmqIfc( unittest.TestCase):
                   'xMin': xmin, 'xMax': xmax, 'width': width, 
                   'yMin': ymin, 'yMax': ymax, 'height': height}}
 
-        hsh = _zmqIfc.execHsh( hsh)
+        hsh = zmqIfc.execHsh( hsh)
         self.assertEqual( hsh[ 'result'], 'done')
         #
         # fill the image, pixel by pixel
@@ -222,16 +222,16 @@ class testZmqIfc( unittest.TestCase):
             for j in range(height):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
                 hsh = { 'command': [ 'setPixelWorld MandelBrot %g %g %g' % ( r1[i], r2[j], res)]}
-                hsh = _zmqIfc.execHsh( hsh)
+                hsh = zmqIfc.execHsh( hsh)
                 self.assertEqual( hsh[ 'result'], 'done')
-            hsh =  _zmqIfc.execHsh( { 'command': ['cls', 'display']})
+            hsh =  zmqIfc.execHsh( { 'command': ['cls', 'display']})
             self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 1)
 
     def testExecHsh5( self) : 
-        hsh = _zmqIfc.execHsh( { 'command': ['cls', 'delete']})
+        hsh = zmqIfc.execHsh( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
-        hsh = _zmqIfc.execHsh( { 'command': ['setWsViewport dina5s']})
+        hsh = zmqIfc.execHsh( { 'command': ['setWsViewport dina5s']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         (xmin, xmax) = (-2.,-0.5)
@@ -242,7 +242,7 @@ class testZmqIfc( unittest.TestCase):
         #
         # do the clean-up before we start
         #
-        hsh =  _zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        hsh =  zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         #
@@ -253,7 +253,7 @@ class testZmqIfc( unittest.TestCase):
                   'xMin': xmin, 'xMax': xmax, 'width': width, 
                   'yMin': ymin, 'yMax': ymax, 'height': height}}
 
-        hsh = _zmqIfc.execHsh( hsh)
+        hsh = zmqIfc.execHsh( hsh)
         self.assertEqual( hsh[ 'result'], 'done')
         #
         # fill the image, pixel by pixel
@@ -263,13 +263,10 @@ class testZmqIfc( unittest.TestCase):
         for i in range(width):
             for j in range(height):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
-                hsh = { 'putData': 
-                         { 'name': "MandelBrot",
-                           'noDisplay': True, 
-                           'setPixelWorld': ( r1[i], r2[j], res)}}
-                hsh = _zmqIfc.execHsh( hsh)
+                hsh = { 'command': "setPixelWorld Mandelbrot %g %g %g" %  ( r1[i], r2[j], res)}
+                hsh = zmqIfc.execHsh( hsh)
                 self.assertEqual( hsh[ 'result'], 'done')
-            hsh =  _zmqIfc.execHsh( { 'command': ['cls', 'display']})
+            hsh =  zmqIfc.execHsh( { 'command': ['cls', 'display']})
             self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 1)
 
@@ -277,9 +274,9 @@ class testZmqIfc( unittest.TestCase):
         '''
         use putData to transfer a complete image at once
         '''
-        hsh = _zmqIfc.execHsh( { 'command': ['cls', 'delete']})
+        hsh = zmqIfc.execHsh( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
-        hsh = _zmqIfc.execHsh( { 'command': ['setWsViewport dina5s']})
+        hsh = zmqIfc.execHsh( { 'command': ['setWsViewport dina5s']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         (xmin, xmax) = (-2.,-0.5)
@@ -290,7 +287,7 @@ class testZmqIfc( unittest.TestCase):
         #
         # do the clean-up before we start
         #
-        hsh =  _zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        hsh =  zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         #
@@ -304,13 +301,13 @@ class testZmqIfc( unittest.TestCase):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
                 data[i][j] = int( res)
 
-        hsh = _zmqIfc.execHsh( { 'putData': 
-                        { 'images': [{'name': "MandelBrot", 'data': data,
-                                      'xMin': xmin, 'xMax': xmax, 
-                                      'yMin': ymin, 'yMax': ymax}]}})
+        hsh = zmqIfc.execHsh( { 'putData': 
+                                { 'images': [{'name': "MandelBrot", 'data': data,
+                                              'xMin': xmin, 'xMax': xmax, 
+                                              'yMin': ymin, 'yMax': ymax}]}})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        hsh =  _zmqIfc.execHsh( { 'command': ['cls', 'display']})
+        hsh =  zmqIfc.execHsh( { 'command': ['cls', 'display']})
         self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 1)
 
@@ -318,9 +315,9 @@ class testZmqIfc( unittest.TestCase):
         '''
         use Image to transfer a complete image at once
         '''
-        hsh = _zmqIfc.execHsh( { 'command': ['cls', 'delete']})
+        hsh = zmqIfc.execHsh( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
-        hsh = _zmqIfc.execHsh( { 'command': ['setWsViewport dina5s']})
+        hsh = zmqIfc.execHsh( { 'command': ['setWsViewport dina5s']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         (xmin, xmax) = (-2.,-0.5)
@@ -331,7 +328,7 @@ class testZmqIfc( unittest.TestCase):
         #
         # do the clean-up before we start
         #
-        hsh =  _zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        hsh =  zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         #
@@ -345,14 +342,14 @@ class testZmqIfc( unittest.TestCase):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
                 data[i][j] = int( res)
 
-        hsh = _zmqIfc.execHsh( { 'Image': 
+        hsh = zmqIfc.execHsh( { 'Image': 
                                           { 'name': "MandelBrot", 'data': data, 
                                             'xMin': xmin, 'xMax': xmax, 
                                             'yMin': ymin, 'yMax': ymax, 
                                           }})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        hsh =  _zmqIfc.execHsh( { 'command': ['cls', 'display']})
+        hsh =  zmqIfc.execHsh( { 'command': ['cls', 'display']})
         self.assertEqual( hsh[ 'result'], 'done')
         o = PySpectra.dMgt.GQE.getGqe( "Mandelbrot")
         self.assertEqual( o.height, 100)

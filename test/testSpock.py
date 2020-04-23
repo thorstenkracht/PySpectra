@@ -3,20 +3,16 @@
 cd /home/kracht/Misc/pySpectra
 python -m unittest discover -v
 
-python ./test/testSpock.py testSpock.testMoveMotor
+python ./test/testSpock.py testSpock.testMv
+python ./test/testSpock.py testSpock.testAscan
 
 '''
-import sys
-#pySpectraPath = "/home/kracht/Misc/pySpectra"
-
-import PySpectra
-import PySpectra.misc.tangoIfc as tangoIfc
-import PySpectra.misc.utils as utils
-import PySpectra.dMgt.GQE as GQE
-import numpy as np
-import unittest
-import PyTango
 import time, os
+import PySpectra
+import PySpectra.misc.zmqIfc as zmqIfc
+import PySpectra.misc.utils as utils
+import unittest
+import HasyUtils
 
 class testSpock( unittest.TestCase):
 
@@ -28,34 +24,62 @@ class testSpock( unittest.TestCase):
     def tearDownClass( testSpock): 
         PySpectra.close()
 
-    def testMoveMotor( self) : 
-        print "testSpock.testMoveMotor"
+    def testMv( self) : 
+        print "testSpock.testMv"
 
-        if utils.getHostname() != 'haso107tk': 
+        if HasyUtils.getHostname() != 'haso107tk': 
             return 
 
-        PySpectra.cls()
-        GQE.delete()
-        g = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
-        mu = 0.
-        sigma = 1.
-        g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2*sigma**2))
+        print "testSpock.testMv, eh_mot66 to 50"
+        
+        hsh =  zmqIfc.execHsh( { 'spock': 'mv eh_mot66 50'})
+        self.assertEqual( hsh[ 'result'], 'done')
 
-        g.motorNameList = ["eh_mot66"]
-        proxyPool = PyTango.DeviceProxy( g.motorNameList[0])
-        proxy = PyTango.DeviceProxy( proxyPool.TangoDevice)
-        POS = proxy.position + 1
-        g.x += POS
-        g.xMin += POS
-        g.xMax += POS
-        print( "testSpock.testMoveMotorNameList: move %s to %g" % ( g.motorNameList[0], POS))
-        tangoIfc.move( g, POS)
+        hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+        while hsh[ 'result'] == 'RUNNING': 
+            time.sleep( 0.5)
+            hsh =  zmqIfc.execHsh( { 'getDoorState': True})
 
-        POS -= 1
-        print( "testSpock.testMoveMotorNameList: move %s back to %g" % ( g.motorNameList[0], POS))
-        tangoIfc.move( g, POS)
+        hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+        self.assertEqual( hsh[ 'result'], 'ON')
 
-        PySpectra.processEventsLoop( 1)
+        print "testSpock.testMv, eh_mot66 to 51"
+        hsh =  zmqIfc.execHsh( { 'spock': 'mv eh_mot66 51'})
+        self.assertEqual( hsh[ 'result'], 'done')
+
+        hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+        while hsh[ 'result'] == 'RUNNING': 
+            time.sleep( 0.5)
+            hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+
+        hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+        self.assertEqual( hsh[ 'result'], 'ON')
+
+        return 
+
+    def testAscan( self) : 
+        print "testSpock.testAscan"
+
+        if HasyUtils.getHostname() != 'haso107tk': 
+            return 
+
+        ( status, wasLaunched) = utils.assertProcessRunning( "/usr/bin/pyspMonitor.py")
+        print( "testSpock.testAscan: ascan eh_mot66 50 51 40 0.1")
+
+        hsh =  zmqIfc.execHsh( { 'spock': 'ascan eh_mot66 50 51 40 0.1'})
+        self.assertEqual( hsh[ 'result'], 'done')
+
+        hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+        while hsh[ 'result'] == 'RUNNING': 
+            time.sleep( 0.5)
+            hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+
+        hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+        self.assertEqual( hsh[ 'result'], 'ON')
+
+        if wasLaunched:
+            print( "testSpock.testAscan kill pyspMonitor.py") 
+            os.system( "kill_proc -f pyspMonitor.py")
 
         return 
 

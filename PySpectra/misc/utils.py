@@ -4,7 +4,7 @@ ssa() - simple scan analysis function
         code also in 
         /home/kracht/Misc/Sardana/hasyutils/HasyUtils/ssa.py
 '''
-import numpy as _np
+import numpy as np
 import math as _math
 import sys as _sys
 import os as _os
@@ -14,6 +14,17 @@ import bisect as _bisect
 from scipy.optimize import curve_fit as _curve_fit
 import PySpectra 
 import PySpectra.definitions as _definitions
+
+
+def createGauss( name = "gauss", xMin = -5, xMax = 5., nPts = 101, 
+                 lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.):
+    import PySpectra.dMgt.GQE as GQE
+
+    g = GQE.Scan( name = name, xMin = xMin, xMax = xMax, nPts = nPts, 
+                  lineColor = lineColor)
+    g.y = amplitude/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-x0)**2/(2.*sigma**2))
+
+    return g
   
 def ssa( xIn, yIn, flagNbs = False, stbr = 3):
     '''
@@ -71,11 +82,11 @@ def ssa( xIn, yIn, flagNbs = False, stbr = 3):
         return dct
         
     if( xIn[-1] > xIn[0]):
-        x = _np.copy( xIn)
-        y = _np.copy( yIn)
+        x = np.copy( xIn)
+        y = np.copy( yIn)
     else:
-        x = _np.copy( xIn)
-        y = _np.copy( yIn)
+        x = np.copy( xIn)
+        y = np.copy( yIn)
         #
         # revert a numpy array
         #
@@ -425,6 +436,16 @@ def assertProcessRunning(processName):
 
     return (True, True)
 #
+# I don't know whether the following function is really needed - 
+# syntactical sugar perhaps
+#
+def assertPyspMonitorRunning(): 
+    """
+    returns (status, wasLaunched)
+    """
+    return assertProcessRunning( "/usr/bin/pyspMonitor.py")
+
+#
 # this function is copied from 
 #  /home/kracht/Misc/Sardana/hasyutils/HasyUtils/OtherUtils.py
 #
@@ -611,7 +632,7 @@ def yMax( scan):
         if scan.currentIndex == 0:
             ret = scan.y[0]
         else:
-            ret = _np.max( scan.y[:scan.currentIndex + 1])
+            ret = np.max( scan.y[:scan.currentIndex + 1])
     else:
         ret = scan.yMax
     return ret
@@ -625,7 +646,7 @@ def yMin( scan):
         if scan.currentIndex == 0:
             ret = scan.y[0]
         else:
-            ret = _np.min( scan.y[:scan.currentIndex + 1])
+            ret = np.min( scan.y[:scan.currentIndex + 1])
     else:
         ret = scan.yMin
     return ret
@@ -659,15 +680,15 @@ def fastscananalysis(x,y,mode):
     debug   = 0
     
     # --- Convert "x" and "y" to NUMPY arrays
-    x = _np.array(x)
-    y = _np.array(y)
+    x = np.array(x)
+    y = np.array(y)
 
     # --- Predefine output variables
     message = "undefined"
-    xpos    = _np.mean(x)
-    xpeak   = _np.mean(x)
-    xcms    = _np.mean(x)
-    xcen    = _np.mean(x)
+    xpos    = np.mean(x)
+    xpeak   = np.mean(x)
+    xcms    = np.mean(x)
+    xcen    = np.mean(x)
 
     # --- Check input variable "mode"
     if not mode.lower() in [ "peak", "cen", "cms", "dip", "dipc", "dipm",
@@ -688,17 +709,17 @@ def fastscananalysis(x,y,mode):
 
     # --- Prepare x and y according to mode selection
     if mode.lower() == "peak" or mode.lower() == "cms" or mode.lower() == "cen":
-        y = y - _np.nanmin(y)            # --- remove constant offset
+        y = y - np.nanmin(y)            # --- remove constant offset
         
     if mode.lower() == "dip" or mode.lower() == "dipc" or mode.lower() == "dipm":
         y = -y                          # --- invert the data
-        y = y - _np.nanmin(y)            # --- remove constant offset
+        y = y - np.nanmin(y)            # --- remove constant offset
         
     if mode.lower() == "step" or mode.lower() == "stepc" or mode.lower() == "stepm":
         if y[0] > y[-1]:                # --- this is a negative slit scan
             y = -y                      # --- invert the data
         y = _deriv(y)                    # --- calculate derivative of signal of identical length
-        y = y - _np.nanmin(y)            # --- remove constant offset
+        y = y - np.nanmin(y)            # --- remove constant offset
 
     if mode.lower() == "slit" or mode.lower() == "slitc" or mode.lower() == "slitm":
         # --- Good cases: a) constant plus slope up   & b) slope down plus constant
@@ -706,14 +727,14 @@ def fastscananalysis(x,y,mode):
         SmoothWidth, SmoothType, Ends = (5, 3, 0)
         # dy = _deriv(y)                                                           #--- calculate 1st derivative of signal
         dy = _fastsmooth( _deriv(y), SmoothWidth, SmoothType, Ends)                #--- calculate 1st derivative of signal
-        if y[0] > y[-1] and _np.mean(dy[0:2]) > _np.mean(dy[-3:-1]): # --- case c)
+        if y[0] > y[-1] and np.mean(dy[0:2]) > np.mean(dy[-3:-1]): # --- case c)
             y = -y                      # --- invert the data
-        if y[0] < y[-1] and _np.mean(dy[0:2]) > _np.mean(dy[-3:-1]): # --- case d)
+        if y[0] < y[-1] and np.mean(dy[0:2]) > np.mean(dy[-3:-1]): # --- case d)
             y = -y                      # --- invert the data
         # y = _deriv( _deriv(y))                                                     # --- calculate 2nd derivative of signal of identical length
         # y = _deriv( _fastsmooth( _deriv(y), SmoothWidth, SmoothType, Ends))          # --- calculate 2nd derivative of signal of identical length
         y = _fastsmooth( _deriv( _deriv(y)), SmoothWidth, SmoothType, Ends)          #--- calculate 2nd derivative of signal of identical length
-        y = y - _np.nanmin(y)            # --- remove constant offset
+        y = y - np.nanmin(y)            # --- remove constant offset
 
     # --- Check if intensity signal contains a peak
     # --- Returns also an estimate for a possible peak index & peak width
@@ -723,14 +744,14 @@ def fastscananalysis(x,y,mode):
         return message, xpos, xpeak, xcen, xcms
 
     # --- Pre-evaluate the data
-    imax  = _np.argmax(y)                   # --- index of maximum value (for peak, dip, step)
+    imax  = np.argmax(y)                   # --- index of maximum value (for peak, dip, step)
     ip    = peaki
     if debug == 1:
         print( 'Indices: %d %d' % ( imax, ip))
     yl    = y[:ip+1]                       # --- Intensity left  side
     yr    = y[ip:]                         # --- Intensity right side
-    hl    = _np.amax(yl)- _np.amin(yl)       # --- Intensity difference left  side
-    hr    = _np.amax(yr)- _np.amin(yr)       # --- Intensity difference right side
+    hl    = np.amax(yl)- np.amin(yl)       # --- Intensity difference left  side
+    hr    = np.amax(yr)- np.amin(yr)       # --- Intensity difference right side
 
     # --- Some 'Return' conditions
     if imax <= 1 or imax >= len(y) - 1: # --- Position of peak, dip or step at the far edge of the scan range
@@ -748,16 +769,16 @@ def fastscananalysis(x,y,mode):
     # --- (if peak is not measured completely)
     xf          = x
     yf          = y
-    yfmax       = _np.amax(y)
-    yfmin       = _np.amin(y)
+    yfmax       = np.amax(y)
+    yfmin       = np.amin(y)
     sigma_start = peakw
     if abs(hl-hr) <= minlevel * max(hl,hr) and abs(hl-hr) >= 0.40 * max(hl,hr):# --- One side of the peak is not fully measured
         if hl >= hr:                                                           # --- Use the higher (better) side for fitting
-            yfmax  = _np.amax(yl)
-            yfmin  = _np.amin(yl)
+            yfmax  = np.amax(yl)
+            yfmin  = np.amin(yl)
         else:
-            yfmax  = _np.amax(yr)
-            yfmin  = _np.amin(yr)
+            yfmax  = np.amax(yr)
+            yfmin  = np.amin(yr)
 
     # --- Symmetrize/Reduce data points for CMS calculation (cms, dipm, stepm)
     xm = x
@@ -765,7 +786,7 @@ def fastscananalysis(x,y,mode):
     if abs(hl-hr) >= 0.025 * max(hl,hr):                       # --- One side of the peak is not fully measured or has a higher background
         if hl > hr:
             try:
-                ind = _bisect.bisect(yl, _np.amin(yr))           # --- Returns the index of the first element of yl greater than the minimum of yr 
+                ind = _bisect.bisect(yl, np.amin(yr))           # --- Returns the index of the first element of yl greater than the minimum of yr 
             except:
                 ind = 0
             if ind < 0 or ind > len(xm):
@@ -776,7 +797,7 @@ def fastscananalysis(x,y,mode):
             ym = y[ind:]
         else:
             try:
-                ind = imax + _bisect.bisect(-yr, -_np.amin(yl))  # --- Returns the index of the first element of -yr greater than the negative minimum of yl 
+                ind = imax + _bisect.bisect(-yr, -np.amin(yl))  # --- Returns the index of the first element of -yr greater than the negative minimum of yl 
             except:
                 ind = len(xm)
             if ind < 0 or ind > len(xm):
@@ -838,11 +859,11 @@ def fastscananalysis(x,y,mode):
         xpos = xcen
 
     # --- Last check if xpos is within scanning range
-    if xpos < _np.amin(x) or xpos > _np.amax(x):
-        xpos  = _np.mean(x)
-        xpeak = _np.mean(x)
-        xcms  = _np.mean(x)
-        xcen  = _np.mean(x)
+    if xpos < np.amin(x) or xpos > np.amax(x):
+        xpos  = np.mean(x)
+        xpeak = np.mean(x)
+        xcms  = np.mean(x)
+        xcen  = np.mean(x)
         message = 'Error %s: Goal position outside of scan range!' % mode.upper()
         return message, xpos, xpeak, xcen, xcms
 
@@ -856,7 +877,7 @@ def _check4peak(x,y):
     # --- initialize output variables
     ispeak = False
     peaki  = int(round(len(x)/2))                # --- Dummy peak index (center point) 
-    peakw  = 0.125 * (_np.amax(x)-_np.amin(x))     # --- Dummy peak width
+    peakw  = 0.125 * (np.amax(x)-np.amin(x))     # --- Dummy peak width
     # --- Calculate smoothed derivative 'sdy' of intensity signal (of identical length!)
     SmoothWidth, SmoothType, Ends = (5, 3, 1)
     sdy = _fastsmooth( _deriv(y), SmoothWidth, SmoothType, Ends)
@@ -872,7 +893,7 @@ def _check4peak(x,y):
     if w % 2 == 0:
         hw = int(w/2)                  # --- halfwidth of even smoothing values
     else:
-        hw = int(_np.ceil(float(w)/2))  # --- halfwidth of odd smoothing values
+        hw = int(np.ceil(float(w)/2))  # --- halfwidth of odd smoothing values
     # --- Collect information of possible peaks
     peak = 1
     p0   = 0.0 * y                     # --- initialize p0 (peak number)
@@ -882,7 +903,7 @@ def _check4peak(x,y):
     p4   = 0.0 * y                     # --- initialize p4 (difference value between maximum and minimum) 
     # --- Find zero crossings in the smoothed derivative 'sdy' (from positive to negative)
     for ind in range((hw-1),L-(hw-1)):
-        # if float(_np.sign(sdy[ind])) > float(_np.sign(sdy[ind+1])):
+        # if float(np.sign(sdy[ind])) > float(np.sign(sdy[ind+1])):
         if sdy[ind] >= 0 and sdy[ind+1] < 0:
             kmax = ind
             while kmax > 0 and sdy[kmax-1] > sdy[kmax]:
@@ -898,15 +919,15 @@ def _check4peak(x,y):
             peak    = peak + 1
     # --- Check the 'most promising' peak 
     # --- By using the index of the maximum of p4 (largest difference in sdy!)
-    imax = _np.argmax(p4)
+    imax = np.argmax(p4)
     if p0[imax] > 0:           # --- Found (at least) one (positive to negative) zero crossing
         if max(p0) > 1:        # --- More than one possible peak
-            if p3[imax] - p2[imax] >= w and p4[imax] >  3.0 * _np.std(sdy):
+            if p3[imax] - p2[imax] >= w and p4[imax] >  3.0 * np.std(sdy):
                 ispeak = True
                 peaki  = int(p1[imax])
                 peakw  = 1 / 2.355 * abs(x[int(p2[imax])] - x[int(p3[imax])])
         elif max(p0) == 1:     # --- Just one possible peak (relax the other conditions)
-            if p3[imax] - p2[imax] >= w and p4[imax] >  1.0 * _np.std(sdy):
+            if p3[imax] - p2[imax] >= w and p4[imax] >  1.0 * np.std(sdy):
                 ispeak = True
                 peaki  = int(p1[imax])
                 peakw  = 1 / 2.355 * abs(x[int(p2[imax])] - x[int(p3[imax])])
@@ -983,7 +1004,7 @@ def _smoothy(y, sw, ends):
     if sw % 2 == 0:  
         hw = int(sw/2)
     else:
-        hw = int(_np.ceil(float(sw)/2))
+        hw = int(np.ceil(float(sw)/2))
     # ---
     L  = len(y)                        # --- retrieve the number of y elements
     # --- smooth the center region of y
@@ -998,8 +1019,8 @@ def _smoothy(y, sw, ends):
         taperpoints = hw - 1
         sy[0] =0
         for ind in range(1,taperpoints):
-            sy[ind]    = _np.mean(y[0 : ind])
-            sy[-ind-1] = _np.mean(y[-ind-1:-1])
+            sy[ind]    = np.mean(y[0 : ind])
+            sy[-ind-1] = np.mean(y[-ind-1:-1])
         sy[-1] =0
     return sy
 # --------------------------------------------------------------------------- #
@@ -1031,14 +1052,14 @@ def _center_of_mass(x,y):
 # --------------------------------------------------------------------------- #
 def _gauss(x, *p):
     offset, amplitude, center, sigma = p
-    gau = offset + amplitude * _np.exp(-(x-center)**2/(2.*sigma**2))
+    gau = offset + amplitude * np.exp(-(x-center)**2/(2.*sigma**2))
     return gau
 # --------------------------------------------------------------------------- #
 
 # --------------------------------------------------------------------------- #
 def _chi2(npara, exp_data, sim_data):
     delta = (exp_data-sim_data)**2
-    gam   = _np.abs(sim_data)
+    gam   = np.abs(sim_data)
     chi2  = delta.sum() / gam.sum()
     chi2  = chi2 / (len(exp_data)-npara)
     return chi2

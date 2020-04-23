@@ -69,7 +69,8 @@ class InfoBlock( object):
     @staticmethod
     def setMonitorGui( monitorGui): 
         InfoBlock.monitorGui = monitorGui
-        InfoBlock.doorProxy = monitorGui.door
+        if hasattr( monitorGui, 'door'):
+            InfoBlock.doorProxy = monitorGui.door
         return 
     #
     # the monitorGui is set from pyspMonitorClass.__init__()
@@ -1822,73 +1823,9 @@ def getData():
             hsh[ 'symbols'][ 'file_name_'] = temp
     return hsh
 
-def fillDataImage( hsh): 
-    '''
-    hsh = { 'putData': 
-            { 'name': 'imageName', 
-              'noDisplay': True, 
-              'setPixelWorld': (x, y, value)}}
-    '''
-
-    if 'setPixelWorld' in hsh: 
-        o = getGqe( hsh[ 'name'])
-        o.setPixelWorld( x = hsh[ 'setPixelWorld'][0],
-                         y = hsh[ 'setPixelWorld'][1],
-                         value = hsh[ 'setPixelWorld'][2])
-        if 'noDisplay' not in hsh or not hsh[ 'noDisplay']: 
-            PySpectra.cls()
-            PySpectra.display()
-    elif 'setPixelImage' in hsh: 
-        o = getGqe( hsh[ 'name'])
-        o.setPixelImage( x = hsh[ 'setPixelImage'][0],
-                         y = hsh[ 'setPixelImage'][1],
-                         value = hsh[ 'setPixelImage'][2])
-        if 'noDisplay' not in hsh or not hsh[ 'noDisplay']: 
-            PySpectra.cls()
-            PySpectra.display()
-
-    else: 
-        raise ValueError( "GQE.fillDataImage: dictionary unexpected")
-
-    return "done"
-
-def fillDataXY( hsh): 
-    '''
-    this function is mainly used during mesh scans
-
-    hsh = { 'putData': 
-    { 'name': 'MeshScan', 
-      'xMin': xmin, 'xMax': xmax, 
-      'yMin': ymin, 'yMax': ymax,
-      'nPts': nPts}}
-
-    hsh = { 'putData': 
-    { 'name': 'MeshScan', 
-      'setXY': (index, x, y)}}
-    '''
-
-    if 'xMin' in hsh: 
-        m = Scan( name = hsh[ 'name'],  
-                  xMin = hsh[ 'xMin'], xMax = hsh[ 'xMax'], 
-                  yMin = hsh[ 'yMin'], yMax = hsh[ 'yMax'],
-                  nPts = hsh[ 'nPts'] )
-        o = getGqe( hsh[ 'name'])
-    elif 'setXY' in hsh: 
-        o = getGqe( hsh[ 'name'])
-        o.setXY( int( hsh[ 'setXY'][0]), 
-                 hsh[ 'setXY'][1],
-                 hsh[ 'setXY'][2])
-        if 'noDisplay' not in hsh or not hsh[ 'noDisplay']: 
-            PySpectra.cls()
-            PySpectra.display()
-
-    else: 
-        raise ValueError( "GQE.fillDataImage: dictionary unexpected")
-
-    return "done"
-    
 def fillDataByColumns( hsh):
     """
+    called from zmqIfc.putData()
 
         hsh = { 'putData': {'columns': [{'data': x, 'name': 'xaxis'},
                                         {'data': tan, 'name': 'tan'},

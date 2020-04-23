@@ -412,7 +412,7 @@ class testIFC( unittest.TestCase):
                                    'xMin': xmin, 'xMax': xmax, 'width': width, 
                                    'yMin': ymin, 'yMax': ymax, 'height': height}})
         if hsh[ 'result'] != "done":
-            print "error from putData", repr( hsh)
+            print "error from execHsh", repr( hsh)
             return 
         #
         # fill the image, pixel by pixel

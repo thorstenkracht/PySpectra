@@ -28,6 +28,7 @@ python ./test/dMgt/testGQE.py testGQE.testGetIndex
 python ./test/dMgt/testGQE.py testGQE.testMotorArrowCurrentAndSetPoint
 python ./test/dMgt/testGQE.py testGQE.testMotorArrowMisc
 python ./test/dMgt/testGQE.py testGQE.testCheckTargetWithinLimits
+python ./test/dMgt/testGQE.py testGQE.testColorSpectraToPysp
 '''
 import sys, time
 import PyTango
@@ -902,17 +903,16 @@ class testGQE( unittest.TestCase):
 
     def testMotorArrowCurrentAndSetPoint( self) : 
 
+        print( "testGQE.testMotorArrowCurrentAndSetPoint")
+
         if utils.getHostname() != 'haso107tk': 
             return 
 
         PySpectra.cls()
         GQE.delete()
 
-        g = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
-                      lineColor = 'red')
-        mu = 0.
-        sigma = 1.
-        g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2.*sigma**2))
+        g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
+                               lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
 
         g.x += 50
 
@@ -928,7 +928,8 @@ class testGQE( unittest.TestCase):
         g.setArrowSetPoint( POSI)
         while proxy.state() == PyTango.DevState.MOVING:
             g.updateArrowCurrent()
-            time.sleep(1.0)
+            time.sleep( 0.1)
+        g.updateArrowCurrent()
 
         g.display()
             
@@ -939,10 +940,13 @@ class testGQE( unittest.TestCase):
         g.setArrowSetPoint( POSI)
         while proxy.state() == PyTango.DevState.MOVING:
             g.setArrowCurrent( proxy.position)
-            time.sleep(1.0)
+            time.sleep( 0.1)
+        g.setArrowCurrent( proxy.position)
         return 
 
     def testMotorArrowMisc( self) : 
+
+        print( "testGQE.testMotorArrowMisc")
 
         PySpectra.cls()
         GQE.delete()
@@ -956,9 +960,8 @@ class testGQE( unittest.TestCase):
 
 
         g.motorNameList = ["eh_mot66"]
+        GQE.setComment( "testGQE.testArrowMisc: an arrow should appear at 50.3")
         g.display()
-
-        print( "testGQE.testArrowMisc: an arrow should appear at 50.3")
         g.setArrowMisc( 50.3)
 
         g.display()
@@ -966,6 +969,8 @@ class testGQE( unittest.TestCase):
         return 
 
     def testCheckTargetWithinLimits( self): 
+
+        print( "testGQE.testCheckTargetWithinLimits")
 
         if utils.getHostname() != 'haso107tk': 
             return 
@@ -992,6 +997,21 @@ class testGQE( unittest.TestCase):
         self.assertEqual( g.checkTargetWithinLimits( g.motorNameList[ 0], 151., proxy, flagConfirm = False), False)
         
         return 
-         
+
+
+    def testColorSpectraToPysp( self): 
+
+        print( "testGQE.testColorSpectraToPysp")
+
+        self.assertEqual( GQE.colorSpectraToPysp( 1), 'black')
+        self.assertEqual( GQE.colorSpectraToPysp( 2), 'red')
+        self.assertEqual( GQE.colorSpectraToPysp( 3), 'green')
+        self.assertEqual( GQE.colorSpectraToPysp( 4), 'blue')
+        self.assertEqual( GQE.colorSpectraToPysp( 5), 'cyan')
+        self.assertEqual( GQE.colorSpectraToPysp( 6), 'yellow')
+        self.assertEqual( GQE.colorSpectraToPysp( 7), 'magenta')
+        self.assertEqual( GQE.colorSpectraToPysp( 123), 'black')
+        
+        return 
 if __name__ == "__main__":
     unittest.main()

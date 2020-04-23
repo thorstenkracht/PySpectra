@@ -404,9 +404,9 @@ def _addArrowsMotor( gqe, nameList):
     #
     #
     gqe.arrowSetPoint = pyqtgraph.ArrowItem( angle=270, pen = pyqtgraph.mkPen( color = (255, 0, 0)), 
-                                                  brush = pyqtgraph.mkBrush( color = (255, 0, 0)))
-    gqe.arrowMisc = pyqtgraph.ArrowItem( angle=270, pen = pyqtgraph.mkPen( color = ( 255, 0, 0)), 
-                                              brush = pyqtgraph.mkBrush( color = ( 255, 0, 0)))
+                                             brush = pyqtgraph.mkBrush( color = (255, 0, 0)))
+    gqe.arrowMisc = pyqtgraph.ArrowItem( angle=270, pen = pyqtgraph.mkPen( color = ( 0, 255, 0)), 
+                                         brush = pyqtgraph.mkBrush( color = ( 0, 255, 0)))
 
     #
     # 'Misc' is for mvsa e.g., this arrow is not touched by the
@@ -1375,28 +1375,11 @@ def _displayImages( flagDisplaySingle, nameList = None):
                 else: 
                     imageGqe.img.setImage( imageGqe.data)
         try: 
-            #
-            # mpl.colors.LinearSegmentedColormap
-            #
-            if imageGqe.colorMap == 'blackwhite':
-                import matplotlib.colors as clr
-                colormap = clr.LinearSegmentedColormap.from_list('blackwhite',     ['#000000','#ffffff'], N=256)
-                colormap._init()
-                lut = (colormap._lut * 255).view( np.ndarray)  # Convert matplotlib colormap from 0-1 to 0-255 for Qt
-                length = lut.shape[0] - 3
-                lutTemp = np.copy( lut)
-                for i in range( length):
-                    if (i%2) == 0:
-                        lutTemp[i] = [0., 0., 0., 255.] 
-                    else:
-                        lutTemp[i] = [255., 255., 255., 255.] 
-                lut = np.copy( lutTemp)
-            else:
-                colormap = cm.get_cmap( imageGqe.colorMap)
-                colormap._init()
-                lut = (colormap._lut * 255).view( np.ndarray)  # Convert matplotlib colormap from 0-1 to 0-255 for Qt
-                length = lut.shape[0] - 3
-                lutTemp = np.copy( lut)
+            colormap = cm.get_cmap( imageGqe.colorMap)
+            colormap._init()
+            lut = (colormap._lut * 255).view( np.ndarray)  # Convert matplotlib colormap from 0-1 to 0-255 for Qt
+            length = lut.shape[0] - 3
+            lutTemp = np.copy( lut)
 
             for i in range( length):
                 j = i - (imageGqe.indexRotate % length)

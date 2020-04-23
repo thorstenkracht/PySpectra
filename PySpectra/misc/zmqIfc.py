@@ -27,81 +27,6 @@ import time
 import PySpectra 
 import PySpectra.dMgt.GQE as GQE
 
-def toPyspMonitor( hsh, node = None):
-    '''
-    send a dictionay to pyspMonitor, cb_timerZMQ() in 
-      /home/kracht/Misc/pySpectra/PySpectra/pyspMonitorClass.py
-    from there it is sent to execHsh()
-
-    the result is returned in a dictionary
-
-    For details see the docu of execHsh()
-    '''
-
-    import zmq, json, socket
-
-    if node is None:
-        node = socket.gethostbyname( socket.getfqdn())
-
-    context = zmq.Context()
-    sckt = context.socket(zmq.REQ)
-    #
-    # prevent context.term() from hanging, if the message
-    # is not consumed by a receiver.
-    #
-    sckt.setsockopt(zmq.LINGER, 1)
-    try:
-        sckt.connect('tcp://%s:7779' % node)
-    except Exception as e:
-        sckt.close()
-        return { 'result': "utils.toPyspMonitor: failed to connect to %s" % node}
-
-    hshEnc = json.dumps( hsh)
-    try:
-        res = sckt.send( hshEnc)
-    except Exception as e:
-        sckt.close()
-        return { 'result': "TgUtils.toPyspMonitor: exception by send() %s" % repr(e)}
-    #
-
-    # PyspMonitor receives the Dct, processes it and then
-    # returns the message. This may take some time. To pass
-    # 4 arrays, each with 10000 pts takes 2.3s
-    #
-    if 'isAlive' in hsh:
-        lst = zmq.select([sckt], [], [], 0.5)
-        if sckt in lst[0]:
-            hshEnc = sckt.recv() 
-            sckt.close()
-            context.term()
-            return json.loads( hshEnc)
-        else: 
-            sckt.close()
-            context.term()
-            return { 'result': 'notAlive'}
-    else:
-        lst = zmq.select([sckt], [], [], 3.0)
-        if sckt in lst[0]:
-            hshEnc = sckt.recv() 
-            sckt.close()
-            context.term()
-            return json.loads( hshEnc)
-        else: 
-            sckt.close()
-            context.term()
-            return { 'result': 'zmqIfc.toPyspMonitor: communication time-out'}
-
-def isPyspMonitorAlive( node = None):
-    '''
-    returns True, if there is a pyspMonitor responding to the isAlive prompt
-    '''
-    hsh = toPyspMonitor( { 'isAlive': True}, node = node)
-    if hsh[ 'result'] == 'notAlive':
-        return False
-    else:
-        return True
-
-
 
 def execHsh( hsh): 
     '''
@@ -178,7 +103,7 @@ def execHsh( hsh):
          {'command': ['setXY MeshScan 0 0.0 1.0']}
            set the x- and y-value by a single call, index is 0
 
-         {'putData': {'columns': [{'data': [0.0, ..., 0.96], 'name': 'eh_mot01'}, 
+         {'putData': { 'columns': [{'data': [0.0, ..., 0.96], 'name': 'eh_mot01'}, 
                                   {'data': [0.39623, ... 0.01250], 'name': 'eh_c01'}, 
                                   {'showGridY': False, 'symbolColor': 'blue', 'showGridX': False, 
                                    'name': 'eh_c02', 'yLog': False, 'symbol': '+', 
@@ -186,7 +111,20 @@ def execHsh( hsh):
                                    'xLog': False, 'symbolSize': 5}], 
                       'title': 'a title', 
                       'comment': 'a comment'}}
-           create the scans eh_c01 and eh_c02. The common x-axis is given by eh_mot01
+           The data are sent as a list of dictionaries containing columns. The first column 
+           is the common x-axis. All columns have to have the same length. 
+           In this example, the Scans eh_c01 and eh_c02 are created. The common x-axis is given by eh_mot01
+
+         { 'putData': {'gqes': [ {'x': x, 'y': tan, 'name': 'tan'},
+                                 {'x': x, 'y': cos, 'name': 'cos'},
+                                 {'x': x, 'y': sin, 'name': 'sin', 
+                                  'showGridY': False, 'symbolColor': 'blue', 'showGridX': True, 
+                                  'yLog': False, 'symbol': '+', 
+                                  'xLog': False, 'symbolSize':5}],
+                       'title': 'a title', 
+                       'comment': 'a comment'}}
+           The data are sent as a list of dictionaries containg the x- and y-data and other
+           parameters describing the Scans.
 
        Image 
          {'Image': {'name': 'MandelBrot', 
@@ -195,13 +133,10 @@ def execHsh( hsh):
                     'yMin': 0, 'yMax': 1.5}}
            create an empty image
 
-         {'putData': {'images': [{'data': array([[0, 0, 0, ..., 0, 0, 0],
-                                                 [0, 0, 0, ..., 1, 1, 1]], dtype=int32), 
-                                  'name': 'MandelBrot'}]}
-           create an image from a 2D array
-
-         {'Image': {'data': data, 'name': "Mandelbrot"}}
-           create an image by sending the data, e.g. data = np.ndarray( (width, height), _np.int32)
+         { 'putData': { 'images': [{'name': "Mandelbrot", 'data': data,
+                                    'xMin': xmin, 'xMax': xmax, 
+                                    'yMin': ymin, 'yMax': ymax}]}}
+           data is a numpy array, e.g.: data = np.ndarray( (width, height), np.float64)
 
          {'command': ['setPixelImage Mandelbrot 1 3 200']}
            set a pixel value. the position is specified by indices
@@ -297,6 +232,84 @@ def execHsh( hsh):
     #print( "zmqIfc.execHsh: return %s" % repr( argout))
     return argout
 
+def toPyspMonitor( hsh, node = None):
+    '''
+    Send a dictionary to pyspMonitor
+
+    It is received in 
+      /home/kracht/Misc/pySpectra/PySpectra/pyspMonitorClass.py
+        cb_timerZMQ() 
+        --> zmqIfc.execHsh()
+
+    The result is returned in a dictionary
+
+    For details see the docu of execHsh()
+    ---
+    '''
+
+    import zmq, json, socket
+
+    if node is None:
+        node = socket.gethostbyname( socket.getfqdn())
+
+    context = zmq.Context()
+    sckt = context.socket(zmq.REQ)
+    #
+    # prevent context.term() from hanging, if the message
+    # is not consumed by a receiver.
+    #
+    sckt.setsockopt(zmq.LINGER, 1)
+    try:
+        sckt.connect('tcp://%s:7779' % node)
+    except Exception as e:
+        sckt.close()
+        return { 'result': "utils.toPyspMonitor: failed to connect to %s" % node}
+
+    hshEnc = json.dumps( hsh)
+    try:
+        res = sckt.send( hshEnc)
+    except Exception as e:
+        sckt.close()
+        return { 'result': "TgUtils.toPyspMonitor: exception by send() %s" % repr(e)}
+    #
+
+    # PyspMonitor receives the Dct, processes it and then
+    # returns the message. This may take some time. To pass
+    # 4 arrays, each with 10000 pts takes 2.3s
+    #
+    if 'isAlive' in hsh:
+        lst = zmq.select([sckt], [], [], 0.5)
+        if sckt in lst[0]:
+            hshEnc = sckt.recv() 
+            sckt.close()
+            context.term()
+            return json.loads( hshEnc)
+        else: 
+            sckt.close()
+            context.term()
+            return { 'result': 'notAlive'}
+    else:
+        lst = zmq.select([sckt], [], [], 3.0)
+        if sckt in lst[0]:
+            hshEnc = sckt.recv() 
+            sckt.close()
+            context.term()
+            return json.loads( hshEnc)
+        else: 
+            sckt.close()
+            context.term()
+            return { 'result': 'zmqIfc.toPyspMonitor: communication time-out'}
+
+def isPyspMonitorAlive( node = None):
+    '''
+    returns True, if there is a pyspMonitor responding to the isAlive prompt
+    '''
+    hsh = toPyspMonitor( { 'isAlive': True}, node = node)
+    if hsh[ 'result'] == 'notAlive':
+        return False
+    else:
+        return True
+
 def _putData( hsh):
     '''
     a plot is created based on a dictionary 
@@ -323,14 +336,6 @@ def _putData( hsh):
             GQE.delete()
             PySpectra.cls()
             argout = GQE.fillDataByColumns( hsh)
-        #
-        # hsh = { 'putData': {'gqes': [ {'x': x, 'y': tan, 'name': 'tan'},
-        #                               {'x': x, 'y': cos, 'name': 'cos'},
-        #                               {'x': x, 'y': sin, 'name': 'sin', 
-        #                                'showGridY': False, 'symbolColor': 'blue', 'showGridX': True, 
-        #                                'yLog': False, 'symbol': '+', 
-        #                                'xLog': False, 'symbolSize':5}]}}
-        #
         elif 'gqes' in hsh:
             GQE.delete()
             PySpectra.cls()
@@ -359,10 +364,6 @@ def _putData( hsh):
             for h in hsh[ 'images']: 
                 GQE.Image( **h)
             argout = "done"
-        elif 'setPixelImage' in hsh or 'setPixelWorld' in hsh:
-            argout = GQE.fillDataImage( hsh)
-        elif 'setXY' in hsh:
-            argout = GQE.fillDataXY( hsh)
         else:
             raise Exception( "zmqIfc._putData", "expecting 'columns', 'gqes', 'setPixelImage', 'setPixelWorld'")
     except Exception as e: 
@@ -415,7 +416,7 @@ def _execSpockCommand( hsh):
     argout = "done"
     try: 
         door = GQE.InfoBlock.getDoorProxy()
-        lst = cmd.split( " ")
+        lst = hsh[ 'spock'].split( " ")
         door.RunMacro( lst)
     except Exception as e: 
         argout = "zmqIfc.execSpockCommand: %s" % repr( e)

@@ -16,17 +16,8 @@ An interface to PySpectra, used by
               zmqIfc.execCommand( hsh): 
                 ifc.command( cmd)
 
-  - ipython, see 00-start.py, 
-
-  #!/usr/bin/env python
-  import PySpectra 
-  import PySpectra.ipython.startup
- 
-  PySpectra.ipython.startup contains the macro definitions
-
-  Afterwards: 
-    In [1]: create s1
-    In [1]: display
+  - ipython, details can be found here: 
+      /home/kracht/Misc/pySpectra/PySpectra/__init__.py
 
   Commands: 
     antiderivative src [target] 
@@ -83,6 +74,12 @@ def command( line):
     Examples
       PySpectra.command( "create s1")
       PySpectra.command( "display")
+
+    called from 
+      - /home/kracht/Misc/pySpectra/PySpectra/ipython/startup.py
+        to execute magic commands
+      - /home/kracht/Misc/pySpectra/PySpectra/misc/zmqIfc.py
+        execHsh() -> _execCommand() -> ifc.command()
     '''
     argout = None
     line = line.strip()

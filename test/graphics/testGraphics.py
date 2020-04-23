@@ -29,12 +29,14 @@ python ./test/graphics/testGraphics.py testGraphics.testOverlay2SecondLog
 python ./test/graphics/testGraphics.py testGraphics.testImageMB1
 python ./test/graphics/testGraphics.py testGraphics.testImageMB2
 python ./test/graphics/testGraphics.py testGraphics.testToPysp1
+python ./test/graphics/testGraphics.py testGraphics.testToPysp2
 '''
 import sys
 pySpectraPath = "/home/kracht/Misc/pySpectra"
 sys.path.append( pySpectraPath)
 
 import PySpectra
+import PySpectra.misc.zmqIfc as zmqIfc
 import pyqtgraph as pg
 import numpy as np
 import unittest
@@ -761,7 +763,7 @@ class testGraphics( unittest.TestCase):
         #
         # do the clean-up before we start
         #
-        hsh = PySpectra.misc.zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        hsh = zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
         if hsh[ 'result'] != "done":
             print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
             return 
@@ -771,7 +773,7 @@ class testGraphics( unittest.TestCase):
                   'type': 'image', 
                   'xMin': xmin, 'xMax': xmax, 'width': width, 
                   'yMin': ymin, 'yMax': ymax, 'height': height}}
-        hsh = PySpectra.misc.zmqIfc.execHsh( hsh)
+        hsh = zmqIfc.execHsh( hsh)
         if hsh[ 'result'] != "done":
             print "error from putData"
             return 
@@ -785,12 +787,56 @@ class testGraphics( unittest.TestCase):
                         { 'name': "MandelBrot",
                           'noDisplay': True, 
                           'setPixelWorld': ( r1[i], r2[j], res)}}
-                hsh = PySpectra.misc.zmqIfc.execHsh( hsh)
+                hsh = zmqIfc.execHsh( hsh)
                 if hsh[ 'result'] != "done":
                     print "error from setPixel"
                     return
             PySpectra.cls()
             PySpectra.display()
+
+        return 
+
+    def testToPysp2( self): 
+        print "testGQE.testToPysp3"
+
+        (xmin, xmax) = (-2.,-0.5)
+        (ymin, ymax) = (0, 1.5)
+        (width, height) = (100, 100)
+        maxiter = 25
+        #
+        # do the clean-up before we start
+        #
+        hsh = zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        if hsh[ 'result'] != "done":
+            print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
+            return 
+        #
+        # create an empty image
+        #
+        hsh = { 'putData': 
+                { 'name': "MandelBrot",
+                  'type': 'image', 
+                  'xMin': xmin, 'xMax': xmax, 'width': width, 
+                  'yMin': ymin, 'yMax': ymax, 'height': height}}
+        hsh = zmqIfc.execHsh( hsh)
+        if hsh[ 'result'] != "done":
+            print "error from putData"
+            return 
+        
+        r1 = np.linspace(xmin, xmax, width)
+        r2 = np.linspace(ymin, ymax, height)
+        for i in range(width):
+            for j in range(height):
+                res = self.mandelbrot(r1[i] + 1j*r2[j],maxiter)
+                hsh = { 'command': "setPixelImage Mandelbrot %d %d %g" % ( i, j, res)}
+                hsh = zmqIfc.execHsh( hsh)
+                if hsh[ 'result'] != "done":
+                    print "error from setPixel"
+                    return
+            hsh = zmqIfc.execHsh( { 'command': ['display']})
+            if hsh[ 'result'] != "done":
+                print "error from ['display']"
+                return 
 
         return 
         

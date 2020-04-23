@@ -857,7 +857,7 @@ if __name__ == "__main__":
 # this piece of code can only be executed,   
 # if the pyspMonitor.py is running
 #
-import PySpectra as pysp
+import PySpectra.misc.zmqIfc as zmqIfc
 import random
 import numpy as np
 import time
@@ -879,7 +879,7 @@ def main():
     #
     # do the clean-up before we start
     #
-    hsh = pysp.toPyspMonitor( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+    hsh = zmqIfc.toPyspMonitor( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
     if hsh[ 'result'] != "done":
         print( "error from ['delete', 'setWsViewport DINA5S', 'cls']")
         return 
@@ -889,7 +889,7 @@ def main():
                'type': 'image', 
                'xMin': xmin, 'xMax': xmax, 'width': width, 
                'yMin': ymin, 'yMax': ymax, 'height': height}}
-    hsh = pysp.toPyspMonitor( hsh)
+    hsh = zmqIfc.toPyspMonitor( hsh)
     if hsh[ 'result'] != "done":
         print( "error from putData")
         return 
@@ -902,7 +902,7 @@ def main():
             hsh = { 'putData': 
                      { 'name': "Mandelbrot",
                        'setPixelWorld': ( r1[i], r2[j], res)}}
-            hsh = pysp.toPyspMonitor( hsh)
+            hsh = zmqIfc.toPyspMonitor( hsh)
             if hsh[ 'result'] != "done":
                 print( "error from setPixel")
                 return 
