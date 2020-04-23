@@ -14,8 +14,8 @@ import numpy as _np
 import datetime as _datetime
 import PySpectra 
 import PySpectra.pqtgrph.graphics as _pqt_graphics
-import PySpectra.dMgt.GQE as _gqe
-import PySpectra.misc.utils as _utils
+import PySpectra.GQE as _gqe
+import PySpectra.utils as _utils
 import PySpectra.definitions as _definitions
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
@@ -643,7 +643,7 @@ def display( nameList = None):
     #
     # Do not put a cls() here because it takes a lot of time, especially when
     # fast displays are done. 
-    # Try /home/kracht/Misc/pySpectra/test/dMgt/testGQE.py testFillData
+    # Try /home/kracht/Misc/pySpectra/test/testGQE.py testFillData
 
     #
     # see if the members of nameList arr in the gqeList

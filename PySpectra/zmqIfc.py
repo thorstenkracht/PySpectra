@@ -15,7 +15,7 @@ Functions
             msg = self.sckt.recv()
             hsh = json.loads( msg)
             ...
-            argout = PySpectra.misc.zmqIfc.execHsh( hsh)
+            argout = PySpectra.zmqIfc.execHsh( hsh)
             msg = json.dumps( argout)
             self.sckt.send( msg)
   - isPyspMonitorAlive()
@@ -25,7 +25,7 @@ Functions
 import PyTango
 import time
 import PySpectra 
-import PySpectra.dMgt.GQE as GQE
+import PySpectra.GQE as GQE
 
 
 def execHsh( hsh): 
@@ -355,7 +355,7 @@ def _putData( hsh):
             GQE.Image( **hsh)
             argout = "done"
         #
-        #_PySpectra.misc.zmqIfc.execHsh( { 'putData': 
+        #_PySpectra.zmqIfc.execHsh( { 'putData': 
         #                { 'images': [{'name': "Mandelbrot", 'data': data,
         #                              'xMin': xmin, 'xMax': xmax, 
         #                              'yMin': ymin, 'yMax': ymax}]}})
@@ -407,7 +407,7 @@ def _execSpockCommand( hsh):
 
       hsh = { 'spock': 'mv eh_mot66 51'}
     '''
-    import PySpectra.misc.tangoIfc as tangoIfc
+    import PySpectra.tangoIfc as tangoIfc
 
     if type( hsh[ 'spock']) == list:
         argout = "zmqIfc.execSpockCommand: not expecting a list"
@@ -427,7 +427,7 @@ def _getDoorState():
     the client starts a macro by issuing a spock command, 
     then senses the state of the door to see, if it's done
     """
-    import PySpectra.misc.tangoIfc as tangoIfc
+    import PySpectra.tangoIfc as tangoIfc
 
     door = GQE.InfoBlock.getDoorProxy()
     argout = "%s" % repr( door.state())

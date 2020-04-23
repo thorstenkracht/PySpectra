@@ -64,10 +64,8 @@ setup( name="python-pyspectra",
                    'PySpectra/pyspMonitor.py',
                    ],
        packages = ['PySpectra', 
-                   'PySpectra/dMgt', 
                    'PySpectra/examples', 
                    'PySpectra/ipython', 
-                   'PySpectra/misc', 
                    'PySpectra/mtpltlb', 
                    'PySpectra/pqtgrph']
    )

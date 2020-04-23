@@ -3,7 +3,7 @@
 this module actracts Spectra, PySpectra
 '''
 import PySpectra 
-import PySpectra.dMgt.GQE as GQE
+import PySpectra.GQE as GQE
 
 try: 
     import Spectra

@@ -9,8 +9,8 @@ python ./test/testSpock.py testSpock.testAscan
 '''
 import time, os
 import PySpectra
-import PySpectra.misc.zmqIfc as zmqIfc
-import PySpectra.misc.utils as utils
+import PySpectra.zmqIfc as zmqIfc
+import PySpectra.utils as utils
 import unittest
 import HasyUtils
 

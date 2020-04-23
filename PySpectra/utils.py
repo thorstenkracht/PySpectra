@@ -18,7 +18,7 @@ import PySpectra.definitions as _definitions
 
 def createGauss( name = "gauss", xMin = -5, xMax = 5., nPts = 101, 
                  lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.):
-    import PySpectra.dMgt.GQE as GQE
+    import PySpectra.GQE as GQE
 
     g = GQE.Scan( name = name, xMin = xMin, xMax = xMax, nPts = nPts, 
                   lineColor = lineColor)
@@ -260,7 +260,7 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
 
     clsFunc is specified to be able to distinguish between mpl and pqt
     '''
-    import PySpectra.dMgt.GQE as _gqe
+    import PySpectra.GQE as _gqe
     global _lenPlotted
     debug = False
 
@@ -486,7 +486,7 @@ def runMacro( line):
     send a command to the door and wait for completion
     """
     import PyTango
-    import PySpectra.dMgt.GQE as GQE
+    import PySpectra.GQE as GQE
     import time
 
     print( "utils.runMacro: %s" % line)

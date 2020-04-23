@@ -12,10 +12,10 @@ import sys
 #pySpectraPath = "/home/kracht/Misc/pySpectra"
 
 import PySpectra
-import PySpectra.misc.tangoIfc as tangoIfc
-import PySpectra.misc.zmqIfc as zmqIfc
-import PySpectra.misc.utils as utils
-import PySpectra.dMgt.GQE as GQE
+import PySpectra.tangoIfc as tangoIfc
+import PySpectra.zmqIfc as zmqIfc
+import PySpectra.utils as utils
+import PySpectra.GQE as GQE
 import numpy as np
 import unittest
 import PyTango

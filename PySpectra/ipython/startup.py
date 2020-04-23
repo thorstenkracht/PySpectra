@@ -11,7 +11,7 @@ from IPython.core.magic import (register_line_magic)
 from IPython.core.getipython import get_ipython
 import PySpectra.ipython.ifc as ifc
 import PySpectra 
-import PySpectra.dMgt.GQE as GQE
+import PySpectra.GQE as GQE
 import numpy as np
 
 ip = get_ipython()

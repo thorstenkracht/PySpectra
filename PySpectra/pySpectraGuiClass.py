@@ -11,9 +11,9 @@ import numpy as np
 
 import PySpectra 
 import PySpectra.examples.exampleCode
-import PySpectra.dMgt.GQE as GQE
+import PySpectra.GQE as GQE
 import PySpectra.definitions as definitions
-import PySpectra.dMgt.calc as calc
+import PySpectra.calc as calc
 import mtpltlb.graphics as mpl_graphics # for pdf output
 
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar

@@ -36,7 +36,8 @@ pySpectraPath = "/home/kracht/Misc/pySpectra"
 sys.path.append( pySpectraPath)
 
 import PySpectra
-import PySpectra.misc.zmqIfc as zmqIfc
+import PySpectra.GQE as GQE
+import PySpectra.zmqIfc as zmqIfc
 import pyqtgraph as pg
 import numpy as np
 import unittest
@@ -59,10 +60,10 @@ class testGraphics( unittest.TestCase):
         print "testGraphics.testClose"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.setTitle( "testing close()")
+        GQE.delete()
+        GQE.setTitle( "testing close()")
 
-        sinus = PySpectra.dMgt.GQE.Scan( name = 'sinus', 
+        sinus = GQE.Scan( name = 'sinus', 
                                 xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red', doty = True)
         sinus.y = np.sin( sinus.y)
 
@@ -72,10 +73,10 @@ class testGraphics( unittest.TestCase):
         PySpectra.close()
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.setTitle( "testing close(), again")
+        GQE.delete()
+        GQE.setTitle( "testing close(), again")
 
-        sinus = PySpectra.dMgt.GQE.Scan( name = 'sinus', 
+        sinus = GQE.Scan( name = 'sinus', 
                                 xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red', doty = True)
         sinus.y = np.sin( sinus.y)
 
@@ -91,10 +92,10 @@ class testGraphics( unittest.TestCase):
         print "testGraphics.testDoty"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.setTitle( "check x-axis doty")
+        GQE.delete()
+        GQE.setTitle( "check x-axis doty")
 
-        sinus = PySpectra.dMgt.GQE.Scan( name = 'sinus', 
+        sinus = GQE.Scan( name = 'sinus', 
                                 xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red', doty = True)
         sinus.y = np.sin( sinus.y)
 
@@ -110,14 +111,14 @@ class testGraphics( unittest.TestCase):
         '''
         print "testGraphics.testGrid"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.setTitle( "check grids")
+        GQE.delete()
+        GQE.setTitle( "check grids")
 
-        sinus = PySpectra.dMgt.GQE.Scan( name = 'sinus', 
+        sinus = GQE.Scan( name = 'sinus', 
                                 xMin = 0., showGridX = True, xMax = 6.0, nPts = 101, lineColor = 'red')
-        cos = PySpectra.dMgt.GQE.Scan( name = 'cos', 
+        cos = GQE.Scan( name = 'cos', 
                                 xMin = 0., showGridY = True, xMax = 6.0, nPts = 101, lineColor = 'red')
-        tan = PySpectra.dMgt.GQE.Scan( name = 'tan', 
+        tan = GQE.Scan( name = 'tan', 
                                 xMin = 0., showGridY = True, showGridX = True, xMax = 6.0, nPts = 101, lineColor = 'red')
         sinus.y = np.sin( sinus.y)
         cos.y = np.cos( cos.y)
@@ -135,11 +136,11 @@ class testGraphics( unittest.TestCase):
         '''
         print "testGraphics.testScanning"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
-        PySpectra.dMgt.GQE.setTitle( "x-axis is not re-scaled")
+        GQE.setTitle( "x-axis is not re-scaled")
 
-        sinus = PySpectra.dMgt.GQE.Scan( name = 'sinus', 
+        sinus = GQE.Scan( name = 'sinus', 
                                 xMin = 0., xMax = 6.0, nPts = 101, autoscaleX = False, 
                                 lineColor = 'red')
         for i in range( sinus.nPts): 
@@ -155,11 +156,11 @@ class testGraphics( unittest.TestCase):
         '''
         print "testGraphics.testScanningWithText"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
-        PySpectra.dMgt.GQE.setTitle( "x-axis is not re-scaled, watch text")
+        GQE.setTitle( "x-axis is not re-scaled, watch text")
 
-        scan = PySpectra.dMgt.GQE.Scan( name = 'tangens', 
+        scan = GQE.Scan( name = 'tangens', 
                                xMin = 0., xMax = 6.0, nPts = 101, 
                                autoscaleX = False, autoscaleY = True, 
                                lineColor = 'red')
@@ -178,14 +179,14 @@ class testGraphics( unittest.TestCase):
         '''
         print "testGraphics.testScanningTwoPlots"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
-        PySpectra.dMgt.GQE.setTitle( "two plot, x-axis is not re-scaled")
+        GQE.setTitle( "two plot, x-axis is not re-scaled")
 
-        sinus = PySpectra.dMgt.GQE.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, 
+        sinus = GQE.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, 
                                 autoscaleX = False, 
                                 lineColor = 'red')
-        cosinus = PySpectra.dMgt.GQE.Scan( name = 'cosinus', 
+        cosinus = GQE.Scan( name = 'cosinus', 
                                   xMin = 0., xMax = 6.0, nPts = 101, 
                                   autoscaleX = False, 
                                   lineColor = 'blue')
@@ -205,11 +206,11 @@ class testGraphics( unittest.TestCase):
         '''
         print "testGraphics.testScanningAutoscaleX"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
-        PySpectra.dMgt.GQE.setTitle( "autoscale of the x-axis")
+        GQE.setTitle( "autoscale of the x-axis")
 
-        sinus = PySpectra.dMgt.GQE.Scan( name = 'sinus', 
+        sinus = GQE.Scan( name = 'sinus', 
                                 xMin = 0., xMax = 6.0, nPts = 101, 
                                 autoscaleX = True, 
                                 lineColor = 'red')
@@ -226,11 +227,11 @@ class testGraphics( unittest.TestCase):
         '''
         print "testGraphics.testScanningReverse"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
-        PySpectra.dMgt.GQE.setTitle( "reverse scan, no re-scale")
+        GQE.setTitle( "reverse scan, no re-scale")
 
-        sinus = PySpectra.dMgt.GQE.Scan( name = 'sinus', 
+        sinus = GQE.Scan( name = 'sinus', 
                                 xMin = 0., xMax = 6.0, nPts = 101, 
                                 autoscaleX = False, 
                                 lineColor = 'red')
@@ -249,11 +250,11 @@ class testGraphics( unittest.TestCase):
         '''
         print "testGraphics.testScanningReverseAutoscaleX"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
-        PySpectra.dMgt.GQE.setTitle( "reverse scan, re-scale")
+        GQE.setTitle( "reverse scan, re-scale")
 
-        sinus = PySpectra.dMgt.GQE.Scan( name = 'sinus', 
+        sinus = GQE.Scan( name = 'sinus', 
                                 xMin = 0., xMax = 6.0, nPts = 101, 
                                 autoscaleX = True, 
                                 lineColor = 'red')
@@ -273,11 +274,11 @@ class testGraphics( unittest.TestCase):
         '''
         print "testGraphics.testDisplaySingleWithText"
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
-        #PySpectra.dMgt.GQE.setTitle( "this is the title text")
+        #GQE.setTitle( "this is the title text")
         #PySpectra.setComment( "this is a comment")
-        sinus = PySpectra.dMgt.GQE.Scan( name = 'sinus', xMin = -3., 
+        sinus = GQE.Scan( name = 'sinus', xMin = -3., 
                                 xMax = 3., nPts = 101, dType = np.float64,
                                 xLabel = "x-Label", yLabel = "y-Label",
                                 at = (2,2,3), lineColor = 'red', lineStyle = 'solid')
@@ -295,9 +296,9 @@ class testGraphics( unittest.TestCase):
         print "testGraphics.testDisplaySymbol"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
-        sinus = PySpectra.dMgt.GQE.Scan( name = 'sinus', xMin = 0., 
+        sinus = GQE.Scan( name = 'sinus', xMin = 0., 
                                 xMax = 6.0, nPts = 101, dType = np.float64,
                                 at = (2,2,3), symbolColor = 'red', symbol = 'o', symbolSize = 10)
 
@@ -313,15 +314,15 @@ class testGraphics( unittest.TestCase):
         print "testGraphics.testDisplayTwo"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
-        sinus = PySpectra.dMgt.GQE.Scan( name = 'sinus', xMin = 0., 
+        sinus = GQE.Scan( name = 'sinus', xMin = 0., 
                                 xMax = 6.0, nPts = 101, dType = np.float64,
                                 lineWidth = 5., 
                                 lineColor = 'red', lineStyle = 'dashed')
         sinus.y = np.sin( sinus.y)
 
-        cosinus = PySpectra.dMgt.GQE.Scan( name = "cosinus", xMin = 0., 
+        cosinus = GQE.Scan( name = "cosinus", xMin = 0., 
                                   xMax = 6.0, nPts = 101, dType = np.float64,
                                   lineWidth = 3., 
                                   lineColor = 'blue', 
@@ -339,15 +340,15 @@ class testGraphics( unittest.TestCase):
         print "testGraphics.testOverlay"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
-        sinus = PySpectra.dMgt.GQE.Scan( name = 'sinus', xMin = 0., 
+        sinus = GQE.Scan( name = 'sinus', xMin = 0., 
                                 xMax = 6.0, nPts = 101, dType = np.float64,
                                 lineWidth = 5., 
                                 lineColor = 'red', lineStyle = 'dashed')
         sinus.y = np.sin( sinus.y)
 
-        tan = PySpectra.dMgt.GQE.Scan( name = 'tangens', xMin = 0., 
+        tan = GQE.Scan( name = 'tangens', xMin = 0., 
                               xMax = 6.0, nPts = 101, dType = np.float64,
                               lineWidth = 2., 
                               lineColor = 'green', lineStyle = 'dashed')
@@ -355,7 +356,7 @@ class testGraphics( unittest.TestCase):
         #
         # cosinus has to be plotted in the same viewport as sinus
         #
-        cosinus = PySpectra.dMgt.GQE.Scan( name = "cosinus", xMin = 0., 
+        cosinus = GQE.Scan( name = "cosinus", xMin = 0., 
                                   xMax = 6.0, nPts = 101, dType = np.float64,
                                   lineWidth = 3., 
                                   lineColor = 'blue', 
@@ -367,7 +368,7 @@ class testGraphics( unittest.TestCase):
         #
         # cossquare has to be plotted in the same viewport as tangens
         #
-        cossquare = PySpectra.dMgt.GQE.Scan( name = "cossquare", xMin = 0., 
+        cossquare = GQE.Scan( name = "cossquare", xMin = 0., 
                                     xMax = 6.0, nPts = 101, dType = np.float64,
                                     yMin = -5, yMax = 5., 
                                     lineWidth = 1., 
@@ -389,10 +390,10 @@ class testGraphics( unittest.TestCase):
         print "testGraphics.testDisplayFour"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
         for i in range( 1, 5):
-            s = PySpectra.dMgt.GQE.Scan( name = 't%d' % i, xMin = 0., 
+            s = GQE.Scan( name = 't%d' % i, xMin = 0., 
                                 xMax = 6.0, nPts = 101, dType = np.float64,
                                 xLabel = 'rad', yLabel = 'Signal', 
                                 at = (2,2,i), lineColor = 'red', lineStyle = 'solid',
@@ -412,10 +413,10 @@ class testGraphics( unittest.TestCase):
         print "testGraphics.testDisplayMany"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
         for i in range( 1, 20):
-            s = PySpectra.dMgt.GQE.Scan( name = 't%d' % i, xMin = 0., 
+            s = GQE.Scan( name = 't%d' % i, xMin = 0., 
                                 xMax = 6.0, nPts = 101, dType = np.float64,
                                 xLabel = 'rad', yLabel = 'Signal', 
                                 at = (5,4,i), lineColor = 'red', lineStyle = 'solid',
@@ -435,10 +436,10 @@ class testGraphics( unittest.TestCase):
         print "testGraphics.testDisplayMany"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
         for i in range( 1, 50):
-            s = PySpectra.dMgt.GQE.Scan( name = 't%d' % i, xMin = 0., 
+            s = GQE.Scan( name = 't%d' % i, xMin = 0., 
                                 xMax = 6.0, nPts = 101, dType = np.float64,
                                 xLabel = 'rad', yLabel = 'Signal', 
                                 lineColor = 'red', lineStyle = 'solid',
@@ -459,9 +460,9 @@ class testGraphics( unittest.TestCase):
         print "testGraphics.testDisplay_v1"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        scan1 = PySpectra.dMgt.GQE.Scan( name = 't1', nPts = 100, yMin = -1., yMax = 1.)
-        scan2 = PySpectra.dMgt.GQE.Scan( name = 't2', nPts = 100, yMin = -1., yMax = 1.)
+        GQE.delete()
+        scan1 = GQE.Scan( name = 't1', nPts = 100, yMin = -1., yMax = 1.)
+        scan2 = GQE.Scan( name = 't2', nPts = 100, yMin = -1., yMax = 1.)
 
         PySpectra.display()
 
@@ -494,9 +495,9 @@ class testGraphics( unittest.TestCase):
         print "testGraphics.testDisplay_v2"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        scan1 = PySpectra.dMgt.GQE.Scan( name = 't1', nPts = 1000, yMin = -1., yMax = 1.)
-        scan2 = PySpectra.dMgt.GQE.Scan( name = 't2', nPts = 1000, yMin = -1., yMax = 1.)
+        GQE.delete()
+        scan1 = GQE.Scan( name = 't1', nPts = 1000, yMin = -1., yMax = 1.)
+        scan2 = GQE.Scan( name = 't2', nPts = 1000, yMin = -1., yMax = 1.)
 
         data = np.random.normal(size=(10,1000))
         x  = np.linspace( 0., 10., 1000)
@@ -528,10 +529,10 @@ class testGraphics( unittest.TestCase):
         print "testGraphics.testWsViewport"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.setTitle( "go through the viewports")
+        GQE.delete()
+        GQE.setTitle( "go through the viewports")
 
-        sinus = PySpectra.dMgt.GQE.Scan( name = 'sinus', 
+        sinus = GQE.Scan( name = 'sinus', 
                                 xMin = 0., xMax = 6.0, nPts = 101, lineColor = 'red', doty = True)
         sinus.y = np.sin( sinus.y)
 
@@ -551,8 +552,8 @@ class testGraphics( unittest.TestCase):
         print "testGraphics.testLissayous"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        scan = PySpectra.dMgt.GQE.Scan( name = 'Lissajous', nPts = 1000, xMin = -1., xMax = 1.)
+        GQE.delete()
+        scan = GQE.Scan( name = 'Lissajous', nPts = 1000, xMin = -1., xMax = 1.)
 
         x  = np.linspace( 0., 6.5, 1000)
         y  = np.linspace( 0., 6.5, 1000)
@@ -580,19 +581,19 @@ class testGraphics( unittest.TestCase):
         print "testGraphics.testOverly2BothLog"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.setTitle( "2 Overlay Scans, with log scale")
-        g1 = PySpectra.dMgt.GQE.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = True, nPts = 101, lineColor = 'red')
+        GQE.delete()
+        GQE.setTitle( "2 Overlay Scans, with log scale")
+        g1 = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = True, nPts = 101, lineColor = 'red')
         mu = 0.
         sigma = 1.
         g1.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g1.y-mu)**2/(2.*sigma**2))
-        g2 = PySpectra.dMgt.GQE.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0.001, yLog = True, 
+        g2 = GQE.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0.001, yLog = True, 
                              yMax = 1., nPts = 101, lineColor = 'green')
         mu = 0.5
         sigma = 1.2
         g2.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g2.y-mu)**2/(2.*sigma**2))
         
-        PySpectra.dMgt.GQE.overlay( "gauss2", "gauss")
+        GQE.overlay( "gauss2", "gauss")
         PySpectra.display()
         PySpectra.processEventsLoop( 1)
 
@@ -603,19 +604,19 @@ class testGraphics( unittest.TestCase):
         print "testGraphics.testOverly2FirstLog"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.setTitle( "2 Overlay Scans, with log scale")
-        g1 = PySpectra.dMgt.GQE.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = True, nPts = 101, lineColor = 'red')
+        GQE.delete()
+        GQE.setTitle( "2 Overlay Scans, with log scale")
+        g1 = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = True, nPts = 101, lineColor = 'red')
         mu = 0.
         sigma = 1.
         g1.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g1.y-mu)**2/(2.*sigma**2))
-        g2 = PySpectra.dMgt.GQE.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0.001, yLog = False,
+        g2 = GQE.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0.001, yLog = False,
                              nPts = 101, lineColor = 'green')
         mu = 0.5
         sigma = 1.2
         g2.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g2.y-mu)**2/(2.*sigma**2))
         
-        PySpectra.dMgt.GQE.overlay( "gauss2", "gauss")
+        GQE.overlay( "gauss2", "gauss")
         PySpectra.display()
         PySpectra.processEventsLoop( 1)
 
@@ -628,19 +629,19 @@ class testGraphics( unittest.TestCase):
         print "testGraphics.testOverly2SecondLog"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        PySpectra.dMgt.GQE.setTitle( "2 Overlay Scans, with log scale")
-        g1 = PySpectra.dMgt.GQE.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = False, nPts = 101, lineColor = 'red')
+        GQE.delete()
+        GQE.setTitle( "2 Overlay Scans, with log scale")
+        g1 = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., yLog = False, nPts = 101, lineColor = 'red')
         mu = 0.
         sigma = 1.
         g1.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g1.y-mu)**2/(2.*sigma**2))
-        g2 = PySpectra.dMgt.GQE.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0.001, yLog = True, 
+        g2 = GQE.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0.001, yLog = True, 
                              yMax = 1., nPts = 101, lineColor = 'green')
         mu = 0.5
         sigma = 1.2
         g2.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g2.y-mu)**2/(2.*sigma**2))
         
-        PySpectra.dMgt.GQE.overlay( "gauss2", "gauss")
+        GQE.overlay( "gauss2", "gauss")
         PySpectra.display()
         PySpectra.processEventsLoop( 1)
 
@@ -660,7 +661,7 @@ class testGraphics( unittest.TestCase):
         PySpectra.setWsViewport( 'DINA5S')
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
         (xmin, xmax) = (-2., 1)
         (ymin, ymax) = (-1.5, 1.5)
@@ -676,7 +677,7 @@ class testGraphics( unittest.TestCase):
         #
         # create the image by supplying data
         #
-        m = PySpectra.dMgt.GQE.Image( name = "MandelbrotSet1", data = n3,
+        m = GQE.Image( name = "MandelbrotSet1", data = n3,
                              xMin = xmin, xMax = xmax, width = width,  
                              yMin = ymin, yMax = ymax, height = height, 
                              xLabel = "eh_mot01", yLabel = "eh_mot02")
@@ -704,7 +705,7 @@ class testGraphics( unittest.TestCase):
         PySpectra.setWsViewport( 'DINA5S')
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
 
         (xmin, xmax) = (-2., 1)
         (ymin, ymax) = (-1.5, 1.5)
@@ -713,7 +714,7 @@ class testGraphics( unittest.TestCase):
         #
         # create the image by supplying the limits
         #
-        m = PySpectra.dMgt.GQE.Image( name = "MandelbrotSet2", 
+        m = GQE.Image( name = "MandelbrotSet2", 
                              xMin = xmin, xMax = xmax, width = width,  
                              yMin = ymin, yMax = ymax, height = height, 
                              xLabel = "eh_mot01", yLabel = "eh_mot02")
@@ -755,7 +756,7 @@ class testGraphics( unittest.TestCase):
         print "testGQE.testToPysp1"
 
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
+        GQE.delete()
         (xmin, xmax) = (-2.,-0.5)
         (ymin, ymax) = (0, 1.5)
         (width, height) = (100, 100)

@@ -12,8 +12,8 @@ has to be done in advance.
 '''
 import builtins
 import pySpectraGuiClass
-import PySpectra.dMgt.GQE as GQE
-import PySpectra.misc.zmqIfc as zmqIfc
+import PySpectra.GQE as GQE
+import PySpectra.zmqIfc as zmqIfc
 import HasyUtils 
 
 import queue, argparse, sys, os

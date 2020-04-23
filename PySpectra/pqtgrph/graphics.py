@@ -6,9 +6,9 @@ import pyqtgraph
 import time, os, math, datetime
 import numpy as np
 import psutil as _psutil
-import PySpectra.dMgt.GQE as GQE
-import PySpectra.misc.utils as utils
-import PySpectra.misc.tangoIfc as tangoIfc
+import PySpectra.GQE as GQE
+import PySpectra.utils as utils
+import PySpectra.tangoIfc as tangoIfc
 import PySpectra.definitions as definitions
 
 _QApp = None
@@ -1443,7 +1443,7 @@ def display( nameList = None):
     #
     # Do not put a cls() here because it takes a lot of time, especially when
     # fast displays are done. 
-    # Try /home/kracht/Misc/pySpectra/test/dMgt/testGQE.py testFillData
+    # Try /home/kracht/Misc/pySpectra/test/testGQE.py testFillData
 
     #
     # see if the members of nameList are in the gqeList

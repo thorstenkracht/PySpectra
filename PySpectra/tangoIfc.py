@@ -4,7 +4,7 @@ from PyQt4 import QtCore, QtGui
 
 import pyqtgraph as _pg
 import PySpectra
-import PySpectra.dMgt.GQE as GQE
+import PySpectra.GQE as GQE
 import PySpectra.definitions as _definitions
 import PyTango 
 import HasyUtils

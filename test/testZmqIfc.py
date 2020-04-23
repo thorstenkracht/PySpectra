@@ -17,7 +17,8 @@ pySpectraPath = "."
 sys.path.append( pySpectraPath)
 
 import PySpectra
-import PySpectra.misc.zmqIfc as zmqIfc
+import PySpectra.GQE as GQE
+import PySpectra.zmqIfc as zmqIfc
 import numpy as np
 import unittest
 
@@ -63,7 +64,7 @@ class testZmqIfc( unittest.TestCase):
         zmqIfc.execHsh( { 'command': ['display']})
         self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 1)
-        lst = PySpectra.dMgt.GQE.getGqeList()
+        lst = GQE.getGqeList()
         self.assertEqual( len( lst), 2)
         self.assertEqual( lst[0].name, "eh_c01")
         self.assertEqual( lst[1].name, "eh_c02")
@@ -105,7 +106,7 @@ class testZmqIfc( unittest.TestCase):
         zmqIfc.execHsh( { 'command': ['display']})
         self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 1)
-        lst = PySpectra.dMgt.GQE.getGqeList()
+        lst = GQE.getGqeList()
         self.assertEqual( len( lst), 2)
         self.assertEqual( lst[0].name, "d1")
         self.assertEqual( lst[1].name, "d2")
@@ -126,7 +127,7 @@ class testZmqIfc( unittest.TestCase):
         #
         # and compare
         #
-        o = PySpectra.dMgt.GQE.getGqe( 'd1')
+        o = GQE.getGqe( 'd1')
         for i in range( MAX):
             self.assertEqual( o.y[i], float(i)/10.)
         
@@ -351,7 +352,7 @@ class testZmqIfc( unittest.TestCase):
 
         hsh =  zmqIfc.execHsh( { 'command': ['cls', 'display']})
         self.assertEqual( hsh[ 'result'], 'done')
-        o = PySpectra.dMgt.GQE.getGqe( "Mandelbrot")
+        o = GQE.getGqe( "Mandelbrot")
         self.assertEqual( o.height, 100)
         self.assertEqual( o.width, 100)
         self.assertEqual( o.xMin, xmin)

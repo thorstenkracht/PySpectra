@@ -61,9 +61,9 @@ An interface to PySpectra, used by
 import itertools
 import PySpectra
 import PySpectra.mtpltlb.graphics as _mpl_graphics # to create postscript
-import PySpectra.dMgt.calc as calc
-import PySpectra.dMgt.GQE as GQE
-import PySpectra.misc.tangoIfc as tangoIfc
+import PySpectra.calc as calc
+import PySpectra.GQE as GQE
+import PySpectra.tangoIfc as tangoIfc
 
 def command( line):
     '''

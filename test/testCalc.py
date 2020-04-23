@@ -3,9 +3,9 @@
 cd /home/kracht/Misc/pySpectra
 python -m unittest discover -v
 
-python ./test/dMgt/testCalc.py testCalc.testYToMinusY
-python ./test/dMgt/testCalc.py testCalc.testDerivative
-python ./test/dMgt/testCalc.py testCalc.testDerivativeAntiDerivative
+python ./test/testCalc.py testCalc.testYToMinusY
+python ./test/testCalc.py testCalc.testDerivative
+python ./test/testCalc.py testCalc.testDerivativeAntiDerivative
 '''
 import sys
 sys.path.append( "/home/kracht/Misc/pySpectra")
@@ -15,8 +15,8 @@ import numpy as np
 import unittest
 import time, sys
 import math 
-import PySpectra.dMgt.GQE as _gqe
-import PySpectra.dMgt.calc as _calc
+import PySpectra.GQE as _gqe
+import PySpectra.calc as _calc
 
 class testCalc( unittest.TestCase):
 

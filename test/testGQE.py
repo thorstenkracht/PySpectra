@@ -3,39 +3,39 @@
 cd /home/kracht/Misc/pySpectra
 python -m unittest discover -v
 
-python ./test/dMgt/testGQE.py testGQE.testNextPrevScan
-python ./test/dMgt/testGQE.py testGQE.testNextPrevImage
-python ./test/dMgt/testGQE.py testGQE.testFillData
-python ./test/dMgt/testGQE.py testGQE.testFillDataByColumns
-python ./test/dMgt/testGQE.py testGQE.testFillDataByGqes
-python ./test/dMgt/testGQE.py testGQE.testCreateDelete
-python ./test/dMgt/testGQE.py testGQE.testWrite
-python ./test/dMgt/testGQE.py testGQE.testRead
-python ./test/dMgt/testGQE.py testGQE.testWriteReadImage
-python ./test/dMgt/testGQE.py testGQE.test_read
-python ./test/dMgt/testGQE.py testGQE.testReuse
-python ./test/dMgt/testGQE.py testGQE.testYGreaterThanZero
-python ./test/dMgt/testGQE.py testGQE.testSetLimits
-python ./test/dMgt/testGQE.py testGQE.testSetXY
-python ./test/dMgt/testGQE.py testGQE.testGetXY
-python ./test/dMgt/testGQE.py testGQE.testExceptions
-python ./test/dMgt/testGQE.py testGQE.testMisc
-python ./test/dMgt/testGQE.py testGQE.testDoubles
-python ./test/dMgt/testGQE.py testGQE.test_titleAndComment
-python ./test/dMgt/testGQE.py testGQE.testSSA
-python ./test/dMgt/testGQE.py testGQE.testFsa
-python ./test/dMgt/testGQE.py testGQE.testGetIndex
-python ./test/dMgt/testGQE.py testGQE.testMotorArrowCurrentAndSetPoint
-python ./test/dMgt/testGQE.py testGQE.testMotorArrowMisc
-python ./test/dMgt/testGQE.py testGQE.testCheckTargetWithinLimits
-python ./test/dMgt/testGQE.py testGQE.testColorSpectraToPysp
+python ./test/testGQE.py testGQE.testNextPrevScan
+python ./test/testGQE.py testGQE.testNextPrevImage
+python ./test/testGQE.py testGQE.testFillData
+python ./test/testGQE.py testGQE.testFillDataByColumns
+python ./test/testGQE.py testGQE.testFillDataByGqes
+python ./test/testGQE.py testGQE.testCreateDelete
+python ./test/testGQE.py testGQE.testWrite
+python ./test/testGQE.py testGQE.testRead
+python ./test/testGQE.py testGQE.testWriteReadImage
+python ./test/testGQE.py testGQE.test_read
+python ./test/testGQE.py testGQE.testReuse
+python ./test/testGQE.py testGQE.testYGreaterThanZero
+python ./test/testGQE.py testGQE.testSetLimits
+python ./test/testGQE.py testGQE.testSetXY
+python ./test/testGQE.py testGQE.testGetXY
+python ./test/testGQE.py testGQE.testExceptions
+python ./test/testGQE.py testGQE.testMisc
+python ./test/testGQE.py testGQE.testDoubles
+python ./test/testGQE.py testGQE.test_titleAndComment
+python ./test/testGQE.py testGQE.testSSA
+python ./test/testGQE.py testGQE.testFsa
+python ./test/testGQE.py testGQE.testGetIndex
+python ./test/testGQE.py testGQE.testMotorArrowCurrentAndSetPoint
+python ./test/testGQE.py testGQE.testMotorArrowMisc
+python ./test/testGQE.py testGQE.testCheckTargetWithinLimits
+python ./test/testGQE.py testGQE.testColorSpectraToPysp
 '''
 import sys, time
 import PyTango
 import PySpectra
-import PySpectra.dMgt.GQE as GQE
-import PySpectra.misc.zmqIfc as zmqIfc
-import PySpectra.misc.utils as utils
+import PySpectra.GQE as GQE
+import PySpectra.zmqIfc as zmqIfc
+import PySpectra.utils as utils
 import numpy as np
 import unittest
 import time, sys, os
@@ -509,7 +509,7 @@ class testGQE( unittest.TestCase):
         
         ima = lst[0]
         self.assertEqual( ima.name, "MandelbrotSet")
-        self.assertEqual( type( ima), PySpectra.dMgt.GQE.Image)
+        self.assertEqual( type( ima), PySpectra.GQE.Image)
         self.assertEqual( ima.width, width)
         self.assertEqual( ima.height, height)
 

@@ -11,7 +11,7 @@ $ pyspViewer.py
 
 $ pyspMonitor.py
   successor of the SardanaMonitor
-    the function PySpectra.misc.zmqIfc.toPyspMonitor()
+    the function PySpectra.zmqIfc.toPyspMonitor()
     communicates with the pyspMonitor via ZMQ
 
 # TngGui.py
@@ -29,7 +29,7 @@ In addition, start ipython and
   In [1]: import PySpectra
   In [2]: PySpectra?
   In [3]: dir( PySpectra) 
-  In [4]: PySpectra.dMgt.GQE.Scan?
+  In [4]: PySpectra.GQE.Scan?
 *
 * To use PySpectra in ipython:
 * ----------------------------
@@ -49,7 +49,7 @@ then again
 $ ipython --profile=PySpectra
 In [1]: create t1
 In [2]: display
-In [3]: o = PySpectra.dMgt.GQE.getGqe( "t1")
+In [3]: o = PySpectra.GQE.getGqe( "t1")
 In [4]: dir( o)
 
 '''

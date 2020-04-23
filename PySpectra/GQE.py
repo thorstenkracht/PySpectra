@@ -10,7 +10,7 @@ from PyQt4 import QtCore, QtGui
 import PyTango as _PyTango
 import PySpectra 
 import PySpectra.definitions as definitions 
-import PySpectra.misc.utils as utils
+import PySpectra.utils as utils
 import pyqtgraph as pg
 import time
 import HasyUtils as _HasyUtils
@@ -1207,16 +1207,16 @@ def delete( nameLst = None):
     if nameLst is supplied, delete the specified scans from the gqeList
     otherwise delete all scans
 
-    PySpectra.dMgt.GQE.delete( ["t1"])
+    PySpectra.GQE.delete( ["t1"])
       delete the scan t1
 
-    PySpectra.dMgt.GQE.delete( ["t1", "t2"])
+    PySpectra.GQE.delete( ["t1", "t2"])
       delete t1 and t2
 
-    PySpectra.dMgt.GQE.delete( "t1")
+    PySpectra.GQE.delete( "t1")
       delete the scan t1, also OK
 
-    PySpectra.dMgt.GQE.delete()
+    PySpectra.GQE.delete()
       delete all scans
     '''
     global _gqeIndex
@@ -1286,7 +1286,7 @@ def overlay( src, trgt):
     ------
     None
 
-    Module: PySpectra.dMgt.GQE.py
+    Module: PySpectra.GQE.py
     '''
     scanSrc = getGqe( src)
     scanTrgt = getGqe( trgt)

@@ -13,8 +13,8 @@ From the command line:
 import numpy as np
 import os, time, math
 import PySpectra 
-import PySpectra.misc.zmqIfc as zmqIfc
-import PySpectra.dMgt.GQE as GQE
+import PySpectra.zmqIfc as zmqIfc
+import PySpectra.GQE as GQE
 
 
 def exampleDataVia_execHsh(): 
@@ -857,7 +857,7 @@ if __name__ == "__main__":
 # this piece of code can only be executed,   
 # if the pyspMonitor.py is running
 #
-import PySpectra.misc.zmqIfc as zmqIfc
+import PySpectra.zmqIfc as zmqIfc
 import random
 import numpy as np
 import time

@@ -27,9 +27,9 @@ import sys, time, os, math
 import numpy as np
 import unittest
 import PySpectra
-import PySpectra.dMgt.GQE as GQE
+import PySpectra.GQE as GQE
 import PySpectra.ipython.ifc as ifc
-import PySpectra.misc.zmqIfc as zmqIfc
+import PySpectra.zmqIfc as zmqIfc
 
 
 def mandelbrot( c, maxiter):

@@ -4,6 +4,7 @@ python ./test/testUtils.py testUtils.test_ssa
 '''
 import sys
 import PySpectra
+import PySpectra.GQE as GQE
 import numpy as np
 import unittest
 import time, sys, os
@@ -24,13 +25,13 @@ class testUtils( unittest.TestCase):
         overlay 2 scans
         '''
         PySpectra.cls()
-        PySpectra.dMgt.GQE.delete()
-        g = PySpectra.dMgt.GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, lineColor = 'red')
+        GQE.delete()
+        g = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, lineColor = 'red')
         mu = 0.
         sigma = 1.
         g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2.*sigma**2))
 
-        hsh = PySpectra.misc.utils.ssa( g.x, g.y)
+        hsh = PySpectra.utils.ssa( g.x, g.y)
         self.assertEqual( hsh[ 'status'], 1)
         self.assertEqual( hsh[ 'midpoint'], 0.)
         self.assertAlmostEqual( hsh[ 'l_back'], 2.521e-5)
