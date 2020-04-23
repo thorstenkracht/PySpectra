@@ -20,7 +20,6 @@ import numpy as np
 import unittest
 import PyTango
 import time, os
-import HasyUtils
 
 class testTangoIfc( unittest.TestCase):
 
@@ -37,7 +36,7 @@ class testTangoIfc( unittest.TestCase):
         print "testTangoIfc.testMoveMotorTangoIfc"
 
 
-        if HasyUtils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != 'haso107tk': 
             return 
 
         PySpectra.cls()
@@ -77,7 +76,7 @@ class testTangoIfc( unittest.TestCase):
         print "testTangoIfc.testMoveMotorNameList"
 
 
-        if HasyUtils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != 'haso107tk': 
             return 
 
         PySpectra.cls()

@@ -1136,6 +1136,23 @@ def _isOverlayTarget( scan, nameList):
     return False
 
 
+def _cmap_xmap(function, cmap):
+    """ Applies function, on the indices of colormap cmap. Beware, function
+    should map the [0, 1] segment to itself, or you are in for surprises.
+
+    See also cmap_xmap.
+    """
+    import matplotlib as mpl
+
+    cdict = cmap._segmentdata
+    function_to_map = lambda x : (function(x[0]), x[1], x[2])
+    for key in ('red','green','blue'):
+        cdict[key] = map(function_to_map, cdict[key])
+        cdict[key].sort()
+        assert (cdict[key][0]<0 or cdict[key][-1]>1), "Resulting indices extend out of the [0, 1] segment."
+
+    return mpl.colors.LinearSegmentedColormap('colormap',cdict,1024)
+
 class SmartFormat( pyqtgraph.AxisItem):
     def __init__(self, *args, **kwargs):
         super(SmartFormat, self).__init__(*args, **kwargs)
@@ -1144,6 +1161,82 @@ class SmartFormat( pyqtgraph.AxisItem):
         if self.logMode:
             return [ "%g" % x for x in 10 ** np.array(values).astype(float)]
         return super( SmartFormat, self).tickStrings( values, scale, spacing)
+
+def _displayImages( flagDisplaySingle, nameList = None):
+
+    from matplotlib import cm
+    gqeList = GQE.getGqeList()
+
+    for imageGqe in gqeList:
+        if type( imageGqe) != GQE.Image: 
+            continue
+        if len( nameList) > 0: 
+            if imageGqe.name not in nameList:
+                continue
+        if imageGqe.plotItem is None: 
+            _createPlotItem( imageGqe, nameList)
+
+        #imageGqe.plotItem = _graphicsWindow.addPlot( row = imageGqe.row, col = imageGqe.col)
+        if imageGqe.img is None:
+            imageGqe.img = pyqtgraph.ImageItem()
+            imageGqe.plotItem.addItem( imageGqe.img)
+            if imageGqe.log:
+                try:
+                    imageGqe.img.setImage( np.log( imageGqe.data))
+                except Exception, e: 
+                    imageGqe.log = False
+                    print "pqt_graphics: log failed"
+                    print repr( e)
+                    return 
+            else:
+                if imageGqe.modulo != -1:
+                    imageGqe.img.setImage( imageGqe.data % imageGqe.modulo)
+                else: 
+                    imageGqe.img.setImage( imageGqe.data)
+        else: 
+            if imageGqe.log:
+                try:
+                    imageGqe.img.setImage( np.log( imageGqe.data))
+                except Exception, e: 
+                    imageGqe.log = False
+                    print "pqt_graphics: log failed"
+                    print repr( e)
+                    return 
+            else:
+                if imageGqe.modulo != -1:
+                    imageGqe.img.setImage( imageGqe.data % imageGqe.modulo)
+                else: 
+                    imageGqe.img.setImage( imageGqe.data)
+        try: 
+            colormap = cm.get_cmap( imageGqe.colorMap)
+            colormap._init()
+            lut = (colormap._lut * 255).view( np.ndarray)  # Convert matplotlib colormap from 0-1 to 0-255 for Qt
+            length = lut.shape[0] - 3
+            lutTemp = np.copy( lut)
+
+            for i in range( length):
+                j = i - (imageGqe.indexRotate % length)
+                if j < 0: 
+                    j = j + length
+                lutTemp[j] = lut[i]
+
+            lut = np.copy( lutTemp)
+
+            imageGqe.img.setLookupTable( lut)
+        except Exception, e: 
+            print "pqt_graphics: problem accessing color map, using default"
+            print repr( e)
+            lut = np.zeros((256,3), dtype=np.ubyte)
+            lut[:128,0] = np.arange(0,255,2)
+            lut[128:,0] = 255
+            lut[:,1] = np.arange(256)
+            imageGqe.img.setLookupTable(lut)
+
+        if flagDisplaySingle:
+            _prepareMouse( imageGqe)
+
+    return 
+
 
 def _createPlotItem( gqe, nameList):            
     '''
@@ -1312,98 +1405,6 @@ def _createPlotItem( gqe, nameList):
 
     return
 
-def _cmap_xmap(function, cmap):
-    """ Applies function, on the indices of colormap cmap. Beware, function
-    should map the [0, 1] segment to itself, or you are in for surprises.
-
-    See also cmap_xmap.
-    """
-    import matplotlib as mpl
-
-    cdict = cmap._segmentdata
-    function_to_map = lambda x : (function(x[0]), x[1], x[2])
-    for key in ('red','green','blue'):
-        cdict[key] = map(function_to_map, cdict[key])
-        cdict[key].sort()
-        assert (cdict[key][0]<0 or cdict[key][-1]>1), "Resulting indices extend out of the [0, 1] segment."
-
-    return mpl.colors.LinearSegmentedColormap('colormap',cdict,1024)
-
-def _displayImages( flagDisplaySingle, nameList = None):
-
-    from matplotlib import cm
-    gqeList = GQE.getGqeList()
-
-    for imageGqe in gqeList:
-        if type( imageGqe) != GQE.Image: 
-            continue
-        if len( nameList) > 0: 
-            if imageGqe.name not in nameList:
-                continue
-        if imageGqe.plotItem is None: 
-            _createPlotItem( imageGqe, nameList)
-
-        #imageGqe.plotItem = _graphicsWindow.addPlot( row = imageGqe.row, col = imageGqe.col)
-        if imageGqe.img is None:
-            imageGqe.img = pyqtgraph.ImageItem()
-            imageGqe.plotItem.addItem( imageGqe.img)
-            if imageGqe.log:
-                try:
-                    imageGqe.img.setImage( np.log( imageGqe.data))
-                except Exception, e: 
-                    imageGqe.log = False
-                    print "pqt_graphics: log failed"
-                    print repr( e)
-                    return 
-            else:
-                if imageGqe.modulo != -1:
-                    imageGqe.img.setImage( imageGqe.data % imageGqe.modulo)
-                else: 
-                    imageGqe.img.setImage( imageGqe.data)
-        else: 
-            if imageGqe.log:
-                try:
-                    imageGqe.img.setImage( np.log( imageGqe.data))
-                except Exception, e: 
-                    imageGqe.log = False
-                    print "pqt_graphics: log failed"
-                    print repr( e)
-                    return 
-            else:
-                if imageGqe.modulo != -1:
-                    imageGqe.img.setImage( imageGqe.data % imageGqe.modulo)
-                else: 
-                    imageGqe.img.setImage( imageGqe.data)
-        try: 
-            colormap = cm.get_cmap( imageGqe.colorMap)
-            colormap._init()
-            lut = (colormap._lut * 255).view( np.ndarray)  # Convert matplotlib colormap from 0-1 to 0-255 for Qt
-            length = lut.shape[0] - 3
-            lutTemp = np.copy( lut)
-
-            for i in range( length):
-                j = i - (imageGqe.indexRotate % length)
-                if j < 0: 
-                    j = j + length
-                lutTemp[j] = lut[i]
-
-            lut = np.copy( lutTemp)
-
-            imageGqe.img.setLookupTable( lut)
-        except Exception, e: 
-            print "pqt_graphics: problem accessing color map, using default"
-            print repr( e)
-            lut = np.zeros((256,3), dtype=np.ubyte)
-            lut[:128,0] = np.arange(0,255,2)
-            lut[128:,0] = 255
-            lut[:,1] = np.arange(256)
-            imageGqe.img.setLookupTable(lut)
-
-        if flagDisplaySingle:
-            _prepareMouse( imageGqe)
-
-    return 
-
 def display( nameList = None):
     '''
     display one or more or all scans
@@ -1538,6 +1539,7 @@ def display( nameList = None):
                 if scan.symbolColor.upper() == 'NONE':
                     scan.plotDataItem = scan.plotItem.plot(pen = _getPen( scan))
                 else:
+                    print( "+++pqtgraphics-5")
                     scan.plotDataItem = scan.plotItem.plot(pen = _getPen( scan), 
                                                            symbol = scan.symbol, 
                                                            symbolPen = definitions.colorCode[ scan.symbolColor.lower()], 
@@ -1559,8 +1561,10 @@ def display( nameList = None):
 
         #print( "+++pqtgraphics.display: data %s " % repr( scan.y[:(scan.currentIndex + 1)]))
 
+        print( "+++pqtgraphics-6")
         scan.plotDataItem.setData( scan.x[:(scan.currentIndex + 1)], 
                                    scan.y[:(scan.currentIndex + 1)])
+        print( "+++pqtgraphics-7")
         #
         # we can introduce a padding with autoRange() but the
         # paading is on both ends of the plot.
@@ -1663,15 +1667,18 @@ def display( nameList = None):
 
         if scan.plotDataItem is None:
             if scan.symbolColor.upper()  == 'NONE':
+                print( "+++pqtgraphics-2")
                 #curveItem = pyqtgraph.PlotCurveItem( x = scan.x, y = scan.y, pen = _getPen( scan))
                 scan.plotDataItem = pyqtgraph.PlotDataItem( x = scan.x, y = scan.y, pen = _getPen( scan))
             else:
                 #scan.plotDataItem = pyqtgraph.PlotDataItem( x = scan.x, y = scan.y, pen = _getPen( scan))
+                print( "+++pqtgraphics-2")
                 scan.plotDataItem = pyqtgraph.ScatterPlotItem( x = scan.x, y = scan.y,
                                                          symbol = scan.symbol, 
                                                          pen = definitions.colorCode[ scan.symbolColor.lower()], 
                                                          brush = definitions.colorCode[ scan.symbolColor.lower()], 
                                                          size = scan.symbolSize)
+                print( "+++pqtgraphics-3")
             scan.viewBox.addItem( scan.plotDataItem )
                 
         if scan.yLog:

@@ -16,7 +16,6 @@ python ./test/ipython/testIFC.py testIFC.test_setXY
 python ./test/ipython/testIFC.py testIFC.test_y2my
 python ./test/ipython/testIFC.py testIFC.test_delete
 python ./test/ipython/testIFC.py testIFC.test_setArrow
-python ./test/ipython/testIFC.py testIFC.test_execHsh
 python ./test/ipython/testIFC.py testIFC.test_execHshScan
 python ./test/ipython/testIFC.py testIFC.test_execHshSetPixelImage
 python ./test/ipython/testIFC.py testIFC.test_execHshSetPixelWorld
@@ -30,7 +29,7 @@ import PySpectra
 import PySpectra.GQE as GQE
 import PySpectra.ipython.ifc as ifc
 import PySpectra.zmqIfc as zmqIfc
-
+import PySpectra.utils as utils
 
 def mandelbrot( c, maxiter):
     z = c
@@ -157,7 +156,11 @@ class testIFC( unittest.TestCase):
         return 
 
     def test_wsViewPort( self): 
+
+        if utils.getHostname() != 'haso107tk': 
+            return 
         print "testIFC.test_wsViewPort"
+
         PySpectra.cls()
         GQE.delete()
         ifc.command( "setWsViewport DINA4")
@@ -345,7 +348,7 @@ class testIFC( unittest.TestCase):
     def test_execHshScan( self): 
         import random
 
-        print "testIFC.test_execHsh"
+        print "testIFC.test_execHshScan"
         ret = zmqIfc.execHsh( { 'command': ["cls", "delete"]}) 
         self.assertEqual( ret[ 'result'], 'done')
         
@@ -380,7 +383,7 @@ class testIFC( unittest.TestCase):
             self.assertEqual( o.currentIndex, i)
             time.sleep( 0.1)
 
-        print "testIFC.test_execHsh DONE"
+        print "testIFC.test_execHshScan DONE"
 
         return 
 
@@ -392,6 +395,7 @@ class testIFC( unittest.TestCase):
         
         replace execHsh() by toPyspMonitor() to connect to pyspMonitor.py 
         '''
+        print "testIFC.test_execHshSetPixelImage"
         (xmin, xmax) = (-2.,-0.5)
         (ymin, ymax) = (0, 1.5)
         (width, height) = (100, 100)
@@ -431,6 +435,7 @@ class testIFC( unittest.TestCase):
         zmqIfc.execHsh( { 'command': ['cls', 'display']})
         PySpectra.processEventsLoop( 1)
 
+        print "testIFC.test_execHshSetPixelImage, DONE"
         return 
 
     def test_execHshSetPixelWorld( self): 
@@ -439,6 +444,7 @@ class testIFC( unittest.TestCase):
         this examples simulates the toPyspMonitor() interface
         replace execHsh() by toPyspMonitor() to connect to pyspMonitor.py 
         '''
+        print "testIFC.test_execHshSetPixelWorld"
         hsh =  zmqIfc.execHsh( { 'command': ['cls', 'delete', 'setWsViewport DINA5S']})
         if hsh[ 'result'] != "done":
             print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
@@ -477,6 +483,7 @@ class testIFC( unittest.TestCase):
         zmqIfc.execHsh( { 'command': ['display']})
         PySpectra.processEventsLoop( 1)
 
+        print "testIFC.test_execHshSetPixelWorld, DONE"
         return 
 
     def test_execHshMonitorSetPixelWorld( self): 
@@ -485,6 +492,7 @@ class testIFC( unittest.TestCase):
         this examples simulates the toPyspMonitor() interface
         replace execHsh() by toPyspMonitor() to connect to pyspMonitor.py 
         '''
+        print "testIFC.test_execHshSMonitorsetPixelWorld"
         #
         # see, if the pyspMonitor is running. If not, return silently
         #
@@ -529,6 +537,8 @@ class testIFC( unittest.TestCase):
             zmqIfc.toPyspMonitor( { 'command': ['cls','display']})
         zmqIfc.toPyspMonitor( { 'command': ['cls']})
         zmqIfc.toPyspMonitor( { 'command': ['display']})
+
+        print "testIFC.test_execHshSMonitorsetPixelWorld, DONE"
 
         return 
 
