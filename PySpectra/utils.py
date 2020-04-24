@@ -2,13 +2,10 @@
 '''
 '''
 import numpy as np
-import math as _math
-import sys as _sys
-import os as _os
-import time as _time
+import subprocess, signal, time, os, sys, math
 #import matplotlib.pyplot as _plt
 import PySpectra 
-import PySpectra.definitions as _definitions
+import PySpectra.definitions as definitions
 
 
 def createGauss( name = "gauss", xMin = -5, xMax = 5., nPts = 101, 
@@ -62,10 +59,10 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
             ncol = 1
             nrow = 2
         else:
-            ncol = int( _math.ceil( _math.sqrt( usedVPs)))
-            if usedVPs > _definitions.MANY_GQES: 
+            ncol = int( math.ceil( math.sqrt( usedVPs)))
+            if usedVPs > definitions.MANY_GQES: 
                 ncol -= 1
-            nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
+            nrow = int( math.ceil( (float(usedVPs))/float(ncol)))
         nplot = 1 
     elif len( nameList) == 1:
         if _lenPlotted != 1 and _lenPlotted != -1: 
@@ -91,10 +88,10 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
             ncol = 1
             nrow = 2
         else:
-            ncol = int( _math.ceil( _math.sqrt( usedVPs)))
-            if usedVPs > _definitions.MANY_GQES: 
+            ncol = int( math.ceil( math.sqrt( usedVPs)))
+            if usedVPs > definitions.MANY_GQES: 
                 ncol -= 1
-            nrow = int( _math.ceil( (float(usedVPs))/float(ncol)))
+            nrow = int( math.ceil( (float(usedVPs))/float(ncol)))
         nplot = 1 
 
     if debug:
@@ -186,11 +183,11 @@ def assertProcessRunning(processName):
     if findProcessByName( processName): 
         return (True, False)
 
-    if not _os.path.isfile( processName):
+    if not os.path.isfile( processName):
         print( "OtherUtils.assertProcessRunning: %s does not exist" % processName)
         return (False, False)
         
-    if _os.system( "%s &" % processName):
+    if os.system( "%s &" % processName):
         print( "OtherUtils.assertProcessRunning: failed to launch %s" % processName)
         return (False, False)
 
@@ -202,9 +199,9 @@ def assertProcessRunning(processName):
             # we need some extra time. The process appears in
             # the process list but is not active
             #
-            _time.sleep( 3) 
+            time.sleep( 3) 
             return (True, True)
-        _time.sleep( 0.1)
+        time.sleep( 0.1)
         if count > 15:
             print( "OtherUtils.assertProcessRunning: %s does not start in time " % processName)
             return ( False, False)
@@ -243,6 +240,16 @@ def findProcessByName( cmdLinePattern):
             if elm.find( cmdLinePattern) != -1:
                 return True
     return False
+
+
+def killProcess( processName):
+    p = subprocess.Popen(['ps', '-Af'], stdout=subprocess.PIPE)
+    out, err = p.communicate()
+    for line in out.splitlines():
+        if processName in line:
+            pid = int(line.split(None)[1])
+            os.kill(pid, signal.SIGKILL)
+    return 
 
 def getHostname():
     '''Return the hostname, short form, e.g.: haspp08 '''
@@ -292,7 +299,7 @@ def _inkeyExitHandler():
     if not _initInkey:
         return
     _initInkey = False
-    _termios.tcsetattr( _sys.stdin.fileno(), _termios.TCSADRAIN, _initInkeyOldTermAttr)
+    _termios.tcsetattr( sys.stdin.fileno(), _termios.TCSADRAIN, _initInkeyOldTermAttr)
     return
 
 def inkey( resetTerminal = None):
@@ -315,12 +322,12 @@ def inkey( resetTerminal = None):
     import atexit as _atexit
     import termios as _termios
 
-    if _os.isatty( 1) == 0:
+    if os.isatty( 1) == 0:
         return -1
 
     if resetTerminal and _initInkey:
         _initInkey = False
-        _termios.tcsetattr( _sys.stdin.fileno(), _termios.TCSADRAIN, _initInkeyOldTermAttr)
+        _termios.tcsetattr( sys.stdin.fileno(), _termios.TCSADRAIN, _initInkeyOldTermAttr)
         return -1
 
     #
@@ -329,8 +336,8 @@ def inkey( resetTerminal = None):
     #
     if not _initInkey:
         _initInkey = True
-        _initInkeyOldTermAttr = _termios.tcgetattr( _sys.stdin.fileno())
-        new = _termios.tcgetattr( _sys.stdin.fileno())
+        _initInkeyOldTermAttr = _termios.tcgetattr( sys.stdin.fileno())
+        new = _termios.tcgetattr( sys.stdin.fileno())
         new[3] = new[3] & ~_termios.ICANON & ~_termios.ECHO
         #
         # VMIN specifies the minimum number of characters to be read
@@ -341,10 +348,10 @@ def inkey( resetTerminal = None):
         # the unit of VTIME is 0.1 s. 
         #
         new[6] [_termios.VTIME] = 1
-        _termios.tcsetattr( _sys.stdin.fileno(), _termios.TCSADRAIN, new)
+        _termios.tcsetattr( sys.stdin.fileno(), _termios.TCSADRAIN, new)
         _atexit.register( _inkeyExitHandler)
 	    
-    key = _sys.stdin.read(1)
+    key = sys.stdin.read(1)
     if( len( key) == 0):
         key = -1
     else:
@@ -369,12 +376,12 @@ def launchGui():
     gui.show()
     app.exec_()
 
-    #_sys.exit( app.exec_())
+    #sys.exit( app.exec_())
 
 def prtc(): 
-    _sys.stdout.write( "Prtc ")
-    _sys.stdout.flush()
-    _sys.stdin.readline()
+    sys.stdout.write( "Prtc ")
+    sys.stdout.flush()
+    sys.stdin.readline()
 
 def xMax( scan):
     '''    
