@@ -1,39 +1,29 @@
 #!/usr/bin/env python
 '''
-this module handles the access via zmq
-Server: 
-  + pyspMonitor
-Client: 
-  + spock macro
-  + any python script
+this module handles the access from remote:
+  - this caan be a client using toPyspMonitor() and ZMQ
+  - or pyspDoor via a queue
+  
+Further documentation
 
-Functions
-
-  - toPyspMonitor() sends the request
-    handled in pyspMonitorClass.py
-      cb_timerZMQ()
-            msg = self.sckt.recv()
-            hsh = json.loads( msg)
-            ...
-            argout = PySpectra.zmqIfc.execHsh( hsh)
-            msg = json.dumps( argout)
-            self.sckt.send( msg)
-  - isPyspMonitorAlive()
-  - execHsh()
-
+  PySpectra.zmqIfc.toPyspMonitor?
+  PySpectra.zmqIfc.execHsh?
+  PySpectra.zmqIfc.isPyspMonitorAlive?
+---
 '''
 import PyTango
 import time
 import PySpectra 
 import PySpectra.GQE as GQE
-
+import PySpectra.utils as utils
 
 def execHsh( hsh): 
     '''
-    this function executes dictionaries which are received from 
-      - ZMQ, from another client calling toPyspMonitor()
-      - Queue, from pyspDoor
-      - from an application directly (to simulate the to toPyspMonitor() interface
+    this function executes dictionaries which are received 
+      - from another client which called toPyspMonitor() to send
+        a dictionary via ZMQ to pyspMonitor.py, specific: cb_timerZMQ()
+      - from Queue, from pyspDoor
+      - from an application directly, maybe to simulation the toPyspMonitor interface
 
      hsh: 
        commands, list of commands: PySpectra.ipython.ifc?
@@ -64,7 +54,7 @@ def execHsh( hsh):
          { 'command': ['setArrowMisc sig_gen hide']}
            handle the arrow pointing to a position defined e.g. by mvsa
 
-         {'command': [u'setTitle ascan exp_dmy01 0.0 1.0 3 0.2']}
+         {'command': [u'setTitle "ascan exp_dmy01 0.0 1.0 3 0.2"']}
            set the title for the whole widget
          {'command': [u'setComment "tst_01366.fio, Wed Dec 18 10:02:09 2019"']}
            set the comment for the whole widget
@@ -234,16 +224,16 @@ def execHsh( hsh):
 
 def toPyspMonitor( hsh, node = None):
     '''
-    Send a dictionary to pyspMonitor
+    Send a dictionary to pyspMonitor. 
+    The dictionary syntax can be found here 
+      PySpectra.zmqIfc.execHsh?
 
-    It is received in 
-      /home/kracht/Misc/pySpectra/PySpectra/pyspMonitorClass.py
-        cb_timerZMQ() 
-        --> zmqIfc.execHsh()
+    Example: 
+      (status, wasLaunched) = PySpectra.utils.assertPyspMonitorRunning()
 
-    The result is returned in a dictionary
-
-    For details see the docu of execHsh()
+      ret = PySpectra.zmqIfc.toPyspMonitor( {'command': ['delete', 'cls', 'create s1', 'display']})
+      if ret[ 'result'] != 'done': 
+          print( "error" % ret[ 'result'])
     ---
     '''
 
@@ -432,4 +422,21 @@ def _getDoorState():
     door = GQE.InfoBlock.getDoorProxy()
     argout = "%s" % repr( door.state())
     return argout.split( '.')[-1]
+
+#
+# I don't know whether the following function is really needed - 
+# syntactical sugar perhaps
+#
+def assertPyspMonitorRunning(): 
+    """
+    returns (status, wasLaunched)
+    """
+    return utils.assertProcessRunning( "/usr/bin/pyspMonitor.py")
+
+
+def killPyspMonitor():
+    ''' 
+    kill processes named /usr/bin/pyspMonitor.py
+    ''' 
+    return utils.killProcess( '/usr/bin/pyspMonitor.py')
 

@@ -1,23 +1,9 @@
 #!/usr/bin/env python
 '''
-An interface to PySpectra, used by 
-
+A command-line-like interface to PySpectra, used by 
   - pyspMonitor.py to execute the commands received via ZMQ 
-    pyspMonitorClass.py
-      zmqIfc.execHsh( hsh)
-        zmqIfc.execCommand( hsh): 
-          ifc.command( cmd)
-
-  - pyspDoor.py
-      sendHshQueue() 
-        pyspMonitorClass.py
-          execHshLocal( hsh)
-            zmqIfc.execHsh( hsh)
-              zmqIfc.execCommand( hsh): 
-                ifc.command( cmd)
-
-  - ipython, details can be found here: 
-      /home/kracht/Misc/pySpectra/PySpectra/__init__.py
+  - pyspDoor.py, via a queue
+  - ipython command line, magic commands
 
   Commands: 
     antiderivative src [target] 
@@ -58,6 +44,27 @@ An interface to PySpectra, used by
     y2my
       y to minus y
 '''
+#
+#
+# The applictions that call ifc.command():
+#
+#  - pyspMonitor.py to execute the commands received via ZMQ 
+#    pyspMonitorClass.py
+#      zmqIfc.execHsh( hsh)
+#        zmqIfc.execCommand( hsh): 
+#          ifc.command( cmd)
+#
+#  - pyspDoor.py
+#      sendHshQueue() 
+#        pyspMonitorClass.py
+#          execHshLocal( hsh)
+#            zmqIfc.execHsh( hsh)
+#              zmqIfc.execCommand( hsh): 
+#                ifc.command( cmd)
+#
+#  - ipython, details can be found here: 
+#      /home/kracht/Misc/pySpectra/PySpectra/__init__.py
+#
 import itertools
 import PySpectra
 import PySpectra.mtpltlb.graphics as _mpl_graphics # to create postscript
@@ -284,6 +291,14 @@ def display( line):
     return "done"
 
 def delete( line):
+    '''
+    delete s1 s2
+      deletes scans s1 and s2
+
+    delete
+      deletes all scans
+
+    '''
     lst = None
     if line: 
         lst = line.split(' ')

@@ -29,6 +29,7 @@ python ./test/testGQE.py testGQE.testMotorArrowCurrentAndSetPoint
 python ./test/testGQE.py testGQE.testMotorArrowMisc
 python ./test/testGQE.py testGQE.testCheckTargetWithinLimits
 python ./test/testGQE.py testGQE.testColorSpectraToPysp
+python ./test/testGQE.py testGQE.testAddText
 '''
 import sys, time
 import PyTango
@@ -229,7 +230,7 @@ class testGQE( unittest.TestCase):
         PySpectra.cls()
         GQE.delete()
         try:
-            scan = GQE.Scan( name = 't1', x = [0, 1, 2, 3, 4])
+            scan = GQE.Scan( name = 't1', x = [0, 1, 2, 3, 4], at = "(2, 2, 4)")
         except ValueError, e:
             self.assertEqual( str( e), "GQE.Scan.__init__(): if 'x' or 'y' then both have to be supplied")
         try:
@@ -256,6 +257,9 @@ class testGQE( unittest.TestCase):
         self.assertEqual( scan.y[4], 12)
 
         self.assertEqual( scan.currentIndex, 4)
+
+        GQE.info( "t1")
+        GQE.info( ["t1"])
 
         print "testGQE.test_createScanByData, DONE"
         
@@ -999,19 +1003,27 @@ class testGQE( unittest.TestCase):
         return 
 
 
-    def testColorSpectraToPysp( self): 
+    def testAddText( self): 
 
-        print( "testGQE.testColorSpectraToPysp")
+        print( "testGQE.testAddText")
 
-        self.assertEqual( GQE.colorSpectraToPysp( 1), 'black')
-        self.assertEqual( GQE.colorSpectraToPysp( 2), 'red')
-        self.assertEqual( GQE.colorSpectraToPysp( 3), 'green')
-        self.assertEqual( GQE.colorSpectraToPysp( 4), 'blue')
-        self.assertEqual( GQE.colorSpectraToPysp( 5), 'cyan')
-        self.assertEqual( GQE.colorSpectraToPysp( 6), 'yellow')
-        self.assertEqual( GQE.colorSpectraToPysp( 7), 'magenta')
-        self.assertEqual( GQE.colorSpectraToPysp( 123), 'black')
-        
+        g = utils.createGauss()
+        g.addText( name = "testText", x = 0.2, y = 0.1, color = 'magenta', 
+                   fontSize = 20, text = "dies ist ein addText test text")
+
+        self.assertEqual( len( g.textList), 1)
+        txt = g.textList[0]
+        self.assertEqual( txt.name, "testText")
+        self.assertEqual( txt.hAlign, "left")
+        self.assertEqual( txt.vAlign, "top")
+        self.assertEqual( txt.color, "magenta")
+        self.assertEqual( txt.fontSize, 20)
+        self.assertEqual( txt.x, 0.2)
+        self.assertEqual( txt.y, 0.1)
+        self.assertEqual( txt.NDC, True)
+
+        g.display()
+        PySpectra.processEventsLoop( 1)
         return 
 if __name__ == "__main__":
     unittest.main()

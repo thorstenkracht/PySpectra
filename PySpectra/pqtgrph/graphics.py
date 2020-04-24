@@ -1560,10 +1560,8 @@ def display( nameList = None):
 
         #print( "+++pqtgraphics.display: data %s " % repr( scan.y[:(scan.currentIndex + 1)]))
 
-        print( "+++pqtgraphics-6")
         scan.plotDataItem.setData( scan.x[:(scan.currentIndex + 1)], 
                                    scan.y[:(scan.currentIndex + 1)])
-        print( "+++pqtgraphics-7")
         #
         # we can introduce a padding with autoRange() but the
         # paading is on both ends of the plot.

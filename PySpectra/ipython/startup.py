@@ -1,11 +1,42 @@
 #!/usr/bin/env python
 '''
-This file defines those magic commands that operate PySpectra from ipython. 
+---
+*
+* PySpectra magic commands in ipython
+* -----------------------------------
+* This feature has been implemented for testing purposes.
+*   - It allows you to try commands before you use them in 
+*     toPyspMonitor().
+*   - you can also use this interface to discover things, 
+*     like the members of objects or the available functions.
+* 
+* To setup PySpectra magic commands in ipython:
+* ---------------------------------------------
+*
 
-How it is used can be found here: 
-   /home/kracht/Misc/pySpectra/PySpectra/__init__.py
+Step 1: Create a empty profile: 
+
+  $ ipython --profile=PySpectra
+  In [1]: exit
+
+Step 2: Edit the startup file: 
+
+  The file ~/.ipython/profile_PySpectra/startup/00-start.py
+  shoud look like:
+    #!/usr/bin/env python
+    # PySpectra macros
+    import PySpectra.ipython.startup 
+
+Step 3: use it
+
+  $ ipython --profile=PySpectra
+  In [1]: create t1
+  In [2]: display
+  In [3]: o = PySpectra.GQE.getGqe( "t1")
+  In [4]: dir( o)
 
 For the list of commands: see pyspectra_help() 
+---
 '''
 from IPython.core.magic import (register_line_magic)
 from IPython.core.getipython import get_ipython
@@ -336,7 +367,7 @@ def sl4(line):
     g.y = 1/(sigma * np.sqrt(2 * np.pi)) * \
           np.exp( - (g.y - mu)**2 / (2 * sigma**2))
 
-pyspectra_help("")        
+#pyspectra_help("")        
 
 # We delete these to avoid name conflicts for automagic to work
 del antiderivative

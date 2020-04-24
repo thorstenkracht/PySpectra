@@ -11,6 +11,7 @@ import PyTango as _PyTango
 import PySpectra 
 import PySpectra.definitions as definitions 
 import PySpectra.utils as utils
+import PySpectra.calc as calc
 import pyqtgraph as pg
 import time
 import HasyUtils as _HasyUtils
@@ -96,17 +97,23 @@ class InfoBlock( object):
 
 class Text(): 
     '''
-    Texts belong to a Scan, created by Scan.addText(), they are stored in Scan.textList.
-    text: 'someString'
-    x: 0.5
-    y: 0.5
-    hAlign: 'left', 'right', 'center'
-    vAlign: 'top', 'bottom', 'center'
-    color: 'red', 'green', 'blue', 'yellow', 'cyan', 'magenta', 'black'
-    fontSize: e.g. 12 or None
-      if None, the fontsize is chosen automatically depending on the number of plots
-    NDC: True, normalized device coordinates
-    tag = 'n.n.', e.g. 'ssa_result'
+    Texts are an instance of GQE.Text(). 
+
+    They belong to a Scan, they are created by Scan.addText(), they are stored in Scan.textList.
+
+    Scan.addText() passes the arguments to Text(). Here are the arguments with their defaults: 
+      name: 'NoName'
+      text: 'Empty'
+      x: 0.5
+      y: 0.5
+      hAlign: 'left' (default), 'right', 'center'
+      vAlign: 'top' (default), 'bottom', 'center'
+      color: 'red', 'green', 'blue', 'yellow', 'cyan', 'magenta', 'black' (default)
+      fontSize: e.g. 12 or None
+        if None, the fontsize is chosen automatically depending on the number of plots
+      NDC: True, normalized device coordinates, i.e. x, y are from [0, 1]
+      tag = 'n.n.', e.g. 'ssa_result'
+      ---
     '''
     def __init__( self, name = "NoName", text = 'Empty', x = 0.5, y = 0.5, 
                   hAlign = 'left', vAlign = 'top', color = 'black', fontSize = None,
@@ -144,7 +151,7 @@ class Scan( object):
     PySpectra.Scan( name = 'name', reUse = True, xArr, y = yArr)
       re-use the existing data struckture, useful for MCA scans
 
-    The attributes: 
+    The attributes of the constructor: 
         autoscaleX, 
         autoscaleY
                     default: True
@@ -156,7 +163,7 @@ class Scan( object):
         fileName:   string
         flagMCA     data from MCA, don't use for movements
         motorNameList: 
-                    from moveMotor() or pyspDoor
+                    used, if called from moveMotor() or pyspDoor
         showGridX, 
         showGridY:  True/False
         lineColor:  'red', 'green', 'blue', 'yellow', 'cyan', 'magenta', 'black', 'NONE'
@@ -178,6 +185,10 @@ class Scan( object):
         xLog, 
         yLog:       bool
                     def. False
+
+    To add texts
+      Scan.addText()
+
     '''
     #
     # this class variable stores the Gui, needed to configure the motorsWidget, 
@@ -527,9 +538,7 @@ class Scan( object):
             #
             # the string '(2, 3, 4)' -> list of ints [1, 2, 3]
             #
-            if type( atStr) is tuple:
-                self.at = list( atStr)
-            elif type( atStr) is list:
+            if type( atStr) is tuple or type( atStr) is list:
                 self.at = list( atStr)
             else:
                 lstStr = atStr.strip()[1:-1].split( ',')
@@ -1023,7 +1032,7 @@ class Scan( object):
             lstX = list( reversed( lstX))
             lstY = list( reversed( lstY))
                 
-        hsh = utils.ssa( _np.array( lstX), _np.array( lstY))
+        hsh = calc.ssa( _np.array( lstX), _np.array( lstY))
 
         if hsh[ 'status'] != 1:
             if logWidget is not None:

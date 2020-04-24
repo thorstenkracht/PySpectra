@@ -11,46 +11,41 @@ $ pyspViewer.py
 
 $ pyspMonitor.py
   successor of the SardanaMonitor
-    the function PySpectra.zmqIfc.toPyspMonitor()
-    communicates with the pyspMonitor via ZMQ
 
-# TngGui.py
-  successor of TngToog.py
+$ TngGui.py
+  successor of TngTool.py
+
 *
-* To use PySpectra from Python:
-* -----------------------------
+* Send data and commands to pyspMonitor
+* -------------------------------------
 *
-Look at some examples using pyspViewer->Examples then
-view the code pyspViewer->Examples->View Code
+  In [1]: import PySpectra.zmqIfc
+  In [2]: PySpectra.zmqIfc?
+  In [3]: PySpectra.zmqIfc.toPyspMonitor?
+  In [4]: PySpectra.zmqIfc.execHsh?
+
+*
+* PySpectra Python module
+* -----------------------
+*
+Execute some examples using pyspViewer->Examples.
+Afterwards you can look at the code following pyspViewer->Examples->View Code
 
 In addition, start ipython and
 
   import PySpectra 
   In [1]: import PySpectra
-  In [2]: PySpectra?
-  In [3]: dir( PySpectra) 
+  In [2]: import PySpectra.GQE
+  In [3]: PySpectra?
   In [4]: PySpectra.GQE.Scan?
+  In [5]: PySpectra.GQE.Image?
+
 *
-* To use PySpectra in ipython:
-* ----------------------------
-* Create a profile: 
-
-  $ ipython --profile=PySpectra
-  In [1]: exit
-
-Then edit the startup file: 
-  ~/.ipython/profile_PySpectra/startup/00-start.py
-to look like 
-  #!/usr/bin/env python
-  # PySpectra macros
-  import PySpectra.ipython.startup 
-
-then again
-$ ipython --profile=PySpectra
-In [1]: create t1
-In [2]: display
-In [3]: o = PySpectra.GQE.getGqe( "t1")
-In [4]: dir( o)
+* PySpectra magic commands in ipython:
+* -----------------------------------
+* 
+In [1]: import PySpectra.ipython.startup
+In [2]: PySpectra.ipython.startup?
 
 '''
 
