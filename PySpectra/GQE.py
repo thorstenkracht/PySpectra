@@ -1124,7 +1124,7 @@ class Scan( object):
             lstY = list( reversed( lstY))
                 
         try: 
-            message, xpos, xpeak, xcms, xcen = utils.fastscananalysis( lstX, lstY, mode)
+            message, xpos, xpeak, xcms, xcen = calc.fastscananalysis( lstX, lstY, mode)
         except Exception as e:
             print( "GQE.fsa: trouble with %s" % self.name)
             print( repr( e))
