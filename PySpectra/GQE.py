@@ -5,7 +5,7 @@ GQE - contains the Scan() class and functions to handle scans:
 '''
 # 1.8.2
 
-import numpy as _np
+import numpy as np
 from PyQt4 import QtCore, QtGui
 import PyTango as _PyTango
 import PySpectra 
@@ -360,9 +360,9 @@ class Scan( object):
         if 'y' not in kwargs:
             raise ValueError( "GQE.Scan._createScanFromData: 'y' not supplied")
 
-        self.x = _np.copy( kwargs[ 'x'])
+        self.x = np.copy( kwargs[ 'x'])
         del kwargs[ 'x']
-        self.y = _np.copy( kwargs[ 'y'])
+        self.y = np.copy( kwargs[ 'y'])
         del kwargs[ 'y']
         if len( self.x) != len( self.y):
             raise ValueError( "GQE.Scan._createScanFromData: 'x' and 'y' differ in length %d (x) %d (y)" % (len( self.x), len( self.y)))
@@ -415,19 +415,19 @@ class Scan( object):
                 del kwargs[ attr]
 
         if 'dType' not in kwargs:
-            self.dType = _np.float64
+            self.dType = np.float64
         else:
             self.dType = kwargs[ 'dType']
             del kwargs[ 'dType']
         #
         # the 1.8 version of linspace does not allow to specify the dType
         # 
-        self.x = _np.linspace( self.xMin, self.xMax, self.nPts)
+        self.x = np.linspace( self.xMin, self.xMax, self.nPts)
         if self.x.dtype != self.dType:
-            self.x = _np.astype( self.dType)
-        self.y = _np.linspace( self.xMin, self.xMax, self.nPts)
+            self.x = np.astype( self.dType)
+        self.y = np.linspace( self.xMin, self.xMax, self.nPts)
         if self.y.dtype != self.dType:
-            self.y = _np.astype( self.dType)
+            self.y = np.astype( self.dType)
 
         if self.yMin is None:
             self.yMin = self.xMin
@@ -570,10 +570,10 @@ class Scan( object):
             raise ValueError( "GQE.Scan.setLimits: %s len(x) == 0" % (self.name))
         if len( self.y) == 0:
             raise ValueError( "GQE.Scan.setLimits: %s len(y) == 0" % (self.name))
-        self.xMin = _np.min( self.x)
-        self.xMax = _np.max( self.x)
-        self.yMin = _np.min( self.y)
-        self.yMax = _np.max( self.y)
+        self.xMin = np.min( self.x)
+        self.xMax = np.max( self.x)
+        self.yMin = np.min( self.y)
+        self.yMax = np.max( self.y)
         self.yMax += (self.yMax - self.yMin)*0.05
         return 
 
@@ -744,14 +744,14 @@ class Scan( object):
         returns the minimum of the y-values
         '''
         # currentIndex refers to the last valid x-, y-value; nPts == currentIndex + 1
-        return _np.min( self.y[:self.currentIndex + 1])
+        return np.min( self.y[:self.currentIndex + 1])
 
     def getYMax( self): 
         '''
         returns the maximum of the y-values
         '''
         # currentIndex refers to the last valid x-, y-value; nPts == currentIndex + 1
-        return _np.max( self.y[:self.currentIndex + 1])
+        return np.max( self.y[:self.currentIndex + 1])
 
     def setArrowCurrent( self, x): 
         '''
@@ -982,8 +982,8 @@ class Scan( object):
         '''
         prepare for log display: remove points with y <= 0. 
         '''
-        x = _np.copy( self.x)
-        y = _np.copy( self.y)
+        x = np.copy( self.x)
+        y = np.copy( self.y)
         count = 0
         for i in range( len( self.y)):
             if self.y[i] <= 0.:
@@ -991,8 +991,8 @@ class Scan( object):
             x[count] = self.x[i]
             y[count] = self.y[i]
             count += 1
-        self.x = _np.copy( x[:count])
-        self.y = _np.copy( y[:count])
+        self.x = np.copy( x[:count])
+        self.y = np.copy( y[:count])
         return 
 
     def ssa( self, logWidget = None):
@@ -1032,7 +1032,7 @@ class Scan( object):
             lstX = list( reversed( lstX))
             lstY = list( reversed( lstY))
                 
-        hsh = calc.ssa( _np.array( lstX), _np.array( lstY))
+        hsh = calc.ssa( np.array( lstX), np.array( lstY))
 
         if hsh[ 'status'] != 1:
             if logWidget is not None:
@@ -1076,7 +1076,7 @@ class Scan( object):
         mu = hsh[ 'midpoint'] 
         sigma = hsh[ 'fwhm']/2.3548
         
-        res.y = a/(sigma*_np.sqrt(2.*_np.pi))*_np.exp( -(res.x-mu)**2/(2*sigma**2))
+        res.y = a/(sigma*np.sqrt(2.*np.pi))*np.exp( -(res.x-mu)**2/(2*sigma**2))
         res.overlay = self.name
         res.useTargetWindow = True
         return 
@@ -1585,7 +1585,7 @@ def _insertFioObj2Image( fioObj):
     for elm in [ 'xMin', 'xMax', 'yMin', 'yMax']: 
         fioObj.parameters[ elm] = float( fioObj.parameters[ elm])
 
-    data = _np.array( fioObj.columns[0].x).reshape(  fioObj.parameters[ 'width'],  fioObj.parameters[ 'height'])
+    data = np.array( fioObj.columns[0].x).reshape(  fioObj.parameters[ 'width'],  fioObj.parameters[ 'height'])
     Image( name = fioObj.motorName, data = data, 
            width = fioObj.parameters[ 'width'], height = fioObj.parameters[ 'height'], 
            xMin = fioObj.parameters[ 'xMin'], xMax = fioObj.parameters[ 'xMax'], 
@@ -1783,7 +1783,7 @@ def _isArrayLike( x):
     '''    
     returns True, if y is a list or a numpy array
     '''
-    if type(x) is list or type(x) is _np.ndarray:
+    if type(x) is list or type(x) is np.ndarray:
         return True
     else:
         return False
@@ -2207,25 +2207,38 @@ class Image( object):
         image data is passed through the keyword data. they are
         copied to self.data as they are
         '''
+        print( "+++GQE-1")
+
         if 'data' not in kwargs: 
             raise ValueError( "GQE.Image.createImageFromData: %s no 'data'" % ( self.name))
 
         self.data = kwargs[ 'data'][:]
         del kwargs[ 'data']
-
+        print( "+++GQE-2")
         #
-        # to understand '+ 1'consider : x [-2, 1], width 100
-        #  if x == 1 -> ix == 100, so we need '+ 1'
+        # if data come as a list, convert them to numpy arrays
         #
-        if self.width is not None and self.width != self.data.shape[0]: 
-            raise ValueError( "GQE.Image.createImageFromLimits: width %d != shape[0] %d" % 
-                              (self.width, self.data.shape[0]))
-        if self.height is not None and self.height != self.data.shape[1]: 
-            raise ValueError( "GQE.Image.createImageFromLimits: height %d != shape[1] %d" % 
-                              (self.height, self.data.shape[1]))
+        if type( self.data) is list: 
+            for kw in [ 'width', 'height']: 
+                if not hasattr( self, kw): 
+                    raise ValueError( "GQE.Image.createImageFromData: %s no %s" % ( self.name, kw))
+            np_array = np.asarray( self.data, np.float64)
+            #self.data = np_array.reshape( self.width, self.height).T 
+            self.data = np_array.reshape( self.width, self.height)
 
-        self.width = self.data.shape[0]
-        self.height = self.data.shape[1]
+        elif type( self.data) is np.ndarray: 
+            if self.width is not None and self.width != self.data.shape[0]: 
+                raise ValueError( "GQE.Image.createImageFromLimits: width %d != shape[0] %d" % 
+                                  (self.width, self.data.shape[0]))
+            if self.height is not None and self.height != self.data.shape[1]: 
+                raise ValueError( "GQE.Image.createImageFromLimits: height %d != shape[1] %d" % 
+                                  (self.height, self.data.shape[1]))
+            self.width = self.data.shape[0]
+            self.height = self.data.shape[1]
+
+        else: 
+            raise ValueError( "GQE.Image.createImageFromData: wrong data type %s" % type( self.data))
+
 
         if self.xMin is None: 
             self.xMin = 0
@@ -2244,7 +2257,7 @@ class Image( object):
             if not hasattr( self, kw): 
                 raise ValueError( "GQE.Image.createImageFromLimits: %s no %s" % ( self.name, kw))
 
-        self.data  = _np.zeros( ( self.width, self.height))
+        self.data  = np.zeros( ( self.width, self.height))
         #
         # fill the righ column with a linear gradient, max: estimatedMax, to 
         # create some dynamical range for the incoming data
@@ -2350,8 +2363,8 @@ class Image( object):
             self.yMin = targetY - deltaY/8.
             self.yMax = targetY + deltaX/8.
 
-        r1 = _np.linspace( self.xMin, self.xMax, self.width)
-        r2 = _np.linspace( self.yMin, self.yMax, self.height)
+        r1 = np.linspace( self.xMin, self.xMax, self.width)
+        r2 = np.linspace( self.yMin, self.yMax, self.height)
         for i in range( self.width):
             for j in range( self.height):
                 res = self.mandelbrot(r1[i] + 1j*r2[j], self.maxIter)
@@ -2374,14 +2387,14 @@ class Image( object):
         
         #print( "GQE.mandelbrot_numpy: xMin %g, xMax %g, width %d" % (self.xMin, self.xMax, self.width))
         #print( "GQE.mandelbrot_numpy: yMin %g, yMax %g, height %d" % (self.yMin, self.yMax, self.height))
-        r1 = _np.linspace( self.xMin, self.xMax, self.width, dtype=_np.float64)
-        r2 = _np.linspace( self.yMin, self.yMax, self.height, dtype=_np.float64)
+        r1 = np.linspace( self.xMin, self.xMax, self.width, dtype=np.float64)
+        r2 = np.linspace( self.yMin, self.yMax, self.height, dtype=np.float64)
         c = r1 + r2[:,None]*1j
 
-        output = _np.zeros(c.shape)
-        z = _np.zeros(c.shape, _np.complex128)
+        output = np.zeros(c.shape)
+        z = np.zeros(c.shape, np.complex128)
         for it in range( self.maxIter):
-            notdone = _np.less(z.real*z.real + z.imag*z.imag, 4.0)
+            notdone = np.less(z.real*z.real + z.imag*z.imag, 4.0)
             output[notdone] = it
             z[notdone] = z[notdone]**2 + c[notdone]
             if (it % 20) == 0: 

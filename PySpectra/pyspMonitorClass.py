@@ -27,8 +27,18 @@ import zmq, json, socket
 import tngGui.lib.tngGuiClass
 import tngGui.lib.devices as devices
 
-updateTime = 0.1
-
+# 
+# Speed 
+# -----
+# notice that the value of TIMEOUT_ZMQ is not critical because  
+# inside the callback function we loop on the socket as long 
+# as there is input.
+#
+# the test:
+#   python ./test/testZmqIfc.py testZmqIfc.testToPyspMonitor4
+#   take 4s, for (50, 50) for TIMEOUT_ZMQ 1 to 100
+TIMEOUT_ZMQ = 100
+TIMEOUT_REFRESH_MAIN = 100
 #
 #
 #
@@ -64,7 +74,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         if not self.flagNoDoor:
             self.updateTimer = QtCore.QTimer(self)
             self.updateTimer.timeout.connect( self.cb_refreshMain)
-            self.updateTimer.start( int( updateTime*1000))
+            self.updateTimer.start( int( TIMEOUT_REFRESH_MAIN))
             try: 
                 if len( HasyUtils.getDoorNames()) == 0:
                     print( "pyspMonitor.__init__: no doors")
@@ -98,7 +108,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             self.sckt.bind( "tcp://%s:7779" % socket.gethostbyname( socket.getfqdn()))
             self.timerZMQ = QtCore.QTimer( self)
             self.timerZMQ.timeout.connect( self.cb_timerZMQ)
-            self.timerZMQ.start(100)
+            self.timerZMQ.start( TIMEOUT_ZMQ)
         except Exception as e:
             print( "pyspMonitorClass.setupZMQ(): ZMQ error (json-dict receiver)")
             print( "message: %s" % repr( e))
@@ -107,28 +117,35 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         return 
 
     def cb_timerZMQ( self):
-        #
-        # checks whether there is a request on the ZMQ socket, 
-        # from toPyspMonitor()
-        #   - mvsa or another client fetches data from the pyspMonitor
-        #   - a client sends data to be displayed by the pyspMonitor
-        #
+        """
+        checks whether there is a request on the ZMQ socket, 
+        from toPyspMonitor()
+         - mvsa or another client fetches data from the pyspMonitor
+         - a client sends data to be displayed by the pyspMonitor
+        """
         self.timerZMQ.stop()
-        lst = zmq.select([self.sckt], [], [], 0.1)
+        lst = zmq.select([self.sckt], [], [], 0.01)
         argout = {}
-        if self.sckt in lst[0]:
+        #
+        # if we received some input, we do another select to see, if 
+        # more input is arriving. this way the pyspMonitor appears  
+        # to be very responsive
+        #
+        while self.sckt in lst[0]:
             msg = self.sckt.recv()
             hsh = json.loads( msg)
+            #print( "hsh %s " % repr( hsh))
             if self.flagIsBusy:
                 argout = { 'result': "pyspMonitor: rejecting dct while scanning"}
             else: 
                 argout = zmqIfc.execHsh( hsh)
             msg = json.dumps( argout)
             self.sckt.send( msg)
+            lst = zmq.select([self.sckt], [], [], 0.1)
         #
         # mandelbrot 20x20: if we change 10 to 1, time from 15s to 10s
         #
-        self.timerZMQ.start(10)
+        self.timerZMQ.start( TIMEOUT_ZMQ)
 
     def cb_helpMove(self):
         QtGui.QMessageBox.about(self, self.tr("Help Move"), self.tr(
@@ -261,4 +278,4 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         except queue.Empty as e:
             pass
 
-        self.updateTimer.start( int( updateTime*1000))
+        self.updateTimer.start( TIMEOUT_REFRESH_MAIN)

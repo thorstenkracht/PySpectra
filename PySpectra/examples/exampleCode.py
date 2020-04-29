@@ -14,6 +14,7 @@ import numpy as np
 import os, time, math
 import PySpectra 
 import PySpectra.zmqIfc as zmqIfc
+import PySpectra.utils as utils
 import PySpectra.GQE as GQE
 
 
@@ -239,11 +240,8 @@ def example_Overlay2():
     GQE.setTitle( "Overlay 2 Scans")
     GQE.setComment( "no comment")
     PySpectra.setWsViewport( "DINA5")
-    g = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
-                    lineColor = 'red')
-    mu = 0.
-    sigma = 1.
-    g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2.*sigma**2))
+    g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
+                           lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
     t1 = GQE.Scan( name = "sinus", lineColor = 'blue', xMin = -5, xMax = 5., 
                     yMin = -1.5, yMax = 1.5, yLabel = 'sin')
     t1.y = np.sin( t1.x)
@@ -390,11 +388,8 @@ def example_GaussAndSinusOverlay():
     GQE.delete()
     GQE.setTitle( "2 Overlay Scans")
     PySpectra.setWsViewport( "DINA5")
-    g = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
-                    lineColor = 'red')
-    mu = 0.
-    sigma = 1.
-    g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2.*sigma**2))
+    g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
+                           lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
     t1 = GQE.Scan( name = "sinus", lineColor = 'blue', xMin = -5, xMax = 5., 
                     yMin = -1.5, yMax = 1.5, yLabel = 'sin')
     t1.y = np.sin( t1.x)
@@ -410,10 +405,8 @@ def example_Gauss():
     GQE.setTitle( "A simple Gauss curve")
     GQE.setComment( "Can be used with SSA, calculating derivative and so")
     PySpectra.setWsViewport( "DINA5")
-    g = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
-    mu = 0.
-    sigma = 1.
-    g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2*sigma**2))
+    g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
+                           lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
     PySpectra.display()
     return 
 
@@ -460,11 +453,9 @@ def example_GaussNoisy():
     GQE.setTitle( "a noisy Gauss")
     GQE.setComment( "See how SSA behaves with noisy data")
     PySpectra.setWsViewport( "DINA5")
-    g = GQE.Scan( name = "gauss_noisy", xMin = -5., xMax = 5., nPts = 101)
-    mu = 0.
-    sigma = 1.
-    g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2*sigma**2)) + \
-          np.random.random_sample( (len( g.x), ))*0.05
+    g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
+                           lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
+    g.y += np.random.random_sample( (len( g.x), ))*0.05
     PySpectra.display()
     return 
 
@@ -639,16 +630,14 @@ def example_Overlay2BothLog():
     GQE.setTitle( "2 Overlay Scans, both with log scale")
     GQE.setComment( "both axes have different ranges")
     PySpectra.setWsViewport( "DINA5")
-    g1 = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., 
-                     yLog = True, nPts = 101, lineColor = 'red')
-    mu = 0.
-    sigma = 1.
-    g1.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g1.y-mu)**2/(2.*sigma**2))
-    g2 = GQE.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0.001, 
-                     yLog = True, yMax = 1., nPts = 101, lineColor = 'green')
-    mu = 0.5
-    sigma = 1.2
-    g2.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g2.y-mu)**2/(2.*sigma**2))*100.
+    g1 = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
+                           lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
+    g1.yLog = True
+    g2 = utils.createGauss( name = "gauss2", xMin = -5., xMax = 5., nPts = 101, 
+                           lineColor = 'green', x0 = 0.5, sigma = 1.2, amplitude = 1.)
+    g2.yLog = True
+    g2.yMin = 0.001
+    g2.yMax = 1.
 
     GQE.overlay( "gauss2", "gauss")
 
@@ -660,16 +649,14 @@ def example_Overlay2FirstLog():
     GQE.setTitle( "2 Overlay Scans, first (red) has log scale")
     GQE.setComment( "Sadly, there are no major tick mark strings at the right axis")
     PySpectra.setWsViewport( "DINA5")
-    g1 = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., 
-                     yLog = True, nPts = 101, lineColor = 'red')
-    mu = 0.
-    sigma = 1.
-    g1.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g1.y-mu)**2/(2.*sigma**2))
-    g2 = GQE.Scan( name = "gauss2", xMin = -5., xMax = 5., yLog = False, 
-                    yMax = 1., nPts = 101, lineColor = 'green')
-    mu = 0.5
-    sigma = 1.2
-    g2.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g2.y-mu)**2/(2.*sigma**2))
+
+    g1 = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
+                           lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
+
+    g1.yLog = True
+
+    g2 = utils.createGauss( name = "gauss2", xMin = -5., xMax = 5., nPts = 101, 
+                           lineColor = 'green', x0 = 0.5, sigma = 1.2, amplitude = 1.)
 
     GQE.overlay( "gauss2", "gauss")
 
@@ -681,16 +668,13 @@ def example_Overlay2SecondLog():
     GQE.setTitle( "2 Overlay Scans, 2nd (green) has log scale")
     GQE.setComment( "Sadly, there are no major tick mark strings at the right axis")
     PySpectra.setWsViewport( "DINA5")
-    g1 = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., 
-                     yLog = False, nPts = 101, lineColor = 'red')
-    mu = 0.
-    sigma = 1.
-    g1.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g1.y-mu)**2/(2.*sigma**2))
-    g2 = GQE.Scan( name = "gauss2", xMin = -5., xMax = 5., yMin = 0.001, 
-                     yLog = True, yMax = 1., nPts = 101, lineColor = 'green')
-    mu = 0.5
-    sigma = 1.2
-    g2.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g2.y-mu)**2/(2.*sigma**2))
+
+    g1 = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
+                           lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
+    g2 = utils.createGauss( name = "gauss2", xMin = -5., xMax = 5., nPts = 101, 
+                           lineColor = 'green', x0 = 0.5, sigma = 1.2, amplitude = 1.)
+
+    g2.yLog = True
 
     GQE.overlay( "gauss2", "gauss")
 
@@ -779,13 +763,11 @@ def example_mvsa():
     GQE.delete()
     GQE.setTitle( "Move by Scan Analysis")
     PySpectra.setWsViewport( "DINA5")
-    g = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
-                    lineColor = 'red')
-    mu = 0.
-    sigma = 1.
-    g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2.*sigma**2))
+    g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
+                           lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
     PySpectra.display()
 
+    return 
 '''
 #!/usr/bin/env python
 

@@ -917,7 +917,6 @@ class testGQE( unittest.TestCase):
 
         g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
                                lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
-
         g.x += 50
 
         g.motorNameList = ["eh_mot66"]

@@ -21,6 +21,7 @@ A command-line-like interface to PySpectra, used by
     move s1 51 [flagConfirm]
     moveStart s1 51 [flagConfirm]
       display s1 and move the first motor of s1.motorNameList
+    noop
     overlay s1 s2
       s1 is plotted in the viewport of s2
     read fileName
@@ -130,6 +131,8 @@ def command( line):
             argout = move( lineRest)
         elif lst[0] == 'moveStart':
             argout = moveStart( lineRest)
+        elif lst[0] == 'noop':
+            argout = noop( lineRest)
         elif lst[0] == 'overlay':
             argout = overlay( lineRest)
         elif lst[0] == 'read':
@@ -348,6 +351,14 @@ def moveStart( line):
         if lst[2].upper() == "FALSE": 
             flagConfirm = False
     tangoIfc.moveStart( gqe, float( lst[1]), flagConfirm = flagConfirm)
+    return "done"
+
+def noop( line):
+    '''
+    noop
+
+      no operation
+    '''
     return "done"
 
 def overlay( line):

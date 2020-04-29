@@ -1687,7 +1687,7 @@ class ImageAttributes( QtGui.QMainWindow):
         self.image.maxIter = 512
         self.image.modulo = 512
         self.image.indexRotate = 0
-        self.image.zoom()
+        self.image.zoomMb()
 
         return 
 

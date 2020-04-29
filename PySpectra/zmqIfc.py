@@ -16,17 +16,16 @@ import time
 import PySpectra 
 import PySpectra.GQE as GQE
 import PySpectra.utils as utils
+import numpy as np
 
 def execHsh( hsh): 
     '''
-    this function executes dictionaries which are received 
-      - from another client which called toPyspMonitor() to send
-        a dictionary via ZMQ to pyspMonitor.py, specific: cb_timerZMQ()
-      - from Queue, from pyspDoor
-      - from an application directly, maybe to simulation the toPyspMonitor interface
+    execHsh executes dictionaries which are received 
+      - from toPyspMonitor()
+      - from a Queue, from pyspDoor
+      - from an application directly, maybe to simulate the toPyspMonitor interface
 
-     hsh: 
-       commands, list of commands: PySpectra.ipython.ifc?
+       Command, see PySpectra.ipython.ifc?
          {'command': ['delete']}
            delete all internal data
 
@@ -42,7 +41,8 @@ def execHsh( hsh):
          { 'command': ['setArrowCurrent sig_gen position 1.234']}
          { 'command': ['setArrowCurrent sig_gen show']}
          { 'command': ['setArrowCurrent sig_gen hide']}
-           handle the arrow pointing to the current position
+           handle the arrow pointing to the current position. sig_gen is
+           the Scan containing data from the SignalCounter (MS env. variable)
 
          { 'command': ['setArrowSetPoint sig_gen position 1.234']}
          { 'command': ['setArrowSetPoint sig_gen show']}
@@ -61,16 +61,17 @@ def execHsh( hsh):
 
          {'spock': [ 'umv eh_mot66 51']}
 
-       Misc
+       Misc:
          {'isAlive': True}
            return values:
-             {u'result': u'done'}
-             {'result': 'notAlive'}
+             { 'result': 'done'}
+             { 'result': 'notAlive'}
+
          {'getDoorState': True}
            returns:
              { 'result': 'ON'}
 
-       Scan
+       Scan, see PySpectra.GQE.Scan?
          {'Scan': {'name': 'eh_c01', 'xMax': 1.0, 'autoscaleX': False, 'lineColor': 'red', 'xMin': 0.0, 'nPts': 6}}
            create an empty scan. Notice, the inner dictionary is passed to the Scan constructor
 
@@ -116,12 +117,17 @@ def execHsh( hsh):
            The data are sent as a list of dictionaries containg the x- and y-data and other
            parameters describing the Scans.
 
-       Image 
+       Image, see PySPectra.GQE.Image?
          {'Image': {'name': 'MandelBrot', 
                     'height': 5, 'width': 5, 
                     'xMax': -0.5, 'xMin': -2.0, 
                     'yMin': 0, 'yMax': 1.5}}
            create an empty image
+
+         { 'Image': { 'name': "MandelBrot", 'data': data, 
+                      'xMin': xmin, 'xMax': xmax, 
+                      'yMin': ymin, 'yMax': ymax}})
+           pass the entire image data
 
          { 'putData': { 'images': [{'name': "Mandelbrot", 'data': data,
                                     'xMin': xmin, 'xMax': xmax, 
@@ -138,7 +144,7 @@ def execHsh( hsh):
          {'command': ['setText MeshScan comment string "Sweep: 1/4" x 0.05 y 0.95']}
            create a text GQE for the scan MeshScan, the name of the text is comment
 
-       Retrieve data
+       Retrieve data:
          {'getData': True}
            {'getData': {'EH_C02': {'y': [0.3183, ... 0.6510], 'x': [0.0, ... 0.959]}, 
                         'EH_C01': {'y': [0.0234, ... 0.4918], 'x': [0.0, ... 0.959]}}, 
@@ -222,22 +228,56 @@ def execHsh( hsh):
     #print( "zmqIfc.execHsh: return %s" % repr( argout))
     return argout
 
-def toPyspMonitor( hsh, node = None):
+def _replaceNumpyArrays( hsh): 
+    """
+    find numpy arrays in the hsh and replace the by lists
+    """
+    for k in list( hsh.keys()): 
+        if type( hsh[ k]) is dict:
+            _replaceNumpyArrays( hsh[ k])
+            continue
+        if type( hsh[ k]) is list:
+            for elm in hsh[ k]: 
+                if type( elm) is dict:
+                    _replaceNumpyArrays( elm)
+        if type( hsh[ k]) is np.ndarray: 
+            #
+            # Images, that have been created by tolist() need width and height
+            # if width and height are not supplied, take them from .shape
+            #
+            if len( hsh[ k].shape) == 2:
+                if not 'width' in hsh: 
+                    hsh[ 'width'] = hsh[ k].shape[0]
+                if not 'height' in hsh: 
+                    hsh[ 'height'] = hsh[ k].shape[1]
+            hsh[ k] = hsh[ k].tolist()
+
+    return
+
+def toPyspMonitor( hsh, node = None, testAlive = False):
     '''
     Send a dictionary to pyspMonitor. 
     The dictionary syntax can be found here 
       PySpectra.zmqIfc.execHsh?
 
     Example: 
-      (status, wasLaunched) = PySpectra.utils.assertPyspMonitorRunning()
-
       ret = PySpectra.zmqIfc.toPyspMonitor( {'command': ['delete', 'cls', 'create s1', 'display']})
       if ret[ 'result'] != 'done': 
           print( "error" % ret[ 'result'])
+
+    if testAlive == True: it is checked whether the pyspMonitor responds to isAlive
+      if not: the process is launched
     ---
     '''
-
     import zmq, json, socket
+
+    #
+    # testAlive == True reduces the rate from 625 Hz to 360 Hz
+    #
+    if testAlive: 
+        (status, wasLaunched) = assertPyspMonitorRunning()
+        if not status: 
+            raise ValueError( "zmqIfc.toPyspMonitor: trouble with pyspMonitor")
 
     if node is None:
         node = socket.gethostbyname( socket.getfqdn())
@@ -254,7 +294,9 @@ def toPyspMonitor( hsh, node = None):
     except Exception as e:
         sckt.close()
         return { 'result': "utils.toPyspMonitor: failed to connect to %s" % node}
-
+    
+    _replaceNumpyArrays( hsh)
+                    
     hshEnc = json.dumps( hsh)
     try:
         res = sckt.send( hshEnc)
@@ -294,7 +336,7 @@ def isPyspMonitorAlive( node = None):
     '''
     returns True, if there is a pyspMonitor responding to the isAlive prompt
     '''
-    hsh = toPyspMonitor( { 'isAlive': True}, node = node)
+    hsh = toPyspMonitor( { 'isAlive': True}, node = node, testAlive = False)
     if hsh[ 'result'] == 'notAlive':
         return False
     else:
@@ -307,21 +349,10 @@ def _putData( hsh):
     '''
 
     argout = 'n.n.'
-    if 'title' not in hsh:
-        GQE.setTitle( "NoTitle")
-    else:
+    if 'title' in hsh:
         GQE.setTitle( hsh[ 'title'])
 
     try: 
-        #
-        #hsh = { 'putData': {'columns': [{'data': x, 'name': 'xaxis'},
-        #                                {'data': tan, 'name': 'tan'},
-        #                                {'data': cos, 'name': 'cos'},
-        #                                {'data': sin, 'name': 'sin',
-        #                                 'showGridY': False, 'symbolColor': 'blue', 'showGridX': False, 
-        #                                 'yLog': False, 'symbol': '+', 
-        #                                 'xLog': False, 'symbolSize':5}]}}
-        #
         if 'columns' in hsh:
             GQE.delete()
             PySpectra.cls()
@@ -333,23 +364,6 @@ def _putData( hsh):
                 argout = GQE.fillDataByGqes( hsh)
             except Exception as e: 
                 print( "zmqIfc: %s" % repr( e))
-        #
-        # hsh = { 'putData': 
-        #         { 'name': "MandelBrot",
-        #           'type': 'image', 
-        #           'xMin': xmin, 'xMax': xmax, 'width': width, 
-        #           'yMin': ymin, 'yMax': ymax, 'height': height}}
-        #
-        elif 'type' in hsh and hsh[ 'type'] == 'image':
-            del hsh[ 'type']
-            GQE.Image( **hsh)
-            argout = "done"
-        #
-        #_PySpectra.zmqIfc.execHsh( { 'putData': 
-        #                { 'images': [{'name': "Mandelbrot", 'data': data,
-        #                              'xMin': xmin, 'xMax': xmax, 
-        #                              'yMin': ymin, 'yMax': ymax}]}})
-        #
         elif 'images' in hsh:
             for h in hsh[ 'images']: 
                 GQE.Image( **h)
@@ -357,7 +371,7 @@ def _putData( hsh):
         else:
             raise Exception( "zmqIfc._putData", "expecting 'columns', 'gqes', 'setPixelImage', 'setPixelWorld'")
     except Exception as e: 
-        argout = "utils.zmqIfc._putData: %s" % repr( e)
+        argout = "zmqIfc._putData: %s" % repr( e)
 
     return argout
 
@@ -430,8 +444,18 @@ def _getDoorState():
 def assertPyspMonitorRunning(): 
     """
     returns (status, wasLaunched)
+
+    it tests whether the pyspMonitor responds to isAlive. 
+    If so, the function return rather quickly.
+
+    Otherwise we call assertProcessRunning() which ma take some time
     """
-    return utils.assertProcessRunning( "/usr/bin/pyspMonitor.py")
+    res = toPyspMonitor( { 'isAlive': True}, testAlive = False) 
+    if res[ 'result'] == 'done': 
+        return( True, False)
+    else: 
+        
+        return utils.assertProcessRunning( "/usr/bin/pyspMonitor.py")
 
 
 def killPyspMonitor():

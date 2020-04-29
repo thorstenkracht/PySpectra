@@ -35,16 +35,14 @@ class testTangoIfc( unittest.TestCase):
         import random
         print "testTangoIfc.testMoveMotorTangoIfc"
 
-
         if utils.getHostname() != 'haso107tk': 
             return 
 
         PySpectra.cls()
         GQE.delete()
-        g = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
-        mu = 0.
-        sigma = 1.
-        g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2*sigma**2))
+        GQE.setTitle( "watch arrows (setPoint, current) while moving a motor forth and back")
+        g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
+                               lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
 
         g.motorNameList = ["eh_mot66"]
         proxyPool = PyTango.DeviceProxy( g.motorNameList[0])
@@ -81,10 +79,9 @@ class testTangoIfc( unittest.TestCase):
 
         PySpectra.cls()
         GQE.delete()
-        g = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
-        mu = 0.
-        sigma = 1.
-        g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2*sigma**2))
+        GQE.setTitle( "watch arrows while a motor is tangoIfc.move()ed")
+        g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
+                               lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
 
         g.motorNameList = ["eh_mot66"]
         proxyPool = PyTango.DeviceProxy( g.motorNameList[0])
@@ -106,10 +103,13 @@ class testTangoIfc( unittest.TestCase):
 
         print "testTangoIfc.testMoveScanInfo"
 
+        PySpectra.cls()
+        GQE.delete()
+
         #
         # see, if the pyspMonitor process exists. Otherwise launch it
         #
-        ( status, wasLaunched) = utils.assertProcessRunning( "/usr/bin/pyspMonitor.py")
+        ( status, wasLaunched) = zmqIfc.assertPyspMonitorRunning()
         if not status:
             print( "testTangoIfc.testMoveScanInfo: failed to launch the pyspMonitor")
             return 
@@ -146,6 +146,7 @@ class testTangoIfc( unittest.TestCase):
             print( "testTangoIfc.testMoveScanInfo: 'display sig_gen' failed, %s" % repr( ret))
             return 
 
+        GQE.setTitle( "umv; a2scan; moveStart sig_gen 50.5 False")
         if zmqIfc.toPyspMonitor( { 'command': 'moveStart sig_gen 50.5 False'})[ 'result'] != 'done':
             print( "testTangoIfc.testMoveScanInfo: moveStart failed failed")
             return 

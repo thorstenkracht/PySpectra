@@ -16,6 +16,9 @@ def createGauss( name = "gauss", xMin = -5, xMax = 5., nPts = 101,
                   lineColor = lineColor)
     g.y = amplitude/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-x0)**2/(2.*sigma**2))
 
+    g.yMin = yMin( g)
+    g.yMax = yMax( g)
+
     return g
 
 _lenPlotted = -1
@@ -39,7 +42,7 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
     gqeList = _gqe.getGqeList()
 
     if debug:
-        print( "utils.setGqeVPs.BEGIN: gqeList %s, nameList %s" % \
+        print( "\nutils.setGqeVPs.BEGIN: gqeList %s, nameList %s" % \
             ( repr(  [ gqe.name for gqe in gqeList]), repr(  nameList)))
 
     if len( nameList) == 0:
@@ -139,6 +142,9 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
                 continue
 
         for second in gqeList: 
+            if second.overlay:
+                continue
+
             if first.name == second.name: 
                 continue
 

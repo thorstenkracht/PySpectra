@@ -169,6 +169,14 @@ def moveStart(line):
     ifc.command( "moveStart " + line)
 
 @register_line_magic
+def noop(line):
+    '''
+    noop 
+      no operation (except testing)
+    '''
+    ifc.command( "noop " + line)
+
+@register_line_magic
 def overlay(line):
     '''
     overlay scan1 scan2
@@ -188,7 +196,7 @@ def pyspectra_help( line):
     print( " ---------------------------------")
     print( " These are the available commands")
     print( "   antiderivative, cls, create, delete, derivative,")
-    print( "   display, info, move, moveStart, overlay, ")
+    print( "   display, info, move, moveStart, noop, overlay, ")
     print( "   processEventsLoop, read, setTitle, ")
     print( "   setComment, show, write, y2my")
     print( "")
@@ -380,6 +388,7 @@ del display
 del info
 del move
 del moveStart
+del noop
 del overlay
 del processEventsLoop
 del pyspectra_help

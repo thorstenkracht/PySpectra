@@ -1679,9 +1679,12 @@ def display( nameList = None):
             #
             # if yLog, the limits have to be supplied as logs
             #
-            if scan.yMax <= 0. or scan.yMin <= 0.:
-                raise ValueError( "pqt_graphics.createPlotItem: yLog && (yMin (%g) <= 0 or yMax (%g) <= 0" % \
-                                  (scan.yMin, scan.yMax))
+            if scan.yMin <= 0.:
+                raise ValueError( "pqt_graphics.createPlotItem: %s, yLog && yMin %g <= 0 " % \
+                                  ( scan.name, scan.yMin))
+            if scan.yMax <= 0.:
+                raise ValueError( "pqt_graphics.createPlotItem: %s, yLog && yMax %g <= 0 " % \
+                                  ( scan.name, scan.yMax))
             scan.plotDataItem.setLogMode( False, True)
             scan.viewBox.setYRange( math.log10( scan.yMin), math.log10(scan.yMax))
         else:
