@@ -2207,14 +2207,12 @@ class Image( object):
         image data is passed through the keyword data. they are
         copied to self.data as they are
         '''
-        print( "+++GQE-1")
 
         if 'data' not in kwargs: 
             raise ValueError( "GQE.Image.createImageFromData: %s no 'data'" % ( self.name))
 
         self.data = kwargs[ 'data'][:]
         del kwargs[ 'data']
-        print( "+++GQE-2")
         #
         # if data come as a list, convert them to numpy arrays
         #
