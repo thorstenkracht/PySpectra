@@ -5,15 +5,14 @@ GQE - contains the Scan() class and functions to handle scans:
 '''
 # 1.8.2
 
-import numpy as np
-from PyQt4 import QtCore, QtGui
+import numpy as _numpy
+from PyQt4 import QtGui as _QtGui
 import PyTango as _PyTango
 import PySpectra 
 import PySpectra.definitions as definitions 
 import PySpectra.utils as utils
 import PySpectra.calc as calc
-import pyqtgraph as pg
-import time
+import pyqtgraph as _pyqtgraph
 import HasyUtils as _HasyUtils
 
 _gqeList = []
@@ -150,6 +149,8 @@ class Scan( object):
       the same as PySpectra.Scan( name = 'name', xMin = 0., xMax = 10., nPts = 101)
     PySpectra.Scan( name = 'name', reUse = True, xArr, y = yArr)
       re-use the existing data struckture, useful for MCA scans
+    PySpectra.Scan( name = "textContainer", textOnly = True)
+      no data, just Texts, fill with gqe.addText()
 
     The attributes of the constructor: 
         autoscaleX, 
@@ -179,6 +180,8 @@ class Scan( object):
                     def.: NONE
         symbolSize: float
                     def.: 5
+        textOnly:   True/False (def.)
+                    if True, Scan has no data, just Texts, fill with addText()
         xLabel,
         yLabel:     string
                     the description of the x- or y-axis
@@ -307,7 +310,7 @@ class Scan( object):
             try: 
                 if target < proxy.UnitLimitMin: 
                     if flagConfirm: 
-                        QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g < unitLimitMin %g" % 
+                        _QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g < unitLimitMin %g" % 
                                                  ( name, target, proxy.UnitLimitMin))
                     else: 
                         print( "GQE.checkTargetWithinLimits: %s, target %g < unitLimitMin %g" % 
@@ -315,7 +318,7 @@ class Scan( object):
                     return False
                 if target > proxy.UnitLimitMax: 
                     if flagConfirm: 
-                        QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g > unitLimitMax %g" % 
+                        _QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g > unitLimitMax %g" % 
                                                  ( name, target, proxy.UnitLimitMax))
                     else: 
                         print( "GQE.checkTargetWithinLimits: %s, target %g > unitLimitMax %g" % 
@@ -323,7 +326,7 @@ class Scan( object):
                     return False
             except Exception as e: 
                 if flagConfirm: 
-                    QtGui.QMessageBox.about( None, 'Info Box', "CheckTargetWithinLimits: %s %s" % 
+                    _QtGui.QMessageBox.about( None, 'Info Box', "CheckTargetWithinLimits: %s %s" % 
                                              ( name, repr( e)))
                 else: 
                     print( "GQE.checkTargetWithinLimits: error %s, %s" % ( name, repr( e)))
@@ -335,7 +338,7 @@ class Scan( object):
             attrConfig = proxy.get_attribute_config_ex( "Position")
             if target < float( attrConfig[0].min_value): 
                 if flagConfirm: 
-                    QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g < attrConf.min_value %g" % 
+                    _QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g < attrConf.min_value %g" % 
                                              ( name, target, float( attrConfig[0].min_value)))
                 else: 
                     print( "GQE.checkTargetWithinLimits: %s, target %g < attrConf.min_value %g" % 
@@ -343,7 +346,7 @@ class Scan( object):
                 return False
             if target > float( attrConfig[0].max_value): 
                 if flagConfirm: 
-                    QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g > attrConf.max_value %g" % 
+                    _QtGui.QMessageBox.about( None, 'Info Box', "%s, target %g > attrConf.max_value %g" % 
                                              ( name, target, float( attrConfig[0].max_value)))
                 else: 
                     print( "GQE.checkTargetWithinLimits: %s, target %g > attrConf.max_value %g" % 
@@ -360,9 +363,9 @@ class Scan( object):
         if 'y' not in kwargs:
             raise ValueError( "GQE.Scan._createScanFromData: 'y' not supplied")
 
-        self.x = np.copy( kwargs[ 'x'])
+        self.x = _numpy.copy( kwargs[ 'x'])
         del kwargs[ 'x']
-        self.y = np.copy( kwargs[ 'y'])
+        self.y = _numpy.copy( kwargs[ 'y'])
         del kwargs[ 'y']
         if len( self.x) != len( self.y):
             raise ValueError( "GQE.Scan._createScanFromData: 'x' and 'y' differ in length %d (x) %d (y)" % (len( self.x), len( self.y)))
@@ -389,7 +392,7 @@ class Scan( object):
         xMin, def.: 0.
         xMax, def.: 10.
         nPts, def.: 101
-        dType, def.: np.float64
+        dType, def.: _numpy.float64
 
         yMin, def.: None
         yMax, def.: None
@@ -415,19 +418,19 @@ class Scan( object):
                 del kwargs[ attr]
 
         if 'dType' not in kwargs:
-            self.dType = np.float64
+            self.dType = _numpy.float64
         else:
             self.dType = kwargs[ 'dType']
             del kwargs[ 'dType']
         #
         # the 1.8 version of linspace does not allow to specify the dType
         # 
-        self.x = np.linspace( self.xMin, self.xMax, self.nPts)
+        self.x = _numpy.linspace( self.xMin, self.xMax, self.nPts)
         if self.x.dtype != self.dType:
-            self.x = np.astype( self.dType)
-        self.y = np.linspace( self.xMin, self.xMax, self.nPts)
+            self.x = _numpy.astype( self.dType)
+        self.y = _numpy.linspace( self.xMin, self.xMax, self.nPts)
         if self.y.dtype != self.dType:
-            self.y = np.astype( self.dType)
+            self.y = _numpy.astype( self.dType)
 
         if self.yMin is None:
             self.yMin = self.xMin
@@ -570,10 +573,10 @@ class Scan( object):
             raise ValueError( "GQE.Scan.setLimits: %s len(x) == 0" % (self.name))
         if len( self.y) == 0:
             raise ValueError( "GQE.Scan.setLimits: %s len(y) == 0" % (self.name))
-        self.xMin = np.min( self.x)
-        self.xMax = np.max( self.x)
-        self.yMin = np.min( self.y)
-        self.yMax = np.max( self.y)
+        self.xMin = _numpy.min( self.x)
+        self.xMax = _numpy.max( self.x)
+        self.yMin = _numpy.min( self.y)
+        self.yMax = _numpy.max( self.y)
         self.yMax += (self.yMax - self.yMin)*0.05
         return 
 
@@ -744,14 +747,14 @@ class Scan( object):
         returns the minimum of the y-values
         '''
         # currentIndex refers to the last valid x-, y-value; nPts == currentIndex + 1
-        return np.min( self.y[:self.currentIndex + 1])
+        return _numpy.min( self.y[:self.currentIndex + 1])
 
     def getYMax( self): 
         '''
         returns the maximum of the y-values
         '''
         # currentIndex refers to the last valid x-, y-value; nPts == currentIndex + 1
-        return np.max( self.y[:self.currentIndex + 1])
+        return _numpy.max( self.y[:self.currentIndex + 1])
 
     def setArrowCurrent( self, x): 
         '''
@@ -773,7 +776,7 @@ class Scan( object):
                 delta = (self.x[ self.currentIndex] - self.x[self.currentIndex - 1])*2.
             xScene = 300
             yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET*2
-            posVb = self.plotItem.vb.mapSceneToView( pg.Point( xScene, yScene))
+            posVb = self.plotItem.vb.mapSceneToView( _pyqtgraph.Point( xScene, yScene))
             self.arrowInvisibleLeft.setPos( x - delta, posVb.y())
             self.arrowInvisibleRight.setPos( x + delta, posVb.y())
             self.arrowInvisibleLeft.show()
@@ -785,7 +788,7 @@ class Scan( object):
         yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET
         if self.xLabel is not None: 
             yScene = yScene - definitions.ARROW_Y_OFFSET_EXTRA
-        posScene = self.plotItem.vb.mapViewToScene( pg.Point( x, self.getYMin()))
+        posScene = self.plotItem.vb.mapViewToScene( _pyqtgraph.Point( x, self.getYMin()))
         self.arrowCurrent.setPos( posScene.x(), yScene)
         self.labelArrowCurrent.setPos(  posScene.x(), yScene)
         self.labelArrowCurrent.setHtml( '<div>%s: %g</div>' % ( self.motorNameList[0], x))
@@ -805,9 +808,9 @@ class Scan( object):
         yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET
         if self.xLabel is not None: 
             yScene = yScene - definitions.ARROW_Y_OFFSET_EXTRA
-        posScene = self.plotItem.vb.mapViewToScene( pg.Point( x, self.getYMin()))
+        posScene = self.plotItem.vb.mapViewToScene( _pyqtgraph.Point( x, self.getYMin()))
         self.arrowSetPoint.setPos( posScene.x(), yScene)
-        #posVb = self.plotItem.vb.mapSceneToView( pg.Point( xScene, yScene)).toPoint()
+        #posVb = self.plotItem.vb.mapSceneToView( _pyqtgraph.Point( xScene, yScene)).toPoint()
         #self.arrowSetPoint.setPos( x, posVb.y())
         self.arrowSetPoint.show()
 
@@ -823,10 +826,10 @@ class Scan( object):
         yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET
         if self.xLabel is not None: 
             yScene = yScene - definitions.ARROW_Y_OFFSET_EXTRA
-        posScene = self.plotItem.vb.mapViewToScene( pg.Point( x, self.getYMin()))
+        posScene = self.plotItem.vb.mapViewToScene( _pyqtgraph.Point( x, self.getYMin()))
         self.arrowMisc.setPos( posScene.x(), yScene)
 
-        #posVb = self.plotItem.vb.mapSceneToView( pg.Point( xScene, yScene)).toPoint()
+        #posVb = self.plotItem.vb.mapSceneToView( _pyqtgraph.Point( xScene, yScene)).toPoint()
         #self.arrowMisc.setPos( x, posVb.y())
         self.arrowMisc.show()
 
@@ -956,7 +959,7 @@ class Scan( object):
         '''
         put this functions in because it is in Spectra, I don't know
         whether we really need it in pysp. reserve scans do not make 
-        any problems in pyqtgraph. however, in matplotlib it plots
+        any problems in _pyqtgraph. however, in matplotlib it plots
         from the wrong direction.
         '''
         pass
@@ -982,8 +985,8 @@ class Scan( object):
         '''
         prepare for log display: remove points with y <= 0. 
         '''
-        x = np.copy( self.x)
-        y = np.copy( self.y)
+        x = _numpy.copy( self.x)
+        y = _numpy.copy( self.y)
         count = 0
         for i in range( len( self.y)):
             if self.y[i] <= 0.:
@@ -991,8 +994,8 @@ class Scan( object):
             x[count] = self.x[i]
             y[count] = self.y[i]
             count += 1
-        self.x = np.copy( x[:count])
-        self.y = np.copy( y[:count])
+        self.x = _numpy.copy( x[:count])
+        self.y = _numpy.copy( y[:count])
         return 
 
     def ssa( self, logWidget = None):
@@ -1032,7 +1035,7 @@ class Scan( object):
             lstX = list( reversed( lstX))
             lstY = list( reversed( lstY))
                 
-        hsh = calc.ssa( np.array( lstX), np.array( lstY))
+        hsh = calc.ssa( _numpy.array( lstX), _numpy.array( lstY))
 
         if hsh[ 'status'] != 1:
             if logWidget is not None:
@@ -1076,7 +1079,7 @@ class Scan( object):
         mu = hsh[ 'midpoint'] 
         sigma = hsh[ 'fwhm']/2.3548
         
-        res.y = a/(sigma*np.sqrt(2.*np.pi))*np.exp( -(res.x-mu)**2/(2*sigma**2))
+        res.y = a/(sigma*_numpy.sqrt(2.*_numpy.pi))*_numpy.exp( -(res.x-mu)**2/(2*sigma**2))
         res.overlay = self.name
         res.useTargetWindow = True
         return 
@@ -1585,7 +1588,7 @@ def _insertFioObj2Image( fioObj):
     for elm in [ 'xMin', 'xMax', 'yMin', 'yMax']: 
         fioObj.parameters[ elm] = float( fioObj.parameters[ elm])
 
-    data = np.array( fioObj.columns[0].x).reshape(  fioObj.parameters[ 'width'],  fioObj.parameters[ 'height'])
+    data = _numpy.array( fioObj.columns[0].x).reshape(  fioObj.parameters[ 'width'],  fioObj.parameters[ 'height'])
     Image( name = fioObj.motorName, data = data, 
            width = fioObj.parameters[ 'width'], height = fioObj.parameters[ 'height'], 
            xMin = fioObj.parameters[ 'xMin'], xMax = fioObj.parameters[ 'xMax'], 
@@ -1719,46 +1722,7 @@ def write( lst = None):
     fileName = obj.write()
     print( "GQE.write: created %s" % fileName)
     return fileName
-    
-def getNumberOfGqesToBeDisplayed( nameList): 
-    '''
-    return the number of scans to be displayed.
-    Scans that are overlaid do not require extra space
-    and are therefore not counted.
-    '''
-    if len( nameList) == 0:
-        nOverlay = 0
-        for gqe in _gqeList:
-            if gqe.overlay is not None:
-                nOverlay += 1
-        nGqe = len( _gqeList) - nOverlay
-        if nGqe < 1:
-            nGqe = 1
-    else:
-        nOverlay = 0
-        for name in nameList:
-            if getGqe( name).overlay is not None:
-                nOverlay += 1
-        nGqe = len( nameList) - nOverlay
-        if nGqe < 1:
-            nGqe = 1
-    #print( "graphics.getNoOfGqesToBeDisplayed: nGqe %d" %(nGqe))
-    return nGqe
 
-def _getNumberOfOverlaid( nameList = None):
-    '''
-    returns the number of gqes which are overlaid to another, 
-    used by e.g. graphics.display()
-    '''
-    count = 0
-    for gqe in _gqeList:
-        if nameList is not None: 
-            if gqe.name not in nameList:
-                continue
-        if gqe.overlay is not None:
-            count += 1
-
-    return count
 def setWsViewportFixed( flag):
     '''
     flag: True or False
@@ -1783,7 +1747,7 @@ def _isArrayLike( x):
     '''    
     returns True, if y is a list or a numpy array
     '''
-    if type(x) is list or type(x) is np.ndarray:
+    if type(x) is list or type(x) is _numpy.ndarray:
         return True
     else:
         return False
@@ -1792,9 +1756,9 @@ def getFontSize( nameList):
     '''
     depending on how many gqes are displayed the font size is adjusted
     '''
-    if getNumberOfGqesToBeDisplayed( nameList) < definitions.MANY_GQES:
+    if utils.getNumberOfGqesToBeDisplayed( nameList) < definitions.MANY_GQES:
         fontSize = definitions.FONT_SIZE_NORMAL
-    elif getNumberOfGqesToBeDisplayed( nameList) <= definitions.VERY_MANY_GQES:
+    elif utils.getNumberOfGqesToBeDisplayed( nameList) <= definitions.VERY_MANY_GQES:
         fontSize = definitions.FONT_SIZE_SMALL
     else: 
         fontSize = definitions.FONT_SIZE_VERY_SMALL
@@ -1803,7 +1767,7 @@ def getFontSize( nameList):
 
 def getData():
     '''
-    pack the interesting part of the spectra storage which has been
+    pack the interesting part of the PySpectra storage which has been
     created by the pyspMonitor into a dictionary. 
     '''
     hsh = {}
@@ -1831,231 +1795,6 @@ def getData():
         else:
             hsh[ 'symbols'][ 'file_name_'] = temp
     return hsh
-
-def fillDataByColumns( hsh):
-    """
-    called from zmqIfc.putData()
-
-        hsh = { 'putData': {'columns': [{'data': x, 'name': 'xaxis'},
-                                        {'data': tan, 'name': 'tan'},
-                                        {'data': cos, 'name': 'cos'},
-                                        {'data': sin, 'name': 'sin',
-                                         'showGridY': False, 'symbolColor': 'blue', 'showGridX': False, 
-                                         'yLog': False, 'symbol': '+', 
-                                         'xLog': False, 'symbolSize':5}]}}
-    """
-
-    if len( hsh[ 'columns']) < 2: 
-        raise Exception( "GQE.fillDataByColumns", "less than 2 columns")
-
-    if 'title' in hsh: 
-        setTitle( hsh[ 'title'])
-
-    if 'comment' in hsh: 
-        setComment( hsh[ 'comment'])
-
-    columns = []
-    xcol = hsh[ 'columns'][0]
-    for elm in hsh[ 'columns'][1:]:
-        if 'name' not in elm:
-            raise Exception( "GQE.fillDataByColumns", "missing 'name'")
-        if 'data' not in elm:
-            raise Exception( "GQE.fillDataByColumns", "missing 'data'")
-        data = elm[ 'data']
-        del elm[ 'data']
-        if len( data) != len( xcol[ 'data']):
-            raise Exception( "GQE.fillDataByColumns", 
-                             "column length differ %s: %d, %s: %d" % ( xcol[ 'name'], len( xcol[ 'data']),
-                                                                       elm[ 'name'], len( data)))
-
-        lineColor = 'red'
-        if 'lineColor' in elm:
-            lineColor = elm[ 'lineColor']
-            del elm[ 'lineColor'] 
-            symbolColor = 'NONE'
-        elif 'symbolColor' not in elm:
-            lineColor = 'red'
-            symbolColor = 'NONE'
-        else: 
-            symbolColor= 'red'
-            lineColor = 'NONE'
-            if 'symbolColor' in elm:
-                symbolColor = elm[ 'symbolColor']
-                del elm[ 'symbolColor'] 
-
-        lineWidth = 1
-        if 'lineWidth' in elm:
-            lineWidth = elm[ 'lineWidth']
-            del elm[ 'lineWidth'] 
-        lineStyle = 'SOLID'
-        if 'lineStyle' in elm:
-            lineStyle = elm[ 'lineStyle']
-            del elm[ 'lineStyle'] 
-        showGridX = False
-        if 'showGridX' in elm:
-            showGridX = elm[ 'showGridX']
-            del elm[ 'showGridX'] 
-        showGridY = False
-        if 'showGridY' in elm:
-            showGridY = elm[ 'showGridY']
-            del elm[ 'showGridY'] 
-        xLog = False
-        if 'xLog' in elm:
-            xLog = elm[ 'xLog']
-            del elm[ 'xLog'] 
-        yLog = False
-        if 'yLog' in elm:
-            yLog = elm[ 'yLog']
-            del elm[ 'yLog'] 
-        symbol = '+'
-        if 'symbol' in elm:
-            symbol = elm[ 'symbol']
-            del elm[ 'symbol'] 
-        symbolSize= 10
-        if 'symbolSize' in elm:
-            symbolSize = elm[ 'symbolSize']
-            del elm[ 'symbolSize'] 
-
-        name = elm['name']
-        del elm[ 'name']
-
-        if len( list( elm.keys())) > 0: 
-            raise ValueError( "GQE.fillDataByColumns: dct not empty %s" % repr( elm))
-
-        scan = Scan( name = name, 
-                     xMin = data[0], xMax = data[-1], nPts = len(data),
-                     xLabel = xcol[ 'name'], yLabel = name,
-                     lineColor = lineColor, lineWidth = lineWidth, lineStyle = lineStyle,
-                     showGridX = showGridX, showGridY = showGridY, 
-                     xLog = xLog, yLog = yLog, 
-                     symbol = symbol, symbolColor = symbolColor, symbolSize = symbolSize, 
-                )
-        for i in range(len(data)):
-            scan.setX( i, xcol[ 'data'][i])
-            scan.setY( i, data[i])
-    PySpectra.display()
-
-    return "done"
-
-def fillDataByGqes( hsh):
-
-    flagAtFound = False
-    flagOverlayFound = False
-    gqes = []
-    for elm in hsh[ 'gqes']:
-        if 'name' not in elm:
-            raise Exception( "GQE.fillDataByGqes", "missing 'name'")
-        if 'x' not in elm:
-            raise Exception( "GQE.fillDataByGqes", "missing 'x' for %s" % elm[ 'name'])
-        if 'y' not in elm:
-            raise Exception( "GQE.fillDataByGqes", "missing 'y' for %s" % elm[ 'name'])
-        if len( elm[ 'x']) != len( elm[ 'y']):
-            raise Exception( "GQE.fillDataByGqes", "%s, x and y have different length %d != %d" % \
-                             (elm[ 'name'], len( elm[ 'x']), len( elm[ 'y'])))
-        #at = '(1,1,1)'
-        #if 'at' in elm:
-        #    flagAtFound = True
-        #    at = elm[ 'at']
-        xLabel = 'x-axis'
-        if 'xlabel' in elm:
-            xLabel = elm[ 'xlabel']
-        yLabel = 'y-axis'
-        if 'ylabel' in elm:
-            yLabel = elm[ 'ylabel']
-        color = 'red'
-        if 'color' in elm:
-            color = elm[ 'color']
-            color = _colorSpectraToPysp( color)
-
-
-        lineColor = 'red'
-        if 'lineColor' in elm:
-            lineColor = elm[ 'lineColor']
-            symbolColor = 'NONE'
-        elif 'symbolColor' not in elm:
-            lineColor = 'red'
-            symbolColor = 'NONE'
-        else: 
-            symbolColor= 'red'
-            lineColor = 'NONE'
-            if 'symbolColor' in elm:
-                symbolColor = elm[ 'symbolColor']
-
-        lineWidth = 1
-        if 'lineWidth' in elm:
-            lineWidth = elm[ 'lineWidth']
-        lineStyle = 'SOLID'
-        if 'lineStyle' in elm:
-            lineStyle = elm[ 'lineStyle']
-        showGridX = False
-        if 'showGridX' in elm:
-            showGridX = elm[ 'showGridX']
-        showGridY = False
-        if 'showGridY' in elm:
-            showGridY = elm[ 'showGridY']
-        xLog = False
-        if 'xLog' in elm:
-            xLog = elm[ 'xLog']
-        yLog = False
-        if 'yLog' in elm:
-            yLog = elm[ 'yLog']
-        symbol = '+'
-        if 'symbol' in elm:
-            symbol = elm[ 'symbol']
-        symbolSize= 10
-        if 'symbolSize' in elm:
-            symbolSize = elm[ 'symbolSize']
-        
-        x = elm[ 'x']
-        y = elm[ 'y']
-        gqe = Scan( name = elm[ 'name'],
-                    xMin = x[0], xMax = x[-1], nPts = len(x),
-                    xLabel = xLabel, yLabel = yLabel,
-                    lineColor = lineColor, lineWidth = lineWidth, lineStyle = lineStyle,
-                    showGridX = showGridX, showGridY = showGridY, 
-                    xLog = xLog, yLog = yLog, 
-                    symbol = symbol, symbolColor = symbolColor, symbolSize = symbolSize, 
-                )
-        for i in range(len(x)):
-            gqe.setX( i, x[i])
-            gqe.setY( i, y[i])
-
-
-    PySpectra.display()
-
-    return "done"
-
-
-def colorSpectraToPysp( color): 
-    '''
-    this functions translates color numbers (a ls Spectra) to strings a la Pysp
-    '''
-    #
-    # 
-    #
-    if type(color) is not int: 
-        return color
-
-    if color == 1:
-        color = 'black'
-    elif color == 2:
-        color = 'red'
-    elif color == 3:
-        color = 'green'
-    elif color == 4:
-        color = 'blue'
-    elif color == 5:
-        color = 'cyan'
-    elif color == 5:
-        color = 'cyan'
-    elif color == 6:
-        color = 'yellow'
-    elif color == 7:
-        color = 'magenta'
-    else: 
-        color = 'black'
-
-    return color
 
 #
 # to understand, why object is needed, goto 'def __setattr__( ...)'
@@ -2220,11 +1959,11 @@ class Image( object):
             for kw in [ 'width', 'height']: 
                 if not hasattr( self, kw): 
                     raise ValueError( "GQE.Image.createImageFromData: %s no %s" % ( self.name, kw))
-            np_array = np.asarray( self.data, np.float64)
+            np_array = _numpy.asarray( self.data, _numpy.float64)
             #self.data = np_array.reshape( self.width, self.height).T 
             self.data = np_array.reshape( self.width, self.height)
 
-        elif type( self.data) is np.ndarray: 
+        elif type( self.data) is _numpy.ndarray: 
             if self.width is not None and self.width != self.data.shape[0]: 
                 raise ValueError( "GQE.Image.createImageFromLimits: width %d != shape[0] %d" % 
                                   (self.width, self.data.shape[0]))
@@ -2255,7 +1994,7 @@ class Image( object):
             if not hasattr( self, kw): 
                 raise ValueError( "GQE.Image.createImageFromLimits: %s no %s" % ( self.name, kw))
 
-        self.data  = np.zeros( ( self.width, self.height))
+        self.data  = _numpy.zeros( ( self.width, self.height))
         #
         # fill the righ column with a linear gradient, max: estimatedMax, to 
         # create some dynamical range for the incoming data
@@ -2329,7 +2068,6 @@ class Image( object):
         '''
         this function is invoked by a middel-button mouse click from pqtgrph/graphics.py
         '''
-        import time as _time
 
         if str(self.name).upper().find( "MANDELBROT") != -1:
             return self.zoomMb( targetIX, targetIY, True)
@@ -2361,8 +2099,8 @@ class Image( object):
             self.yMin = targetY - deltaY/8.
             self.yMax = targetY + deltaX/8.
 
-        r1 = np.linspace( self.xMin, self.xMax, self.width)
-        r2 = np.linspace( self.yMin, self.yMax, self.height)
+        r1 = _numpy.linspace( self.xMin, self.xMax, self.width)
+        r2 = _numpy.linspace( self.yMin, self.yMax, self.height)
         for i in range( self.width):
             for j in range( self.height):
                 res = self.mandelbrot(r1[i] + 1j*r2[j], self.maxIter)
@@ -2385,14 +2123,14 @@ class Image( object):
         
         #print( "GQE.mandelbrot_numpy: xMin %g, xMax %g, width %d" % (self.xMin, self.xMax, self.width))
         #print( "GQE.mandelbrot_numpy: yMin %g, yMax %g, height %d" % (self.yMin, self.yMax, self.height))
-        r1 = np.linspace( self.xMin, self.xMax, self.width, dtype=np.float64)
-        r2 = np.linspace( self.yMin, self.yMax, self.height, dtype=np.float64)
+        r1 = _numpy.linspace( self.xMin, self.xMax, self.width, dtype=_numpy.float64)
+        r2 = _numpy.linspace( self.yMin, self.yMax, self.height, dtype=_numpy.float64)
         c = r1 + r2[:,None]*1j
 
-        output = np.zeros(c.shape)
-        z = np.zeros(c.shape, np.complex128)
+        output = _numpy.zeros(c.shape)
+        z = _numpy.zeros(c.shape, _numpy.complex128)
         for it in range( self.maxIter):
-            notdone = np.less(z.real*z.real + z.imag*z.imag, 4.0)
+            notdone = _numpy.less(z.real*z.real + z.imag*z.imag, 4.0)
             output[notdone] = it
             z[notdone] = z[notdone]**2 + c[notdone]
             if (it % 20) == 0: 

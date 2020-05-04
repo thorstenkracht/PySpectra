@@ -24,7 +24,7 @@ pySpectraPath = "."
 sys.path.append( pySpectraPath)
 
 import PySpectra
-import PySpectra.GQE as GQE
+import PySpectra.utils as utils
 import PySpectra.zmqIfc as zmqIfc
 import numpy as np
 import unittest, time
@@ -77,7 +77,7 @@ class testZmqIfc( unittest.TestCase):
         zmqIfc.execHsh( { 'command': ['display']})
         self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 1)
-        lst = GQE.getGqeList()
+        lst = PySpectra.getGqeList()
         self.assertEqual( len( lst), 2)
         self.assertEqual( lst[0].name, "eh_c01")
         self.assertEqual( lst[1].name, "eh_c02")
@@ -123,7 +123,7 @@ class testZmqIfc( unittest.TestCase):
         zmqIfc.execHsh( { 'command': ['display']})
         self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 1)
-        lst = GQE.getGqeList()
+        lst = PySpectra.getGqeList()
         self.assertEqual( len( lst), 2)
         self.assertEqual( lst[0].name, "d1")
         self.assertEqual( lst[1].name, "d2")
@@ -146,7 +146,7 @@ class testZmqIfc( unittest.TestCase):
         #
         # and compare
         #
-        o = GQE.getGqe( 'd1')
+        o = PySpectra.getGqe( 'd1')
         for i in range( MAX):
             self.assertEqual( o.y[i], float(i)/10.)
         
@@ -383,7 +383,7 @@ class testZmqIfc( unittest.TestCase):
 
         hsh =  zmqIfc.execHsh( { 'command': ['cls', 'display']})
         self.assertEqual( hsh[ 'result'], 'done')
-        o = GQE.getGqe( "Mandelbrot")
+        o = PySpectra.getGqe( "Mandelbrot")
         self.assertEqual( o.height, 100)
         self.assertEqual( o.width, 100)
         self.assertEqual( o.xMin, xmin)
@@ -398,6 +398,9 @@ class testZmqIfc( unittest.TestCase):
     def testToPyspMonitor1( self) : 
         import random
         print "testZmqIfc.testToPyspMonitor1"
+
+        if utils.getHostname() != 'haso107tk': 
+            return 
 
         hsh = zmqIfc.toPyspMonitor( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
@@ -439,6 +442,9 @@ class testZmqIfc( unittest.TestCase):
     def testToPyspMonitor2( self) : 
         import random
         print "testZmqIfc.testToPyspMonitor2"
+
+        if utils.getHostname() != 'haso107tk': 
+            return 
 
         hsh = zmqIfc.toPyspMonitor( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
@@ -489,6 +495,10 @@ class testZmqIfc( unittest.TestCase):
         set the mandelbrot pixel in pixel numbers (whole numbers)
         '''
         print "testZmqIfc.testToPyspMonitor3"
+
+        if utils.getHostname() != 'haso107tk': 
+            return 
+
         hsh = zmqIfc.toPyspMonitor( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
         hsh = zmqIfc.toPyspMonitor( { 'command': ['setWsViewport dina5s']})
@@ -541,6 +551,10 @@ class testZmqIfc( unittest.TestCase):
         set the mandelbrot pixel in world coordinates
         '''
         print "testZmqIfc.testToPyspMonitor4"
+
+        if utils.getHostname() != 'haso107tk': 
+            return 
+
         hsh = zmqIfc.toPyspMonitor( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
         hsh = zmqIfc.toPyspMonitor( { 'command': ['setWsViewport dina5s']})
@@ -595,6 +609,9 @@ class testZmqIfc( unittest.TestCase):
         '''
         print "testZmqIfc.testToPyspMonitor5"
 
+        if utils.getHostname() != 'haso107tk': 
+            return 
+
         hsh = zmqIfc.toPyspMonitor( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
         hsh = zmqIfc.toPyspMonitor( { 'command': ['setWsViewport dina5s']})
@@ -643,6 +660,10 @@ class testZmqIfc( unittest.TestCase):
         use putData to transfer a complete image at once
         '''
         print "testZmqIfc.testToPyspMonitor6"
+
+        if utils.getHostname() != 'haso107tk': 
+            return 
+
         hsh = zmqIfc.toPyspMonitor( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
         hsh = zmqIfc.toPyspMonitor( { 'command': ['setWsViewport dina5s']})
@@ -689,6 +710,10 @@ class testZmqIfc( unittest.TestCase):
         use Image to transfer a complete image at once
         '''
         print "testZmqIfc.testToPyspMonitor7"
+
+        if utils.getHostname() != 'haso107tk': 
+            return 
+
         hsh = zmqIfc.toPyspMonitor( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
         hsh = zmqIfc.toPyspMonitor( { 'command': ['setWsViewport dina5s']})
@@ -729,5 +754,6 @@ class testZmqIfc( unittest.TestCase):
         print "testZmqIfc.testToPyspMonitor7 DONE"
 
         return 
+
 if __name__ == "__main__":
     unittest.main()

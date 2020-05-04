@@ -1,10 +1,11 @@
 #!/bin/env python
-
+'''
+this module contains some Tango-related functions
+'''
 from PyQt4 import QtCore, QtGui
 
 import pyqtgraph as _pg
 import PySpectra
-import PySpectra.GQE as GQE
 import PySpectra.definitions as _definitions
 import PyTango 
 import HasyUtils
@@ -21,9 +22,9 @@ def moveStart( gqe, targetX, targetY = None, flagConfirm = True):
 
     gqe.display()
 
-    if type( gqe) == GQE.Scan: 
+    if type( gqe) == PySpectra.Scan: 
         return moveScan( gqe, targetX, flagSync = False, flagConfirm = flagConfirm)
-    elif type( gqe) == GQE.Image: 
+    elif type( gqe) == PySpectra.Image: 
         return moveImage( gqe, targetX, targetY, flagSync = False, flagConfirm = flagConfirm)
     else: 
         raise ValueError( "IfTango.move: failed to identify the gqe type" % type( gqe))
@@ -37,9 +38,9 @@ def move( gqe, targetX, targetY = None, flagConfirm = True):
       - ifc.move()
       - a mouse click from pqtgrph/graphics.py
     '''
-    if type( gqe) == GQE.Scan: 
+    if type( gqe) == PySpectra.Scan: 
         return moveScan( gqe, targetX, flagSync = True, flagConfirm = flagConfirm)
-    elif type( gqe) == GQE.Image: 
+    elif type( gqe) == PySpectra.Image: 
         return moveImage( gqe, targetX, targetY, flagSync = True, flagConfirm = flagConfirm)
     else: 
         raise ValueError( "IfTango.move: failed to identify the gqe type" % type( gqe))
@@ -53,14 +54,14 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
 
     #print( "tangoIfc.move(), motorNameList %s " % repr( scan.motorNameList))
         
-    if GQE.InfoBlock.monitorGui is None and scan.motorNameList is None:
+    if PySpectra.InfoBlock.monitorGui is None and scan.motorNameList is None:
         if scan.logWidget is not None:
             scan.logWidget.append( "tangoIfc.move: not called from pyspMonitor or moveMotor") 
         else:
             pass
         return 
     
-    door = GQE.InfoBlock.getDoorProxy()
+    door = PySpectra.InfoBlock.getDoorProxy()
             
     if door.state() != PyTango.DevState.ON: 
         if scan.logWidget is not None:
@@ -73,7 +74,7 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
     # make sure the target is inside the x-range of the plot
     #
     if target < scan.xMin or target > scan.xMax:
-        if GQE.InfoBlock.monitorGui is None: 
+        if PySpectra.InfoBlock.monitorGui is None: 
             print( "tangoIfc.Move: target %g outside %s x-axis %g %g" % 
                    (target, scan.name, scan.xMin, scan.xMax))
         else: 
@@ -123,7 +124,7 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
         # otherwise the client receives a time-out
         #
         if flagConfirm:
-            if GQE.InfoBlock.monitorGui is None: 
+            if PySpectra.InfoBlock.monitorGui is None: 
                 if not HasyUtils.yesno( msg + " y/[n]: "):
                     print( "Move: move not confirmed")
                     return
@@ -177,18 +178,18 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
     # from the pyspMonitor application, after a scan macro has bee executed
     # ---
     #
-    if GQE.InfoBlock.monitorGui is None or GQE.InfoBlock.monitorGui.scanInfo is None: 
+    if PySpectra.InfoBlock.monitorGui is None or PySpectra.InfoBlock.monitorGui.scanInfo is None: 
         QtGui.QMessageBox.about( None, "Info Box", 
-                                  "GQE.Move: GQE.monitorGui is None or GQE.monitorGui.scanInfo is None")
+                                  "PySpectra.Move: PySpectra.monitorGui is None or PySpectra.monitorGui.scanInfo is None")
         return
 
-    motorArr = GQE.InfoBlock.monitorGui.scanInfo['motors']        
+    motorArr = PySpectra.InfoBlock.monitorGui.scanInfo['motors']        
     length = len( motorArr)
     if  length == 0 or length > 3:
         QtGui.QMessageBox.about( None, 'Info Box', "no. of motors == 0 or > 3") 
         return
 
-    motorIndex = GQE.InfoBlock.monitorGui.scanInfo['motorIndex']
+    motorIndex = PySpectra.InfoBlock.monitorGui.scanInfo['motorIndex']
 
     if motorIndex >= length:
         QtGui.QMessageBox.about( None, 'Info Box', "motorIndex %d >= no. of motors %d" % (motorIndex, length))
@@ -277,11 +278,11 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
         scan.arrowSetPoint.show()
 
     if not reply == QtGui.QMessageBox.Yes:
-        GQE.InfoBlock.monitorGui.logWidget.append( "Move: move not confirmed")
+        PySpectra.InfoBlock.monitorGui.logWidget.append( "Move: move not confirmed")
         return
 
-    if GQE.InfoBlock.monitorGui.scanInfo['title'].find( "hklscan") == 0:
-        GQE.InfoBlock.monitorGui.logWidget.append( "br %g %g %g" % 
+    if PySpectra.InfoBlock.monitorGui.scanInfo['title'].find( "hklscan") == 0:
+        PySpectra.InfoBlock.monitorGui.logWidget.append( "br %g %g %g" % 
                                          (motorArr[0]['targetPos'],
                                           motorArr[1]['targetPos'],
                                           motorArr[2]['targetPos']))
@@ -294,7 +295,7 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
         for hsh in motorArr:
             lst.append( "%s" % (hsh['name']))
             lst.append( "%g" % (hsh['targetPos']))
-            GQE.InfoBlock.monitorGui.logWidget.append( "%s to %g" % (hsh['name'], hsh['targetPos']))
+            PySpectra.InfoBlock.monitorGui.logWidget.append( "%s to %g" % (hsh['name'], hsh['targetPos']))
         door.RunMacro( lst)
 
     if flagSync:
@@ -327,13 +328,13 @@ def moveImage( image, targetIX, targetIY, flagSync, flagConfirm = True):
             
     targetX = float( targetIX)/float( image.width)*( image.xMax - image.xMin) + image.xMin
     targetY = float( targetIY)/float( image.height)*( image.yMax - image.yMin) + image.yMin
-    print( "GQE.Image.move x %g, y %g" % (targetX, targetY))
+    print( "PySpectra.Image.move x %g, y %g" % (targetX, targetY))
 
-    if GQE.InfoBlock.monitorGui is None:
+    if PySpectra.InfoBlock.monitorGui is None:
         if image.logWidget is not None:
-            image.logWidget.append( "GQE.Image.move: not called from pyspMonitor") 
+            image.logWidget.append( "PySpectra.Image.move: not called from pyspMonitor") 
         else:
-            print( "GQE.Image.move: not called from pyspMonitor")
+            print( "PySpectra.Image.move: not called from pyspMonitor")
         return 
 
     try: 
@@ -376,15 +377,15 @@ def moveImage( image, targetIX, targetIY, flagSync, flagConfirm = True):
         
         if not reply == QtGui.QMessageBox.Yes:
             if image.logWidget is not None:
-                GQE.InfoBlock.monitorGui.logWidget.append( "Image.Move: move not confirmed")
+                PySpectra.InfoBlock.monitorGui.logWidget.append( "Image.Move: move not confirmed")
             return
 
     lst = [ "umv %s %g %s %g" % (proxyX.name(), targetX, proxyY.name(), targetY)]
         
     if image.logWidget is not None:
-        GQE.InfoBlock.monitorGui.logWidget.append( "%s" % (lst[0]))
+        PySpectra.InfoBlock.monitorGui.logWidget.append( "%s" % (lst[0]))
 
-    door = GQE.InfoBlock.getDoorProxy()
+    door = PySpectra.InfoBlock.getDoorProxy()
 
     if door is None: 
         return 

@@ -11,7 +11,6 @@ import numpy as np
 
 import PySpectra 
 import PySpectra.examples.exampleCode
-import PySpectra.GQE as GQE
 import PySpectra.definitions as definitions
 import PySpectra.calc as calc
 import mtpltlb.graphics as mpl_graphics # for pdf output
@@ -117,13 +116,13 @@ class QListWidgetTK( QtGui.QListWidget):
                 self.parent.displayChecked()
         if event.button() == QtCore.Qt.RightButton:
             item = self.currentItem()
-            gqe = GQE.getGqe( item.text())
-            if type( gqe) == GQE.Scan:
+            gqe = PySpectra.getGqe( item.text())
+            if type( gqe) == PySpectra.Scan:
                 if gqe.textOnly: 
                     self.logWidget.append( "%s is textOnly" % item.text())
                     return 
                 self.scanAttributes = ScanAttributes( self.parent, item.text(), self.logWidget)
-            elif type( gqe) == GQE.Image:
+            elif type( gqe) == PySpectra.Image:
                 self.imageAttributes = ImageAttributes( self.parent, item.text(), self.logWidget)
         return 
 #
@@ -543,7 +542,7 @@ class ScanAttributes( QtGui.QMainWindow):
             raise ValueError( "pyspFio.ScanAttributes: name not specified")
         self.name = name
         self.logWidget = logWidget
-        self.scan = GQE.getGqe( self.name)
+        self.scan = PySpectra.getGqe( self.name)
         self.scan.attributeWidget = self
         self.scan.flagDisplayVLines = False
         PySpectra.cls()
@@ -847,7 +846,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.w_overlayComboBox.addItem( "None")
         count = 1 
         countTemp = -1
-        for scan in GQE.getGqeList(): 
+        for scan in PySpectra.getGqeList(): 
             if scan.name == self.name:
                 continue
             if self.scan.overlay is not None and self.scan.overlay == scan.name:
@@ -978,8 +977,8 @@ class ScanAttributes( QtGui.QMainWindow):
 
 
     def cb_next( self): 
-        nextScan = GQE.nextScan( self.name)
-        index = GQE.getIndex( nextScan.name)
+        nextScan = PySpectra.nextScan( self.name)
+        index = PySpectra.getIndex( nextScan.name)
         self.name = nextScan.name
         self.scan = nextScan
         PySpectra.cls()
@@ -988,8 +987,8 @@ class ScanAttributes( QtGui.QMainWindow):
         return 
 
     def cb_back( self): 
-        prevScan = GQE.prevScan( self.name)
-        index = GQE.getIndex( prevScan.name)
+        prevScan = PySpectra.prevScan( self.name)
+        index = PySpectra.getIndex( prevScan.name)
         self.name = prevScan.name
         self.scan = prevScan
         PySpectra.cls()
@@ -1303,7 +1302,7 @@ class ImageAttributes( QtGui.QMainWindow):
             raise ValueError( "pyspFio.ImageAttributes: name not specified")
         self.name = name
         self.logWidget = logWidget
-        self.image = GQE.getGqe( self.name)
+        self.image = PySpectra.getGqe( self.name)
         self.image.attributeWidget = self
 
         PySpectra.cls()
@@ -1660,8 +1659,8 @@ class ImageAttributes( QtGui.QMainWindow):
         return
 
     def cb_next( self): 
-        nextImage = GQE.nextImage( self.name)
-        index = GQE.getIndex( nextImage.name)
+        nextImage = PySpectra.nextImage( self.name)
+        index = PySpectra.getIndex( nextImage.name)
         self.name = nextImage.name
         self.image = nextImage
         PySpectra.cls()
@@ -1670,8 +1669,8 @@ class ImageAttributes( QtGui.QMainWindow):
         return 
 
     def cb_back( self): 
-        prevImage = GQE.prevImage( self.name)
-        index = GQE.getIndex( prevImage.name)
+        prevImage = PySpectra.prevImage( self.name)
+        index = PySpectra.getIndex( prevImage.name)
         self.name = prevImage.name
         self.image = prevImage
         PySpectra.cls()
@@ -2013,7 +2012,7 @@ class pySpectraGui( QtGui.QMainWindow):
         if files is not None and len( files) > 0:
             self.files = self.getMatchingFiles( files)
             for f in self.files:
-                GQE.read( f)
+                PySpectra.read( f)
             PySpectra.display()
 
         self.prepareCentralWidgets()
@@ -2316,15 +2315,15 @@ class pySpectraGui( QtGui.QMainWindow):
         #
         elif pathNameTokens[-1] in definitions.dataFormats:
             PySpectra.cls()
-            GQE.delete()
+            PySpectra.delete()
             try: 
-                GQE.read( pathName, flagMCA = self.mcaAction.isChecked())
+                PySpectra.read( pathName, flagMCA = self.mcaAction.isChecked())
             except Exception as e :
                 print( "pySpectraGui.newPathSelected: trouble reading %s" % pathName)
                 print( repr( e))
                 return 
 
-            GQE.setTitle( pathName)
+            PySpectra.setTitle( pathName)
             PySpectra.display()
             self.updateScansList()
         else:
@@ -2361,7 +2360,7 @@ class pySpectraGui( QtGui.QMainWindow):
         if len( self.getCheckedNameList()) != 1: 
             return 
 
-        #gqe = GQE.getGqe( self.getCheckedNameList()[0])
+        #gqe = PySpectra.getGqe( self.getCheckedNameList()[0])
         #gqe.updateArrowCurrent()
         
         #self.updateTimerPySpectraGui.start( int( updateTime*1000))
@@ -2374,14 +2373,14 @@ class pySpectraGui( QtGui.QMainWindow):
         #   - the current gqeList and the displayed gqeList are different
         #
 
-        gqeList = GQE.getGqeList()[:]
+        gqeList = PySpectra.getGqeList()[:]
         #
         # see, if one of the GQEs has an arrowCurrent. 
         # if so, update it because the motor might have been 
         # moved somehow
         # 
         for gqe in gqeList: 
-            if type( gqe) != GQE.Scan:            
+            if type( gqe) != PySpectra.Scan:            
                 continue
             if gqe.arrowCurrent is None: 
                 continue
@@ -2417,7 +2416,7 @@ class pySpectraGui( QtGui.QMainWindow):
         # fill the gqesListWidget
         #
         if len( self.gqeList) > 0:
-            if type( self.gqeList[0]) == GQE.Scan:
+            if type( self.gqeList[0]) == PySpectra.Scan:
                 if self.gqeList[0].fileName is not None:
                     self.fileNameLabel.setText( self.gqeList[0].fileName)
 
@@ -2477,15 +2476,15 @@ class pySpectraGui( QtGui.QMainWindow):
         PySpectra.display()
 
     def cb_back( self): 
-        scan = GQE.prevScan()
-        index = GQE.getIndex( scan.name)
+        scan = PySpectra.prevScan()
+        index = PySpectra.getIndex( scan.name)
         PySpectra.cls()
         PySpectra.display( [ scan.name])
         self.gqesListWidget.setCurrentRow( index)
 
     def cb_next( self): 
-        scan = GQE.nextScan()
-        index = GQE.getIndex( scan.name)
+        scan = PySpectra.nextScan()
+        index = PySpectra.getIndex( scan.name)
         PySpectra.cls()
         PySpectra.display( [ scan.name])
         self.gqesListWidget.setCurrentRow( index)
@@ -2734,7 +2733,7 @@ class pySpectraGui( QtGui.QMainWindow):
     def _printHelper( self, frmt): 
         import HasyUtils
 
-        lst = GQE.getGqeList()
+        lst = PySpectra.getGqeList()
         if len( lst) == 0:
             QtGui.QMessageBox.about(self, 'Info Box', "No Scans to print")
             return
@@ -2830,7 +2829,7 @@ class pySpectraGui( QtGui.QMainWindow):
             return 
         for name in lst: 
             self.logWidget.append(  "Deleting %s" % name)
-        GQE.delete( lst)
+        PySpectra.delete( lst)
         PySpectra.cls()
         PySpectra.display()
         return 
@@ -2844,7 +2843,7 @@ class pySpectraGui( QtGui.QMainWindow):
             self.logWidget.append( "failed to create PDF file")
         
     def cb_doty( self):
-        lst = GQE.getGqeList()
+        lst = PySpectra.getGqeList()
         if self.dotyAction.isChecked():
             for elm in lst:
                 elm.doty = True
@@ -2855,7 +2854,7 @@ class pySpectraGui( QtGui.QMainWindow):
         PySpectra.display()
 
     def cb_grid( self): 
-        lst = GQE.getGqeList()
+        lst = PySpectra.getGqeList()
         if self.gridAction.isChecked():
             for scan in lst:
                 scan.showGridX = True
@@ -2896,28 +2895,28 @@ class pySpectraGui( QtGui.QMainWindow):
         return 
         
     def cb_derivative( self):
-        displayList = GQE.getDisplayList()
+        displayList = PySpectra.getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append(  "cb_derivative: expecting 1 displayed scan")
             return 
         calc.derivative( displayList[0].name)
 
     def cb_antiderivative( self):
-        displayList = GQE.getDisplayList()
+        displayList = PySpectra.getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append(  "cb_antiderivative: expecting 1 displayed scan")
             return 
         calc.antiderivative( displayList[0].name)
 
     def cb_y2my( self):
-        displayList = GQE.getDisplayList()
+        displayList = PySpectra.getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append(  "cb_y2my: expecting 1 displayed scan")
             return 
         calc.yToMinusY( displayList[0].name)
 
     def cb_ssa( self):
-        displayList = GQE.getDisplayList()
+        displayList = PySpectra.getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append( "cb_ssa: expecting 1 displayed scan")
             return 
@@ -2928,7 +2927,7 @@ class pySpectraGui( QtGui.QMainWindow):
         PySpectra.display()
 
     def cb_fsa( self):
-        displayList = GQE.getDisplayList()
+        displayList = PySpectra.getDisplayList()
         if len( displayList) != 1:
             self.logWidget.append( "cb_fsa: expecting 1 displayed scan")
             return 
@@ -2940,9 +2939,9 @@ class pySpectraGui( QtGui.QMainWindow):
 
     def cb_writeFile( self):
         if len( self.getCheckedNameList()) > 0: 
-            fName = GQE.write( self.getCheckedNameList())
+            fName = PySpectra.write( self.getCheckedNameList())
         else:
-            fName = GQE.write()
+            fName = PySpectra.write()
         if fName is None: 
             self.logWidget.append( "Failed to create .fio file")
         else:

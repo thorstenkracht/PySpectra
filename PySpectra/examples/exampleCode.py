@@ -15,7 +15,6 @@ import os, time, math
 import PySpectra 
 import PySpectra.zmqIfc as zmqIfc
 import PySpectra.utils as utils
-import PySpectra.GQE as GQE
 
 
 def exampleDataVia_execHsh(): 
@@ -90,7 +89,7 @@ def exampleImageMBVia_execHsh():
     PySpectra.setWsViewport( 'DINA5S')
 
     PySpectra.cls()
-    GQE.delete()
+    PySpectra.delete()
 
     (xmin, xmax) = (-2.,-0.5)
     (ymin, ymax) = (0, 1.5)
@@ -144,7 +143,7 @@ def exampleImageMBVia_execHsh_OneChunk():
     PySpectra.setWsViewport( 'DINA5S')
 
     PySpectra.cls()
-    GQE.delete()
+    PySpectra.delete()
 
     (xmin, xmax) = (-2., 1.0)
     (ymin, ymax) = ( -1.5, 1.5)
@@ -186,9 +185,9 @@ def example_LogPlotWithText():
     create 1 scan, y-log scale, one text
     '''
     PySpectra.cls()
-    GQE.delete()
+    PySpectra.delete()
     PySpectra.setWsViewport( "DINA5")
-    t1 = GQE.Scan( name = "t1", xMin = 0.01, xMax = 10., nPts = 101, 
+    t1 = PySpectra.Scan( name = "t1", xMin = 0.01, xMax = 10., nPts = 101, 
                      lineColor = 'blue', xLabel='Position', 
                      yLabel = 'signal', yLog = True)
     t1.addText( text = "a left/center aligned text, should be in the center", 
@@ -197,10 +196,10 @@ def example_LogPlotWithText():
 
 def example_LogXScale():
     PySpectra.cls()
-    GQE.delete()
+    PySpectra.delete()
     PySpectra.setWsViewport( "DINA5")
-    GQE.setTitle( "log x-scale")
-    t1 = GQE.Scan( name = "t1", xMin = 0.01, xMax = 100., nPts = 101, 
+    PySpectra.setTitle( "log x-scale")
+    t1 = PySpectra.Scan( name = "t1", xMin = 0.01, xMax = 100., nPts = 101, 
                     lineColor = 'blue', xLabel='Position', yLabel = 'signal', 
                      yLog = False, xLog = True)
     PySpectra.display()
@@ -211,11 +210,11 @@ def example_PlotWithSeveralTexts():
     create 1 scan with several texts
     '''
     PySpectra.cls()
-    GQE.delete()
-    GQE.setTitle( "Here could be the title")
-    GQE.setComment( "comment: Sinus(), shifted up by 1.1")
+    PySpectra.delete()
+    PySpectra.setTitle( "Here could be the title")
+    PySpectra.setComment( "comment: Sinus(), shifted up by 1.1")
     PySpectra.setWsViewport( "DINA5")
-    t1 = GQE.Scan( name = "t1", xMin = 0.01, xMax = 10., nPts = 101, 
+    t1 = PySpectra.Scan( name = "t1", xMin = 0.01, xMax = 10., nPts = 101, 
                      lineColor = 'blue', xLabel = 'Position', yLabel = 'sin')
     t1.addText( text = "a left/center aligned text", x = 0.05, y = 0.8, 
                 hAlign = 'left', vAlign = 'center')
@@ -236,16 +235,16 @@ def example_Overlay2():
     create 2 overlaid scans
     '''
     PySpectra.cls()
-    GQE.delete()
-    GQE.setTitle( "Overlay 2 Scans")
-    GQE.setComment( "no comment")
+    PySpectra.delete()
+    PySpectra.setTitle( "Overlay 2 Scans")
+    PySpectra.setComment( "no comment")
     PySpectra.setWsViewport( "DINA5")
     g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
                            lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
-    t1 = GQE.Scan( name = "sinus", lineColor = 'blue', xMin = -5, xMax = 5., 
+    t1 = PySpectra.Scan( name = "sinus", lineColor = 'blue', xMin = -5, xMax = 5., 
                     yMin = -1.5, yMax = 1.5, yLabel = 'sin')
     t1.y = np.sin( t1.x)
-    GQE.overlay( "sinus", "gauss")
+    PySpectra.overlay( "sinus", "gauss")
     PySpectra.display()
 
 def example_OverlayDoty():
@@ -253,14 +252,14 @@ def example_OverlayDoty():
     create 2 overlaid scans
     '''
     PySpectra.cls()
-    GQE.delete()
-    GQE.setTitle( "2 Overlay scans, x-axis tick labels show date")
+    PySpectra.delete()
+    PySpectra.setTitle( "2 Overlay scans, x-axis tick labels show date")
     PySpectra.setWsViewport( "DINA5")
-    t1 = GQE.Scan( name = "t1", xMin = 0, xMax = 10, nPts = 101, 
+    t1 = PySpectra.Scan( name = "t1", xMin = 0, xMax = 10, nPts = 101, 
                      lineColor = 'blue', 
                      xLabel = 'Position', yLabel = 'sin', doty = True)
     t1.y = np.sin( t1.x)
-    t2 = GQE.Scan( "t2", xLabel = 'Position', yLabel = 'cos', 
+    t2 = PySpectra.Scan( "t2", xLabel = 'Position', yLabel = 'cos', 
                      xMin = 0, xMax = 10, nPts = 101, 
                      lineColor = 'green', doty = True)
     t2.y = np.cos( t2.x)
@@ -272,22 +271,22 @@ def example_PlotsWithTextContainer():
     create 3 scans and a text container
     '''
     PySpectra.cls()
-    GQE.delete()
-    GQE.setTitle( "here could be a title")
-    GQE.setComment( "this is a comment")
+    PySpectra.delete()
+    PySpectra.setTitle( "here could be a title")
+    PySpectra.setComment( "this is a comment")
     PySpectra.setWsViewport( "DINA5")
-    textScan = GQE.Scan( name = "textContainer", textOnly = True)
+    textScan = PySpectra.Scan( name = "textContainer", textOnly = True)
     textScan.addText( text = "some information", 
                       x = 0., y = 0.95, color = 'blue')
     textScan.addText( text = "and more infos", 
                       x = 0., y = 0.85, color = 'blue')
-    t1 = GQE.Scan( "t1", lineColor = 'blue', xLabel = 'Position', 
+    t1 = PySpectra.Scan( "t1", lineColor = 'blue', xLabel = 'Position', 
                      yLabel = 'sin')
     t1.y = np.sin( t1.x)
-    t2 = GQE.Scan( "t2", xLabel = 'Position', yLabel = 'cos', 
+    t2 = PySpectra.Scan( "t2", xLabel = 'Position', yLabel = 'cos', 
                      symbol = 'o', symbolColor = 'red', symbolSize = 5)
     t2.y = np.cos( t2.x)
-    t3 = GQE.Scan( "t3", xLabel = 'Position', yLabel = 'tan', 
+    t3 = PySpectra.Scan( "t3", xLabel = 'Position', yLabel = 'tan', 
                      symbol = '+', lineColor = 'cyan', 
                      symbolColor = 'green', symbolSize = 5)
     t3.y = np.tan( t3.x)
@@ -298,24 +297,24 @@ def example_Create5Plots():
     create 5 scans, different colors, demonstrate overlay feature
     '''
     PySpectra.cls()
-    GQE.delete()
-    GQE.setTitle( "5 Scans, t5 is overlaid to t3")
+    PySpectra.delete()
+    PySpectra.setTitle( "5 Scans, t5 is overlaid to t3")
     PySpectra.setWsViewport( "DINA5")
-    t1 = GQE.Scan( name = "t1", lineColor = 'blue', yLabel = 'sin')
+    t1 = PySpectra.Scan( name = "t1", lineColor = 'blue', yLabel = 'sin')
     t1.y = np.sin( t1.x)
-    t2 = GQE.Scan( "t2", xLabel = 'Position', yLabel = 'cos', symbol = '+')
+    t2 = PySpectra.Scan( "t2", xLabel = 'Position', yLabel = 'cos', symbol = '+')
     t2.y = np.cos( t2.x)
-    t3 = GQE.Scan( name = "t3", lineColor = 'green', 
+    t3 = PySpectra.Scan( name = "t3", lineColor = 'green', 
                      xLabel = 'Position', yLabel = 'tan')
     t3.y = np.tan( t3.x)
-    t4 = GQE.Scan( name = "t4", lineColor = 'NONE', 
+    t4 = PySpectra.Scan( name = "t4", lineColor = 'NONE', 
                      xLabel = 'Position', yLabel = 'random', 
                      symbol = '+', symbolColor = 'CYAN')
     t4.y = np.random.random_sample( (len( t4.y), ))
-    t5 = GQE.Scan( name = "t5", lineColor = 'magenta', 
+    t5 = PySpectra.Scan( name = "t5", lineColor = 'magenta', 
                      xLabel = 'Position', yLabel = 'x**2')
     t5.y = t5.x * t5.x
-    GQE.overlay( 't5', 't3')
+    PySpectra.overlay( 't5', 't3')
     PySpectra.display()
 
 def example_Create22Plots():
@@ -323,12 +322,12 @@ def example_Create22Plots():
     create 22 plots
     '''
     PySpectra.cls()
-    GQE.delete()
-    GQE.setTitle( "22 Scans")
-    GQE.setComment( "and a comment")
+    PySpectra.delete()
+    PySpectra.setTitle( "22 Scans")
+    PySpectra.setComment( "and a comment")
     PySpectra.setWsViewport( "DINA4")
     for i in range( 22): 
-        t = GQE.Scan( name = "t%d" % i, lineColor = 'blue',
+        t = PySpectra.Scan( name = "t%d" % i, lineColor = 'blue',
                         xLabel = 'Position', yLabel = 'rand')
         t.y = np.random.random_sample( (len( t.x), ))*1000.
     PySpectra.display()
@@ -338,18 +337,18 @@ def example_Create56x3Plots():
     create 56x3 plots
     '''
     PySpectra.cls()
-    GQE.delete()
-    GQE.setTitle( "56 x 3 Scans")
-    GQE.setComment( "Display many Scans")
+    PySpectra.delete()
+    PySpectra.setTitle( "56 x 3 Scans")
+    PySpectra.setComment( "Display many Scans")
     PySpectra.setWsViewport( "DINA4")
     for i in range( 56): 
-        t = GQE.Scan( name = "t%d_a" % i, lineColor = 'blue', nPts = 200, 
+        t = PySpectra.Scan( name = "t%d_a" % i, lineColor = 'blue', nPts = 200, 
                         yLabel = 'rand')
         t.y = np.random.random_sample( (len( t.x), ))*1000.
-        t = GQE.Scan( name = "t%d_b" % i, lineColor = 'red', nPts = 200, 
+        t = PySpectra.Scan( name = "t%d_b" % i, lineColor = 'red', nPts = 200, 
                         yLabel = 'rand', overlay = "t%d_a" % i)
         t.y = np.random.random_sample( (len( t.x), ))*1000.
-        t = GQE.Scan( name = "t%d_c" % i, lineColor = 'green', nPts = 200, 
+        t = PySpectra.Scan( name = "t%d_c" % i, lineColor = 'green', nPts = 200, 
                         yLabel = 'rand', overlay = "t%d_a" % i)
         t.y = np.random.random_sample( (len( t.x), ))*1000.
     PySpectra.display()
@@ -365,11 +364,11 @@ def example_CreatePDF():
         return 
 
     PySpectra.cls()
-    GQE.delete()
+    PySpectra.delete()
 
-    GQE.setTitle( "Create PDF file and send it to the printer")
+    PySpectra.setTitle( "Create PDF file and send it to the printer")
     PySpectra.setWsViewport( "DINA5")
-    scan = GQE.Scan( name = 'PDF Output', nPts = 100, xMin = -1., xMax = 1.,
+    scan = PySpectra.Scan( name = 'PDF Output', nPts = 100, xMin = -1., xMax = 1.,
                            xLabel = 'Position', yLabel = "Counts")
     
     scan.y = np.sin( scan.x)
@@ -385,15 +384,15 @@ def example_GaussAndSinusOverlay():
     overlay 2 scans
     '''
     PySpectra.cls()
-    GQE.delete()
-    GQE.setTitle( "2 Overlay Scans")
+    PySpectra.delete()
+    PySpectra.setTitle( "2 Overlay Scans")
     PySpectra.setWsViewport( "DINA5")
     g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
                            lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
-    t1 = GQE.Scan( name = "sinus", lineColor = 'blue', xMin = -5, xMax = 5., 
+    t1 = PySpectra.Scan( name = "sinus", lineColor = 'blue', xMin = -5, xMax = 5., 
                     yMin = -1.5, yMax = 1.5, yLabel = 'sin')
     t1.y = np.sin( t1.x)
-    GQE.overlay( "sinus", "gauss")
+    PySpectra.overlay( "sinus", "gauss")
     PySpectra.display()
 
 def example_Gauss():
@@ -401,9 +400,9 @@ def example_Gauss():
     gauss plot
     '''
     PySpectra.cls()
-    GQE.delete()
-    GQE.setTitle( "A simple Gauss curve")
-    GQE.setComment( "Can be used with SSA, calculating derivative and so")
+    PySpectra.delete()
+    PySpectra.setTitle( "A simple Gauss curve")
+    PySpectra.setComment( "Can be used with SSA, calculating derivative and so")
     PySpectra.setWsViewport( "DINA5")
     g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
                            lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
@@ -415,9 +414,9 @@ def example_GaussManyOverlay():
     gauss plot
     '''
     PySpectra.cls()
-    GQE.delete()
+    PySpectra.delete()
     PySpectra.setWsViewport( "DINA5")
-    g = GQE.Scan( name = "gauss", xMin = -10., xMax = 10., nPts = 101)
+    g = PySpectra.Scan( name = "gauss", xMin = -10., xMax = 10., nPts = 101)
     #mu = 0.
     #sigma = 1.
     #g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2*sigma**2))
@@ -434,11 +433,11 @@ def example_GaussManyOverlay():
     g.yMin = 0
     g.yMax = 2
     for i in range( 1,50):  # don't want i == 0
-        gqe = GQE.Scan( name = "gauss%d" % i, xMin = -5., xMax = 5., 
+        gqe = PySpectra.Scan( name = "gauss%d" % i, xMin = -5., xMax = 5., 
                           nPts = 101)
         gqe.x = g.x + 0.02 * i
         gqe.y = g.y + 0.02 * i
-        GQE.overlay( "gauss%d" % i, "gauss")
+        PySpectra.overlay( "gauss%d" % i, "gauss")
         gqe.useTargetWindow = True
         
     PySpectra.display()
@@ -449,9 +448,9 @@ def example_GaussNoisy():
     gauss plot
     '''
     PySpectra.cls()
-    GQE.delete()
-    GQE.setTitle( "a noisy Gauss")
-    GQE.setComment( "See how SSA behaves with noisy data")
+    PySpectra.delete()
+    PySpectra.setTitle( "a noisy Gauss")
+    PySpectra.setComment( "See how SSA behaves with noisy data")
     PySpectra.setWsViewport( "DINA5")
     g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
                            lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
@@ -464,11 +463,11 @@ def example_Gauss2():
     2 gauss plot
     '''
     PySpectra.cls()
-    GQE.delete()
-    GQE.setTitle( "Two Gauss curves")
-    GQE.setComment( "To demonstrate how SSA limits can be defined with VLines")
+    PySpectra.delete()
+    PySpectra.setTitle( "Two Gauss curves")
+    PySpectra.setComment( "To demonstrate how SSA limits can be defined with VLines")
     PySpectra.setWsViewport( "DINA5")
-    g = GQE.Scan( name = "gauss", xMin = -10., xMax = 10., nPts = 101)
+    g = PySpectra.Scan( name = "gauss", xMin = -10., xMax = 10., nPts = 101)
     mu1 = 0.
     sigma1 = 1.
     mu2 = 6.5
@@ -482,11 +481,11 @@ def example_Scanning():
     '''    
     '''
     PySpectra.cls()
-    GQE.delete()
+    PySpectra.delete()
 
-    GQE.setTitle( "scanning, x-axis is fixed")
+    PySpectra.setTitle( "scanning, x-axis is fixed")
     PySpectra.setWsViewport( "DINA5")
-    sinus = GQE.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, 
+    sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, 
                         autoscaleX = False, lineColor = 'red')
 
 
@@ -501,7 +500,7 @@ def example_ScanningMesh():
     '''    
     '''
     PySpectra.cls()
-    GQE.delete()
+    PySpectra.delete()
 
     (xmin, xmax) = (-2., 1)
     (ymin, ymax) = (-1.5, 1.5)
@@ -512,16 +511,16 @@ def example_ScanningMesh():
     r2 = np.linspace(ymin, ymax, height)
     n3 = np.zeros((width,height))
             
-    m = GQE.Image( name = "MandelbrotSet", colorMap = 'Greys', 
+    m = PySpectra.Image( name = "MandelbrotSet", colorMap = 'Greys', 
                      estimatedMax = 20, 
                      xMin = xmin, xMax = xmax, width = width, 
                      yMin = ymin, yMax = ymax, height = height)
     
-    GQE.setTitle( "Simulate a mesh scan")
+    PySpectra.setTitle( "Simulate a mesh scan")
     PySpectra.setWsViewport( "DINA5")
-    sinus = GQE.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = width*height, 
+    sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = width*height, 
                         autoscaleX = False, lineColor = 'red')
-    cosinus = GQE.Scan( name = 'cosinus', xMin = 0., xMax = 6.0, nPts = width*height, 
+    cosinus = PySpectra.Scan( name = 'cosinus', xMin = 0., xMax = 6.0, nPts = width*height, 
                         autoscaleX = False, lineColor = 'red')
 
     PySpectra.display()
@@ -548,11 +547,11 @@ def example_ScanningAutoscaleX():
     '''    
     '''
     PySpectra.cls()
-    GQE.delete()
+    PySpectra.delete()
     
-    GQE.setTitle( "scanning, x-axis is re-scaled")
+    PySpectra.setTitle( "scanning, x-axis is re-scaled")
     PySpectra.setWsViewport( "DINA5")
-    sinus = GQE.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, 
+    sinus = PySpectra.Scan( name = 'sinus', xMin = 0., xMax = 6.0, nPts = 101, 
                         autoscaleX = True, lineColor = 'red')
     for i in range( sinus.nPts): 
         sinus.setX( i, i/10. + 0.01)
@@ -565,11 +564,11 @@ def example_ScanningReverse():
     '''    
     '''
     PySpectra.cls()
-    GQE.delete()
+    PySpectra.delete()
     
-    GQE.setTitle( "scanning in reverse direction, x-axis is fixed")
+    PySpectra.setTitle( "scanning in reverse direction, x-axis is fixed")
     PySpectra.setWsViewport( "DINA5")
-    sinus = GQE.Scan( name = 'sinus', 
+    sinus = PySpectra.Scan( name = 'sinus', 
                         xMin = 0., xMax = 6.0, nPts = 101, 
                         autoscaleX = False, 
                         lineColor = 'red')
@@ -586,10 +585,10 @@ def example_ScanningReverseAutoscaleX():
     '''    
     '''
     PySpectra.cls()
-    GQE.delete()
-    GQE.setTitle( "scanning in reverse direction, the x-axis is re-scaled")
+    PySpectra.delete()
+    PySpectra.setTitle( "scanning in reverse direction, the x-axis is re-scaled")
     PySpectra.setWsViewport( "DINA5")
-    sinus = GQE.Scan( name = 'sinus', 
+    sinus = PySpectra.Scan( name = 'sinus', 
                             xMin = 0., xMax = 6.0, nPts = 101, 
                             autoscaleX = True, 
                             lineColor = 'red')
@@ -608,8 +607,8 @@ def example_Lissajous():
     PySpectra.setWsViewport( "DINA5S")
     
     PySpectra.cls()
-    GQE.delete()
-    scan = GQE.Scan( name = 'Lissajous', nPts = 1000, xMin = -1., xMax = 1.)
+    PySpectra.delete()
+    scan = PySpectra.Scan( name = 'Lissajous', nPts = 1000, xMin = -1., xMax = 1.)
     
     x  = np.linspace( 0., 6.5, 1000)
     y  = np.linspace( 0., 6.5, 1000)
@@ -626,9 +625,9 @@ def example_Lissajous():
 
 def example_Overlay2BothLog(): 
     PySpectra.cls()
-    GQE.delete()
-    GQE.setTitle( "2 Overlay Scans, both with log scale")
-    GQE.setComment( "both axes have different ranges")
+    PySpectra.delete()
+    PySpectra.setTitle( "2 Overlay Scans, both with log scale")
+    PySpectra.setComment( "both axes have different ranges")
     PySpectra.setWsViewport( "DINA5")
     g1 = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
                            lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
@@ -639,15 +638,15 @@ def example_Overlay2BothLog():
     g2.yMin = 0.001
     g2.yMax = 1.
 
-    GQE.overlay( "gauss2", "gauss")
+    PySpectra.overlay( "gauss2", "gauss")
 
     PySpectra.display()
 
 def example_Overlay2FirstLog(): 
     PySpectra.cls()
-    GQE.delete()
-    GQE.setTitle( "2 Overlay Scans, first (red) has log scale")
-    GQE.setComment( "Sadly, there are no major tick mark strings at the right axis")
+    PySpectra.delete()
+    PySpectra.setTitle( "2 Overlay Scans, first (red) has log scale")
+    PySpectra.setComment( "Sadly, there are no major tick mark strings at the right axis")
     PySpectra.setWsViewport( "DINA5")
 
     g1 = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
@@ -658,15 +657,15 @@ def example_Overlay2FirstLog():
     g2 = utils.createGauss( name = "gauss2", xMin = -5., xMax = 5., nPts = 101, 
                            lineColor = 'green', x0 = 0.5, sigma = 1.2, amplitude = 1.)
 
-    GQE.overlay( "gauss2", "gauss")
+    PySpectra.overlay( "gauss2", "gauss")
 
     PySpectra.display()
 
 def example_Overlay2SecondLog(): 
     PySpectra.cls()
-    GQE.delete()
-    GQE.setTitle( "2 Overlay Scans, 2nd (green) has log scale")
-    GQE.setComment( "Sadly, there are no major tick mark strings at the right axis")
+    PySpectra.delete()
+    PySpectra.setTitle( "2 Overlay Scans, 2nd (green) has log scale")
+    PySpectra.setComment( "Sadly, there are no major tick mark strings at the right axis")
     PySpectra.setWsViewport( "DINA5")
 
     g1 = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
@@ -676,7 +675,7 @@ def example_Overlay2SecondLog():
 
     g2.yLog = True
 
-    GQE.overlay( "gauss2", "gauss")
+    PySpectra.overlay( "gauss2", "gauss")
 
     PySpectra.display()
 
@@ -685,14 +684,14 @@ def example_ImageMB():
     PySpectra.setWsViewport( 'DINA5S')
 
     PySpectra.cls()
-    GQE.delete()
+    PySpectra.delete()
 
     (xmin, xmax) = (-2., 0.5)
     (ymin, ymax) = (-1.25, 1.25)
     (width, height) = (750, 750)
     maxiter = 512
     
-    m = GQE.Image( name = "MandelbrotSet",
+    m = PySpectra.Image( name = "MandelbrotSet",
                    flagAxes = True, 
                    maxIter = maxiter, 
                    xMin = xmin, xMax = xmax, width = width, 
@@ -702,29 +701,7 @@ def example_ImageMB():
     PySpectra.cls()
     PySpectra.display()
     return 
-"""
-def example_ImageMBSlow(): 
 
-    PySpectra.setWsViewport( 'DINA5S')
-
-    PySpectra.cls()
-    GQE.delete()
-
-    (xmin, xmax) = (-2., 0.5)
-    (ymin, ymax) = (-1.25, 1.25)
-    (width, height) = (500, 500)
-    maxiter = 256
-    
-    m = GQE.Image( name = "MandelbrotSet",
-                    xMin = xmin, xMax = xmax, width = width, 
-                    yMin = ymin, yMax = ymax, height = height)
-
-    m.flagZoomMbSlow = True
-    m.zoomMb()
-    PySpectra.cls()
-    PySpectra.display()
-    return 
-"""
 def example_ImageRandom(): 
 
     import random
@@ -732,7 +709,7 @@ def example_ImageRandom():
     PySpectra.setWsViewport( 'DINA5S')
 
     PySpectra.cls()
-    GQE.delete()
+    PySpectra.delete()
 
     (xmin, xmax) = (-2., 1)
     (ymin, ymax) = (-1.5, 1.5)
@@ -745,7 +722,7 @@ def example_ImageRandom():
         for j in range(height):
             n3[i,j] = i + random.random()*j + 100.
             
-    m = GQE.Image( name = "ImageRandom", data = n3, 
+    m = PySpectra.Image( name = "ImageRandom", data = n3, 
                     xMin = xmin, xMax = xmax, width = width, 
                     yMin = ymin, yMax = ymax, height = height, 
                     xLabel = "x-Axis", yLabel = "y-Axis")
@@ -755,142 +732,3 @@ def example_ImageRandom():
     return 
 
 
-def example_mvsa():
-    '''
-    move by scan analysis
-    '''
-    PySpectra.cls()
-    GQE.delete()
-    GQE.setTitle( "Move by Scan Analysis")
-    PySpectra.setWsViewport( "DINA5")
-    g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
-                           lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
-    PySpectra.display()
-
-    return 
-'''
-#!/usr/bin/env python
-
-# 
-# this piece of code can only be executed, if the pyspMonitor.py is running
-# some date are sent to the pyspMonitor where they are displayed
-# then data are retrieved from pyspMonitor and compared with the originals
-#
-import PySpectra as pysp
-import random
-
-def main():
-    MAX = 5
-    #
-    # create some data
-    #
-    pos = [float(n)/MAX for n in range( MAX)]
-    d1 = [random.random() for n in range( MAX)]
-    d2 = [random.random() for n in range( MAX)]
-    
-    print( "pos %s" % repr( pos))
-    print( "d1: %s" % repr( d1))
-    #
-    # colors: 'RED', 'GREEN', 'BLUE','YELLOW', 'CYAN', 'MAGENTA', 'BLACK', 'WHITE', 'NONE', 
-    # lineStyles: 'SOLID', 'DASHED', 'DOTTED', 'DASHDOTTED'
-    # symbols: 'o', 's', 'd', '+'
-    #
-    #
-    # send the data to pyspMonitor
-    #
-    hsh = { 'putData': 
-            {'title': "Important Data", 
-             'columns': 
-             [ { 'name': "eh_mot01", 'data' : pos},
-               { 'name': "eh_c01", 'data' : d1},
-               { 'name': "eh_c02", 'data' : d2, 
-                 'symbolColor': 'blue', 'symbol': '+', 'symbolSize': 5, 
-                 'xLog': False, 'yLog': False, 
-                 'showGridX': False, 'showGridY': False},
-             ]}}
-
-    hsh = pysp.toPyspMonitor( hsh)
-    print( "return values of putData: %s" % repr( hsh) )
-
-    #
-    # retrieve the data from pyspMonitor
-    #
-    hsh = pysp.toPyspMonitor( { 'getData': True})
-    #
-    # ... and compare.
-    #
-    for i in range( MAX):
-        if pos[i] != hsh[ 'getData']['EH_C01']['x'][i]:
-            print( "error: pos[i] != x[i]")
-        if d1[i] != hsh[ 'getData'][ 'EH_C01'][ 'y'][i]:
-            print( "error: d1[i] != y[i]")
-        
-    print( "getData, pos: %s" % hsh[ 'getData']['EH_C01']['x'])
-    print( "getData, pos: %s" % hsh[ 'getData']['EH_C01']['y'])
-    return 
-
-if __name__ == "__main__":
-    main()
-
------ cut here
-
-#!/usr/bin/env python
-# 
-# this piece of code can only be executed,   
-# if the pyspMonitor.py is running
-#
-import PySpectra.zmqIfc as zmqIfc
-import random
-import numpy as np
-import time
-
-def mandelbrot( c, maxiter):
-    z = c
-    for n in range(maxiter):
-        if abs(z) > 2:
-            return n
-        z = z*z + c
-    return 0
-
-def main():
-  
-    (xmin, xmax) = (-2.,-0.5)
-    (ymin, ymax) = (0, 1.5)
-    (width, height) = (20, 20)
-    maxiter = 15
-    #
-    # do the clean-up before we start
-    #
-    hsh = zmqIfc.toPyspMonitor( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
-    if hsh[ 'result'] != "done":
-        print( "error from ['delete', 'setWsViewport DINA5S', 'cls']")
-        return 
-    
-    hsh = { 'putData': 
-             { 'name': "Mandelbrot",
-               'type': 'image', 
-               'xMin': xmin, 'xMax': xmax, 'width': width, 
-               'yMin': ymin, 'yMax': ymax, 'height': height}}
-    hsh = zmqIfc.toPyspMonitor( hsh)
-    if hsh[ 'result'] != "done":
-        print( "error from putData")
-        return 
-
-    r1 = np.linspace(xmin, xmax, width)
-    r2 = np.linspace(ymin, ymax, height)
-    for i in range(width):
-        for j in range(height):
-            res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
-            hsh = { 'putData': 
-                     { 'name': "Mandelbrot",
-                       'setPixelWorld': ( r1[i], r2[j], res)}}
-            hsh = zmqIfc.toPyspMonitor( hsh)
-            if hsh[ 'result'] != "done":
-                print( "error from setPixel")
-                return 
-    return 
-
-if __name__ == "__main__":
-    main()
-
-'''

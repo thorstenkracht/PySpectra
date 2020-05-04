@@ -7,16 +7,12 @@ import matplotlib.pyplot as plt
 from PyQt4 import QtCore, QtGui
 
 import time as _time
-import os as _os
-import sys as _sys
-import math as _math
-import numpy as _np
-import datetime as _datetime
+import os, sys
+import numpy
+import datetime 
 import PySpectra 
-import PySpectra.pqtgrph.graphics as _pqt_graphics
-import PySpectra.GQE as _gqe
-import PySpectra.utils as _utils
-import PySpectra.definitions as _definitions
+import PySpectra.utils as utils
+import PySpectra.definitions as definitions
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -61,7 +57,7 @@ def createPDF( printer = None, fileName = None, flagPrint = False, format = 'DIN
     - returns the name of the output file
     '''
 
-    gqeList = _gqe.getGqeList()
+    gqeList = PySpectra.getGqeList()
     if len( gqeList) == 0:
         return None
 
@@ -81,8 +77,8 @@ def createPDF( printer = None, fileName = None, flagPrint = False, format = 'DIN
     if fileName.find( '.pdf') == -1:
         fileName += ".pdf"
  
-    if _os.path.exists( "/usr/local/bin/vrsn"):
-        if _os.system( "/usr/local/bin/vrsn -s -nolog %s" % fileName):
+    if os.path.exists( "/usr/local/bin/vrsn"):
+        if os.system( "/usr/local/bin/vrsn -s -nolog %s" % fileName):
             print( "graphics.createPDF: failed to save the current version of %s" % fileName)
     
     try:
@@ -103,10 +99,10 @@ def createPDF( printer = None, fileName = None, flagPrint = False, format = 'DIN
 
     if flagPrint: 
         if printer is None:
-            printer = _os.getenv( "PRINTER")
+            printer = os.getenv( "PRINTER")
             if printer is None: 
                 raise ValueError( "mpl_graphics.createPDF: environment variable PRINTER not defined")
-        if _os.system( "/usr/bin/lpr -P %s %s" % (printer, fileName)):
+        if os.system( "/usr/bin/lpr -P %s %s" % (printer, fileName)):
             print( "mpl_graphics.createPDF: failed to print %s on %s" % (fileName, printer))
         else:
             pass
@@ -127,7 +123,7 @@ def configGraphics():
 def _setSizeGraphicsWindow( nScan):
     '''
     '''
-    if _gqe.getWsViewportFixed(): 
+    if PySpectra.getWsViewportFixed(): 
         return 
 
     if nScan > 9:
@@ -190,7 +186,7 @@ def setWsViewport( size = None):
 
     fig = matplotlib.pyplot.gcf()
     fig.set_size_inches( w/2.54, h/2.54, forward = True)
-    _gqe.setWsViewportFixed( True)
+    PySpectra.setWsViewportFixed( True)
 
     return 
 
@@ -215,11 +211,11 @@ def cls():
     #
     # clear the plotItems
     #
-    gqeList = _gqe.getGqeList()
+    gqeList = PySpectra.getGqeList()
 
     for scan in gqeList:
         scan.plotItem = None
-        if type( scan) == _gqe.Scan:
+        if type( scan) == PySpectra.Scan:
             scan.plotDataItem = None
             scan.lastIndex = 0
 
@@ -247,8 +243,8 @@ def processEventsLoop( timeOut = None):
     loops over QApp.processEvents until a <return> is entered
     '''
     if timeOut is None:
-        _sys.stdout.write( "\nPress <return> to continue ")
-        _sys.stdout.flush()
+        sys.stdout.write( "\nPress <return> to continue ")
+        sys.stdout.flush()
     startTime = _time.time()
     while True:
         _time.sleep(0.001)
@@ -259,9 +255,9 @@ def processEventsLoop( timeOut = None):
         #
         # :99.0 is the DISPLAY in travis
         #
-        if _os.getenv( "DISPLAY") == ":99.0": 
+        if os.getenv( "DISPLAY") == ":99.0": 
             break
-        key = _utils.inkey()        
+        key = utils.inkey()        
         if key == 10:
             break
 
@@ -297,11 +293,11 @@ def _doty2datetime(doty, year = None):
       --> Jan 29, 02:52
     """
     if year is None:
-        now = _datetime.datetime.now()
+        now = datetime.datetime.now()
         year = now.year
     dotySeconds = doty*24.*60.*60
-    boy = _datetime.datetime(year, 1, 1)
-    tmp = boy + _datetime.timedelta(seconds=dotySeconds)
+    boy = datetime.datetime(year, 1, 1)
+    tmp = boy + datetime.timedelta(seconds=dotySeconds)
     #
     # doty2datatime doty -5.0 to datetime.datetime(2018, 12, 27, 0, 0)
     # doty2datatime doty 4.8 to datetime.datetime(2019, 1, 5, 19, 12)
@@ -312,7 +308,7 @@ def _doty2datetime(doty, year = None):
 
 def _setTitle( gqe, nameList): 
 
-    if type( gqe) == _gqe.Scan and gqe.textOnly:
+    if type( gqe) == PySpectra.Scan and gqe.textOnly:
         return 
     #
     # the length of the title has to be limited. Otherwise pg 
@@ -320,14 +316,14 @@ def _setTitle( gqe, nameList):
     # and the following display command, even with less gqes, will 
     # also not fit into the graphics window
     #
-    if len( gqe.name) > _definitions.LEN_MAX_TITLE:
-        tempName = "X_" + gqe.name[-_definitions.LEN_MAX_TITLE:]
+    if len( gqe.name) > definitions.LEN_MAX_TITLE:
+        tempName = "X_" + gqe.name[-definitions.LEN_MAX_TITLE:]
     else: 
         tempName = gqe.name
 
-    #fontSize = _gqe.getFontSize( nameList)
+    #fontSize = PySpectra.getFontSize( nameList)
  
-    if _gqe.getNumberOfGqesToBeDisplayed( nameList) < _definitions.MANY_GQES:
+    if utils.getNumberOfGqesToBeDisplayed( nameList) < definitions.MANY_GQES:
         gqe.plotItem.set_title( tempName)
         #scan.plotItem.set_title( tempName, fontsize = fontSize)
     else:
@@ -365,9 +361,9 @@ def _adjustFigure( nDisplay):
     if nDisplay > 4: 
         nDisplay = 10
 
-    if _gqe.getTitle() is not None:
+    if PySpectra.getTitle() is not None:
         top -= 0.05
-    if _gqe.getComment() is not None:
+    if PySpectra.getComment() is not None:
         top -= 0.05
 
     hsh = { '1':  { 'top': top,
@@ -402,15 +398,15 @@ def _adjustFigure( nDisplay):
 def _displayTitleComment( nameList):     
     '''
     '''
-    #fontSize = _gqe.getFontSize( nameList)
+    #fontSize = PySpectra.getFontSize( nameList)
 
-    title = _gqe.getTitle()
+    title = PySpectra.getTitle()
     if title is not None:
         if not _textIsOnDisplay( title):
             t = Fig.text( 0.5, 0.95, title, va='center', ha='center')
             #t.set_fontsize( fontSize)
     
-    comment = _gqe.getComment()
+    comment = PySpectra.getComment()
     if comment is not None:
         if title is not None:
             if not _textIsOnDisplay( comment):
@@ -426,9 +422,9 @@ def _displayTitleComment( nameList):
 def _addTexts( scan, nameList):
     #print( "mpl_graphics.addTexts")
 
-    #fontSize = _gqe.getFontSize( nameList)
+    #fontSize = PySpectra.getFontSize( nameList)
 
-    if type( scan) != _gqe.Scan:
+    if type( scan) != PySpectra.Scan:
         return 
 
     for elm in scan.textList:
@@ -483,7 +479,7 @@ def _createPlotItem( scan, nameList):
 
     try:
         scan.plotItem = Fig.add_subplot( scan.nrow, scan.ncol, scan.nplot)
-        if type( scan) == _gqe.Scan and scan.textOnly: 
+        if type( scan) == PySpectra.Scan and scan.textOnly: 
             scan.plotItem.axis( 'off')
             _addTexts( scan, nameList)
             return 
@@ -494,7 +490,7 @@ def _createPlotItem( scan, nameList):
 
     #print( "mpl_graphics.createPlotItem, autoscale %s %s " % ( repr( scan.autoscaleX), repr( scan.autoscaleY)))
 
-    if type( scan) == _gqe.Scan: 
+    if type( scan) == PySpectra.Scan: 
         #
         # log scale
         #
@@ -541,7 +537,7 @@ def _createPlotItem( scan, nameList):
     
     _setTitle( scan, nameList)
 
-    if _gqe.getNumberOfGqesToBeDisplayed( nameList) < _definitions.MANY_GQES:
+    if utils.getNumberOfGqesToBeDisplayed( nameList) < definitions.MANY_GQES:
         if hasattr( scan, 'xLabel') and scan.xLabel is not None:
             scan.plotItem.set_xlabel( scan.xLabel)
         if hasattr( scan, 'yLabel') and scan.yLabel is not None:
@@ -554,9 +550,9 @@ def _createPlotItem( scan, nameList):
 def _displayImages( nameList): 
     '''
     '''
-    gqeList = _gqe.getGqeList()
+    gqeList = PySpectra.getGqeList()
     for image in gqeList:
-        if type( image) != _gqe.Image: 
+        if type( image) != PySpectra.Image: 
             continue
         if len( nameList) > 0: 
             if image.name not in nameList:
@@ -564,7 +560,7 @@ def _displayImages( nameList):
         _createPlotItem( image, nameList)
         if image.log: 
             try: 
-                image.img = image.plotItem.imshow( _np.rot90( _np.flipud( _np.log( image.data)), k = 3), 
+                image.img = image.plotItem.imshow( numpy.rot90( numpy.flipud( numpy.log( image.data)), k = 3), 
                                                    origin = 'lower',
                                                    cmap=plt.get_cmap( image.colorMap))
             except Exception as e: 
@@ -575,11 +571,11 @@ def _displayImages( nameList):
             
         else:
             if image.modulo != -1:
-                image.img = image.plotItem.imshow( _np.rot90( _np.flipud( image.data % image.modulo), k = 3), 
+                image.img = image.plotItem.imshow( numpy.rot90( numpy.flipud( image.data % image.modulo), k = 3), 
                                                    origin = 'lower',
                                                    cmap=plt.get_cmap( image.colorMap))
             else: 
-                image.img = image.plotItem.imshow( _np.rot90( _np.flipud( image.data), k = 3), 
+                image.img = image.plotItem.imshow( numpy.rot90( numpy.flipud( image.data), k = 3), 
                                                    origin = 'lower',
                                                    cmap=plt.get_cmap( image.colorMap))
         
@@ -649,10 +645,10 @@ def display( nameList = None):
     # see if the members of nameList arr in the gqeList
     #
     for nm in nameList:
-        if _gqe.getGqe( nm) is None:
+        if PySpectra.getGqe( nm) is None:
             raise ValueError( "graphics.display: %s is not in the gqeList" % nm)
 
-    gqeList = _gqe.getGqeList()
+    gqeList = PySpectra.getGqeList()
     #
     # if there is only one scan to be displayed, there is no overlay
     #
@@ -663,7 +659,7 @@ def display( nameList = None):
     #
     # adjust the graphics window to the number of displayed scans
     #
-    nDisplay = _gqe.getNumberOfGqesToBeDisplayed( nameList)
+    nDisplay = utils.getNumberOfGqesToBeDisplayed( nameList)
     _setSizeGraphicsWindow( nDisplay)
 
     _adjustFigure( nDisplay)
@@ -671,7 +667,7 @@ def display( nameList = None):
     #
     # set scan.nrow, scan.ncol, scan.nplot
     #
-    _utils.setGqeVPs( nameList, flagDisplaySingle, cls)
+    utils.setGqeVPs( nameList, flagDisplaySingle, cls)
 
     _displayTitleComment( nameList)
 
@@ -682,7 +678,7 @@ def display( nameList = None):
     #
     for scan in gqeList:
         
-        if type(scan) != _gqe.Scan:
+        if type(scan) != PySpectra.Scan:
             continue
 
         #
@@ -694,7 +690,7 @@ def display( nameList = None):
             #
             # maybe the scan.overlay has beed deleted
             #
-            if _gqe.getGqe( scan.overlay) is None:
+            if PySpectra.getGqe( scan.overlay) is None:
                 scan.overlay = None
             else:
                 continue
@@ -716,7 +712,7 @@ def display( nameList = None):
                 print( "graphics.display %s" % repr( e))
                 return 
 
-            if type( scan) == _gqe.Scan and scan.textOnly: 
+            if type( scan) == PySpectra.Scan and scan.textOnly: 
                 continue
 
             if scan.doty:
@@ -750,7 +746,7 @@ def display( nameList = None):
             scan.plotDataItem.setData = scan.plotDataItem.set_data
             scan.lastIndex = scan.currentIndex
 
-        if type( scan) == _gqe.Scan and scan.textOnly: 
+        if type( scan) == PySpectra.Scan and scan.textOnly: 
             continue
         #
         # modify the scan 
@@ -784,8 +780,8 @@ def display( nameList = None):
             if scan.autoscaleX:
                 scan.plotItem.set_xlim( min( scan.x[0], scan.x[scan.currentIndex]), 
                                         max( scan.x[0], scan.x[scan.currentIndex]))
-            scan.plotItem.set_ylim( _np.min( scan.y[:(scan.currentIndex + 1)]), 
-                                    _np.max( scan.y[:(scan.currentIndex + 1)]))
+            scan.plotItem.set_ylim( numpy.min( scan.y[:(scan.currentIndex + 1)]), 
+                                    numpy.max( scan.y[:(scan.currentIndex + 1)]))
         #
         # keep track of what has already been displayed
         #
@@ -798,7 +794,7 @@ def display( nameList = None):
     #
     for scan in gqeList:
         
-        if type(scan) != _gqe.Scan:
+        if type(scan) != PySpectra.Scan:
             continue
         #
         # if only one scan is displayed, there is no overlay
@@ -816,7 +812,7 @@ def display( nameList = None):
         
         if len( nameList) > 0 and scan.name not in nameList:
             continue
-        target = _gqe.getGqe( scan.overlay)
+        target = PySpectra.getGqe( scan.overlay)
         if target is None or target.plotItem is None:
             raise ValueError( "mpl_graphics.display: %s tries to overlay to %s" %
                               (scan.name, scan.overlay))
@@ -830,7 +826,7 @@ def display( nameList = None):
         if scan.yLog: 
             scan.plotItem.set_yscale( "log")
         
-        if len( _gqe.getGqeList()) >= _definitions.MANY_GQES or \
+        if len( PySpectra.getGqeList()) >= definitions.MANY_GQES or \
            scan.yTicksVisible == False: 
             plt.setp( scan.plotItem.get_yticklabels(), visible=False)
 

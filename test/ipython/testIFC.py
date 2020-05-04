@@ -26,7 +26,6 @@ import sys, time, os, math
 import numpy as np
 import unittest
 import PySpectra
-import PySpectra.GQE as GQE
 import PySpectra.ipython.ifc as ifc
 import PySpectra.zmqIfc as zmqIfc
 import PySpectra.utils as utils
@@ -52,15 +51,15 @@ class testIFC( unittest.TestCase):
     def test_create1( self):
         print "testIFC.test_create1"
         PySpectra.cls()
-        GQE.delete()
+        PySpectra.delete()
         ifc.command( "create s1 0 10 100")
-        lst = GQE.getGqeList()
+        lst = PySpectra.getGqeList()
         self.assertEqual( len( lst), 1)
         self.assertEqual( lst[0].name, "s1")
         self.assertEqual( lst[0].nPts, 100)
         self.assertEqual( lst[0].xMin, 0.)
         self.assertEqual( lst[0].xMax, 10.)
-        GQE.delete()
+        PySpectra.delete()
         print "testIFC.test_create1 DONE"
 
         return 
@@ -70,27 +69,27 @@ class testIFC( unittest.TestCase):
         print "testIFC.test_create"
 
         PySpectra.cls()
-        GQE.delete()
+        PySpectra.delete()
         ifc.command( "create s1")
-        lst = GQE.getGqeList()
+        lst = PySpectra.getGqeList()
         self.assertEqual( len( lst), 1)
         self.assertEqual( lst[0].name, "s1")
         ifc.command( "display s1")
 
         ifc.command( "derivative s1")
-        lst = GQE.getGqeList()
+        lst = PySpectra.getGqeList()
         self.assertEqual( lst[1].name, "s1_derivative")
         self.assertEqual( len( lst), 2)
 
         ifc.command( "antiderivative s1")
-        lst = GQE.getGqeList()
+        lst = PySpectra.getGqeList()
         self.assertEqual( lst[2].name, "s1_antiderivative")
         self.assertEqual( len( lst), 3)
 
         ifc.command( "delete s1")
         ifc.command( "delete s1_derivative")
         ifc.command( "delete s1_antiderivative")
-        lst = GQE.getGqeList()
+        lst = PySpectra.getGqeList()
         self.assertEqual( len( lst), 0)
         print "testIFC.test_create DONE"
 
@@ -109,7 +108,7 @@ class testIFC( unittest.TestCase):
         print "testIFC.test_show"
 
         PySpectra.cls()
-        GQE.delete()
+        PySpectra.delete()
         ifc.command( "create s1")
         ifc.command( "show s1")
         print "testIFC.test_show DONE"
@@ -119,11 +118,11 @@ class testIFC( unittest.TestCase):
     def test_title( self): 
         print "testIFC.test_title"
         PySpectra.cls()
-        GQE.delete()
+        PySpectra.delete()
         ifc.command( "create s1")
         ifc.command( "setTitle hallo")
 
-        ret = GQE.getTitle()
+        ret = PySpectra.getTitle()
         self.assertEqual( ret, "hallo")
         print "testIFC.test_title DONE"
 
@@ -132,10 +131,10 @@ class testIFC( unittest.TestCase):
     def test_comment( self): 
         print "testIFC.test_comment"
         PySpectra.cls()
-        GQE.delete()
+        PySpectra.delete()
         ifc.command( "setComment AComment")
 
-        ret = GQE.getComment()
+        ret = PySpectra.getComment()
         self.assertEqual( ret, "AComment")
         print "testIFC.test_comment DONE"
 
@@ -144,11 +143,11 @@ class testIFC( unittest.TestCase):
     def test_y2my( self): 
         print "testIFC.test_y2my"
         PySpectra.cls()
-        GQE.delete()
+        PySpectra.delete()
         ifc.command( "create s1")
         ifc.command( "y2my s1")
 
-        lst = GQE.getGqeList()
+        lst = PySpectra.getGqeList()
         self.assertEqual( lst[1].name, "s1_y2my")
         self.assertEqual( len( lst), 2)
         print "testIFC.test_y2my DONE"
@@ -162,7 +161,7 @@ class testIFC( unittest.TestCase):
         print "testIFC.test_wsViewPort"
 
         PySpectra.cls()
-        GQE.delete()
+        PySpectra.delete()
         ifc.command( "setWsViewport DINA4")
         PySpectra.processEventsLoop( 1)
         ifc.command( "setWsViewport DINA4P")
@@ -182,11 +181,11 @@ class testIFC( unittest.TestCase):
     def test_overlay( self): 
         print "testIFC.test_overlay"
         PySpectra.cls()
-        GQE.delete()
+        PySpectra.delete()
         ifc.command( "create s1")
         ifc.command( "create s2")
         ifc.command( "overlay s1 s2")
-        s1 = GQE.getGqe( 's1')
+        s1 = PySpectra.getGqe( 's1')
         self.assertEqual( s1.overlay, "s2")
         print "testIFC.test_overlay DONE"
 
@@ -209,7 +208,7 @@ class testIFC( unittest.TestCase):
         ifc.command( "cls")
         ifc.command( "delete")
         ifc.command( "create s1")
-        o = GQE.getGqe( "s1")
+        o = PySpectra.getGqe( "s1")
         self.assertEqual( len( o.textList), 0)
         ifc.command( "setText s1 comment string \"this is a comment\" x 0.05 y 0.95 hAlign left vAlign top color blue")
         self.assertEqual( len( o.textList), 1)
@@ -237,7 +236,7 @@ class testIFC( unittest.TestCase):
         max = 50
         ifc.command( "create s1 0 10 %d" % max)
 
-        s1 = GQE.getGqe( "s1")
+        s1 = PySpectra.getGqe( "s1")
         self.assertEqual( s1.currentIndex, 49)
         self.assertEqual( s1.lastIndex, -1)
         ifc.command( "display")
@@ -288,7 +287,7 @@ class testIFC( unittest.TestCase):
         ifc.command( "create s4 0 10 %d" % max)
         ifc.command( "display")
         PySpectra.processEventsLoop( 1)
-        gqeList = GQE.getGqeList()
+        gqeList = PySpectra.getGqeList()
         self.assertEqual( len( gqeList), 4)
         self.assertEqual( gqeList[0].name, "s1")
         self.assertEqual( gqeList[1].name, "s2")
@@ -300,7 +299,7 @@ class testIFC( unittest.TestCase):
         ifc.command( "setTitle \"s1,s3,s4\"")
         ifc.command( "display")
         PySpectra.processEventsLoop( 1)
-        gqeList = GQE.getGqeList()
+        gqeList = PySpectra.getGqeList()
         self.assertEqual( len( gqeList), 3)
         self.assertEqual( gqeList[0].name, "s1")
         self.assertEqual( gqeList[1].name, "s3")
@@ -311,7 +310,7 @@ class testIFC( unittest.TestCase):
         ifc.command( "setTitle \"s1\"")
         ifc.command( "display")
         PySpectra.processEventsLoop( 1)
-        gqeList = GQE.getGqeList()
+        gqeList = PySpectra.getGqeList()
         self.assertEqual( len( gqeList), 1)
         self.assertEqual( gqeList[0].name, "s1")
         print "testIFC.test_delete DONE"
@@ -326,7 +325,7 @@ class testIFC( unittest.TestCase):
         ifc.command( "setComment \"Arrows: Current: 5, Misc: 2, SetPoint: 6\"")
         ifc.command( "create s1 0 10 %d" % max)
 
-        gqe = GQE.getGqe( "s1")
+        gqe = PySpectra.getGqe( "s1")
         gqe.motorNameList = ["eh_mot66"] 
 
         ifc.command( "setArrowCurrent s1 position 5.") 
@@ -366,7 +365,7 @@ class testIFC( unittest.TestCase):
                                           'nPts': max,
                                           'autoscaleX': False, 'autoscaleY': True}})
         self.assertEqual( ret[ 'result'], 'done')
-        o = GQE.getGqe( name)
+        o = PySpectra.getGqe( name)
         self.assertEqual( o.nPts, max)
         self.assertEqual( o.symbol, '+')
         self.assertEqual( o.symbolColor, 'red')

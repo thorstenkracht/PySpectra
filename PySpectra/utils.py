@@ -8,11 +8,287 @@ import PySpectra
 import PySpectra.definitions as definitions
 
 
+    
+def getNumberOfGqesToBeDisplayed( nameList): 
+    '''
+    return the number of scans to be displayed.
+    Scans that are overlaid do not require extra space
+    and are therefore not counted.
+    '''
+    if len( nameList) == 0:
+        nOverlay = 0
+        for gqe in PySpectra.getGqeList():
+            if gqe.overlay is not None:
+                nOverlay += 1
+        nGqe = len( PySpectra.getGqeList()) - nOverlay
+        if nGqe < 1:
+            nGqe = 1
+    else:
+        nOverlay = 0
+        for name in nameList:
+            if PySpectra.getGqe( name).overlay is not None:
+                nOverlay += 1
+        nGqe = len( nameList) - nOverlay
+        if nGqe < 1:
+            nGqe = 1
+    #print( "graphics.getNoOfGqesToBeDisplayed: nGqe %d" %(nGqe))
+    return nGqe
+
+def _getNumberOfOverlaid( nameList = None):
+    '''
+    returns the number of gqes which are overlaid to another, 
+    used by e.g. graphics.display()
+    '''
+    count = 0
+    for gqe in PySpectra.getGqeList():
+        if nameList is not None: 
+            if gqe.name not in nameList:
+                continue
+        if gqe.overlay is not None:
+            count += 1
+
+    return count
+
+def colorSpectraToPysp( color): 
+    '''
+    this functions translates color numbers (a ls Spectra) to strings a la Pysp
+    '''
+    #
+    # 
+    #
+    if type(color) is not int: 
+        return color
+
+    if color == 1:
+        color = 'black'
+    elif color == 2:
+        color = 'red'
+    elif color == 3:
+        color = 'green'
+    elif color == 4:
+        color = 'blue'
+    elif color == 5:
+        color = 'cyan'
+    elif color == 5:
+        color = 'cyan'
+    elif color == 6:
+        color = 'yellow'
+    elif color == 7:
+        color = 'magenta'
+    else: 
+        color = 'black'
+
+    return color
+
+def createScansByColumns( hsh):
+    """
+    called from zmqIfc.putData()
+        hsh = { 'putData': {'columns': [{'data': x, 'name': 'xaxis'},
+                                        {'data': tan, 'name': 'tan'},
+                                        {'data': cos, 'name': 'cos'},
+                                        {'data': sin, 'name': 'sin',
+                                         'showGridY': False, 'symbolColor': 'blue', 'showGridX': False, 
+                                         'yLog': False, 'symbol': '+', 
+                                         'xLog': False, 'symbolSize':5}]}}
+    """
+
+    if len( hsh[ 'columns']) < 2: 
+        raise Exception( "PySpectra.createScansByColumns", "less than 2 columns")
+
+    if 'title' in hsh: 
+        PySpectra.setTitle( hsh[ 'title'])
+
+    if 'comment' in hsh: 
+        PySpectra.setComment( hsh[ 'comment'])
+
+    columns = []
+    xcol = hsh[ 'columns'][0]
+    for elm in hsh[ 'columns'][1:]:
+        if 'name' not in elm:
+            raise Exception( "PySpectra.createScansByColumns", "missing 'name'")
+        if 'data' not in elm:
+            raise Exception( "PySpectra.createScansByColumns", "missing 'data'")
+        data = elm[ 'data']
+        del elm[ 'data']
+        if len( data) != len( xcol[ 'data']):
+            raise Exception( "PySpectra.createScansByColumns", 
+                             "column length differ %s: %d, %s: %d" % ( xcol[ 'name'], len( xcol[ 'data']),
+                                                                       elm[ 'name'], len( data)))
+
+        lineColor = 'red'
+        if 'lineColor' in elm:
+            lineColor = elm[ 'lineColor']
+            del elm[ 'lineColor'] 
+            symbolColor = 'NONE'
+        elif 'symbolColor' not in elm:
+            lineColor = 'red'
+            symbolColor = 'NONE'
+        else: 
+            symbolColor= 'red'
+            lineColor = 'NONE'
+            if 'symbolColor' in elm:
+                symbolColor = elm[ 'symbolColor']
+                del elm[ 'symbolColor'] 
+
+        lineWidth = 1
+        if 'lineWidth' in elm:
+            lineWidth = elm[ 'lineWidth']
+            del elm[ 'lineWidth'] 
+        lineStyle = 'SOLID'
+        if 'lineStyle' in elm:
+            lineStyle = elm[ 'lineStyle']
+            del elm[ 'lineStyle'] 
+        showGridX = False
+        if 'showGridX' in elm:
+            showGridX = elm[ 'showGridX']
+            del elm[ 'showGridX'] 
+        showGridY = False
+        if 'showGridY' in elm:
+            showGridY = elm[ 'showGridY']
+            del elm[ 'showGridY'] 
+        xLog = False
+        if 'xLog' in elm:
+            xLog = elm[ 'xLog']
+            del elm[ 'xLog'] 
+        yLog = False
+        if 'yLog' in elm:
+            yLog = elm[ 'yLog']
+            del elm[ 'yLog'] 
+        symbol = '+'
+        if 'symbol' in elm:
+            symbol = elm[ 'symbol']
+            del elm[ 'symbol'] 
+        symbolSize= 10
+        if 'symbolSize' in elm:
+            symbolSize = elm[ 'symbolSize']
+            del elm[ 'symbolSize'] 
+
+        name = elm['name']
+        del elm[ 'name']
+
+        if len( list( elm.keys())) > 0: 
+            raise ValueError( "PySpectra.createScansByColumns: dct not empty %s" % repr( elm))
+
+        scan = PySpectra.Scan( name = name, 
+                     xMin = data[0], xMax = data[-1], nPts = len(data),
+                     xLabel = xcol[ 'name'], yLabel = name,
+                     lineColor = lineColor, lineWidth = lineWidth, lineStyle = lineStyle,
+                     showGridX = showGridX, showGridY = showGridY, 
+                     xLog = xLog, yLog = yLog, 
+                     symbol = symbol, symbolColor = symbolColor, symbolSize = symbolSize, 
+                )
+        for i in range(len(data)):
+            scan.setX( i, xcol[ 'data'][i])
+            scan.setY( i, data[i])
+    PySpectra.display()
+
+    return "done"
+
+def createScansByGqes( hsh):
+    '''
+    called from zmqIfc.putData()
+
+         { 'putData': {'gqes': [ {'x': x, 'y': tan, 'name': 'tan'},
+                                 {'x': x, 'y': cos, 'name': 'cos'},
+                                 {'x': x, 'y': sin, 'name': 'sin', 
+                                  'showGridY': False, 'symbolColor': 'blue', 'showGridX': True, 
+                                  'yLog': False, 'symbol': '+', 
+                                  'xLog': False, 'symbolSize':5}],
+                       'title': 'a title', 
+                       'comment': 'a comment'}}
+           The data are sent as a list of dictionaries containg the x- and y-data and other
+           parameters describing the Scans.
+    '''
+    flagAtFound = False
+    flagOverlayFound = False
+    gqes = []
+    for elm in hsh[ 'gqes']:
+        if 'name' not in elm:
+            raise Exception( "PySpectra.createScansByGqes", "missing 'name'")
+        if 'x' not in elm:
+            raise Exception( "PySpectra.createScansByGqes", "missing 'x' for %s" % elm[ 'name'])
+        if 'y' not in elm:
+            raise Exception( "PySpectra.createScansByGqes", "missing 'y' for %s" % elm[ 'name'])
+        if len( elm[ 'x']) != len( elm[ 'y']):
+            raise Exception( "PySpectra.createScansByGqes", "%s, x and y have different length %d != %d" % \
+                             (elm[ 'name'], len( elm[ 'x']), len( elm[ 'y'])))
+        #at = '(1,1,1)'
+        #if 'at' in elm:
+        #    flagAtFound = True
+        #    at = elm[ 'at']
+        xLabel = 'x-axis'
+        if 'xlabel' in elm:
+            xLabel = elm[ 'xlabel']
+        yLabel = 'y-axis'
+        if 'ylabel' in elm:
+            yLabel = elm[ 'ylabel']
+        color = 'red'
+        if 'color' in elm:
+            color = elm[ 'color']
+            color = _colorSpectraToPysp( color)
+
+
+        lineColor = 'red'
+        if 'lineColor' in elm:
+            lineColor = elm[ 'lineColor']
+            symbolColor = 'NONE'
+        elif 'symbolColor' not in elm:
+            lineColor = 'red'
+            symbolColor = 'NONE'
+        else: 
+            symbolColor= 'red'
+            lineColor = 'NONE'
+            if 'symbolColor' in elm:
+                symbolColor = elm[ 'symbolColor']
+
+        lineWidth = 1
+        if 'lineWidth' in elm:
+            lineWidth = elm[ 'lineWidth']
+        lineStyle = 'SOLID'
+        if 'lineStyle' in elm:
+            lineStyle = elm[ 'lineStyle']
+        showGridX = False
+        if 'showGridX' in elm:
+            showGridX = elm[ 'showGridX']
+        showGridY = False
+        if 'showGridY' in elm:
+            showGridY = elm[ 'showGridY']
+        xLog = False
+        if 'xLog' in elm:
+            xLog = elm[ 'xLog']
+        yLog = False
+        if 'yLog' in elm:
+            yLog = elm[ 'yLog']
+        symbol = '+'
+        if 'symbol' in elm:
+            symbol = elm[ 'symbol']
+        symbolSize= 10
+        if 'symbolSize' in elm:
+            symbolSize = elm[ 'symbolSize']
+        
+        x = elm[ 'x']
+        y = elm[ 'y']
+        gqe = PySpectra.Scan( name = elm[ 'name'],
+                    xMin = x[0], xMax = x[-1], nPts = len(x),
+                    xLabel = xLabel, yLabel = yLabel,
+                    lineColor = lineColor, lineWidth = lineWidth, lineStyle = lineStyle,
+                    showGridX = showGridX, showGridY = showGridY, 
+                    xLog = xLog, yLog = yLog, 
+                    symbol = symbol, symbolColor = symbolColor, symbolSize = symbolSize, 
+                )
+        for i in range(len(x)):
+            gqe.setX( i, x[i])
+            gqe.setY( i, y[i])
+
+
+    PySpectra.display()
+
+    return "done"
+
 def createGauss( name = "gauss", xMin = -5, xMax = 5., nPts = 101, 
                  lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.):
-    import PySpectra.GQE as GQE
 
-    g = GQE.Scan( name = name, xMin = xMin, xMax = xMax, nPts = nPts, 
+    g = PySpectra.Scan( name = name, xMin = xMin, xMax = xMax, nPts = nPts, 
                   lineColor = lineColor)
     g.y = amplitude/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-x0)**2/(2.*sigma**2))
 
@@ -35,11 +311,10 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
 
     clsFunc is specified to be able to distinguish between mpl and pqt
     '''
-    import PySpectra.GQE as _gqe
     global _lenPlotted
     debug = False
 
-    gqeList = _gqe.getGqeList()
+    gqeList = PySpectra.getGqeList()
 
     if debug:
         print( "\nutils.setGqeVPs.BEGIN: gqeList %s, nameList %s" % \
@@ -49,7 +324,7 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
         #
         # the number of used viewports is (len( gqeList) - numberOfOverlaid) 
         #
-        usedVPs = len( gqeList) - _gqe._getNumberOfOverlaid()
+        usedVPs = len( gqeList) - _getNumberOfOverlaid()
         if usedVPs != _lenPlotted and _lenPlotted != -1: 
             clsFunc()
         _lenPlotted = usedVPs
@@ -78,7 +353,7 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
         #
         # the number of used viewports is (len( nameList) - numberOfOverlaid( nameList)) 
         #
-        usedVPs = len( nameList) - _gqe._getNumberOfOverlaid( nameList)
+        usedVPs = len( nameList) - _getNumberOfOverlaid( nameList)
         if usedVPs != _lenPlotted and _lenPlotted != -1: 
             clsFunc()
         _lenPlotted = usedVPs
@@ -108,7 +383,7 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
             #
             # maybe the gqe.overlay has beed deleted
             #
-            if _gqe.getGqe( gqe.overlay) is None:
+            if PySpectra.getGqe( gqe.overlay) is None:
                 gqe.overlay = None
             else:
                 continue
@@ -279,7 +554,7 @@ def runMacro( line):
 
     print( "utils.runMacro: %s" % line)
 
-    door = GQE.InfoBlock.getDoorProxy()
+    door = PySpectra.InfoBlock.getDoorProxy()
     if door is None:
         print( "utils.runMacro: no door")
         return False

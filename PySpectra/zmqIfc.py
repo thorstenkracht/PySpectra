@@ -14,7 +14,6 @@ Further documentation
 import PyTango
 import time
 import PySpectra 
-import PySpectra.GQE as GQE
 import PySpectra.utils as utils
 import numpy as np
 
@@ -71,7 +70,7 @@ def execHsh( hsh):
            returns:
              { 'result': 'ON'}
 
-       Scan, see PySpectra.GQE.Scan?
+       Scan, see PySpectra.Scan?
          {'Scan': {'name': 'eh_c01', 'xMax': 1.0, 'autoscaleX': False, 'lineColor': 'red', 'xMin': 0.0, 'nPts': 6}}
            create an empty scan. Notice, the inner dictionary is passed to the Scan constructor
 
@@ -117,7 +116,7 @@ def execHsh( hsh):
            The data are sent as a list of dictionaries containg the x- and y-data and other
            parameters describing the Scans.
 
-       Image, see PySPectra.GQE.Image?
+       Image, see PySPectra.PySpectra.Image?
          {'Image': {'name': 'MandelBrot', 
                     'height': 5, 'width': 5, 
                     'xMax': -0.5, 'xMin': -2.0, 
@@ -178,7 +177,7 @@ def execHsh( hsh):
     #
     elif 'getData' in hsh:
         try:
-            argout[ 'getData'] = GQE.getData()
+            argout[ 'getData'] = PySpectra.getData()
             argout[ 'result'] = 'done'
         except Exception as e:
             argout[ 'getData'] = {}
@@ -196,7 +195,7 @@ def execHsh( hsh):
             #
             # '**hsh': unpacked dictionary
             #
-            GQE.Image( **hsh[ 'Image']) 
+            PySpectra.Image( **hsh[ 'Image']) 
             argout[ 'result'] = 'done'
         except Exception as e:
             argout[ 'result'] = "zmqIfc.execHsh: error, %s" % repr( e)
@@ -208,7 +207,7 @@ def execHsh( hsh):
             #
             # '**hsh' unpacked dictionary
             #
-            GQE.Scan( **hsh[ 'Scan']) 
+            PySpectra.Scan( **hsh[ 'Scan']) 
             argout[ 'result'] = 'done'
         except Exception as e:
             argout[ 'result'] = "zmqIfc.execHsh: error, %s" % repr( e)
@@ -350,23 +349,23 @@ def _putData( hsh):
 
     argout = 'n.n.'
     if 'title' in hsh:
-        GQE.setTitle( hsh[ 'title'])
+        PySpectra.setTitle( hsh[ 'title'])
 
     try: 
         if 'columns' in hsh:
-            GQE.delete()
+            PySpectra.delete()
             PySpectra.cls()
-            argout = GQE.fillDataByColumns( hsh)
+            argout = utils.createScansByColumns( hsh)
         elif 'gqes' in hsh:
-            GQE.delete()
+            PySpectra.delete()
             PySpectra.cls()
             try: 
-                argout = GQE.fillDataByGqes( hsh)
+                argout = utils.createScansByGqes( hsh)
             except Exception as e: 
                 print( "zmqIfc: %s" % repr( e))
         elif 'images' in hsh:
             for h in hsh[ 'images']: 
-                GQE.Image( **h)
+                PySpectra.Image( **h)
             argout = "done"
         else:
             raise Exception( "zmqIfc._putData", "expecting 'columns', 'gqes', 'setPixelImage', 'setPixelWorld'")
@@ -419,7 +418,7 @@ def _execSpockCommand( hsh):
 
     argout = "done"
     try: 
-        door = GQE.InfoBlock.getDoorProxy()
+        door = PySpectra.InfoBlock.getDoorProxy()
         lst = hsh[ 'spock'].split( " ")
         door.RunMacro( lst)
     except Exception as e: 
@@ -433,7 +432,7 @@ def _getDoorState():
     """
     import PySpectra.tangoIfc as tangoIfc
 
-    door = GQE.InfoBlock.getDoorProxy()
+    door = PySpectra.InfoBlock.getDoorProxy()
     argout = "%s" % repr( door.state())
     return argout.split( '.')[-1]
 

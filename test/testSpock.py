@@ -5,6 +5,7 @@ python -m unittest discover -v
 
 python ./test/testSpock.py testSpock.testMv
 python ./test/testSpock.py testSpock.testAscan
+python ./test/testSpock.py testSpock.testMvsa
 
 '''
 import time, os
@@ -82,6 +83,36 @@ class testSpock( unittest.TestCase):
             os.system( "kill_proc -f pyspMonitor.py")
 
         return 
+
+    def testMvsa( self) : 
+        print "testSpock.testMvsa"
+
+        if HasyUtils.getHostname() != 'haso107tk': 
+            return 
+
+        ( status, wasLaunched) = utils.assertProcessRunning( "/usr/bin/pyspMonitor.py")
+        print( "testSpock.testAscan: ascan eh_mot66 50 51 40 0.1")
+
+        hsh =  zmqIfc.execHsh( { 'spock': 'ascan eh_mot66 50 51 40 0.1'})
+        self.assertEqual( hsh[ 'result'], 'done')
+
+        hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+        while hsh[ 'result'] == 'RUNNING': 
+            time.sleep( 0.5)
+            hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+
+        hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+        self.assertEqual( hsh[ 'result'], 'ON')
+
+        hsh =  zmqIfc.execHsh( { 'spock': 'mvsa_tk peak 0'})
+        self.assertEqual( hsh[ 'result'], 'done')
+
+        if wasLaunched:
+            print( "testSpock.testAscan kill pyspMonitor.py") 
+            os.system( "kill_proc -f pyspMonitor.py")
+
+        return 
+
 
 if __name__ == "__main__":
     unittest.main()

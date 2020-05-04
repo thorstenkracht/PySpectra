@@ -12,7 +12,7 @@ has to be done in advance.
 '''
 import builtins
 import pySpectraGuiClass
-import PySpectra.GQE as GQE
+import PySpectra
 import PySpectra.zmqIfc as zmqIfc
 import HasyUtils 
 
@@ -64,7 +64,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         # create the door member before setMonitorGui()
         #
         self.door = None
-        GQE.InfoBlock.setMonitorGui( self)
+        PySpectra.InfoBlock.setMonitorGui( self)
         self.refreshCount = 0
         self.flagIsBusy = False
         #
@@ -202,7 +202,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         #
         elif 'ScanInfo' in hsh:
             self.scanInfo = hsh[ 'ScanInfo']
-            GQE._scanInfo = hsh[ 'ScanInfo']
+            PySpectra._scanInfo = hsh[ 'ScanInfo']
             self.configureMotorsWidget()
         else: 
             zmqIfc.execHsh( hsh)

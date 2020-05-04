@@ -35,10 +35,9 @@ In addition, start ipython and
 
   import PySpectra 
   In [1]: import PySpectra
-  In [2]: import PySpectra.GQE
   In [3]: PySpectra?
-  In [4]: PySpectra.GQE.Scan?
-  In [5]: PySpectra.GQE.Image?
+  In [4]: PySpectra.Scan?
+  In [5]: PySpectra.Image?
 
 *
 * PySpectra magic commands in ipython:
@@ -49,7 +48,6 @@ In [2]: PySpectra.ipython.startup?
 
 '''
 
-import os 
 #
 # here we include functions like cls(), display() into the toplevel 
 # PySpectra name space. Depending on the state of PYSP_USE_MATPLOTLIB
@@ -57,14 +55,17 @@ import os
 # createPDF is a special case because it has to be available also 
 # in the pqt world.
 #
-try:
-    if os.environ["PYSP_USE_MATPLOTLIB"] == "True":
-        from mtpltlb.graphics import *
-    else:
-        from pqtgrph.graphics import *
-except: 
-    from pqtgrph.graphics import *
-
+#import os 
+#try:
+#    if os.environ["PYSP_USE_MATPLOTLIB"] == "True":
+#        from mtpltlb.graphics import *
+#    else:
+#        from pqtgrph.graphics import *
+#except: 
+#    from pqtgrph.graphics import *
+ 
+from pqtgrph.graphics import *
 from mtpltlb.graphics import createPDF
 
+from PySpectra.GQE import *
 

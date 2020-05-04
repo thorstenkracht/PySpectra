@@ -4,14 +4,12 @@ python ./test/testUtils.py testUtils.test_ssa
 '''
 import sys
 import PySpectra
-import PySpectra.GQE as GQE
 import numpy as np
 import unittest
 import time, sys, os
 import math 
 
 class testUtils( unittest.TestCase):
-
 
     @classmethod
     def setUpClass( testUtils):
@@ -25,8 +23,8 @@ class testUtils( unittest.TestCase):
         overlay 2 scans
         '''
         PySpectra.cls()
-        GQE.delete()
-        g = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, lineColor = 'red')
+        PySpectra.delete()
+        g = PySpectra.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101, lineColor = 'red')
         mu = 0.
         sigma = 1.
         g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2.*sigma**2))

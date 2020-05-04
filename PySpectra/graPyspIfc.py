@@ -3,7 +3,7 @@
 this module actracts Spectra, PySpectra
 '''
 import PySpectra 
-import PySpectra.GQE as GQE
+import PySpectra.utils as utils
 
 try: 
     import Spectra
@@ -82,7 +82,7 @@ def deleteScan( scan):
     if spectraInstalled and useSpectra:
         del scan
     else: 
-        GQE.delete( [scan.name])
+        PySpectra.delete( [scan.name])
         PySpectra.cls()
 
     return 
@@ -95,7 +95,7 @@ def delete():
         Spectra.gra_command("delete *.*")
     else: 
         PySpectra.cls()
-        GQE.delete()
+        PySpectra.delete()
 
     return 
 
@@ -106,7 +106,7 @@ def getGqe( name):
     if spectraInstalled and useSpectra:
         return None
     else: 
-        return GQE.getGqe( name)
+        return PySpectra.getGqe( name)
     
 def Scan( **hsh):
     '''
@@ -149,7 +149,7 @@ def Scan( **hsh):
         if 'color' in hsh:
             color = hsh[ 'color']
         if type(color) == int:
-            GQE.colorSpectraToPysp( color)
+            utils.colorSpectraToPysp( color)
 
         motorNameList = None
         if 'motorNameList' in hsh:
@@ -161,7 +161,7 @@ def Scan( **hsh):
         if 'at' in hsh: 
             at = hsh[ 'at']
         
-        scan = GQE.Scan( name = name, 
+        scan = PySpectra.Scan( name = name, 
                          xMin = xMin, 
                          xMax = xMax,
                          nPts = nPts,
@@ -182,16 +182,16 @@ def Scan( **hsh):
     return scan
 
 def setComment( line): 
-    return GQE.setComment( line) 
+    return PySpectra.setComment( line) 
 
 def getComment( line): 
-    return GQE.getComment()
+    return PySpectra.getComment()
 
 def setTitle( line): 
-    return GQE.setTitle( line) 
+    return PySpectra.setTitle( line) 
 
 def getTitle( line): 
-    return GQE.getTitle()
+    return PySpectra.getTitle()
 
 def writeFile( nameGQE):
 

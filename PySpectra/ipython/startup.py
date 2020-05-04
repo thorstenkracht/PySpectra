@@ -32,7 +32,7 @@ Step 3: use it
   $ ipython --profile=PySpectra
   In [1]: create t1
   In [2]: display
-  In [3]: o = PySpectra.GQE.getGqe( "t1")
+  In [3]: o = PySpectra.getGqe( "t1")
   In [4]: dir( o)
 
 For the list of commands: see pyspectra_help() 
@@ -42,7 +42,6 @@ from IPython.core.magic import (register_line_magic)
 from IPython.core.getipython import get_ipython
 import PySpectra.ipython.ifc as ifc
 import PySpectra 
-import PySpectra.GQE as GQE
 import numpy as np
 
 ip = get_ipython()
@@ -328,8 +327,8 @@ def sl1(line):
     create 1 scan
     '''
     PySpectra.cls()
-    GQE.delete()
-    t1 = GQE.Scan( name = "t1", color = 'blue', yLabel = 'sin')
+    PySpectra.delete()
+    t1 = PySpectra.Scan( name = "t1", color = 'blue', yLabel = 'sin')
     t1.y = np.sin( t1.x)
 
 @register_line_magic
@@ -338,18 +337,18 @@ def sl2(line):
     scan list 1, creates some scans, fill them with data
     '''
     PySpectra.cls()
-    GQE.delete()
-    t1 = GQE.Scan( name = "t1", color = 'blue', yLabel = 'sin')
+    PySpectra.delete()
+    t1 = PySpectra.Scan( name = "t1", color = 'blue', yLabel = 'sin')
     t1.y = np.sin( t1.x)
-    t2 = GQE.Scan( "t2", yLabel = 'cos')
+    t2 = PySpectra.Scan( "t2", yLabel = 'cos')
     t2.y = np.cos( t2.x)
-    t3 = GQE.Scan( name = "t3", color = 'green', yLabel = 'tan')
+    t3 = PySpectra.Scan( name = "t3", color = 'green', yLabel = 'tan')
     t3.y = np.tan( t3.x)
-    t4 = GQE.Scan( name = "t4", color = 'cyan', yLabel = 'random')
+    t4 = PySpectra.Scan( name = "t4", color = 'cyan', yLabel = 'random')
     t4.y = np.random.random_sample( (len( t4.y), ))
-    t5 = GQE.Scan( name = "t5", color = 'magenta', yLabel = 'x**2')
+    t5 = PySpectra.Scan( name = "t5", color = 'magenta', yLabel = 'x**2')
     t5.y = t5.x * t5.x
-    GQE.overlay( 't5', 't3')
+    PySpectra.overlay( 't5', 't3')
 
 @register_line_magic
 def sl3(line):
@@ -357,9 +356,9 @@ def sl3(line):
     many scans
     '''
     PySpectra.cls()
-    GQE.delete()
+    PySpectra.delete()
     for i in range( 20):
-        t = GQE.Scan( name = "t%d" % i, color = 'blue')
+        t = PySpectra.Scan( name = "t%d" % i, color = 'blue')
         t.y = np.random.random_sample( (len( t.y), ))
 
 @register_line_magic
@@ -368,8 +367,8 @@ def sl4(line):
     gauss
     '''
     PySpectra.cls()
-    GQE.delete()
-    g = GQE.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
+    PySpectra.delete()
+    g = PySpectra.Scan( name = "gauss", xMin = -5., xMax = 5., nPts = 101)
     mu = 0.
     sigma = 1.
     g.y = 1/(sigma * np.sqrt(2 * np.pi)) * \

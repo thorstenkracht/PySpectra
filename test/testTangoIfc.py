@@ -15,7 +15,6 @@ import PySpectra
 import PySpectra.tangoIfc as tangoIfc
 import PySpectra.zmqIfc as zmqIfc
 import PySpectra.utils as utils
-import PySpectra.GQE as GQE
 import numpy as np
 import unittest
 import PyTango
@@ -32,15 +31,14 @@ class testTangoIfc( unittest.TestCase):
         PySpectra.close()
 
     def testMoveMotorStart( self) : 
-        import random
-        print "testTangoIfc.testMoveMotorTangoIfc"
+        print "testTangoIfc.testMoveMotorStart"
 
         if utils.getHostname() != 'haso107tk': 
             return 
 
         PySpectra.cls()
-        GQE.delete()
-        GQE.setTitle( "watch arrows (setPoint, current) while moving a motor forth and back")
+        PySpectra.delete()
+        PySpectra.setTitle( "watch arrows (setPoint, current) while moving a motor forth and back")
         g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
                                lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
 
@@ -67,10 +65,11 @@ class testTangoIfc( unittest.TestCase):
             time.sleep( 0.5)
             g.updateArrowCurrent()
 
+        print "testTangoIfc.testMoveMotorStart DONE"
         return 
 
     def testMoveMotorNameList( self) : 
-        import random
+
         print "testTangoIfc.testMoveMotorNameList"
 
 
@@ -78,8 +77,8 @@ class testTangoIfc( unittest.TestCase):
             return 
 
         PySpectra.cls()
-        GQE.delete()
-        GQE.setTitle( "watch arrows while a motor is tangoIfc.move()ed")
+        PySpectra.delete()
+        PySpectra.setTitle( "watch arrows while a motor is tangoIfc.move()ed")
         g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
                                lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
 
@@ -97,6 +96,8 @@ class testTangoIfc( unittest.TestCase):
         print( "testTangoIfc.testMoveMotorNameList: move %s back to %g" % ( g.motorNameList[0], POS))
         tangoIfc.move( g, POS, flagConfirm = False)
 
+        print "testTangoIfc.testMoveMotorNameList DONE"
+
         return 
 
     def testMoveScanInfo( self) : 
@@ -104,7 +105,7 @@ class testTangoIfc( unittest.TestCase):
         print "testTangoIfc.testMoveScanInfo"
 
         PySpectra.cls()
-        GQE.delete()
+        PySpectra.delete()
 
         #
         # see, if the pyspMonitor process exists. Otherwise launch it
@@ -146,7 +147,7 @@ class testTangoIfc( unittest.TestCase):
             print( "testTangoIfc.testMoveScanInfo: 'display sig_gen' failed, %s" % repr( ret))
             return 
 
-        GQE.setTitle( "umv; a2scan; moveStart sig_gen 50.5 False")
+        PySpectra.setTitle( "umv; a2scan; moveStart sig_gen 50.5 False")
         if zmqIfc.toPyspMonitor( { 'command': 'moveStart sig_gen 50.5 False'})[ 'result'] != 'done':
             print( "testTangoIfc.testMoveScanInfo: moveStart failed failed")
             return 
@@ -159,6 +160,8 @@ class testTangoIfc( unittest.TestCase):
         if wasLaunched:
             print( "testTangoIfc.testMoveScanInfo: kill pyspMonitor.py") 
             os.system( "kill_proc -f pyspMonitor.py")
+
+        print "testTangoIfc.testMoveScanInfo DONE"
         
         return 
         

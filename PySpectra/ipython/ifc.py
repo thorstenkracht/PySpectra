@@ -70,7 +70,6 @@ import itertools
 import PySpectra
 import PySpectra.mtpltlb.graphics as _mpl_graphics # to create postscript
 import PySpectra.calc as calc
-import PySpectra.GQE as GQE
 import PySpectra.tangoIfc as tangoIfc
 
 def command( line):
@@ -243,7 +242,7 @@ def create( line):
     else:
         raise ValueError( "ifs.createScan: wrong syntax %s" % line)
         
-    GQE.Scan( **hsh)
+    PySpectra.Scan( **hsh)
     return "done"
 
 def createPDF( line):
@@ -305,7 +304,7 @@ def delete( line):
     lst = None
     if line: 
         lst = line.split(' ')
-    GQE.delete( lst)
+    PySpectra.delete( lst)
     return "done"
 
 def info( line):
@@ -326,7 +325,7 @@ def move( line):
     lst = line.split( ' ')
     if len( lst) < 2:
         raise ValueError( "ifc.move: expecting at least a scan name and the destination")
-    gqe = GQE.getGqe( lst[0])
+    gqe = PySpectra.getGqe( lst[0])
     flagConfirm = True
     if len( lst) == 3:
         if lst[2].upper() == "FALSE": 
@@ -345,7 +344,7 @@ def moveStart( line):
     lst = line.split( ' ')
     if len( lst) < 2:
         raise ValueError( "ifc.moveStart: expecting at least a scan name and the destination")
-    gqe = GQE.getGqe( lst[0])
+    gqe = PySpectra.getGqe( lst[0])
     flagConfirm = True
     if len( lst) == 3:
         if lst[2].upper() == "FALSE": 
@@ -369,7 +368,7 @@ def overlay( line):
     lst = line.split( ' ')
     if len( lst) != 2:
         raise ValueError( "ifc.overlay: expecting two scan names")
-    GQE.overlay( lst[0], lst[1])
+    PySpectra.overlay( lst[0], lst[1])
     return "done"
 
 def read( line):
@@ -382,7 +381,7 @@ def read( line):
         lst = line.split(' ')
     if len( lst) == 0:
         raise ValueError( "ifc.read: expecting a file name and optionally '-mca'")
-    GQE.read( lst)
+    PySpectra.read( lst)
     return "done"
 
 def setComment( line):
@@ -391,8 +390,8 @@ def setComment( line):
       set the comment string for the whole plot
     '''
     argout = "done"
-    if not GQE.setComment( line): 
-        argout = "trouble from GQE.setComment()"
+    if not PySpectra.setComment( line): 
+        argout = "trouble from PySpectra.setComment()"
     return argout
 
 def _pairs( lst): 
@@ -438,7 +437,7 @@ def setText( line):
     '''
     lst = _mySplit( line)
     try:
-        o = GQE.getGqe( lst[0])
+        o = PySpectra.getGqe( lst[0])
     except Exception as e: 
         raise ValueError( "ifc.setText: failed to gqeGqe %s" % lst[0])
 
@@ -497,8 +496,8 @@ def setTitle( line):
     set the title of the whole plot
     '''
     argout = "done"
-    if not GQE.setTitle( line): 
-        argout = "trouble from GQE.setTitle()"
+    if not PySpectra.setTitle( line): 
+        argout = "trouble from PySpectra.setTitle()"
     return argout
 
 def setPixelImage( line): 
@@ -509,7 +508,7 @@ def setPixelImage( line):
         iy > 0 and iy < height
     '''
     lst = line.split( ' ')
-    o = GQE.getGqe( lst[0])
+    o = PySpectra.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setPixelImage: failed to find %s" % lst[0])
     ix = int( lst[1])
@@ -528,7 +527,7 @@ def setArrowCurrentCmd( line):
       position: the motor current position, maybe from mvsa
     '''
     lst = line.split( ' ')
-    o = GQE.getGqe( lst[0])
+    o = PySpectra.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setArrowSCurrent: failed to find %s" % lst[0])
     o.setArrowCurrentCmd( lst[1:])
@@ -544,7 +543,7 @@ def setArrowSetPointCmd( line):
       position: the motor target position, mayby from mouse-click
     '''
     lst = line.split( ' ')
-    o = GQE.getGqe( lst[0])
+    o = PySpectra.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setArrowSetPoint: failed to find %s" % lst[0])
     o.setArrowSetPointCmd( lst[1:])
@@ -560,7 +559,7 @@ def setArrowMiscCmd( line):
       position: the motor target position, maybe from mvsa
     '''
     lst = line.split( ' ')
-    o = GQE.getGqe( lst[0])
+    o = PySpectra.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setArrowMisc: failed to find %s" % lst[0])
     o.setArrowMiscCmd( lst[1:])
@@ -574,7 +573,7 @@ def setPixelWorld( line):
         y >= yMin and y <= yMax
     '''
     lst = line.split( ' ')
-    o = GQE.getGqe( lst[0])
+    o = PySpectra.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setPixelWorld: failed to find %s" % lst[0])
     x = float( lst[1])
@@ -588,7 +587,7 @@ def setX( line):
     setX <nameGqe> index x
     '''
     lst = line.split( ' ')
-    o = GQE.getGqe( lst[0])
+    o = PySpectra.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setX: failed to find %s" % lst[0])
     index = int( lst[1])
@@ -604,7 +603,7 @@ def setY( line):
     setY <nameGqe> index y
     '''
     lst = line.split( ' ')
-    o = GQE.getGqe( lst[0])
+    o = PySpectra.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setY: failed to find %s" % lst[0])
     index = int( lst[1])
@@ -620,7 +619,7 @@ def setXY( line):
     setXY <nameGqe> index x y
     '''
     lst = line.split( ' ')
-    o = GQE.getGqe( lst[0])
+    o = PySpectra.getGqe( lst[0])
     if o is None: 
         raise ValueError(" ifc.setXY: failed to find %s" % lst[0])
     index = int( lst[1])
@@ -654,7 +653,7 @@ def show( line):
     '''
     show the list of scans
     '''
-    GQE.show()
+    PySpectra.show()
     return "done"
 
 def write( line):
@@ -669,7 +668,7 @@ def write( line):
       write selected scans
     '''
     lst = line.split( ' ')
-    GQE.write( lst)
+    PySpectra.write( lst)
     return "done"
 
 def y2my( line):
