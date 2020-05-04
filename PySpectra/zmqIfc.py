@@ -255,17 +255,19 @@ def _replaceNumpyArrays( hsh):
 
 def toPyspMonitor( hsh, node = None, testAlive = False):
     '''
-    Send a dictionary to pyspMonitor. 
-    The dictionary syntax can be found here 
-      PySpectra.zmqIfc.execHsh?
+    Send a dictionary to the pyspMonitor process. 
+
+    The pyspMonitor processes the dictionary by calling PySpectra.zmqIfc.execHsh()
+
+    testAlive == True: 
+        it is checked whether a pyspMonitor process responds to isAlive
+        if there is no answer: the process is launched
 
     Example: 
       ret = PySpectra.zmqIfc.toPyspMonitor( {'command': ['delete', 'cls', 'create s1', 'display']})
       if ret[ 'result'] != 'done': 
           print( "error" % ret[ 'result'])
 
-    if testAlive == True: it is checked whether the pyspMonitor responds to isAlive
-      if not: the process is launched
     ---
     '''
     import zmq, json, socket
@@ -292,16 +294,18 @@ def toPyspMonitor( hsh, node = None, testAlive = False):
         sckt.connect('tcp://%s:7779' % node)
     except Exception as e:
         sckt.close()
-        return { 'result': "utils.toPyspMonitor: failed to connect to %s" % node}
+        return { 'result': "zmqIfc.toPyspMonitor: failed to connect to %s" % node}
     
     _replaceNumpyArrays( hsh)
-                    
+
+    #print( "zmqIfc.toPyspMonitor: sending %s" % hsh)
+
     hshEnc = json.dumps( hsh)
     try:
         res = sckt.send( hshEnc)
     except Exception as e:
         sckt.close()
-        return { 'result': "TgUtils.toPyspMonitor: exception by send() %s" % repr(e)}
+        return { 'result': "zmqIfc.toPyspMonitor: exception by send() %s" % repr(e)}
     #
 
     # PyspMonitor receives the Dct, processes it and then
@@ -314,22 +318,26 @@ def toPyspMonitor( hsh, node = None, testAlive = False):
             hshEnc = sckt.recv() 
             sckt.close()
             context.term()
-            return json.loads( hshEnc)
+            argout = json.loads( hshEnc)
         else: 
             sckt.close()
             context.term()
-            return { 'result': 'notAlive'}
+            argout = { 'result': 'notAlive'}
     else:
         lst = zmq.select([sckt], [], [], 3.0)
         if sckt in lst[0]:
             hshEnc = sckt.recv() 
             sckt.close()
             context.term()
-            return json.loads( hshEnc)
+            argout = json.loads( hshEnc) 
+
         else: 
             sckt.close()
             context.term()
-            return { 'result': 'zmqIfc.toPyspMonitor: communication time-out'}
+            argout = { 'result': 'zmqIfc.toPyspMonitor: communication time-out'}
+
+    #print( "zmqIfc.toPyspMonitor: received %s" % argout)
+    return argout
 
 def isPyspMonitorAlive( node = None):
     '''
@@ -392,7 +400,7 @@ def _execCommand( hsh):
         for cmd in hsh[ 'command']: 
             ret = ifc.command( cmd)
             if ret != 'done':
-                return "zmqIfc._execCommand: error from ifc.command %s for %s" % ( ret, cmd)
+                return "zmqIfc._execCommand: '%s' was answered by %s" % ( cmd, ret)
         return "done"
 
     argout = ifc.command( hsh[ 'command'])
@@ -447,15 +455,20 @@ def assertPyspMonitorRunning():
     it tests whether the pyspMonitor responds to isAlive. 
     If so, the function return rather quickly.
 
-    Otherwise we call assertProcessRunning() which ma take some time
+    Otherwise we call assertProcessRunning() which may take some time
     """
     res = toPyspMonitor( { 'isAlive': True}, testAlive = False) 
     if res[ 'result'] == 'done': 
         return( True, False)
     else: 
+        #
+        # even if the pyspMonitor does not reply to 'isAlive', 
+        # the process may exist
+        #
+        if utils.findProcessByName( "/usr/bin/pyspMonitor.py"):
+            utils.killProcess( "/usr/bin/pyspMonitor.py")
         
         return utils.assertProcessRunning( "/usr/bin/pyspMonitor.py")
-
 
 def killPyspMonitor():
     ''' 

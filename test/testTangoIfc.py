@@ -72,7 +72,6 @@ class testTangoIfc( unittest.TestCase):
 
         print "testTangoIfc.testMoveMotorNameList"
 
-
         if utils.getHostname() != 'haso107tk': 
             return 
 

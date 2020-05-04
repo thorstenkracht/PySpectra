@@ -6,6 +6,7 @@ python -m unittest discover -v
 python ./test/testCalc.py testCalc.testYToMinusY
 python ./test/testCalc.py testCalc.testDerivative
 python ./test/testCalc.py testCalc.testDerivativeAntiDerivative
+python ./test/testCalc.py testCalc.testSSAErrors
 '''
 import sys
 sys.path.append( "/home/kracht/Misc/pySpectra")
@@ -15,8 +16,7 @@ import numpy as np
 import unittest
 import time, sys
 import math 
-import PySpectra.GQE as _gqe
-import PySpectra.calc as _calc
+import PySpectra.calc as calc
 
 class testCalc( unittest.TestCase):
 
@@ -33,10 +33,10 @@ class testCalc( unittest.TestCase):
         print "testCalc.testYToMinusY"
 
         PySpectra.cls()
-        _gqe.delete()
-        scan = _gqe.Scan( name = "t1", xMin = 2., xMax = 10.0, nPts = 201)
+        PySpectra.delete()
+        scan = PySpectra.Scan( name = "t1", xMin = 2., xMax = 10.0, nPts = 201)
         scan.y = np.sin( scan.y)
-        scanMY = _calc.yToMinusY( name = scan.name, nameNew = "t1_y2MinusY")
+        scanMY = calc.yToMinusY( name = scan.name, nameNew = "t1_y2MinusY")
 
         self.assertEqual( len( scan.y), len( scanMY.y))
         self.assertEqual( len( scan.x), len( scanMY.x))
@@ -71,28 +71,28 @@ class testCalc( unittest.TestCase):
         print "testCalc.testDerivative"
 
         PySpectra.cls()
-        _gqe.delete()
-        scan = _gqe.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
+        PySpectra.delete()
+        scan = PySpectra.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
         scan.y = np.sin( scan.y)
-        _calc.derivative( name = scan.name, nameNew = "t1_d")
+        calc.derivative( name = scan.name, nameNew = "t1_d")
         PySpectra.display()
         #PySpectra.show()
         PySpectra.processEventsLoop( 1)
 
         PySpectra.cls()
-        _gqe.delete()
-        scan = _gqe.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
+        PySpectra.delete()
+        scan = PySpectra.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
         scan.y = np.cos( scan.y)
-        _calc.derivative( name = scan.name)
+        calc.derivative( name = scan.name)
         PySpectra.display()
         #PySpectra.show()
         PySpectra.processEventsLoop( 1)
 
         PySpectra.cls()
-        _gqe.delete()
-        scan = _gqe.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
+        PySpectra.delete()
+        scan = PySpectra.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
         scan.y = np.tan( scan.y)
-        _calc.derivative( scan.name, "t1_d")
+        calc.derivative( scan.name, "t1_d")
         PySpectra.display()
         #PySpectra.show()
         PySpectra.processEventsLoop( 1)
@@ -104,10 +104,10 @@ class testCalc( unittest.TestCase):
         print "testCalc.testAntiDerivative"
 
         PySpectra.cls()
-        _gqe.delete()
-        scan = _gqe.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
+        PySpectra.delete()
+        scan = PySpectra.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
         scan.y = np.sin( scan.y)
-        _calc.antiderivative( name = scan.name, nameNew = "t1_ad")
+        calc.antiderivative( name = scan.name, nameNew = "t1_ad")
         PySpectra.display()
         #PySpectra.show()
         PySpectra.processEventsLoop( 1)
@@ -119,11 +119,11 @@ class testCalc( unittest.TestCase):
         print "testCalc.testDerivativeAntiDerivative"
 
         PySpectra.cls()
-        _gqe.delete()
-        scan = _gqe.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
+        PySpectra.delete()
+        scan = PySpectra.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
         scan.y = np.sin( scan.y)
-        derivative = _calc.derivative( name = scan.name, nameNew = "t1_d")
-        stamm = _calc.antiderivative( name = derivative.name, nameNew = "t1_ad")
+        derivative = calc.derivative( name = scan.name, nameNew = "t1_d")
+        stamm = calc.antiderivative( name = derivative.name, nameNew = "t1_ad")
 
         self.assertEqual( len( scan.y), len( stamm.y))
         self.assertEqual( len( scan.x), len( stamm.x))
@@ -138,9 +138,9 @@ class testCalc( unittest.TestCase):
         self.assertLess( diff, 0.08)
 
         stamm.lineColor = 'blue'
-        _gqe.delete( "t1_d")
+        PySpectra.delete( "t1_d")
 
-        _gqe.overlay( "t1_ad", "t1") 
+        PySpectra.overlay( "t1_ad", "t1") 
 
         PySpectra.cls()
         PySpectra.display()
@@ -149,6 +149,29 @@ class testCalc( unittest.TestCase):
         PySpectra.processEventsLoop( 3)
 
         print "testCalc.testDerivativeAntiDerivative, DONE"
+
+        return 
+
+    def testSSAErrors( self):
+
+        print "testCalc.testSSA1"
+
+        PySpectra.cls()
+        PySpectra.delete()
+
+        ret = calc.ssa( [1, 2, 3], [4, 5, 6])
+
+        self.assertEqual( ret[ 'status'], 0)
+        self.assertEqual( ret[ 'reason'], 7)
+        self.assertEqual( ret[ 'reasonString'], "not a numpy array")
+
+        ret = calc.ssa( np.asarray( [3, 2, 1]), np.asarray([4, 5, 6]))
+        self.assertEqual( ret[ 'status'], 0)
+        self.assertEqual( ret[ 'reason'], 1)
+        self.assertEqual( ret[ 'reasonString'], "np < 6")
+
+        print( "%s" % repr( ret))
+        print "testCalc.testSSA1 DONE"
 
 if __name__ == "__main__":
     unittest.main()

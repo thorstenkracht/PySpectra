@@ -171,7 +171,7 @@ def command( line):
     except Exception, e: 
         print( "ifc.command: error for '%s'" % line)
         print( "ifc.command: %s" % repr( e))
-        argout = None
+        argout = repr( e)
     
     return argout
 
