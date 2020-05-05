@@ -6,9 +6,9 @@ this module handles the access from remote:
   
 Further documentation
 
-  PySpectra.zmqIfc.toPyspMonitor?
-  PySpectra.zmqIfc.execHsh?
-  PySpectra.zmqIfc.isPyspMonitorAlive?
+  PySpectra.toPyspMonitor?
+  PySpectra.execHsh?
+  PySpectra.isPyspMonitorAlive?
 ---
 '''
 import PyTango
@@ -257,14 +257,14 @@ def toPyspMonitor( hsh, node = None, testAlive = False):
     '''
     Send a dictionary to the pyspMonitor process. 
 
-    The pyspMonitor processes the dictionary by calling PySpectra.zmqIfc.execHsh()
+    The pyspMonitor processes the dictionary by calling PySpectra.execHsh()
 
     testAlive == True: 
         it is checked whether a pyspMonitor process responds to isAlive
         if there is no answer: the process is launched
 
     Example: 
-      ret = PySpectra.zmqIfc.toPyspMonitor( {'command': ['delete', 'cls', 'create s1', 'display']})
+      ret = PySpectra.toPyspMonitor( {'command': ['delete', 'cls', 'create s1', 'display']})
       if ret[ 'result'] != 'done': 
           print( "error" % ret[ 'result'])
 

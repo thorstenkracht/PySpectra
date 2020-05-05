@@ -36,7 +36,6 @@ pySpectraPath = "/home/kracht/Misc/pySpectra"
 sys.path.append( pySpectraPath)
 
 import PySpectra
-import PySpectra.zmqIfc as zmqIfc
 import pyqtgraph as pg
 import numpy as np
 import unittest
@@ -763,7 +762,7 @@ class testGraphics( unittest.TestCase):
         #
         # do the clean-up before we start
         #
-        hsh = zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        hsh = PySpectra.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
         if hsh[ 'result'] != "done":
             print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
             return 
@@ -773,7 +772,7 @@ class testGraphics( unittest.TestCase):
                   'type': 'image', 
                   'xMin': xmin, 'xMax': xmax, 'width': width, 
                   'yMin': ymin, 'yMax': ymax, 'height': height}}
-        hsh = zmqIfc.execHsh( hsh)
+        hsh = PySpectra.execHsh( hsh)
         if hsh[ 'result'] != "done":
             print "error from putData"
             return 
@@ -787,7 +786,7 @@ class testGraphics( unittest.TestCase):
                         { 'name': "MandelBrot",
                           'noDisplay': True, 
                           'setPixelWorld': ( r1[i], r2[j], res)}}
-                hsh = zmqIfc.execHsh( hsh)
+                hsh = PySpectra.execHsh( hsh)
                 if hsh[ 'result'] != "done":
                     print "error from setPixel"
                     return
@@ -806,7 +805,7 @@ class testGraphics( unittest.TestCase):
         #
         # do the clean-up before we start
         #
-        hsh = zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        hsh = PySpectra.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
         if hsh[ 'result'] != "done":
             print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
             return 
@@ -818,7 +817,7 @@ class testGraphics( unittest.TestCase):
                   'type': 'image', 
                   'xMin': xmin, 'xMax': xmax, 'width': width, 
                   'yMin': ymin, 'yMax': ymax, 'height': height}}
-        hsh = zmqIfc.execHsh( hsh)
+        hsh = PySpectra.execHsh( hsh)
         if hsh[ 'result'] != "done":
             print "error from putData"
             return 
@@ -829,11 +828,11 @@ class testGraphics( unittest.TestCase):
             for j in range(height):
                 res = self.mandelbrot(r1[i] + 1j*r2[j],maxiter)
                 hsh = { 'command': "setPixelImage Mandelbrot %d %d %g" % ( i, j, res)}
-                hsh = zmqIfc.execHsh( hsh)
+                hsh = PySpectra.execHsh( hsh)
                 if hsh[ 'result'] != "done":
                     print "error from setPixel"
                     return
-            hsh = zmqIfc.execHsh( { 'command': ['display']})
+            hsh = PySpectra.execHsh( { 'command': ['display']})
             if hsh[ 'result'] != "done":
                 print "error from ['display']"
                 return 

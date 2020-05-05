@@ -85,7 +85,7 @@ def command( line):
     called from 
       - /home/kracht/Misc/pySpectra/PySpectra/ipython/startup.py
         to execute magic commands
-      - /home/kracht/Misc/pySpectra/PySpectra/misc/zmqIfc.py
+      - /home/kracht/Misc/pySpectra/PySpectra/zmqIfc.py
         execHsh() -> _execCommand() -> ifc.command()
     '''
     argout = None

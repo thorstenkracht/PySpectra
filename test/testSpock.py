@@ -10,7 +10,6 @@ python ./test/testSpock.py testSpock.testMvsa
 '''
 import time, os
 import PySpectra
-import PySpectra.zmqIfc as zmqIfc
 import PySpectra.utils as utils
 import unittest
 import HasyUtils
@@ -33,27 +32,27 @@ class testSpock( unittest.TestCase):
 
         print "testSpock.testMv, eh_mot66 to 50"
         
-        hsh =  zmqIfc.execHsh( { 'spock': 'mv eh_mot66 50'})
+        hsh =  PySpectra.execHsh( { 'spock': 'mv eh_mot66 50'})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+        hsh =  PySpectra.execHsh( { 'getDoorState': True})
         while hsh[ 'result'] == 'RUNNING': 
             time.sleep( 0.5)
-            hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+            hsh =  PySpectra.execHsh( { 'getDoorState': True})
 
-        hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+        hsh =  PySpectra.execHsh( { 'getDoorState': True})
         self.assertEqual( hsh[ 'result'], 'ON')
 
         print "testSpock.testMv, eh_mot66 to 51"
-        hsh =  zmqIfc.execHsh( { 'spock': 'mv eh_mot66 51'})
+        hsh =  PySpectra.execHsh( { 'spock': 'mv eh_mot66 51'})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+        hsh =  PySpectra.execHsh( { 'getDoorState': True})
         while hsh[ 'result'] == 'RUNNING': 
             time.sleep( 0.5)
-            hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+            hsh =  PySpectra.execHsh( { 'getDoorState': True})
 
-        hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+        hsh =  PySpectra.execHsh( { 'getDoorState': True})
         self.assertEqual( hsh[ 'result'], 'ON')
 
         return 
@@ -67,15 +66,15 @@ class testSpock( unittest.TestCase):
         ( status, wasLaunched) = utils.assertProcessRunning( "/usr/bin/pyspMonitor.py")
         print( "testSpock.testAscan: ascan eh_mot66 50 51 40 0.1")
 
-        hsh =  zmqIfc.execHsh( { 'spock': 'ascan eh_mot66 50 51 40 0.1'})
+        hsh =  PySpectra.execHsh( { 'spock': 'ascan eh_mot66 50 51 40 0.1'})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+        hsh =  PySpectra.execHsh( { 'getDoorState': True})
         while hsh[ 'result'] == 'RUNNING': 
             time.sleep( 0.5)
-            hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+            hsh =  PySpectra.execHsh( { 'getDoorState': True})
 
-        hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+        hsh =  PySpectra.execHsh( { 'getDoorState': True})
         self.assertEqual( hsh[ 'result'], 'ON')
 
         if wasLaunched:
@@ -93,18 +92,18 @@ class testSpock( unittest.TestCase):
         ( status, wasLaunched) = utils.assertProcessRunning( "/usr/bin/pyspMonitor.py")
         print( "testSpock.testAscan: ascan eh_mot66 50 51 40 0.1")
 
-        hsh =  zmqIfc.execHsh( { 'spock': 'ascan eh_mot66 50 51 40 0.1'})
+        hsh =  PySpectra.execHsh( { 'spock': 'ascan eh_mot66 50 51 40 0.1'})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+        hsh =  PySpectra.execHsh( { 'getDoorState': True})
         while hsh[ 'result'] == 'RUNNING': 
             time.sleep( 0.5)
-            hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+            hsh =  PySpectra.execHsh( { 'getDoorState': True})
 
-        hsh =  zmqIfc.execHsh( { 'getDoorState': True})
+        hsh =  PySpectra.execHsh( { 'getDoorState': True})
         self.assertEqual( hsh[ 'result'], 'ON')
 
-        hsh =  zmqIfc.execHsh( { 'spock': 'mvsa_tk peak 0'})
+        hsh =  PySpectra.execHsh( { 'spock': 'mvsa_tk peak 0'})
         self.assertEqual( hsh[ 'result'], 'done')
 
         if wasLaunched:

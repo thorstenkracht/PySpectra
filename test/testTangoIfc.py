@@ -13,7 +13,6 @@ import sys
 
 import PySpectra
 import PySpectra.tangoIfc as tangoIfc
-import PySpectra.zmqIfc as zmqIfc
 import PySpectra.utils as utils
 import numpy as np
 import unittest
@@ -109,7 +108,7 @@ class testTangoIfc( unittest.TestCase):
         #
         # see, if the pyspMonitor process exists. Otherwise launch it
         #
-        ( status, wasLaunched) = zmqIfc.assertPyspMonitorRunning()
+        ( status, wasLaunched) = PySpectra.assertPyspMonitorRunning()
         if not status:
             print( "testTangoIfc.testMoveScanInfo: failed to launch the pyspMonitor")
             return 
@@ -132,7 +131,7 @@ class testTangoIfc( unittest.TestCase):
         #
         count = 0
         while 1: 
-            ret = zmqIfc.toPyspMonitor( { 'isAlive': True})
+            ret = PySpectra.toPyspMonitor( { 'isAlive': True})
             if ret[ 'result'] == 'done':
                 break
             count += 1
@@ -141,18 +140,18 @@ class testTangoIfc( unittest.TestCase):
                 print( "testTangoIfc.testMoveScanInfo: isAlive failes")
                 return 
 
-        ret = zmqIfc.toPyspMonitor( { 'command': 'display sig_gen'})
+        ret = PySpectra.toPyspMonitor( { 'command': 'display sig_gen'})
         if ret[ 'result'] != 'done': 
             print( "testTangoIfc.testMoveScanInfo: 'display sig_gen' failed, %s" % repr( ret))
             return 
 
         PySpectra.setTitle( "umv; a2scan; moveStart sig_gen 50.5 False")
-        if zmqIfc.toPyspMonitor( { 'command': 'moveStart sig_gen 50.5 False'})[ 'result'] != 'done':
+        if PySpectra.toPyspMonitor( { 'command': 'moveStart sig_gen 50.5 False'})[ 'result'] != 'done':
             print( "testTangoIfc.testMoveScanInfo: moveStart failed failed")
             return 
 
         while 1: 
-            if zmqIfc.toPyspMonitor( { 'getDoorState': True})[ 'result'] == 'ON':
+            if PySpectra.toPyspMonitor( { 'getDoorState': True})[ 'result'] == 'ON':
                 break
             time.sleep( 0.5)
         

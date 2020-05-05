@@ -13,7 +13,6 @@ From the command line:
 import numpy as np
 import os, time, math
 import PySpectra 
-import PySpectra.zmqIfc as zmqIfc
 import PySpectra.utils as utils
 
 
@@ -49,13 +48,13 @@ def exampleDataVia_execHsh():
                  'showGridX': False, 'showGridY': False},
              ]}}
 
-    hsh = zmqIfc.execHsh( hsh)
+    hsh = PySpectra.execHsh( hsh)
     print( "exampleDataVia_execHsh: putData returns %s" % repr( hsh) )
 
     #
     # retrieve the data 
     #
-    hsh = zmqIfc.execHsh( { 'getData': True})
+    hsh = PySpectra.execHsh( { 'getData': True})
     #
     # ... and compare.
     #
@@ -99,7 +98,7 @@ def exampleImageMBVia_execHsh():
     #
     # do the clean-up before we start
     #
-    hsh =  zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+    hsh =  PySpectra.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
     if hsh[ 'result'] != "done":
         print( "error from ['delete', 'setWsViewport DINA5S', 'cls']")
         return 
@@ -111,7 +110,7 @@ def exampleImageMBVia_execHsh():
               'xMin': xmin, 'xMax': xmax, 'width': width, 
               'yMin': ymin, 'yMax': ymax, 'height': height}}
 
-    hsh = zmqIfc.execHsh( hsh)
+    hsh = PySpectra.execHsh( hsh)
     if hsh[ 'result'] != "done":
         print( "error from putData")
         return 
@@ -124,7 +123,7 @@ def exampleImageMBVia_execHsh():
         for j in range(height):
             res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
             hsh = { 'command': [ 'setPixelImage Mandelbrot %d %d %g' % ( i, j, res)]}
-            hsh = zmqIfc.execHsh( hsh)
+            hsh = PySpectra.execHsh( hsh)
             if hsh[ 'result'] != "done":
                 print( "error from setPixel")
                 return
@@ -153,7 +152,7 @@ def exampleImageMBVia_execHsh_OneChunk():
     #
     # do the clean-up before we start
     #
-    hsh =  zmqIfc.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+    hsh =  PySpectra.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
     if hsh[ 'result'] != "done":
         print( "error from ['delete', 'setWsViewport DINA5S', 'cls']")
         return 
@@ -169,7 +168,7 @@ def exampleImageMBVia_execHsh_OneChunk():
             res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
             data[i][j] = int( res)
 
-    zmqIfc.execHsh( { 'putData': 
+    PySpectra.execHsh( { 'putData': 
                     { 'images': [{'name': "Mandelbrot", 'data': data,
                                   'xMin': xmin, 'xMax': xmax, 
                                   'yMin': ymin, 'yMax': ymax}]}})

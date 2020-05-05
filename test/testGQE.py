@@ -36,7 +36,6 @@ python ./test/testGQE.py testGQE.testTextOnlyScan
 import sys, time
 import PyTango
 import PySpectra
-import PySpectra.zmqIfc as zmqIfc
 import PySpectra.utils as utils
 import numpy as np
 import unittest
@@ -386,7 +385,7 @@ class testGQE( unittest.TestCase):
                                          'yLog': False, 'symbol': '+', 
                                          'xLog': False, 'symbolSize':5}]}}
 
-        zmqIfc.execHsh( hsh)
+        PySpectra.execHsh( hsh)
 
         lst = PySpectra.getGqeList()
         self.assertEqual( len( lst), 3)
@@ -429,7 +428,7 @@ class testGQE( unittest.TestCase):
                                        'yLog': False, 'symbol': '+', 
                                        'xLog': False, 'symbolSize':5}]}}
 
-        zmqIfc.execHsh( hsh)
+        PySpectra.execHsh( hsh)
 
         lst = PySpectra.getGqeList()
         self.assertEqual( len( lst), 3)

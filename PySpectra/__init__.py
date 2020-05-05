@@ -19,10 +19,9 @@ $ TngGui.py
 * Send data and commands to pyspMonitor
 * -------------------------------------
 *
-  In [1]: import PySpectra.zmqIfc
-  In [2]: PySpectra.zmqIfc?
-  In [3]: PySpectra.zmqIfc.toPyspMonitor?
-  In [4]: PySpectra.zmqIfc.execHsh?
+  In [1]: import PySpectra
+  In [2]: PySpectra.toPyspMonitor?
+  In [3]: PySpectra.execHsh?
 
 *
 * PySpectra Python module
@@ -35,9 +34,8 @@ In addition, start ipython and
 
   import PySpectra 
   In [1]: import PySpectra
-  In [3]: PySpectra?
-  In [4]: PySpectra.Scan?
-  In [5]: PySpectra.Image?
+  In [2]: PySpectra.Scan?
+  In [3]: PySpectra.Image?
 
 *
 * PySpectra magic commands in ipython:
@@ -68,4 +66,5 @@ from pqtgrph.graphics import *
 from mtpltlb.graphics import createPDF
 
 from PySpectra.GQE import *
+from PySpectra.zmqIfc import *
 

@@ -13,7 +13,6 @@ has to be done in advance.
 import builtins
 import pySpectraGuiClass
 import PySpectra
-import PySpectra.zmqIfc as zmqIfc
 import HasyUtils 
 
 import queue, argparse, sys, os
@@ -138,7 +137,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             if self.flagIsBusy:
                 argout = { 'result': "pyspMonitor: rejecting dct while scanning"}
             else: 
-                argout = zmqIfc.execHsh( hsh)
+                argout = PySpectra.execHsh( hsh)
             msg = json.dumps( argout)
             self.sckt.send( msg)
             lst = zmq.select([self.sckt], [], [], 0.1)
@@ -205,7 +204,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             PySpectra._scanInfo = hsh[ 'ScanInfo']
             self.configureMotorsWidget()
         else: 
-            zmqIfc.execHsh( hsh)
+            PySpectra.execHsh( hsh)
         return 
         
     def configureMotorsWidget( self): 
