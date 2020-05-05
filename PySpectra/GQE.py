@@ -863,9 +863,16 @@ class Scan( object):
 
         self.setArrowCurrent( proxy.position)
 
-        if proxy.state() == _PyTango.DevState.ON: 
-            self.arrowSetPoint.hide()
-
+        #
+        # we check the existence of arrowSetPoint although arrowCurrent
+        # was checked before (and both are created at the same time)
+        # because the 2 'display' paths pyspDoor and  
+        # PySpectraGuiClass.cb_refreshPySpectraGui() may interfere destructively
+        #
+        if self.arrowSetPoint is not None: 
+            if proxy.state() == _PyTango.DevState.ON: 
+                self.arrowSetPoint.hide()
+                
         return
 
     def setArrowCurrentCmd( self, lst): 

@@ -407,9 +407,9 @@ def _addArrowsMotor( gqe, nameList):
     #
     #
     gqe.arrowSetPoint = _pyqtgraph.ArrowItem( angle=270, pen = _pyqtgraph.mkPen( color = (255, 0, 0)), 
-                                             brush = _pyqtgraph.mkBrush( color = (255, 0, 0)))
+                                              brush = _pyqtgraph.mkBrush( color = (255, 0, 0)))
     gqe.arrowMisc = _pyqtgraph.ArrowItem( angle=270, pen = _pyqtgraph.mkPen( color = ( 0, 255, 0)), 
-                                         brush = _pyqtgraph.mkBrush( color = ( 0, 255, 0)))
+                                          brush = _pyqtgraph.mkBrush( color = ( 0, 255, 0)))
 
     #
     # 'Misc' is for mvsa e.g., this arrow is not touched by the
