@@ -16,11 +16,11 @@ python ./test/ipython/testIFC.py testIFC.test_setXY
 python ./test/ipython/testIFC.py testIFC.test_y2my
 python ./test/ipython/testIFC.py testIFC.test_delete
 python ./test/ipython/testIFC.py testIFC.test_setArrow
-python ./test/ipython/testIFC.py testIFC.test_execHshScan
-python ./test/ipython/testIFC.py testIFC.test_execHshSetPixelImage
-python ./test/ipython/testIFC.py testIFC.test_execHshSetPixelWorld
-python ./test/ipython/testIFC.py testIFC.test_execHshMonitorSetPixelWorld
-python ./test/ipython/testIFC.py testIFC.test_execHshMonitorScan
+python ./test/ipython/testIFC.py testIFC.test_toPyspLocalScan
+python ./test/ipython/testIFC.py testIFC.test_toPyspLocalSetPixelImage
+python ./test/ipython/testIFC.py testIFC.test_toPyspLocalSetPixelWorld
+python ./test/ipython/testIFC.py testIFC.test_toPyspLocalMonitorSetPixelWorld
+python ./test/ipython/testIFC.py testIFC.test_toPyspLocalMonitorScan
 '''
 import sys, time, os, math
 import numpy as np
@@ -343,20 +343,20 @@ class testIFC( unittest.TestCase):
         return 
 
 
-    def test_execHshScan( self): 
+    def test_toPyspLocalScan( self): 
         import random
 
-        print "testIFC.test_execHshScan"
-        ret = PySpectra.execHsh( { 'command': ["cls", "delete"]}) 
+        print "testIFC.test_toPyspLocalScan"
+        ret = PySpectra.toPyspLocal( { 'command': ["cls", "delete"]}) 
         self.assertEqual( ret[ 'result'], 'done')
         
-        ret = PySpectra.execHsh( { 'command': ["setTitle \"An important title\"", 
+        ret = PySpectra.toPyspLocal( { 'command': ["setTitle \"An important title\"", 
                                               "setComment \"An interesting comment\""]}) 
         self.assertEqual( ret[ 'result'], 'done')
 
         max = 101
         name = "TestScan"
-        ret = PySpectra.execHsh( {'Scan': { 'name': name,
+        ret = PySpectra.toPyspLocal( {'Scan': { 'name': name,
                                           'xMin': 0., 'xMax': 100., 
                                           'yMin': 0., 'yMax': 1.,
                                           'symbol': '+','symbolColor': 'red',
@@ -376,24 +376,24 @@ class testIFC( unittest.TestCase):
         for i in range( max): 
             pos = float(i)
             posY = random.random()*10
-            PySpectra.execHsh( { 'command': ['setXY %s %d %s %s' % (name, i, repr(pos), repr(posY))]})
-            PySpectra.execHsh( { 'command': ["display"]}) 
+            PySpectra.toPyspLocal( { 'command': ['setXY %s %d %s %s' % (name, i, repr(pos), repr(posY))]})
+            PySpectra.toPyspLocal( { 'command': ["display"]}) 
             self.assertEqual( o.currentIndex, i)
             time.sleep( 0.1)
 
-        print "testIFC.test_execHshScan DONE"
+        print "testIFC.test_toPyspLocalScan DONE"
 
         return 
 
 
-    def test_execHshSetPixelImage( self): 
+    def test_toPyspLocalSetPixelImage( self): 
 
         '''
         this examples simulates the toPyspMonitor() interface
         
-        replace execHsh() by toPyspMonitor() to connect to pyspMonitor.py 
+        replace toPyspLocal() by toPyspMonitor() to connect to pyspMonitor.py 
         '''
-        print "testIFC.test_execHshSetPixelImage"
+        print "testIFC.test_toPyspLocalSetPixelImage"
         (xmin, xmax) = (-2.,-0.5)
         (ymin, ymax) = (0, 1.5)
         (width, height) = (100, 100)
@@ -402,19 +402,19 @@ class testIFC( unittest.TestCase):
         #
         # do the clean-up before we start
         #
-        hsh =  PySpectra.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        hsh =  PySpectra.toPyspLocal( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
         if hsh[ 'result'] != "done":
             print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
             return 
         #
         # create the image
         #
-        hsh = PySpectra.execHsh( { 'Image': 
+        hsh = PySpectra.toPyspLocal( { 'Image': 
                                  { 'name': "MandelBrot",
                                    'xMin': xmin, 'xMax': xmax, 'width': width, 
                                    'yMin': ymin, 'yMax': ymax, 'height': height}})
         if hsh[ 'result'] != "done":
-            print "error from execHsh", repr( hsh)
+            print "error from toPyspLocal", repr( hsh)
             return 
         #
         # fill the image, pixel by pixel
@@ -424,26 +424,26 @@ class testIFC( unittest.TestCase):
         for i in range(width):
             for j in range(height):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
-                hsh = PySpectra.execHsh( { 'command': 
+                hsh = PySpectra.toPyspLocal( { 'command': 
                                          ["setPixelImage MandelBrot %d %d %s" % ( i, j, repr( res))]})
                 if hsh[ 'result'] != "done":
                     print "error from setPixel"
                     return
-            PySpectra.execHsh( { 'command': ['cls','display']})
-        PySpectra.execHsh( { 'command': ['cls', 'display']})
+            PySpectra.toPyspLocal( { 'command': ['cls','display']})
+        PySpectra.toPyspLocal( { 'command': ['cls', 'display']})
         PySpectra.processEventsLoop( 1)
 
-        print "testIFC.test_execHshSetPixelImage, DONE"
+        print "testIFC.test_toPyspLocalSetPixelImage, DONE"
         return 
 
-    def test_execHshSetPixelWorld( self): 
+    def test_toPyspLocalSetPixelWorld( self): 
 
         '''
         this examples simulates the toPyspMonitor() interface
-        replace execHsh() by toPyspMonitor() to connect to pyspMonitor.py 
+        replace toPyspLocal() by toPyspMonitor() to connect to pyspMonitor.py 
         '''
-        print "testIFC.test_execHshSetPixelWorld"
-        hsh =  PySpectra.execHsh( { 'command': ['cls', 'delete', 'setWsViewport DINA5S']})
+        print "testIFC.test_toPyspLocalSetPixelWorld"
+        hsh =  PySpectra.toPyspLocal( { 'command': ['cls', 'delete', 'setWsViewport DINA5S']})
         if hsh[ 'result'] != "done":
             print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
             return 
@@ -456,7 +456,7 @@ class testIFC( unittest.TestCase):
         #
         # create the image
         #
-        hsh = PySpectra.execHsh( { 'Image': 
+        hsh = PySpectra.toPyspLocal( { 'Image': 
                                  { 'name': "MandelBrot",
                                    'xMin': xmin, 'xMax': xmax, 'width': width, 
                                    'yMin': ymin, 'yMax': ymax, 'height': height}})
@@ -471,26 +471,26 @@ class testIFC( unittest.TestCase):
         for i in range(width):
             for j in range(height):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
-                hsh = PySpectra.execHsh( { 'command': 
+                hsh = PySpectra.toPyspLocal( { 'command': 
                                          ["setPixelWorld MandelBrot %g %g %s" % ( r1[i], r2[j], repr( res))]})
                 if hsh[ 'result'] != "done":
                     print "error from setPixelWorld"
                     return
-            PySpectra.execHsh( { 'command': ['cls','display']})
-        PySpectra.execHsh( { 'command': ['cls']})
-        PySpectra.execHsh( { 'command': ['display']})
+            PySpectra.toPyspLocal( { 'command': ['cls','display']})
+        PySpectra.toPyspLocal( { 'command': ['cls']})
+        PySpectra.toPyspLocal( { 'command': ['display']})
         PySpectra.processEventsLoop( 1)
 
-        print "testIFC.test_execHshSetPixelWorld, DONE"
+        print "testIFC.test_toPyspLocalSetPixelWorld, DONE"
         return 
 
-    def test_execHshMonitorSetPixelWorld( self): 
+    def test_toPyspLocalMonitorSetPixelWorld( self): 
 
         '''
         this examples simulates the toPyspMonitor() interface
-        replace execHsh() by toPyspMonitor() to connect to pyspMonitor.py 
+        replace toPyspLocal() by toPyspMonitor() to connect to pyspMonitor.py 
         '''
-        print "testIFC.test_execHshSMonitorsetPixelWorld"
+        print "testIFC.test_toPyspLocalSMonitorsetPixelWorld"
         #
         # see, if the pyspMonitor is running. If not, return silently
         #
@@ -536,7 +536,7 @@ class testIFC( unittest.TestCase):
         PySpectra.toPyspMonitor( { 'command': ['cls']})
         PySpectra.toPyspMonitor( { 'command': ['display']})
 
-        print "testIFC.test_execHshSMonitorsetPixelWorld, DONE"
+        print "testIFC.test_toPyspLocalSMonitorsetPixelWorld, DONE"
 
         return 
 

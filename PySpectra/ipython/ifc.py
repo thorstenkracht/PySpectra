@@ -51,15 +51,15 @@ A command-line-like interface to PySpectra, used by
 #
 #  - pyspMonitor.py to execute the commands received via ZMQ 
 #    pyspMonitorClass.py
-#      zmqIfc.execHsh( hsh)
+#      zmqIfc.toPyspLocal( hsh)
 #        zmqIfc.execCommand( hsh): 
 #          ifc.command( cmd)
 #
 #  - pyspDoor.py
 #      sendHshQueue() 
 #        pyspMonitorClass.py
-#          execHshLocal( hsh)
-#            zmqIfc.execHsh( hsh)
+#          toPyspLocalWrapper( hsh)
+#            zmqIfc.toPyspLocal( hsh)
 #              zmqIfc.execCommand( hsh): 
 #                ifc.command( cmd)
 #
@@ -86,7 +86,7 @@ def command( line):
       - /home/kracht/Misc/pySpectra/PySpectra/ipython/startup.py
         to execute magic commands
       - /home/kracht/Misc/pySpectra/PySpectra/zmqIfc.py
-        execHsh() -> _execCommand() -> ifc.command()
+        toPyspLocal() -> _execCommand() -> ifc.command()
     '''
     argout = None
     line = line.strip()

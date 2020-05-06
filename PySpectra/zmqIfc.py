@@ -7,7 +7,7 @@ this module handles the access from remote:
 Further documentation
 
   PySpectra.toPyspMonitor?
-  PySpectra.execHsh?
+  PySpectra.toPyspLocal?
   PySpectra.isPyspMonitorAlive?
 ---
 '''
@@ -17,9 +17,9 @@ import PySpectra
 import PySpectra.utils as utils
 import numpy as np
 
-def execHsh( hsh): 
+def toPyspLocal( hsh): 
     '''
-    execHsh executes dictionaries which are received 
+    toPyspLocal executes dictionaries which are received 
       - from toPyspMonitor()
       - from a Queue, from pyspDoor
       - from an application directly, maybe to simulate the toPyspMonitor interface
@@ -150,7 +150,7 @@ def execHsh( hsh):
             'result': 'done'}
 
     '''
-    #print( "zmqIfc.execHsh: %s" % repr( hsh))
+    #print( "zmqIfc.toPyspLocal: %s" % repr( hsh))
     argout = {}
     #
     # command
@@ -181,7 +181,7 @@ def execHsh( hsh):
             argout[ 'result'] = 'done'
         except Exception as e:
             argout[ 'getData'] = {}
-            argout[ 'result'] = "zmqIfc.execHsh: error, %s" % repr( e)
+            argout[ 'result'] = "zmqIfc.toPyspLocal: error, %s" % repr( e)
     #
     # the 'isAlive' question comes from a toPyspMonitor() client, not from the door
     #
@@ -198,7 +198,7 @@ def execHsh( hsh):
             PySpectra.Image( **hsh[ 'Image']) 
             argout[ 'result'] = 'done'
         except Exception as e:
-            argout[ 'result'] = "zmqIfc.execHsh: error, %s" % repr( e)
+            argout[ 'result'] = "zmqIfc.toPyspLocal: error, %s" % repr( e)
     #
     # Scan
     #
@@ -210,21 +210,21 @@ def execHsh( hsh):
             PySpectra.Scan( **hsh[ 'Scan']) 
             argout[ 'result'] = 'done'
         except Exception as e:
-            argout[ 'result'] = "zmqIfc.execHsh: error, %s" % repr( e)
+            argout[ 'result'] = "zmqIfc.toPyspLocal: error, %s" % repr( e)
     #
     # ... else
     #
     else:
-        argout[ 'result'] = "zmqIfc.execHsh: error, failed to identify %s" % repr( hsh)
+        argout[ 'result'] = "zmqIfc.toPyspLocal: error, failed to identify %s" % repr( hsh)
     #
     # getDoorState is answered with a value, not with 'done'
     #
     if not 'getDoorState' in hsh: 
         if argout[ 'result'].upper() != "DONE":
-            print( "zmqIfc.execHsh: no 'DONE', instead received '%s' " % argout[ 'result'])
-            print( "zmqIfc.execHsh: input: %s " % repr( hsh))
+            print( "zmqIfc.toPyspLocal: no 'DONE', instead received '%s' " % argout[ 'result'])
+            print( "zmqIfc.toPyspLocal: input: %s " % repr( hsh))
 
-    #print( "zmqIfc.execHsh: return %s" % repr( argout))
+    #print( "zmqIfc.toPyspLocal: return %s" % repr( argout))
     return argout
 
 def _replaceNumpyArrays( hsh): 
@@ -257,7 +257,7 @@ def toPyspMonitor( hsh, node = None, testAlive = False):
     '''
     Send a dictionary to the pyspMonitor process. 
 
-    The pyspMonitor processes the dictionary by calling PySpectra.execHsh()
+    The pyspMonitor processes the dictionary by calling PySpectra.toPyspLocal()
 
     testAlive == True: 
         it is checked whether a pyspMonitor process responds to isAlive
@@ -387,7 +387,7 @@ def _execCommand( hsh):
     passes PySpectra commands to pysp.ipython.ifc.command()
 
     called from 
-      - execHsh()
+      - toPyspLocal()
     
     List of commands: 
       hsh = { 'command': ['cls', 'display']}
@@ -410,7 +410,7 @@ def _execSpockCommand( hsh):
     '''
     sends spock commands to a door
 
-    called from execHsh()
+    called from toPyspLocal()
     
     It is always a single command because the macroserver
     will be busy when executing the first command and

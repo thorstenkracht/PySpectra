@@ -16,9 +16,9 @@ import PySpectra
 import PySpectra.utils as utils
 
 
-def exampleDataVia_execHsh(): 
+def exampleDataVia_toPyspLocal(): 
     '''
-    replace execHsh() with toPyspMonitor() to connect to pyspMonitor.py
+    replace toPyspLocal() with toPyspMonitor() to connect to pyspMonitor.py
     '''
     import random
     MAX = 25
@@ -48,13 +48,13 @@ def exampleDataVia_execHsh():
                  'showGridX': False, 'showGridY': False},
              ]}}
 
-    hsh = PySpectra.execHsh( hsh)
-    print( "exampleDataVia_execHsh: putData returns %s" % repr( hsh) )
+    hsh = PySpectra.toPyspLocal( hsh)
+    print( "exampleDataVia_toPyspLocal: putData returns %s" % repr( hsh) )
 
     #
     # retrieve the data 
     #
-    hsh = PySpectra.execHsh( { 'getData': True})
+    hsh = PySpectra.toPyspLocal( { 'getData': True})
     #
     # ... and compare.
     #
@@ -64,8 +64,8 @@ def exampleDataVia_execHsh():
         if d1[i] != hsh[ 'getData'][ 'EH_C01'][ 'y'][i]:
             print( "error: d1[i] != y[i]")
         
-    print( "exampleDataVia_execHsh: getData returns x(EH_C01) %s " % hsh[ 'getData']['EH_C01']['x'])
-    print( "exampleDataVia_execHsh: getData returns y(EH_C01) %s" % hsh[ 'getData']['EH_C01']['y'])
+    print( "exampleDataVia_toPyspLocal: getData returns x(EH_C01) %s " % hsh[ 'getData']['EH_C01']['x'])
+    print( "exampleDataVia_toPyspLocal: getData returns y(EH_C01) %s" % hsh[ 'getData']['EH_C01']['y'])
     return 
 
 def mandelbrot( c, maxiter):
@@ -79,11 +79,11 @@ def mandelbrot( c, maxiter):
         z = z*z + c
     return 0
 
-def exampleImageMBVia_execHsh(): 
+def exampleImageMBVia_toPyspLocal(): 
     '''
     this examples simulates the toPyspMonitor() interface
 
-    replace execHsh() by toPyspMonitor() to connect to pyspMonitor.py 
+    replace toPyspLocal() by toPyspMonitor() to connect to pyspMonitor.py 
     '''
     PySpectra.setWsViewport( 'DINA5S')
 
@@ -98,7 +98,7 @@ def exampleImageMBVia_execHsh():
     #
     # do the clean-up before we start
     #
-    hsh =  PySpectra.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+    hsh =  PySpectra.toPyspLocal( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
     if hsh[ 'result'] != "done":
         print( "error from ['delete', 'setWsViewport DINA5S', 'cls']")
         return 
@@ -110,7 +110,7 @@ def exampleImageMBVia_execHsh():
               'xMin': xmin, 'xMax': xmax, 'width': width, 
               'yMin': ymin, 'yMax': ymax, 'height': height}}
 
-    hsh = PySpectra.execHsh( hsh)
+    hsh = PySpectra.toPyspLocal( hsh)
     if hsh[ 'result'] != "done":
         print( "error from putData")
         return 
@@ -123,7 +123,7 @@ def exampleImageMBVia_execHsh():
         for j in range(height):
             res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
             hsh = { 'command': [ 'setPixelImage Mandelbrot %d %d %g' % ( i, j, res)]}
-            hsh = PySpectra.execHsh( hsh)
+            hsh = PySpectra.toPyspLocal( hsh)
             if hsh[ 'result'] != "done":
                 print( "error from setPixel")
                 return
@@ -132,13 +132,13 @@ def exampleImageMBVia_execHsh():
 
     return 
 
-def exampleImageMBVia_execHsh_OneChunk(): 
+def exampleImageMBVia_toPyspLocal_OneChunk(): 
     '''
     this examples simulates the toPyspMonitor() interface
 
-    replace execHsh() by toPyspMonitor() to connect to pyspMonitor.py 
+    replace toPyspLocal() by toPyspMonitor() to connect to pyspMonitor.py 
     '''
-    print( "execHsh_OneChunk") 
+    print( "toPyspLocal_OneChunk") 
     PySpectra.setWsViewport( 'DINA5S')
 
     PySpectra.cls()
@@ -152,7 +152,7 @@ def exampleImageMBVia_execHsh_OneChunk():
     #
     # do the clean-up before we start
     #
-    hsh =  PySpectra.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+    hsh =  PySpectra.toPyspLocal( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
     if hsh[ 'result'] != "done":
         print( "error from ['delete', 'setWsViewport DINA5S', 'cls']")
         return 
@@ -168,13 +168,13 @@ def exampleImageMBVia_execHsh_OneChunk():
             res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
             data[i][j] = int( res)
 
-    PySpectra.execHsh( { 'putData': 
+    PySpectra.toPyspLocal( { 'putData': 
                     { 'images': [{'name': "Mandelbrot", 'data': data,
                                   'xMin': xmin, 'xMax': xmax, 
                                   'yMin': ymin, 'yMax': ymax}]}})
     PySpectra.cls()
     PySpectra.display()
-    print( "execHsh_OneChunk DONE") 
+    print( "toPyspLocal_OneChunk DONE") 
 
     return 
 

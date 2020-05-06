@@ -174,11 +174,11 @@ class pyspDoor( sms.BaseDoor):
             # Re-use the scan. Otherwise we have these flickering displays
             #
             self.sendHshQueue( { 'Scan': { 'name': self.mcaAliases[n],
-                                      'reUse': True, 
-                                      'flagMCA': True, 
-                                      'lineColor': 'blue', 
-                                      'x': x, 
-                                      'y': y}}) 
+                                           'reUse': True, 
+                                           'flagMCA': True, 
+                                           'lineColor': 'blue', 
+                                           'x': x, 
+                                           'y': y}}) 
             
 
     def toBeDisplayed( self, name, dataRecord):

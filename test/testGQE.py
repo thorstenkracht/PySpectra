@@ -385,7 +385,7 @@ class testGQE( unittest.TestCase):
                                          'yLog': False, 'symbol': '+', 
                                          'xLog': False, 'symbolSize':5}]}}
 
-        PySpectra.execHsh( hsh)
+        PySpectra.toPyspLocal( hsh)
 
         lst = PySpectra.getGqeList()
         self.assertEqual( len( lst), 3)
@@ -428,7 +428,7 @@ class testGQE( unittest.TestCase):
                                        'yLog': False, 'symbol': '+', 
                                        'xLog': False, 'symbolSize':5}]}}
 
-        PySpectra.execHsh( hsh)
+        PySpectra.toPyspLocal( hsh)
 
         lst = PySpectra.getGqeList()
         self.assertEqual( len( lst), 3)

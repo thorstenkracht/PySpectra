@@ -762,7 +762,7 @@ class testGraphics( unittest.TestCase):
         #
         # do the clean-up before we start
         #
-        hsh = PySpectra.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        hsh = PySpectra.toPyspLocal( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
         if hsh[ 'result'] != "done":
             print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
             return 
@@ -772,7 +772,7 @@ class testGraphics( unittest.TestCase):
                   'type': 'image', 
                   'xMin': xmin, 'xMax': xmax, 'width': width, 
                   'yMin': ymin, 'yMax': ymax, 'height': height}}
-        hsh = PySpectra.execHsh( hsh)
+        hsh = PySpectra.toPyspLocal( hsh)
         if hsh[ 'result'] != "done":
             print "error from putData"
             return 
@@ -786,7 +786,7 @@ class testGraphics( unittest.TestCase):
                         { 'name': "MandelBrot",
                           'noDisplay': True, 
                           'setPixelWorld': ( r1[i], r2[j], res)}}
-                hsh = PySpectra.execHsh( hsh)
+                hsh = PySpectra.toPyspLocal( hsh)
                 if hsh[ 'result'] != "done":
                     print "error from setPixel"
                     return
@@ -805,7 +805,7 @@ class testGraphics( unittest.TestCase):
         #
         # do the clean-up before we start
         #
-        hsh = PySpectra.execHsh( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
+        hsh = PySpectra.toPyspLocal( { 'command': ['delete', 'setWsViewport DINA5S', 'cls']})
         if hsh[ 'result'] != "done":
             print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
             return 
@@ -817,7 +817,7 @@ class testGraphics( unittest.TestCase):
                   'type': 'image', 
                   'xMin': xmin, 'xMax': xmax, 'width': width, 
                   'yMin': ymin, 'yMax': ymax, 'height': height}}
-        hsh = PySpectra.execHsh( hsh)
+        hsh = PySpectra.toPyspLocal( hsh)
         if hsh[ 'result'] != "done":
             print "error from putData"
             return 
@@ -828,11 +828,11 @@ class testGraphics( unittest.TestCase):
             for j in range(height):
                 res = self.mandelbrot(r1[i] + 1j*r2[j],maxiter)
                 hsh = { 'command': "setPixelImage Mandelbrot %d %d %g" % ( i, j, res)}
-                hsh = PySpectra.execHsh( hsh)
+                hsh = PySpectra.toPyspLocal( hsh)
                 if hsh[ 'result'] != "done":
                     print "error from setPixel"
                     return
-            hsh = PySpectra.execHsh( { 'command': ['display']})
+            hsh = PySpectra.toPyspLocal( { 'command': ['display']})
             if hsh[ 'result'] != "done":
                 print "error from ['display']"
                 return 

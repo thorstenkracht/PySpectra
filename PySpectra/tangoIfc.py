@@ -56,7 +56,7 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
         
     if PySpectra.InfoBlock.monitorGui is None and scan.motorNameList is None:
         if scan.logWidget is not None:
-            scan.logWidget.append( "tangoIfc.move: not called from pyspMonitor or moveMotor") 
+            scan.logWidget.append( "tangoIfc.moveScan: not called from pyspMonitor or moveMotor") 
         else:
             pass
         return 
@@ -68,18 +68,18 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
             scan.logWidget.append( "tangoIfc.move: door.state() != ON %s" % 
                                    repr( door.state()))
         else:
-            print( "tangoIfc.move: door.state() != ON %s" % repr( door.state()))
+            print( "tangoIfc.moveScan: door.state() != ON %s" % repr( door.state()))
         return 
     #
     # make sure the target is inside the x-range of the plot
     #
     if target < scan.xMin or target > scan.xMax:
         if PySpectra.InfoBlock.monitorGui is None: 
-            print( "tangoIfc.Move: target %g outside %s x-axis %g %g" % 
+            print( "tangoIfc.moveScan: target %g outside %s x-axis %g %g" % 
                    (target, scan.name, scan.xMin, scan.xMax))
         else: 
             QtGui.QMessageBox.about( None, "Info Box", 
-                                     "tangoIfc.Move: target %g outside %s x-axis %g %g" % 
+                                     "tangoIfc.moveScan: target %g outside %s x-axis %g %g" % 
                                      (target, scan.name, scan.xMin, scan.xMax))
         return
             
@@ -88,7 +88,7 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
     #
     if scan.flagMCA:
         if scan.logWidget is not None:
-            scan.logWidget.append( "tangoIfc.move: error, don't use MCAs to move motors") 
+            scan.logWidget.append( "tangoIfc.moveScan: error, don't use MCAs to move motors") 
         return 
 
     #
@@ -103,7 +103,7 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
             proxyPool = PyTango.DeviceProxy( scan.motorNameList[0])
             proxy = PyTango.DeviceProxy( proxyPool.TangoDevice)
         except Exception as e: 
-            print( "tangoIfc.move: failed to create the proxy to %s" % scan.motorNameList[0])
+            print( "tangoIfc.moveScan: failed to create the proxy to %s" % scan.motorNameList[0])
             print( "%s" % repr( e))
             return 
         #
@@ -111,7 +111,7 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
         #
         if proxy.state() == PyTango.DevState.MOVING:
             if scan.logWidget is not None:
-                scan.logWidget.append( "Move: stopping %s" % proxy.name()) 
+                scan.logWidget.append( "MoveScan: stopping %s" % proxy.name()) 
             proxy.stopMove()
         while proxy.state() == PyTango.DevState.MOVING:
             time.sleep(0.01)
@@ -126,7 +126,7 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
         if flagConfirm:
             if PySpectra.InfoBlock.monitorGui is None: 
                 if not HasyUtils.yesno( msg + " y/[n]: "):
-                    print( "Move: move not confirmed")
+                    print( "MoveScan: move not confirmed")
                     return
             else: 
                 reply = QtGui.QMessageBox.question( None, 'YesNo', 
@@ -134,9 +134,9 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
 
                 if reply != QtGui.QMessageBox.Yes:
                     if scan.logWidget is not None:
-                        scan.logWidget.append( "Move: move not confirmed") 
+                        scan.logWidget.append( "MoveScan: move not confirmed") 
                     else:
-                        print( "Move: move not confirmed")
+                        print( "MoveScan: move not confirmed")
                     return
 
         if scan.logWidget is not None:
@@ -180,7 +180,7 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
     #
     if PySpectra.InfoBlock.monitorGui is None or PySpectra.InfoBlock.monitorGui.scanInfo is None: 
         QtGui.QMessageBox.about( None, "Info Box", 
-                                  "PySpectra.Move: PySpectra.monitorGui is None or PySpectra.monitorGui.scanInfo is None")
+                                  "PySpectra.MoveScan: PySpectra.monitorGui is None or PySpectra.monitorGui.scanInfo is None")
         return
 
     motorArr = PySpectra.InfoBlock.monitorGui.scanInfo['motors']        

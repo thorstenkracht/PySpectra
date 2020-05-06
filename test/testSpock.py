@@ -32,27 +32,27 @@ class testSpock( unittest.TestCase):
 
         print "testSpock.testMv, eh_mot66 to 50"
         
-        hsh =  PySpectra.execHsh( { 'spock': 'mv eh_mot66 50'})
+        hsh =  PySpectra.toPyspLocal( { 'spock': 'mv eh_mot66 50'})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        hsh =  PySpectra.execHsh( { 'getDoorState': True})
+        hsh =  PySpectra.toPyspLocal( { 'getDoorState': True})
         while hsh[ 'result'] == 'RUNNING': 
             time.sleep( 0.5)
-            hsh =  PySpectra.execHsh( { 'getDoorState': True})
+            hsh =  PySpectra.toPyspLocal( { 'getDoorState': True})
 
-        hsh =  PySpectra.execHsh( { 'getDoorState': True})
+        hsh =  PySpectra.toPyspLocal( { 'getDoorState': True})
         self.assertEqual( hsh[ 'result'], 'ON')
 
         print "testSpock.testMv, eh_mot66 to 51"
-        hsh =  PySpectra.execHsh( { 'spock': 'mv eh_mot66 51'})
+        hsh =  PySpectra.toPyspLocal( { 'spock': 'mv eh_mot66 51'})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        hsh =  PySpectra.execHsh( { 'getDoorState': True})
+        hsh =  PySpectra.toPyspLocal( { 'getDoorState': True})
         while hsh[ 'result'] == 'RUNNING': 
             time.sleep( 0.5)
-            hsh =  PySpectra.execHsh( { 'getDoorState': True})
+            hsh =  PySpectra.toPyspLocal( { 'getDoorState': True})
 
-        hsh =  PySpectra.execHsh( { 'getDoorState': True})
+        hsh =  PySpectra.toPyspLocal( { 'getDoorState': True})
         self.assertEqual( hsh[ 'result'], 'ON')
 
         return 
@@ -66,15 +66,15 @@ class testSpock( unittest.TestCase):
         ( status, wasLaunched) = utils.assertProcessRunning( "/usr/bin/pyspMonitor.py")
         print( "testSpock.testAscan: ascan eh_mot66 50 51 40 0.1")
 
-        hsh =  PySpectra.execHsh( { 'spock': 'ascan eh_mot66 50 51 40 0.1'})
+        hsh =  PySpectra.toPyspLocal( { 'spock': 'ascan eh_mot66 50 51 40 0.1'})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        hsh =  PySpectra.execHsh( { 'getDoorState': True})
+        hsh =  PySpectra.toPyspLocal( { 'getDoorState': True})
         while hsh[ 'result'] == 'RUNNING': 
             time.sleep( 0.5)
-            hsh =  PySpectra.execHsh( { 'getDoorState': True})
+            hsh =  PySpectra.toPyspLocal( { 'getDoorState': True})
 
-        hsh =  PySpectra.execHsh( { 'getDoorState': True})
+        hsh =  PySpectra.toPyspLocal( { 'getDoorState': True})
         self.assertEqual( hsh[ 'result'], 'ON')
 
         if wasLaunched:
@@ -92,18 +92,18 @@ class testSpock( unittest.TestCase):
         ( status, wasLaunched) = utils.assertProcessRunning( "/usr/bin/pyspMonitor.py")
         print( "testSpock.testAscan: ascan eh_mot66 50 51 40 0.1")
 
-        hsh =  PySpectra.execHsh( { 'spock': 'ascan eh_mot66 50 51 40 0.1'})
+        hsh =  PySpectra.toPyspLocal( { 'spock': 'ascan eh_mot66 50 51 40 0.1'})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        hsh =  PySpectra.execHsh( { 'getDoorState': True})
+        hsh =  PySpectra.toPyspLocal( { 'getDoorState': True})
         while hsh[ 'result'] == 'RUNNING': 
             time.sleep( 0.5)
-            hsh =  PySpectra.execHsh( { 'getDoorState': True})
+            hsh =  PySpectra.toPyspLocal( { 'getDoorState': True})
 
-        hsh =  PySpectra.execHsh( { 'getDoorState': True})
+        hsh =  PySpectra.toPyspLocal( { 'getDoorState': True})
         self.assertEqual( hsh[ 'result'], 'ON')
 
-        hsh =  PySpectra.execHsh( { 'spock': 'mvsa_tk peak 0'})
+        hsh =  PySpectra.toPyspLocal( { 'spock': 'mvsa_tk peak 0'})
         self.assertEqual( hsh[ 'result'], 'done')
 
         if wasLaunched:

@@ -137,7 +137,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             if self.flagIsBusy:
                 argout = { 'result': "pyspMonitor: rejecting dct while scanning"}
             else: 
-                argout = PySpectra.execHsh( hsh)
+                argout = PySpectra.toPyspLocal( hsh)
             msg = json.dumps( argout)
             self.sckt.send( msg)
             lst = zmq.select([self.sckt], [], [], 0.1)
@@ -184,11 +184,11 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         if self.useMatplotlib:
             self.matplotlibBtn.setEnabled( flag)
             
-    def execHshLocal( self, hsh): 
+    def toPyspLocalWrapper( self, hsh): 
         '''
         data come from the door, via a queue()
         '''
-        #print( "pyspMonitorClass.queueSM.execHsh %s " % repr( hsh))
+        #print( "pyspMonitorClass.queueSM.toPyspLocal %s " % repr( hsh))
 
         if 'newScan' in hsh and hsh[ 'newScan']: 
             self.setCertainWidgetEnabled( False)
@@ -204,7 +204,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             PySpectra._scanInfo = hsh[ 'ScanInfo']
             self.configureMotorsWidget()
         else: 
-            PySpectra.execHsh( hsh)
+            PySpectra.toPyspLocal( hsh)
         return 
         
     def configureMotorsWidget( self): 
@@ -271,7 +271,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             cnt = 0
             while True:
                 hsh = self.queue.get_nowait()
-                self.execHshLocal( hsh)
+                self.toPyspLocalWrapper( hsh)
                 self.queue.task_done()
                 cnt += 1
         except queue.Empty as e:

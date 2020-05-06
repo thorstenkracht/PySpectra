@@ -21,7 +21,7 @@ $ TngGui.py
 *
   In [1]: import PySpectra
   In [2]: PySpectra.toPyspMonitor?
-  In [3]: PySpectra.execHsh?
+  In [3]: PySpectra.toPyspLocal?
 
 *
 * PySpectra Python module

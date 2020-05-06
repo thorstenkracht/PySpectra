@@ -3,13 +3,13 @@
 cd /home/kracht/Misc/pySpectra
 python -m unittest discover -v
 
-python ./test/testZmqIfc.py testZmqIfc.testExecHsh1
-python ./test/testZmqIfc.py testZmqIfc.testExecHsh2
-python ./test/testZmqIfc.py testZmqIfc.testExecHsh3
-python ./test/testZmqIfc.py testZmqIfc.testExecHsh4
-python ./test/testZmqIfc.py testZmqIfc.testExecHsh5
-python ./test/testZmqIfc.py testZmqIfc.testExecHsh6
-python ./test/testZmqIfc.py testZmqIfc.testExecHsh7
+python ./test/testZmqIfc.py testZmqIfc.testToPyspLocal1
+python ./test/testZmqIfc.py testZmqIfc.testToPyspLocal2
+python ./test/testZmqIfc.py testZmqIfc.testToPyspLocal3
+python ./test/testZmqIfc.py testZmqIfc.testToPyspLocal4
+python ./test/testZmqIfc.py testZmqIfc.testToPyspLocal5
+python ./test/testZmqIfc.py testZmqIfc.testToPyspLocal6
+python ./test/testZmqIfc.py testZmqIfc.testToPyspLocal7
 python ./test/testZmqIfc.py testZmqIfc.testToPyspMonitor1
 python ./test/testZmqIfc.py testZmqIfc.testToPyspMonitor2
 python ./test/testZmqIfc.py testZmqIfc.testToPyspMonitor3
@@ -51,11 +51,11 @@ class testZmqIfc( unittest.TestCase):
             PySpectra.killPyspMonitor()
         PySpectra.close()
 
-    def testExecHsh1( self) : 
+    def testToPyspLocal1( self) : 
         import random
-        print "testZmqIfc.testExecHsh1"
+        print "testZmqIfc.testToPyspLocal1"
 
-        hsh = PySpectra.execHsh( { 'command': ['cls', 'delete']})
+        hsh = PySpectra.toPyspLocal( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         MAX = 25
@@ -63,7 +63,7 @@ class testZmqIfc( unittest.TestCase):
         d1 = np.random.random_sample( (len( pos), ))*1000.
         d2 = np.random.random_sample( (len( pos), ))*1000.
 
-        hsh = PySpectra.execHsh( { 'putData': {'title': "testing putData & columns", 
+        hsh = PySpectra.toPyspLocal( { 'putData': {'title': "testing putData & columns", 
                                             'comment': "a comment", 
                                             'columns': 
                                             [ { 'name': "eh_mot01", 'data' : pos},
@@ -73,7 +73,7 @@ class testZmqIfc( unittest.TestCase):
                                                 'xLog': False, 'yLog': False, 
                                                 'showGridX': False, 'showGridY': False}]}})
         self.assertEqual( hsh[ 'result'], 'done')
-        PySpectra.execHsh( { 'command': ['display']})
+        PySpectra.toPyspLocal( { 'command': ['display']})
         self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 1)
         lst = PySpectra.getGqeList()
@@ -84,7 +84,7 @@ class testZmqIfc( unittest.TestCase):
         #
         # retrieve the data 
         #
-        hsh = PySpectra.execHsh( { 'getData': True})
+        hsh = PySpectra.toPyspLocal( { 'getData': True})
         self.assertEqual( hsh[ 'result'], 'done')
         #
         # ... and compare.
@@ -94,14 +94,14 @@ class testZmqIfc( unittest.TestCase):
             self.assertEqual( d1[i], hsh[ 'getData']['EH_C01']['y'][i])
             self.assertEqual( d2[i], hsh[ 'getData']['EH_C02']['y'][i])
 
-        print "testZmqIfc.testExecHsh1 DONE"
+        print "testZmqIfc.testToPyspLocal1 DONE"
         return 
         
-    def testExecHsh2( self) : 
+    def testToPyspLocal2( self) : 
         import random
-        print "testZmqIfc.testExecHsh2"
+        print "testZmqIfc.testToPyspLocal2"
 
-        hsh = PySpectra.execHsh( { 'command': ['cls', 'delete']})
+        hsh = PySpectra.toPyspLocal( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         MAX = 25
@@ -109,17 +109,17 @@ class testZmqIfc( unittest.TestCase):
         d1 = np.random.random_sample( (len( pos), ))*1000.
         d2 = np.random.random_sample( (len( pos), ))*1000.
 
-        PySpectra.execHsh( { 'command': ['setTitle "testing Scan command"']})
+        PySpectra.toPyspLocal( { 'command': ['setTitle "testing Scan command"']})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        hsh = PySpectra.execHsh( { 'Scan': { 'name': "d1", 'x': pos, 'y': d1}})
+        hsh = PySpectra.toPyspLocal( { 'Scan': { 'name': "d1", 'x': pos, 'y': d1}})
         self.assertEqual( hsh[ 'result'], 'done')
-        hsh = PySpectra.execHsh( { 'Scan': { 'name': "d2", 'x': pos, 'y': d2}})
+        hsh = PySpectra.toPyspLocal( { 'Scan': { 'name': "d2", 'x': pos, 'y': d2}})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        PySpectra.execHsh( { 'command': ['setComment \"a comment\"']})
+        PySpectra.toPyspLocal( { 'command': ['setComment \"a comment\"']})
         self.assertEqual( hsh[ 'result'], 'done')
-        PySpectra.execHsh( { 'command': ['display']})
+        PySpectra.toPyspLocal( { 'command': ['display']})
         self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 1)
         lst = PySpectra.getGqeList()
@@ -130,7 +130,7 @@ class testZmqIfc( unittest.TestCase):
         #
         # retrieve the data and compare
         #
-        hsh = PySpectra.execHsh( { 'getData': True})
+        hsh = PySpectra.toPyspLocal( { 'getData': True})
         for i in range( MAX):
             self.assertEqual( pos[i], hsh[ 'getData']['D1']['x'][i])
             self.assertEqual( d1[i], hsh[ 'getData']['D1']['y'][i])
@@ -138,10 +138,10 @@ class testZmqIfc( unittest.TestCase):
         #
         # set y-values 
         #
-        PySpectra.execHsh( { 'command': ['setTitle "set y-values to linear"']})
+        PySpectra.toPyspLocal( { 'command': ['setTitle "set y-values to linear"']})
         self.assertEqual( hsh[ 'result'], 'done')
         for i in range( MAX):
-            PySpectra.execHsh( { 'command': ['setY d1 %d %g' % (i, float(i)/10.)]})
+            PySpectra.toPyspLocal( { 'command': ['setY d1 %d %g' % (i, float(i)/10.)]})
         #
         # and compare
         #
@@ -149,21 +149,21 @@ class testZmqIfc( unittest.TestCase):
         for i in range( MAX):
             self.assertEqual( o.y[i], float(i)/10.)
         
-        PySpectra.execHsh( { 'command': ['cls', 'display']})
+        PySpectra.toPyspLocal( { 'command': ['cls', 'display']})
         self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 1)
         
-        print "testZmqIfc.testExecHsh2 DONE"
+        print "testZmqIfc.testToPyspLocal2 DONE"
         return 
 
-    def testExecHsh3( self) : 
+    def testToPyspLocal3( self) : 
         '''
         set the mandelbrot pixel in pixel numbers (whole numbers)
         '''
-        print "testZmqIfc.testExecHsh3"
-        hsh = PySpectra.execHsh( { 'command': ['cls', 'delete']})
+        print "testZmqIfc.testToPyspLocal3"
+        hsh = PySpectra.toPyspLocal( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
-        hsh = PySpectra.execHsh( { 'command': ['setWsViewport dina5s']})
+        hsh = PySpectra.toPyspLocal( { 'command': ['setWsViewport dina5s']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         (xmin, xmax) = (-2.,-0.5)
@@ -174,7 +174,7 @@ class testZmqIfc( unittest.TestCase):
         #
         # title: set pixels using pixel coordinates
         #
-        hsh =  PySpectra.execHsh( { 'command': ['setTitle "set pixels using pixel coordinates"']})
+        hsh =  PySpectra.toPyspLocal( { 'command': ['setTitle "set pixels using pixel coordinates"']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         #
@@ -185,7 +185,7 @@ class testZmqIfc( unittest.TestCase):
                   'xMin': xmin, 'xMax': xmax, 'width': width, 
                   'yMin': ymin, 'yMax': ymax, 'height': height}}
 
-        hsh = PySpectra.execHsh( hsh)
+        hsh = PySpectra.toPyspLocal( hsh)
         self.assertEqual( hsh[ 'result'], 'done')
         #
         # fill the image, pixel by pixel
@@ -196,27 +196,27 @@ class testZmqIfc( unittest.TestCase):
             for j in range(height):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
                 hsh = { 'command': [ 'setPixelImage MandelBrot %d %d %g' % ( i, j, res)]}
-                hsh = PySpectra.execHsh( hsh)
+                hsh = PySpectra.toPyspLocal( hsh)
                 self.assertEqual( hsh[ 'result'], 'done')
-            hsh =  PySpectra.execHsh( { 'command': ['display']})
+            hsh =  PySpectra.toPyspLocal( { 'command': ['display']})
             self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 1)
-        print "testZmqIfc.testExecHsh3 DONE"
+        print "testZmqIfc.testToPyspLocal3 DONE"
         return 
 
-    def testExecHsh4( self) : 
+    def testToPyspLocal4( self) : 
         '''
         set the mandelbrot pixel in world coordinates
         '''
-        print "testZmqIfc.testExecHsh4"
-        hsh = PySpectra.execHsh( { 'command': ['cls', 'delete']})
+        print "testZmqIfc.testToPyspLocal4"
+        hsh = PySpectra.toPyspLocal( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
-        hsh = PySpectra.execHsh( { 'command': ['setWsViewport dina5s']})
+        hsh = PySpectra.toPyspLocal( { 'command': ['setWsViewport dina5s']})
         self.assertEqual( hsh[ 'result'], 'done')
         #
         # title: set pixels using world coordinates
         #
-        hsh =  PySpectra.execHsh( { 'command': ['setTitle "set pixels using world coordinates"']})
+        hsh =  PySpectra.toPyspLocal( { 'command': ['setTitle "set pixels using world coordinates"']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         (xmin, xmax) = (-2.,-0.5)
@@ -231,7 +231,7 @@ class testZmqIfc( unittest.TestCase):
                   'xMin': xmin, 'xMax': xmax, 'width': width, 
                   'yMin': ymin, 'yMax': ymax, 'height': height}}
 
-        hsh = PySpectra.execHsh( hsh)
+        hsh = PySpectra.toPyspLocal( hsh)
         self.assertEqual( hsh[ 'result'], 'done')
         #
         # fill the image, pixel by pixel
@@ -242,29 +242,29 @@ class testZmqIfc( unittest.TestCase):
             for j in range(height):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
                 hsh = { 'command': [ 'setPixelWorld MandelBrot %g %g %g' % ( r1[i], r2[j], res)]}
-                hsh = PySpectra.execHsh( hsh)
+                hsh = PySpectra.toPyspLocal( hsh)
                 self.assertEqual( hsh[ 'result'], 'done')
-            hsh =  PySpectra.execHsh( { 'command': ['display']})
+            hsh =  PySpectra.toPyspLocal( { 'command': ['display']})
             self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 1)
 
-        print "testZmqIfc.testExecHsh4 DONE"
+        print "testZmqIfc.testToPyspLocal4 DONE"
         return 
 
-    def testExecHsh5( self) : 
+    def testToPyspLocal5( self) : 
         '''
         use Image then setPixelWorld
         '''
-        print "testZmqIfc.testExecHsh5"
+        print "testZmqIfc.testToPyspLocal5"
 
-        hsh = PySpectra.execHsh( { 'command': ['cls', 'delete']})
+        hsh = PySpectra.toPyspLocal( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
-        hsh = PySpectra.execHsh( { 'command': ['setWsViewport dina5s']})
+        hsh = PySpectra.toPyspLocal( { 'command': ['setWsViewport dina5s']})
         self.assertEqual( hsh[ 'result'], 'done')
         #
         # title: set pixels using pixel coordinates
         #
-        hsh =  PySpectra.execHsh( { 'command': ['setTitle "Image, then setPixelWorld"']})
+        hsh =  PySpectra.toPyspLocal( { 'command': ['setTitle "Image, then setPixelWorld"']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         (xmin, xmax) = (-2.,-0.5)
@@ -279,7 +279,7 @@ class testZmqIfc( unittest.TestCase):
                   'xMin': xmin, 'xMax': xmax, 'width': width, 
                   'yMin': ymin, 'yMax': ymax, 'height': height}}
 
-        hsh = PySpectra.execHsh( hsh)
+        hsh = PySpectra.toPyspLocal( hsh)
         self.assertEqual( hsh[ 'result'], 'done')
         #
         # fill the image, pixel by pixel
@@ -290,23 +290,23 @@ class testZmqIfc( unittest.TestCase):
             for j in range(height):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
                 hsh = { 'command': "setPixelWorld Mandelbrot %g %g %g" %  ( r1[i], r2[j], res)}
-                hsh = PySpectra.execHsh( hsh)
+                hsh = PySpectra.toPyspLocal( hsh)
                 self.assertEqual( hsh[ 'result'], 'done')
-            hsh =  PySpectra.execHsh( { 'command': ['display']})
+            hsh =  PySpectra.toPyspLocal( { 'command': ['display']})
             self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 1)
 
-        print "testZmqIfc.testExecHsh5 DONE"
+        print "testZmqIfc.testToPyspLocal5 DONE"
         return 
 
-    def testExecHsh6( self) : 
+    def testToPyspLocal6( self) : 
         '''
         use putData to transfer a complete image at once
         '''
-        print "testZmqIfc.testExecHsh6"
-        hsh = PySpectra.execHsh( { 'command': ['cls', 'delete']})
+        print "testZmqIfc.testToPyspLocal6"
+        hsh = PySpectra.toPyspLocal( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
-        hsh = PySpectra.execHsh( { 'command': ['setWsViewport dina5s']})
+        hsh = PySpectra.toPyspLocal( { 'command': ['setWsViewport dina5s']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         (xmin, xmax) = (-2.,-0.5)
@@ -326,36 +326,36 @@ class testZmqIfc( unittest.TestCase):
         #
         # title: putData transfers the complete image at once
         #
-        hsh =  PySpectra.execHsh( { 'command': ['setTitle "putData transfers the complete image at once"']})
+        hsh =  PySpectra.toPyspLocal( { 'command': ['setTitle "putData transfers the complete image at once"']})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        hsh = PySpectra.execHsh( { 'putData': 
+        hsh = PySpectra.toPyspLocal( { 'putData': 
                                 { 'images': [{'name': "MandelBrot", 'data': data,
                                               'xMin': xmin, 'xMax': xmax, 
                                               'yMin': ymin, 'yMax': ymax}]}})
         self.assertEqual( hsh[ 'result'], 'done')
 
 
-        hsh =  PySpectra.execHsh( { 'command': ['display']})
+        hsh =  PySpectra.toPyspLocal( { 'command': ['display']})
         self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 2)
 
-        print "testZmqIfc.testExecHsh6 DONE"
+        print "testZmqIfc.testToPyspLocal6 DONE"
         return 
 
-    def testExecHsh7( self) : 
+    def testToPyspLocal7( self) : 
         '''
         use Image to transfer a complete image at once
         '''
-        print "testZmqIfc.testExecHsh7"
-        hsh = PySpectra.execHsh( { 'command': ['cls', 'delete']})
+        print "testZmqIfc.testToPyspLocal7"
+        hsh = PySpectra.toPyspLocal( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
-        hsh = PySpectra.execHsh( { 'command': ['setWsViewport dina5s']})
+        hsh = PySpectra.toPyspLocal( { 'command': ['setWsViewport dina5s']})
         self.assertEqual( hsh[ 'result'], 'done')
         #
         # setTitle
         #
-        hsh =  PySpectra.execHsh( { 'command': ['setTitle "use Imageto transfer the complete image at once"']})
+        hsh =  PySpectra.toPyspLocal( { 'command': ['setTitle "use Imageto transfer the complete image at once"']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         (xmin, xmax) = (-2.,-0.5)
@@ -373,14 +373,14 @@ class testZmqIfc( unittest.TestCase):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
                 data[i][j] = int( res)
 
-        hsh = PySpectra.execHsh( { 'Image': 
+        hsh = PySpectra.toPyspLocal( { 'Image': 
                                 { 'name': "MandelBrot", 'data': data, 
                                   'xMin': xmin, 'xMax': xmax, 
                                   'yMin': ymin, 'yMax': ymax, 
                                 }})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        hsh =  PySpectra.execHsh( { 'command': ['cls', 'display']})
+        hsh =  PySpectra.toPyspLocal( { 'command': ['cls', 'display']})
         self.assertEqual( hsh[ 'result'], 'done')
         o = PySpectra.getGqe( "Mandelbrot")
         self.assertEqual( o.height, 100)
@@ -391,7 +391,7 @@ class testZmqIfc( unittest.TestCase):
         self.assertEqual( o.yMax, ymax)
         PySpectra.processEventsLoop( 2)
 
-        print "testZmqIfc.testExecHsh7 DONE"
+        print "testZmqIfc.testToPyspLocal7 DONE"
         return 
 
     def testToPyspMonitor1( self) : 
