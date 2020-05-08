@@ -797,25 +797,27 @@ class testGQE( unittest.TestCase):
         g.ssa()
         self.assertEqual( len(g.textList), 5)
 
-        #
+        # SSA results
         # midpoint: -6.84879e-06
         # peak-x:   0
         # cms:      -9.65309e-05
         # fwhm:     2.3552
         #
-        lst = g.textList[0].text.split( ':')
+        self.assertTrue( g.textList[0].text == 'SSA results')
+
+        lst = g.textList[1].text.split( ':')
         self.assertTrue( lst[0] == 'midpoint')
         self.assertTrue( abs(float(lst[1])) < 0.0001)
         
-        lst = g.textList[1].text.split( ':')
+        lst = g.textList[2].text.split( ':')
         self.assertTrue( lst[0] == 'peak-x')
         self.assertTrue( abs(float(lst[1])) < 0.0001)
         
-        lst = g.textList[2].text.split( ':')
+        lst = g.textList[3].text.split( ':')
         self.assertTrue( lst[0] == 'cms')
         self.assertTrue( abs(float(lst[1])) < 0.0001)
         
-        lst = g.textList[3].text.split( ':')
+        lst = g.textList[4].text.split( ':')
         self.assertTrue( lst[0] == 'fwhm')
         self.assertTrue( abs(float(lst[1])) < 2.356)
         self.assertTrue( abs(float(lst[1])) > 2.350)
@@ -838,6 +840,20 @@ class testGQE( unittest.TestCase):
         self.assertAlmostEqual( xpeak, 0.1)
         self.assertAlmostEqual( xcms, 0.1234, 3)
         self.assertAlmostEqual( xcen, 0.1234, 3)
+
+        self.assertTrue( g.textList[0].text == 'FSA results')
+
+        lst = g.textList[1].text.split( ':')
+        self.assertTrue( lst[0] == 'xpos')
+        
+        lst = g.textList[2].text.split( ':')
+        self.assertTrue( lst[0] == 'xpeak')
+        
+        lst = g.textList[3].text.split( ':')
+        self.assertTrue( lst[0] == 'xcms')
+        
+        lst = g.textList[4].text.split( ':')
+        self.assertTrue( lst[0] == 'xcen')
 
         return 
 
