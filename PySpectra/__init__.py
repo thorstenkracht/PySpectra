@@ -1,19 +1,20 @@
 #!/usr/bin/env python
 '''
-PySpectra displays 1D data
---------------------------
+PySpectra displays 1D and 2D data
+---------------------------------
 *
 * Applications based on PySpectra: 
 * --------------------------------
 *
-$ pyspViewer.py 
-  successor of the FioViewer
-
 $ pyspMonitor.py
-  successor of the SardanaMonitor
+  - listens to a Sardana Door and displays the 1D data
+  - receives data and commands sent by PySpectra.toPyspMonitor()
 
 $ TngGui.py
-  successor of TngTool.py
+  gives access to various parts of our Tango/Sardana environment
+
+$ pyspViewer.py 
+  displays 1D data from ASCII (.fio, .dat,. iint) and .nxs files
 
 *
 * Send data and commands to pyspMonitor
@@ -24,18 +25,20 @@ $ TngGui.py
   In [3]: PySpectra.toPyspLocal?
 
 *
-* PySpectra Python module
-* -----------------------
+* PySpectra Python interface in general
+* -------------------------------------
 *
-Execute some examples using pyspViewer->Examples.
-Afterwards you can look at the code following pyspViewer->Examples->View Code
+Start by executing some examples using pyspViewer->Examples.
+Afterwards you see how it was done by looking at the code
+  pyspViewer->Examples->View Code
 
-In addition, start ipython and
+In addition, all PySpectra functions and modules are python-documented
 
   import PySpectra 
   In [1]: import PySpectra
-  In [2]: PySpectra.Scan?
-  In [3]: PySpectra.Image?
+  In [2]: PySpectra?
+  In [3]: PySpectra.Scan?
+  In [4]: PySpectra.Image?
 
 *
 * PySpectra magic commands in ipython:

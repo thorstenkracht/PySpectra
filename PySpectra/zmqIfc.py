@@ -255,13 +255,13 @@ def _replaceNumpyArrays( hsh):
 
 def toPyspMonitor( hsh, node = None, testAlive = False):
     '''
-    Send a dictionary to the pyspMonitor process. 
-
-    The pyspMonitor processes the dictionary by calling PySpectra.toPyspLocal()
+    Send a dictionary to the pyspMonitor process via ZMQ. 
+    pyspMonitor processes the dictionary by calling PySpectra.toPyspLocal()
 
     testAlive == True: 
-        it is checked whether a pyspMonitor process responds to isAlive
-        if there is no answer: the process is launched
+        it is checked whether a pyspMonitor process responds to 
+        the { 'isAlive': True} dictionary. 
+          if not, pyspMonitor is launched
 
     Example: 
       ret = PySpectra.toPyspMonitor( {'command': ['delete', 'cls', 'create s1', 'display']})

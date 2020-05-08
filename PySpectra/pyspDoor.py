@@ -740,9 +740,7 @@ class pyspDoor( sms.BaseDoor):
         # mesh exp_dmy01 0 1 10 exp_dmy02 2 3 10 0.2 flagSShape
         # 
         elif cmd[0] == 'mesh':
-            # +++
             motorLimitDct = self.extractMotorLimitDct( dataRecord)
-            # +++
             self.start = float( cmd[2])
             self.stop =  float( cmd[3])
             self.np =    int( cmd[4])
@@ -797,7 +795,7 @@ class pyspDoor( sms.BaseDoor):
             #self.sendHshQueue( { 'command': [ "setText MeshScan comment string \"Sweep: 1/%d\" x 0.05 y 0.95" % self.meshSweepCountTotal]})
         #
         # dmesh exp_dmy01 -1 1 10 exp_dmy02 -0.5 0.5 10 0.2 flagSShape
-        # +++
+        # 
         elif cmd[0] == 'dmesh':
             motorLimitDct = self.extractMotorLimitDct( dataRecord)
             raise Exception( "pyspDoor.findScanLimits",
@@ -808,8 +806,8 @@ class pyspDoor( sms.BaseDoor):
                              "failed to identify scan command", 
                               dataRecord[1]['data']['title'])
 
-        #print( "+++pyspDoor.findScanLimits cmd %s" % ( cmd))
-        #print( "+++pyspDoor.findScanLimits start %g, stop %g np %d motors %s" % ( self.start, 
+        #print( "pyspDoor.findScanLimits cmd %s" % ( cmd))
+        #print( "pyspDoor.findScanLimits start %g, stop %g np %d motors %s" % ( self.start, 
         #                                                                         self.stop,
         #                                                                         self.np, 
         #                                                                         str( self.motorNameList)))
@@ -869,11 +867,6 @@ class pyspDoor( sms.BaseDoor):
         self.scanInfo[ 'motorIndex'] = self.motorIndex
         self.sendHshQueue( { 'ScanInfo': self.scanInfo})
         
-        #+++if self.isMesh:
-        #    at_str = "(%d,%d,%d)" % (self.ncol, self.nrow, count)
-        #    Spectra.gra_command( "set %s/at=%s" % (self.meshScan.gqeName, at_str))
-        #+++    count += 1
-
         #
         # we may have scans using the condition feature
         #
@@ -1000,7 +993,7 @@ class pyspDoor( sms.BaseDoor):
         # +++
         #print( ">>> recordDataReceived ")
         #pp.pprint( dataRecord)
-        # +++
+        # 
 
         #
         # it may happend that no 'type' is in the record, ignore
@@ -1013,7 +1006,7 @@ class pyspDoor( sms.BaseDoor):
         if dataRecord[1]['type'] == "data_desc":
             #+++
             #pp.pprint( dataRecord)
-            #+++
+            
             self.prepareNewScan( dataRecord)
             self.flagIsBusy = True
             return
