@@ -795,7 +795,7 @@ class testGQE( unittest.TestCase):
                                lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
         
         g.ssa()
-        self.assertEqual( len(g.textList), 4)
+        self.assertEqual( len(g.textList), 5)
 
         #
         # midpoint: -6.84879e-06
