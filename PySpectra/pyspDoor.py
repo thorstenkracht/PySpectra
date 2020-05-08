@@ -25,6 +25,7 @@ pp = pprint.PrettyPrinter()
 db = PyTango.Database()
 sms.registerExtensions()
 
+flagPrintOnce1 = False 
 #
 # this global variable is supposed to store 'self' of the pyspDoor instance
 # to be called, e.g. from SardanaMonitor to send some data
@@ -850,7 +851,11 @@ class pyspDoor( sms.BaseDoor):
         if 'SignalCounter' in self.env:
             self.signalCounter = self.env[ 'SignalCounter']
         else: 
+            global flagPrintOnce1
             self.signalCounter = None
+            if not flagPrintOnce1: 
+                print( "pyspDoor.prepareNewScan: no SignalCounter (MS environment) ") 
+                flagPrintOnce1 = True
 
         self.unknownScanType = False
         try:
