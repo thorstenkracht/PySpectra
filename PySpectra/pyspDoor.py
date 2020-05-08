@@ -887,8 +887,8 @@ class pyspDoor( sms.BaseDoor):
         if 'SignalCounter' in env:
             self.signalCounter = env['SignalCounter']
             self.signalInd = 0
-            self.signalX = np.zeros( npTemp + 1)
-            self.signalY = np.zeros( npTemp + 1)
+        #    self.signalX = np.zeros( npTemp + 1)
+        #    self.signalY = np.zeros( npTemp + 1)
         else:
             self.signalCounter = None
 

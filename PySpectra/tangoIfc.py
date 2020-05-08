@@ -93,12 +93,25 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
 
     #
     # ---
-    # from moveMotor widget
-    # - one motor only
+    # one motor only
+    # - from moveMotor widget
+    # - from pyspMonitor, after a scan, with one scan selected, and click into graphics
     # ---
     #
     if scan.motorNameList is not None and len( scan.motorNameList) == 1: 
 
+        #
+        # do not want to treat dummy motors because the 
+        # are pool device, different commands and attributes
+        #
+        if scan.motorNameList[0].upper() in [ 'EXP_DMY01', 'EXP_DMY02', 'EXP_DMY03']: 
+            if PySpectra.InfoBlock.monitorGui is None: 
+                print( "tangoIfc.moveScan: not for dummy motors")
+            else: 
+                QtGui.QMessageBox.about( None, "Info Box", 
+                                         "tangoIfc.moveScan: not for dummy motors")
+            return
+            
         try: 
             proxyPool = PyTango.DeviceProxy( scan.motorNameList[0])
             proxy = PyTango.DeviceProxy( proxyPool.TangoDevice)
@@ -176,6 +189,7 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
     #
     # ---
     # from the pyspMonitor application, after a scan macro has bee executed
+    # a single scan habe been checked and a click into the graphics has been done
     # ---
     #
     if PySpectra.InfoBlock.monitorGui is None or PySpectra.InfoBlock.monitorGui.scanInfo is None: 
@@ -198,6 +212,18 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
     motorArr[motorIndex]['targetPos'] = target
     r = (motorArr[motorIndex]['targetPos'] - motorArr[motorIndex]['start']) / \
         (motorArr[motorIndex]['stop'] - motorArr[motorIndex]['start']) 
+    #
+    # do not want to treat dummy motors because the 
+    # are pool device, different commands and attributes
+    #
+    for mot in motorArr:
+        if mot[ 'name'].upper() in [ 'EXP_DMY01', 'EXP_DMY02', 'EXP_DMY03']: 
+            if PySpectra.InfoBlock.monitorGui is None: 
+                print( "tangoIfc.moveScan: not for dummy motors")
+            else: 
+                QtGui.QMessageBox.about( None, "Info Box", 
+                                         "tangoIfc.moveScan: not for dummy motors")
+            return
 
     if length == 1:
         p0Pool = PyTango.DeviceProxy( motorArr[0]['name'])
