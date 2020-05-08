@@ -1062,11 +1062,14 @@ class Scan( object):
         if len( self.textList) > 0:
             lst = []
             for t in self.textList:
+                if t.tag.lower() == 'fsa_result':
+                    continue
                 if t.tag.lower() == 'ssa_result':
                     continue
                 lst.append( t)
             self.textList = lst[:]
         
+        self.addText( text = "SSA results", x = 0.02, y = 1.00, hAlign = 'left', vAlign = 'top', tag = 'ssa_result')
         self.addText( text = "midpoint: %g" % hsh[ 'midpoint'], x = 0.02, y = 0.95, hAlign = 'left', vAlign = 'top', tag = 'ssa_result')
         self.addText( text = "peak-x:   %g" % hsh[ 'peak_x'], x = 0.02, y = 0.90, hAlign = 'left', vAlign = 'top', tag = 'ssa_result')
         self.addText( text = "cms:      %g" % hsh[ 'cms'], x = 0.02, y = 0.85, hAlign = 'left', vAlign = 'top', tag = 'ssa_result')
@@ -1148,6 +1151,28 @@ class Scan( object):
             logWidget.append( " xcen:     %g" % xcen)
         else:
             print( "GQE.fsa: message %s xpos %g xpeak %g xmcs %g xcen %g" % (message, xpos, xpeak, xcms, xcen))
+
+
+        #
+        # clear the text list. Otherwise several SSA results will appear on the screen.
+        #
+        if len( self.textList) > 0:
+            lst = []
+            for t in self.textList:
+                if t.tag.lower() == 'fsa_result':
+                    continue
+                if t.tag.lower() == 'ssa_result':
+                    continue
+                lst.append( t)
+            self.textList = lst[:]
+
+        self.addText( text = "FSA results", x = 0.02, y = 1.00, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+        self.addText( text = "xpos: %g" % xpos, x = 0.02, y = 0.95, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+        self.addText( text = "xpeak:   %g" % xpeak, x = 0.02, y = 0.90, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+        self.addText( text = "xcms:      %g" % xcms, x = 0.02, y = 0.85, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+        self.addText( text = "xcen:     %g" % xcen, x = 0.02, y = 0.80, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+
+
 
         return (message, xpos, xpeak, xcms, xcen)
 

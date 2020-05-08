@@ -847,9 +847,10 @@ class pyspDoor( sms.BaseDoor):
         # get the environment for every scan
         #
         self.env = self.getEnvironment()
-        if 'SignalCounter' not in self.env:
-            raise ValueError( "pyspDoor.prepareNewScan: SignalCounter is not set")
-        self.signalCounter = self.env[ 'SignalCounter']
+        if 'SignalCounter' in self.env:
+            self.signalCounter = self.env[ 'SignalCounter']
+        else: 
+            self.signalCounter = None
 
         self.unknownScanType = False
         try:
@@ -895,7 +896,7 @@ class pyspDoor( sms.BaseDoor):
 
         return True
 
-    def analyseSignal( self):
+    def analyseSignalObsolete( self):
         env = self.getEnvironment()
         for elm in ('ssa_status', 'ssa_reason', 'ssa_cms', 'ssa_fwhm'):            
             if elm in env:
@@ -1100,7 +1101,7 @@ class pyspDoor( sms.BaseDoor):
                 continue
 
             data  = dataRecord[1]['data'][self.alias_dict[alias]]
-            if alias.upper() == self.signalCounter.upper(): 
+            if self.signalCounter is not None and alias.upper() == self.signalCounter.upper(): 
                 signal = data
             #
             # the first point has np == 0, but 

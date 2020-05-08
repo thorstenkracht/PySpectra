@@ -1209,14 +1209,13 @@ class ScanAttributes( QtGui.QMainWindow):
     def cb_ssa( self): 
         self.scan.ssa( self.parent.logWidget)
         PySpectra.cls()
-        PySpectra.display()
-
+        PySpectra.display( [ self.scan.name])
 
     def cb_fsa( self):
         self.scan.fsa( self.logWidget)
 
         PySpectra.cls()
-        PySpectra.display()
+        PySpectra.display( [ self.scan.name])
 
     def cb_details( self): 
         print( "\n %s " % self.scan.name)
@@ -2107,7 +2106,7 @@ class pySpectraGui( QtGui.QMainWindow):
         # the log widget, has been created a few lines up
         #
         #self.logWidget = QtGui.QTextEdit()
-        self.logWidget.setMaximumHeight( 50)
+        self.logWidget.setMaximumHeight( 100)
         self.logWidget.setReadOnly( 1)
         self.layout_v.addWidget( self.logWidget)
         #
@@ -2924,7 +2923,7 @@ class pySpectraGui( QtGui.QMainWindow):
         scan.ssa( self.logWidget)
 
         PySpectra.cls()
-        PySpectra.display()
+        PySpectra.display( [scan.name])
 
     def cb_fsa( self):
         displayList = PySpectra.getDisplayList()
@@ -2935,7 +2934,7 @@ class pySpectraGui( QtGui.QMainWindow):
         scan.fsa( self.logWidget)
 
         PySpectra.cls()
-        PySpectra.display()
+        PySpectra.display( [scan.name])
 
     def cb_writeFile( self):
         if len( self.getCheckedNameList()) > 0: 
