@@ -103,7 +103,7 @@ class testSpock( unittest.TestCase):
         hsh =  PySpectra.toPyspLocal( { 'getDoorState': True})
         self.assertEqual( hsh[ 'result'], 'ON')
 
-        hsh =  PySpectra.toPyspLocal( { 'spock': 'mvsa_tk peak 0'})
+        hsh =  PySpectra.toPyspLocal( { 'spock': 'mvsa peak 0'})
         self.assertEqual( hsh[ 'result'], 'done')
 
         if wasLaunched:
