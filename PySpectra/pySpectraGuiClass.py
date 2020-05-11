@@ -2645,9 +2645,6 @@ class pySpectraGui( QtGui.QMainWindow):
         self.scanNameAction = self.helpMenu.addAction(self.tr("ScanName widget"))
         self.scanNameAction.triggered.connect( self.cb_helpScanName)
 
-        self.examplesAction = self.helpMenu.addAction(self.tr("Examples"))
-        self.examplesAction.triggered.connect( self.cb_helpExamples)
-
         self.activityIndex = 0
         self.activity = self.menuBarActivity.addMenu( "_")
     #
@@ -2954,8 +2951,11 @@ class pySpectraGui( QtGui.QMainWindow):
 
     def cb_helpPySpectra(self):
         QtGui.QMessageBox.about(self, self.tr("Help Widget"), self.tr(
-                "<h3> PySpectraGui</h3>"
-                "The Python Spectra Gui: graphics using pyqtgraph and matplotlib"
+                "<h3> PySpectra displays 1D and 2D data</h3>"
+                "<br> Documentation:"
+                "<br>"
+                "<br> import PySpectra"
+                "<br> PySpectra?"
                 ))
 
     def cb_helpScanName(self):
@@ -2963,12 +2963,8 @@ class pySpectraGui( QtGui.QMainWindow):
                 "<h3> The ScanName widget</h3>"
                 "<ul>"
                 "<li> if no Scan (aka GQE) is checked, all are displayed</li>"
-                "<li> the MB3-click opens a widget for the GQE attributes</li>"
+                "<li> the MB3-click opens an attributes widget</li>"
                 "</ul>"
                 ))
 
-    def cb_helpExamples(self):
-        QtGui.QMessageBox.about(self, self.tr("Help Examples"), self.tr(
-                "<h3> PySpectra by Examples</h3>"
-                "Execute the example code snippets and look at the code."
-                ))
+
