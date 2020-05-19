@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 #
 import matplotlib 
-matplotlib.use( 'TkAgg')
+matplotlib.use( 'TkAgg', warn=False)
+
 import matplotlib.pyplot as plt
 
 from PyQt4 import QtCore, QtGui
 
-import time as _time
 import os, sys
 import numpy
 import datetime 
@@ -51,7 +51,7 @@ def _initGraphic( figureIn = None, canvasIn = None):
 
 def createPDF( printer = None, fileName = None, flagPrint = False, format = 'DINA4'): 
     '''
-    - create a PDF file, the default name is pyspOutput.pdf
+    - create a PDF file, the default name is pyspOutput.pdf 
     - a version of the last output file is created
     - if flagPrint is True, the file is sent to the PRINTER 
     - returns the name of the output file
@@ -242,15 +242,16 @@ def processEventsLoop( timeOut = None):
     '''
     loops over QApp.processEvents until a <return> is entered
     '''
+    import time
     if timeOut is None:
         sys.stdout.write( "\nPress <return> to continue ")
         sys.stdout.flush()
-    startTime = _time.time()
+    startTime = time.time()
     while True:
-        _time.sleep(0.001)
+        time.sleep(0.001)
         processEvents()
         if timeOut is not None:
-            if (_time.time() - startTime) > timeOut: 
+            if (time.time() - startTime) > timeOut: 
                 break
         #
         # :99.0 is the DISPLAY in travis

@@ -15,12 +15,12 @@ A command-line-like interface to PySpectra, used by
     createPDF
     derivative src [target] 
       calculates the derivative
-    display
+    display_pysp
     delete
     info
     move s1 51 [flagConfirm]
     moveStart s1 51 [flagConfirm]
-      display s1 and move the first motor of s1.motorNameList
+      display_pysp s1 and move the first motor of s1.motorNameList
     noop
     overlay s1 s2
       s1 is plotted in the viewport of s2
@@ -79,8 +79,10 @@ def command( line):
     are called depending on the first token, the verb.
 
     Examples
-      PySpectra.command( "create s1")
-      PySpectra.command( "display")
+      import PySpectra.ipython.ifc as ifc
+
+      ifc.command( "create s1")
+      ifc.command( "display")
 
     called from 
       - /home/kracht/Misc/pySpectra/PySpectra/ipython/startup.py
@@ -134,6 +136,8 @@ def command( line):
             argout = noop( lineRest)
         elif lst[0] == 'overlay':
             argout = overlay( lineRest)
+        elif lst[0] == 'processEventsLoop':
+            argout = processEventsLoop( lineRest)
         elif lst[0] == 'read':
             argout = read( lineRest)
         elif lst[0] == 'setArrowCurrent':
@@ -240,7 +244,7 @@ def create( line):
     elif line.find( 'xMin') > 0:
         hsh = dict(itertools.zip_longest(*[iter(l)] * 2, fillvalue=""))
     else:
-        raise ValueError( "ifs.createScan: wrong syntax %s" % line)
+        raise ValueError( "ifc.createScan: wrong syntax %s" % line)
         
     PySpectra.Scan( **hsh)
     return "done"
@@ -371,6 +375,30 @@ def overlay( line):
     PySpectra.overlay( lst[0], lst[1])
     return "done"
 
+def processEventsLoop( line): 
+    '''
+    allows pyqtgraph to process events thereby 
+    supporting mouse operations.
+
+    processEventsLoop 
+      stays in the loop until <enter> is pressed
+    processEventsLoop <secs> 
+      terminates the loop after <secs> seconds
+    
+    '''
+    lst = None
+    if line: 
+        lst = line.split(' ')
+    if lst is None or len( lst) == 0:
+        PySpectra.processEventsLoop()
+    elif len( lst) == 1:
+        PySpectra.processEventsLoop( float( lst[0]))
+    else: 
+        raise ValueError( "ifc.processEventsLoop: wrong syntax")
+
+    return "done"
+        
+    
 def read( line):
     '''
     read <fileName> 

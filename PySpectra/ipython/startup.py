@@ -31,7 +31,7 @@ Step 3: use it
 
   $ ipython --profile=PySpectra
   In [1]: create t1
-  In [2]: display
+  In [2]: display_pysp
   In [3]: o = PySpectra.getGqe( "t1")
   In [4]: dir( o)
 
@@ -124,9 +124,10 @@ def derivative(line):
     ifc.command( "derivative " + line)
 
 @register_line_magic
-def display(line):
+def display_pysp(line):
     '''
     display one or more or all scans
+    '_pysp' distinguishes this command from IPython/core/display.py
 
     Parameters
     ----------
@@ -137,9 +138,9 @@ def display(line):
 
     Example
     -------
-    display s1 s2
+    display_pysp s1 s2
       display scans s1 and s2
-    display
+    display_pysp
       display all scans
     '''
     ifc.command( "display " + line)
@@ -186,7 +187,7 @@ def overlay(line):
 
 @register_line_magic
 def processEventsLoop(line):
-    PySpectra.ipython.processEventsLoop( line)
+    ifc.processEventsLoop( line)
 
 @register_line_magic
 def pyspectra_help( line):
@@ -195,7 +196,7 @@ def pyspectra_help( line):
     print( " ---------------------------------")
     print( " These are the available commands")
     print( "   antiderivative, cls, create, delete, derivative,")
-    print( "   display, info, move, moveStart, noop, overlay, ")
+    print( "   display_pysp, info, move, moveStart, noop, overlay, ")
     print( "   processEventsLoop, read, setTitle, ")
     print( "   setComment, show, write, y2my")
     print( "")
@@ -383,7 +384,7 @@ del create
 del createPDF
 del delete
 del derivative
-del display
+del display_pysp
 del info
 del move
 del moveStart

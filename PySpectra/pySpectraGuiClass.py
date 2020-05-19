@@ -941,11 +941,13 @@ class ScanAttributes( QtGui.QMainWindow):
 
         self.back = QtGui.QPushButton(self.tr("&Back")) 
         self.statusBar.addPermanentWidget( self.back) # 'permanent' to shift it right
+        self.back.setToolTip( "Select previous GQE")
         self.back.clicked.connect( self.cb_back)
         self.back.setShortcut( "Alt+b")
 
         self.next = QtGui.QPushButton(self.tr("&Next")) 
         self.statusBar.addPermanentWidget( self.next) # 'permanent' to shift it right
+        self.next.setToolTip( "Select next GQE")
         self.next.clicked.connect( self.cb_next)
         self.next.setShortcut( "Alt+n")
 
@@ -2182,6 +2184,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.stopAllMoves = QtGui.QPushButton(self.tr("StopAllMoves"))
         hBox.addWidget( self.stopAllMoves)
         self.stopAllMoves.clicked.connect( self.cb_stopAllMoves)
+        self.stopAllMoves.setToolTip( "Execute StopMacro on every Door, if the state is not ON\nStop all Pool motors (names from Pool motorList)\nStop all Tango server motors (names from Tango DB)")
 
         self.requestStop = QtGui.QPushButton(self.tr("RequestStop"))
         hBox.addWidget( self.requestStop)
@@ -2680,7 +2683,7 @@ class pySpectraGui( QtGui.QMainWindow):
             self.matplotlibBtn = QtGui.QPushButton(self.tr("&Matplotlib")) 
             self.statusBar.addWidget( self.matplotlibBtn) 
             self.matplotlibBtn.clicked.connect( self.cb_matplotlib)
-            self.matplotlibBtn.setToolTip( "Print info about the scans")
+            self.matplotlibBtn.setToolTip( "Use matplotlib for display")
             self.matplotlibBtn.setShortcut( "Alt+m")
 
 
