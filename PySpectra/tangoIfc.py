@@ -65,7 +65,7 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
             
     if door.state() != PyTango.DevState.ON: 
         if scan.logWidget is not None:
-            scan.logWidget.append( "tangoIfc.move: door.state() != ON %s" % 
+            scan.logWidget.append( "tangoIfc.moveScan: door.state() != ON %s" % 
                                    repr( door.state()))
         else:
             print( "tangoIfc.moveScan: door.state() != ON %s" % repr( door.state()))

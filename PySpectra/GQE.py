@@ -49,11 +49,11 @@ _ScanAttrsPrivate = [ 'attributeWidget', 'infLineLeft', 'infLineRight', 'infLine
 _ImageAttrsPublic = [ 'at', 'colorMap', 'colSpan', 'data', 'estimatedMax', 'flagAxes', 'indexRotate', 
                       'log', 'logWidget', 'maxIter', 'modulo', 
                       'name', 'ncol', 'nplot', 'nrow', 'overlay', 'textOnly', 'xMin', 'xMax',
-                     'yMin', 'yMax', 'width', 'height', 'viewBox', 'xLabel', 'yLabel']
+                      'yMin', 'yMax', 'width', 'height', 'viewBox', 'xLabel', 'yLabel', 'zoomFactor']
 #
 # img is used in pqt_graphics
 #
-_ImageAttrsPrivate = [ 'attributeWidget', 'cbZoomMbProgress', 'flagZoomingMb', 'flagZoomMbSlow', 'img', 'plotItem', 'mousePrepared', 'mouseLabel', 'cb_mouseLabel']
+_ImageAttrsPrivate = [ 'attributeWidget', 'cbZoomMbProgress', 'flagZoomMbSlow', 'flagZoomingMb', 'img', 'plotItem', 'mousePrepared', 'mouseLabel', 'cb_mouseLabel']
 
 
 class InfoBlock( object): 
@@ -1945,6 +1945,7 @@ class Image( object):
         self.yMin = None
         self.yMax = None
         self.yLabel = None
+        self.zoomFactor = 4. 
         #
         # the attributes plot and mouseLabel are created by graphics.display(). 
         # However, it is initialized here to help cls()
@@ -2203,11 +2204,14 @@ class Image( object):
             deltaY = self.yMax - self.yMin
 
             if not flagShift: 
-                self.xMin = targetX - deltaX/8.
-                self.xMax = targetX + deltaX/8.
+                deltaX = deltaX/2./self.zoomFactor
+                deltaY = deltaY/2./self.zoomFactor
 
-                self.yMin = targetY - deltaY/8.
-                self.yMax = targetY + deltaX/8.
+                self.xMin = targetX - deltaX
+                self.xMax = targetX + deltaX
+
+                self.yMin = targetY - deltaY
+                self.yMax = targetY + deltaY
             else: 
                 self.xMin = targetX - deltaX/2.
                 self.xMax = targetX + deltaX/2.

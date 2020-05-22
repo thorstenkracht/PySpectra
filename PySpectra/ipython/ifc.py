@@ -47,13 +47,13 @@ A command-line-like interface to PySpectra, used by
 '''
 #
 #
-# The applictions that call ifc.command():
+# The applictions that call PySpectra.command():
 #
 #  - pyspMonitor.py to execute the commands received via ZMQ 
 #    pyspMonitorClass.py
 #      zmqIfc.toPyspLocal( hsh)
 #        zmqIfc.execCommand( hsh): 
-#          ifc.command( cmd)
+#          PySpectra.command( cmd)
 #
 #  - pyspDoor.py
 #      sendHshQueue() 
@@ -61,7 +61,7 @@ A command-line-like interface to PySpectra, used by
 #          toPyspLocalWrapper( hsh)
 #            zmqIfc.toPyspLocal( hsh)
 #              zmqIfc.execCommand( hsh): 
-#                ifc.command( cmd)
+#                PySpectra.command( cmd)
 #
 #  - ipython, details can be found here: 
 #      /home/kracht/Misc/pySpectra/PySpectra/__init__.py
@@ -79,16 +79,18 @@ def command( line):
     are called depending on the first token, the verb.
 
     Examples
-      import PySpectra.ipython.ifc as ifc
+      import PySpectra
 
-      ifc.command( "create s1")
-      ifc.command( "display")
+      PySpectra.command( "create s1")
+      PySpectra.command( "display")
 
     called from 
       - /home/kracht/Misc/pySpectra/PySpectra/ipython/startup.py
         to execute magic commands
       - /home/kracht/Misc/pySpectra/PySpectra/zmqIfc.py
         toPyspLocal() -> _execCommand() -> ifc.command()
+
+    See also: PySpectra.ipython.ifc?
     '''
     argout = None
     line = line.strip()
@@ -100,76 +102,77 @@ def command( line):
         lineRest = " ".join( lst[1:])
     else:
         lineRest = None
+
     try: 
         #
         # antiderivative src [target] 
         #
         if lst[0] == 'antiderivative':
-            return antiderivative( lineRest)
+            argout = _antiderivative( lineRest)
         #
         # cls
         #
         elif lst[0] == 'cls':
-            argout = cls( lineRest)
+            argout = _cls( lineRest)
             #
             #  create name scanname xMin 0. xMax 1. nPts 101
             #  create scanname 0. 1. 101
             #  create scanname
             #
         elif lst[0] == 'create':
-            argout = create( lineRest)    
+            argout = _create( lineRest)    
         elif lst[0] == 'createPDF':
-            argout = createPDF( lineRest)
+            argout = _createPDF( lineRest)
         elif lst[0] == 'delete':
-            argout = delete( lineRest)
+            argout = _delete( lineRest)
         elif lst[0] == 'derivative':
-            argout = derivative( lineRest)
+            argout = _derivative( lineRest)
         elif lst[0] == 'display':
-            argout = display( lineRest)
+            argout = _display( lineRest)
         elif lst[0] == 'info':
-            argout = info( lineRest)
+            argout = _info( lineRest)
         elif lst[0] == 'move':
-            argout = move( lineRest)
+            argout = _move( lineRest)
         elif lst[0] == 'moveStart':
-            argout = moveStart( lineRest)
+            argout = _moveStart( lineRest)
         elif lst[0] == 'noop':
-            argout = noop( lineRest)
+            argout = _noop( lineRest)
         elif lst[0] == 'overlay':
-            argout = overlay( lineRest)
+            argout = _overlay( lineRest)
         elif lst[0] == 'processEventsLoop':
-            argout = processEventsLoop( lineRest)
+            argout = _processEventsLoop( lineRest)
         elif lst[0] == 'read':
-            argout = read( lineRest)
+            argout = _read( lineRest)
         elif lst[0] == 'setArrowCurrent':
-            argout = setArrowCurrentCmd( lineRest)
+            argout = _setArrowCurrentCmd( lineRest)
         elif lst[0] == 'setArrowSetPoint':
-            argout = setArrowSetPointCmd( lineRest)
+            argout = _setArrowSetPointCmd( lineRest)
         elif lst[0] == 'setArrowMisc':
-            argout = setArrowMiscCmd( lineRest)
+            argout = _setArrowMiscCmd( lineRest)
         elif lst[0] == 'setComment':
-            argout = setComment( lineRest)
+            argout = _setComment( lineRest)
         elif lst[0] == 'setPixelImage':
-            argout = setPixelImage( lineRest)
+            argout = _setPixelImage( lineRest)
         elif lst[0] == 'setPixelWorld':
-            argout = setPixelWorld( lineRest)
+            argout = _setPixelWorld( lineRest)
         elif lst[0] == 'setText':
-            argout = setText( lineRest)
+            argout = _setText( lineRest)
         elif lst[0] == 'setTitle':
-            argout = setTitle( lineRest)
+            argout = _setTitle( lineRest)
         elif lst[0] == 'setWsViewport':
-            argout = setWsViewport( lineRest)
+            argout = _setWsViewport( lineRest)
         elif lst[0] == 'setX':
-            argout = setX( lineRest)
+            argout = _setX( lineRest)
         elif lst[0] == 'setXY':
-            argout = setXY( lineRest)
+            argout = _setXY( lineRest)
         elif lst[0] == 'setY':
-            argout = setY( lineRest)
+            argout = _setY( lineRest)
         elif lst[0] == 'show':
-            argout = show( lineRest)
+            argout = _show( lineRest)
         elif lst[0] == 'write':
-            argout = write( lineRest)
+            argout = _write( lineRest)
         elif lst[0] == 'y2my':
-            argout = y2my( lineRest)
+            argout = _y2my( lineRest)
         else:
             raise ValueError( "ifc.command: failed to identify %s" % line)
     except Exception, e: 
@@ -179,7 +182,7 @@ def command( line):
     
     return argout
 
-def antiderivative( line):
+def _antiderivative( line):
     '''
     antiderivative src [target] 
       the default target name is <src>_antiderivative
@@ -204,7 +207,7 @@ def antiderivative( line):
     else:
         raise ValueError( "ifc.antiderivative: wrong syntax %s" % line)
 
-def cls( line):
+def _cls( line):
     '''
     clears the graphics screen
     '''
@@ -212,7 +215,7 @@ def cls( line):
 
     return "done"
 
-def create( line):
+def _create( line):
     '''
     creates a scan 
    
@@ -249,7 +252,7 @@ def create( line):
     PySpectra.Scan( **hsh)
     return "done"
 
-def createPDF( line):
+def _createPDF( line):
     '''
     create a PDF 
     '''
@@ -261,7 +264,7 @@ def createPDF( line):
     _mpl_graphics.createPDF( fileName = fName)
     return "done"
 
-def derivative( line):
+def _derivative( line):
     '''
     derivative <src> [<target>] 
       the default target name is <src>_derivative
@@ -283,7 +286,7 @@ def derivative( line):
         raise ValueError( "ifc.derivative: wrong syntax %s" % line)
     return "done"
 
-def display( line):
+def _display( line):
     '''
     display 
     display <nameGqe> ...
@@ -296,7 +299,7 @@ def display( line):
     PySpectra.display( lst)
     return "done"
 
-def delete( line):
+def _delete( line):
     '''
     delete s1 s2
       deletes scans s1 and s2
@@ -311,14 +314,14 @@ def delete( line):
     PySpectra.delete( lst)
     return "done"
 
-def info( line):
+def _info( line):
     '''
     displays some information
     '''
     PySpectra.info()
     return "done"
 
-def move( line):
+def _move( line):
     '''
     move s1 50 <flagConfirm> 
 
@@ -337,7 +340,7 @@ def move( line):
     tangoIfc.move( gqe, float( lst[1]), flagConfirm = flagConfirm)
     return "done"
 
-def moveStart( line):
+def _moveStart( line):
     '''
     moveStart s1 50 <flagConfirm>
 
@@ -356,7 +359,7 @@ def moveStart( line):
     tangoIfc.moveStart( gqe, float( lst[1]), flagConfirm = flagConfirm)
     return "done"
 
-def noop( line):
+def _noop( line):
     '''
     noop
 
@@ -364,7 +367,7 @@ def noop( line):
     '''
     return "done"
 
-def overlay( line):
+def _overlay( line):
     '''
     overlay <s1> <s2>
       s1 is plotted in the viewport of s2
@@ -375,7 +378,7 @@ def overlay( line):
     PySpectra.overlay( lst[0], lst[1])
     return "done"
 
-def processEventsLoop( line): 
+def _processEventsLoop( line): 
     '''
     allows pyqtgraph to process events thereby 
     supporting mouse operations.
@@ -399,7 +402,7 @@ def processEventsLoop( line):
     return "done"
         
     
-def read( line):
+def _read( line):
     '''
     read <fileName> 
     read <fileName> -mca
@@ -412,7 +415,7 @@ def read( line):
     PySpectra.read( lst)
     return "done"
 
-def setComment( line):
+def _setComment( line):
     '''
     setComment "some comment"
       set the comment string for the whole plot
@@ -432,7 +435,7 @@ def _mySplit( s):
     return lst
     
 
-def setText( line):
+def _setText( line):
     '''
     setText gqeName textName string stringValue ...
             x xValue y yValue 
@@ -519,7 +522,7 @@ def setText( line):
             break
     return "done"
 
-def setTitle( line):
+def _setTitle( line):
     '''
     set the title of the whole plot
     '''
@@ -528,7 +531,7 @@ def setTitle( line):
         argout = "trouble from PySpectra.setTitle()"
     return argout
 
-def setPixelImage( line): 
+def _setPixelImage( line): 
     '''
     setPixelImage <nameGqe> <ix> iy value
       ix, iy: indices, image coordinate frame
@@ -545,7 +548,7 @@ def setPixelImage( line):
     o.setPixelImage( ix, iy, val)
     return "done"
 
-def setArrowCurrentCmd( line): 
+def _setArrowCurrentCmd( line): 
     '''
     handle the arrowCurrent
       setArrowCurrent <nameGqe> position <targetPos>
@@ -561,7 +564,7 @@ def setArrowCurrentCmd( line):
     o.setArrowCurrentCmd( lst[1:])
     return "done"
 
-def setArrowSetPointCmd( line): 
+def _setArrowSetPointCmd( line): 
     '''
     handle the arrowSetPoint
       setArrowSetPoint <nameGqe> position <targetPos>
@@ -577,7 +580,7 @@ def setArrowSetPointCmd( line):
     o.setArrowSetPointCmd( lst[1:])
     return "done"
 
-def setArrowMiscCmd( line): 
+def _setArrowMiscCmd( line): 
     '''
     handle the arrowMisc
       setArrowMisc <nameGqe> position <targetPos>
@@ -593,7 +596,7 @@ def setArrowMiscCmd( line):
     o.setArrowMiscCmd( lst[1:])
     return "done"
 
-def setPixelWorld( line): 
+def _setPixelWorld( line): 
     '''
     setPixelWorld <nameGqe> x y value
       x, y: in world coordinates
@@ -610,7 +613,7 @@ def setPixelWorld( line):
     o.setPixelWorld( x, y, val)
     return "done"
 
-def setX( line): 
+def _setX( line): 
     '''
     setX <nameGqe> index x
     '''
@@ -626,7 +629,7 @@ def setX( line):
     o.currentIndex = index
     return "done"
 
-def setY( line): 
+def _setY( line): 
     '''
     setY <nameGqe> index y
     '''
@@ -642,7 +645,7 @@ def setY( line):
     o.currentIndex = index
     return "done"
 
-def setXY( line): 
+def _setXY( line): 
     '''
     setXY <nameGqe> index x y
     '''
@@ -659,7 +662,7 @@ def setXY( line):
     o.currentIndex = index
     return "done"
     
-def setWsViewport( line):
+def _setWsViewport( line):
     '''
     setWsViewPort dina4
       dina4, dina4p, dina4s, dina5, dina5p, dina5s, dina6, dina6p, dina6s, 
@@ -677,14 +680,14 @@ def setWsViewport( line):
 
     return "done"
 
-def show( line):
+def _show( line):
     '''
     show the list of scans
     '''
     PySpectra.show()
     return "done"
 
-def write( line):
+def _write( line):
     ''' 
     write the specified scans or all scans to a .fio file. 
     the prefix is pysp
@@ -699,7 +702,7 @@ def write( line):
     PySpectra.write( lst)
     return "done"
 
-def y2my( line):
+def _y2my( line):
     lst = line.split( ' ')
     if len( lst) != 1 and len( lst) != 2:
         raise ValueError( "ifc.y2my: expecting one or two scan names")

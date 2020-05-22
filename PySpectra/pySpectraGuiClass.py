@@ -1311,6 +1311,7 @@ class ImageAttributes( QtGui.QMainWindow):
         #self.setWindowTitle( "ImageAttributes")
         self.setWindowTitle( name)
 
+        self.deltaXYLabel = None
         self.prepareWidgets()
 
         self.menuBar = QtGui.QMenuBar()
@@ -1513,10 +1514,37 @@ class ImageAttributes( QtGui.QMainWindow):
                 definitions.maxIterList.index( self.image.maxIter))
             self.w_maxIterComboBox.currentIndexChanged.connect( self.cb_maxIter)
             self.layout_grid.addWidget( self.w_maxIterComboBox, row, 1) 
-
-            self.progressLabel = QtGui.QLabel( "Progress: ")
+            #
+            # progress
+            #
+            self.layout_grid.addWidget( QtGui.QLabel( "Progress:"), row, 2)
+            self.progressLabel = QtGui.QLabel( "")
             self.layout_grid.addWidget( self.progressLabel, row, 3)
             self.image.cbZoomMbProgress = self.cb_zoomMbProgress
+
+            #
+            # deltaXY, fille from GQE.zoomMB
+            #
+            row += 1
+            self.layout_grid.addWidget( QtGui.QLabel( "Delta"), row, 0)
+            self.deltaXYLabel = QtGui.QLabel( "")
+            self.layout_grid.addWidget( self.deltaXYLabel, row, 1)
+            self.deltaXYLabel.setToolTip( "Resolution, max - min")
+
+            #
+            # zoom factor
+            #
+            self.zoomFactor = QtGui.QLabel( "ZoomFactor")
+            self.layout_grid.addWidget( self.zoomFactor, row, 2)
+            self.w_zoomFactorComboBox = QtGui.QComboBox()
+            self.w_zoomFactorComboBox.setToolTip( "The zoom-in/out factor applied with every click.")
+            for zoomFactor in definitions.zoomFactorList:
+                self.w_zoomFactorComboBox.addItem( "%g" % zoomFactor)
+            self.w_zoomFactorComboBox.setCurrentIndex( 
+                definitions.zoomFactorList.index( self.image.zoomFactor))
+            self.w_zoomFactorComboBox.currentIndexChanged.connect( self.cb_zoomFactor)
+            self.layout_grid.addWidget( self.w_zoomFactorComboBox, row, 3) 
+
 
             row += 1
 
@@ -1645,11 +1673,16 @@ class ImageAttributes( QtGui.QMainWindow):
         PySpectra.display( [ self.name])
         return
 
+    def cb_zoomFactor( self): 
+        temp = self.w_zoomFactorComboBox.currentText()
+        self.image.zoomFactor = float( temp)
+        return
+
     def cb_zoomMbProgress( self, line): 
         '''
         called from image.zoomMb() to display the progress
         '''
-        self.progressLabel.setText( "Progress: %s" % line)
+        self.progressLabel.setText( "%s" % line)
         return 
 
     def cb_colorMap( self): 
@@ -1842,6 +1875,9 @@ class ImageAttributes( QtGui.QMainWindow):
         if self.w_indexRotatePosition is not None:
             self.w_indexRotatePosition.setText( "%d" % self.image.indexRotate)
 
+        if self.deltaXYLabel is not None:
+            self.deltaXYLabel.setText( "%.2e" % (self.image.xMax - self.image.xMin))
+
         self.updateTimer.start( int( updateTime*1000))
 
     def cb_display( self): 
@@ -1977,6 +2013,7 @@ class pySpectraGui( QtGui.QMainWindow):
     def __init__( self, files = None, parent = None, 
                   calledFromSardanaMonitor = False, 
                   flagExitOnClose = False):
+        import PyTango, HasyUtils
         #print( "pySpectraGui.__init__")
         super( pySpectraGui, self).__init__( parent)
         #
@@ -1995,7 +2032,7 @@ class pySpectraGui( QtGui.QMainWindow):
 
         self.gqeList = None
         self.scanAttributes = None
-        self.proxyDoor = None
+        self.proxyDoor = PyTango.DeviceProxy( HasyUtils.getDoorNames()[0])
         self.nMotor = 0
         
         self.useMatplotlib = True 
@@ -2058,7 +2095,10 @@ class pySpectraGui( QtGui.QMainWindow):
 
         self.pyQtConfigWidget = None
         self.configWidget = None
-
+        #
+        # MacroServer info
+        #
+        self.msInfo = None
     #
     # the central widgets
     #
@@ -2153,7 +2193,7 @@ class pySpectraGui( QtGui.QMainWindow):
             w.hide()
 
             w = QtGui.QLabel( "pos")
-            w.setMinimumWidth( 50)
+            w.setMinimumWidth( 60)
 
             self.motPosLabels.append( w)
             hBox.addWidget( w)
@@ -2170,6 +2210,14 @@ class pySpectraGui( QtGui.QMainWindow):
         hBox = QtGui.QHBoxLayout()
 
         hBox.addStretch()            
+
+        hBox.addWidget( QtGui.QLabel( "Door:"))
+
+        self.msInfo = QtGui.QLabel( "")
+        self.msInfo.setMinimumWidth( 70)
+        self.msInfo.setAlignment( QtCore.Qt.AlignCenter)
+
+        hBox.addWidget( self.msInfo)
 
         self.abort = QtGui.QPushButton(self.tr("Abort"))
         hBox.addWidget( self.abort)
@@ -2195,8 +2243,42 @@ class pySpectraGui( QtGui.QMainWindow):
 
         self.layout_frame_v.addLayout( hBox)
 
+
+    def getMsInfo( self): 
+        macroStatusLst = self.proxyDoor.status().split( "\n")
+
+        if macroStatusLst[0] == 'The device is in ON state.':
+            argout = "Idle"
+            return argout
+        try:
+            a = ""
+            for elm in macroStatusLst[2:]:
+                lst = elm.split("\t")
+                lst1 = lst[1].split( " ")
+                a = a + lst1[0] + '->'
+        except: 
+            a = "unknown ->" 
+        #
+        # cut the trailing '->'
+        #
+        argout = a[:-2]
+        return argout
+
     def updateMotorWidgets( self): 
         import PyTango
+
+        if self.msInfo is not None: 
+            if self.proxyDoor.state() == PyTango.DevState.MOVING:
+                self.msInfo.setStyleSheet( "background-color:%s;" % definitions.BLUE_MOVING)
+            elif self.proxyDoor.state() == PyTango.DevState.RUNNING:
+                self.msInfo.setStyleSheet( "background-color:%s;" % definitions.BLUE_MOVING)
+            elif self.proxyDoor.state() == PyTango.DevState.ON:
+                self.msInfo.setStyleSheet( "background-color:%s;" % definitions.GREEN_OK)
+            else:
+                self.msInfo.setStyleSheet( "background-color:%s;" % definitions.RED_ALARM)
+            
+            self.msInfo.setText( self.getMsInfo())
+
         if self.nMotor == 0: 
             return 
 
@@ -2208,6 +2290,8 @@ class pySpectraGui( QtGui.QMainWindow):
                 self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % definitions.GREEN_OK)
             else:
                 self.motPosLabels[ i].setStyleSheet( "background-color:%s;" % definitions.RED_ALARM)
+
+        return 
 
     def addScanFrame( self): 
         '''

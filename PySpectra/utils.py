@@ -7,8 +7,6 @@ import subprocess, signal, time, os, sys, math
 import PySpectra 
 import PySpectra.definitions as definitions
 
-
-    
 def getNumberOfGqesToBeDisplayed( nameList): 
     '''
     return the number of scans to be displayed.
@@ -564,6 +562,9 @@ def runMacro( line):
     door.RunMacro( line.split( ' '))
     while door.state() == PyTango.DevState.RUNNING: 
         time.sleep( 0.1)
+
+    if door.state() != PyTango.DevState.ON: 
+        raise ValueError( "utils.runMacro: door state not ON, instead %s" % repr( door.state()))
 
     print( "utils.runMacro: %s, DONE" % line)
 

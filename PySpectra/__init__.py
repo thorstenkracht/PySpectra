@@ -69,5 +69,6 @@ from pqtgrph.graphics import *
 from mtpltlb.graphics import createPDF
 
 from PySpectra.GQE import *
+from PySpectra.ipython.ifc import *
 from PySpectra.zmqIfc import *
 

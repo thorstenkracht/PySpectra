@@ -104,6 +104,12 @@ class testTangoIfc( unittest.TestCase):
 
         PySpectra.cls()
         PySpectra.delete()
+        #
+        # senv ActiveMntGrp mg_pysp
+        #
+        if not utils.runMacro( "senv ActiveMntGrp mg_pysp"): 
+            print( "testTangoIfc.testMoveScanInfo: ruNMacro failed")
+            return 
 
         #
         # see, if the pyspMonitor process exists. Otherwise launch it
@@ -112,7 +118,6 @@ class testTangoIfc( unittest.TestCase):
         if not status:
             print( "testTangoIfc.testMoveScanInfo: failed to launch the pyspMonitor")
             return 
-
         #
         # move the motors to good starting points
         #
@@ -130,6 +135,7 @@ class testTangoIfc( unittest.TestCase):
         # we see that the scan is over. So test 'isAlive'
         #
         count = 0
+        print "testTangoIfc.testMoveScanInfo-1"
         while 1: 
             ret = PySpectra.toPyspMonitor( { 'isAlive': True})
             if ret[ 'result'] == 'done':
@@ -139,16 +145,21 @@ class testTangoIfc( unittest.TestCase):
             if count > 5: 
                 print( "testTangoIfc.testMoveScanInfo: isAlive failes")
                 return 
+        print "testTangoIfc.testMoveScanInfo-2"
 
         ret = PySpectra.toPyspMonitor( { 'command': 'display sig_gen'})
         if ret[ 'result'] != 'done': 
             print( "testTangoIfc.testMoveScanInfo: 'display sig_gen' failed, %s" % repr( ret))
             return 
+        print "testTangoIfc.testMoveScanInfo-3"
 
-        PySpectra.setTitle( "umv; a2scan; moveStart sig_gen 50.5 False")
-        if PySpectra.toPyspMonitor( { 'command': 'moveStart sig_gen 50.5 False'})[ 'result'] != 'done':
+        PySpectra.setTitle( "moveStart sig_gen 50.5 False")
+        res = PySpectra.toPyspMonitor( { 'command': 'moveStart sig_gen 50.5 False'})
+        if res[ 'result'] != 'done':
             print( "testTangoIfc.testMoveScanInfo: moveStart failed failed")
             return 
+
+        print( "testTangoIfc.testMoveScanInfo-4, %s" % repr( res))
 
         while 1: 
             if PySpectra.toPyspMonitor( { 'getDoorState': True})[ 'result'] == 'ON':
