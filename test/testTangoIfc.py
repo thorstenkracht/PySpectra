@@ -102,6 +102,9 @@ class testTangoIfc( unittest.TestCase):
 
         print "testTangoIfc.testMoveScanInfo"
 
+        if utils.getHostname() != 'haso107tk': 
+            return 
+
         PySpectra.cls()
         PySpectra.delete()
         #
