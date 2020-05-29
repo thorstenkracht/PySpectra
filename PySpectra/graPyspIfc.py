@@ -4,24 +4,14 @@ this module actracts Spectra, PySpectra
 '''
 import PySpectra 
 import PySpectra.utils as utils
+import PySpectra.GQE as GQE
+import numpy as np
 
 try: 
     import Spectra
     spectraInstalled = True
 except: 
     spectraInstalled = False
-
-lineColorArr = [ 
-    'RED', 
-    'GREEN',
-    'BLUE',
-    'YELLOW',
-    'CYAN',
-    'MAGENTA',
-    'BLACK',
-    'WHITE', 
-    'NONE', 
-]
 
 useSpectra = False
 
@@ -102,7 +92,7 @@ def delete():
 
 def display(): 
     if spectraInstalled and useSpectra:
-        argout = Spectra.gra_command("display")
+        argout = Spectra.gra_command("display/vp")
     else: 
         argout = PySpectra.display()
     return argout
@@ -116,162 +106,247 @@ def getGqe( name):
     else: 
         return PySpectra.getGqe( name)
     
-def Scan( **hsh):
-    '''
-    create a scan and return it
-    '''
-    if not 'name' in hsh:
-        raise ValueError( "graPyspIfc.Scan: 'name' is missing")
+class Scan( object): 
+    """
+    interfaces to GQE.Scan oder spectra
+    """
+    def __init__( self, name = None, **kwargs):
 
-    name = hsh[ 'name']
-    del hsh[ 'name']
-
-    if 'start' in hsh: 
-        xMin = hsh[ 'start']
-        del hsh[ 'start']
-    elif 'xMin' in hsh: 
-        xMin = hsh[ 'xMin']
-        del hsh[ 'xMin']
-    elif 'x' in hsh: 
-        xMin = hsh[ 'x'][0]
-    elif 'y' in hsh: 
-        xMin = 0.
-    else: 
-        xMin = 0.
-
-    if 'stop' in hsh: 
-        xMax = hsh[ 'stop']
-        del hsh[ 'stop']
-    elif 'xMax' in hsh: 
-        xMax = hsh[ 'xMax']
-        del hsh[ 'xMax']
-    elif 'x' in hsh: 
-        xMax = hsh[ 'x'][-1]
-    elif 'y' in hsh: 
-        xMax = float( len( hsh[ 'y']) - 1)
-    else: 
-        xMax = 10.
-
-    nPts = 101
-    if 'np' in hsh:
-        nPts = hsh[ 'np']
-        del hsh[ 'np']
-    elif 'nPts' in hsh:  
-        nPts = hsh[ 'nPts']
-        del hsh[ 'nPts']
-    elif 'x' in hsh: 
-        nPts = len( hsh[ 'x'])
-    elif 'y' in hsh: 
-        nPts = len( hsh[ 'y'])
-    else: 
-        nPts = 101
-
-    xLabel = 'x-axis'
-    if 'xlabel' in hsh:
-        xLabel = hsh[ 'xlabel']
-        del hsh[ 'xlabel']
-    yLabel = 'y-axis'
-    if 'ylabel' in hsh:
-        yLabel = hsh[ 'ylabel']
-        del hsh[ 'ylabel']
-
-
-    color = 2
-    if 'colour' in hsh:
-        color = hsh[ 'colour']
-        del hsh[ 'colour']
-    if 'color' in hsh:
-        color = hsh[ 'color']
-        del hsh[ 'color']
-
-    at = "(1,1,1)"
-    if 'at' in hsh: 
-        at = hsh[ 'at']
-        del hsh[ 'at']
-
-    comment = "A comment"
-    if 'comment' in hsh: 
-        comment = hsh[ 'comment']
-        del hsh[ 'comment']
-
-    x = None
-    if 'x' in hsh: 
-        x = hsh[ 'x'][:]
-        del hsh[ 'x']
-    y = None
-    if 'y' in hsh: 
-        y = hsh[ 'y'][:]
-        del hsh[ 'y']
-
-    if spectraInstalled and useSpectra:
-        nodelete = False
-        if 'NoDelete' in hsh: 
-            nodelete = hsh[ 'NoDelete']
-            del hsh[ 'nodelete']
-
-        if hsh:
-            raise ValueError( "graPyspIfs.Scan (Spectra): dct not empty %s" % str( hsh))
-        scan = Spectra.SCAN( name = name,
-                             start = xMin, 
-                             stop = xMax,
-                             np = nPts,
-                             xlabel = xLabel,
-                             ylabel = yLabel,
-                             comment = comment,
-                             NoDelete = nodelete,
-                             colour = color,
-                             at = at)
-        if x is not None: 
-            for i in range( len( x)): 
-                scan.setX( i, x[i])
-        if y is not None: 
-            for i in range( len(y)): 
-                scan.setY( i, y[i])
-    else:
-
-        if type(color) == int:
-            utils.colorSpectraToPysp( color)
-
-        reUse = False
-        if 'reUser' in hsh: 
-            reUse = hsh[ 'reUse']
-            del hsh[ 'reUse']
-
-        motorNameList = None
-        if 'motorNameList' in hsh:
-            motorNameList = hsh[ 'motorNameList'][:]
-            del hsh[ 'motorNameList']
-        logWidget = None
-        if 'logWidget' in hsh:
-            logWidget = hsh[ 'logWidget']
-            del hsh[ 'logWidget']
+        # print( "+++graPyspIfc.Scan: %s" % repr( kwargs))
+        if name is None:
+            raise ValueError( "graPyspIfc.Scan: 'name' is missing")
         
+        self.name = name
 
-        if hsh:
-            raise ValueError( "graPyspIfs.Scan (PySPectra): dct not empty %s" % str( hsh))
+        if 'start' in kwargs: 
+            xMin = kwargs[ 'start']
+            del kwargs[ 'start']
+        elif 'xMin' in kwargs: 
+            xMin = kwargs[ 'xMin']
+            del kwargs[ 'xMin']
+        elif 'x' in kwargs: 
+            xMin = kwargs[ 'x'][0]
+        elif 'y' in kwargs: 
+            xMin = 0.
+        else: 
+            xMin = 0.
 
-        scan = PySpectra.Scan( name = name, 
-                               xMin = xMin, 
-                               xMax = xMax,
-                               nPts = nPts,
-                               xLabel = xLabel, 
-                               yLabel = yLabel,
-                               color = color,
-                               autoscaleX = True, 
-                               autoscaleY = True,
-                               motorNameList = motorNameList,
-                               logWidget = logWidget,
-                               reUser = reUse, 
-                               x = x, 
-                               y = y, 
-                               at = at)
+        if 'stop' in kwargs: 
+            xMax = kwargs[ 'stop']
+            del kwargs[ 'stop']
+        elif 'xMax' in kwargs: 
+            xMax = kwargs[ 'xMax']
+            del kwargs[ 'xMax']
+        elif 'x' in kwargs: 
+            xMax = kwargs[ 'x'][-1]
+        elif 'y' in kwargs: 
+            xMax = float( len( kwargs[ 'y']) - 1)
+        else: 
+            xMax = 10.
+        
+        nPts = 101
+        if 'np' in kwargs:
+            nPts = kwargs[ 'np']
+            del kwargs[ 'np']
+        elif 'nPts' in kwargs:  
+            nPts = kwargs[ 'nPts']
+            del kwargs[ 'nPts']
+        elif 'x' in kwargs: 
+            nPts = len( kwargs[ 'x'])
+        elif 'y' in kwargs: 
+            nPts = len( kwargs[ 'y'])
+        else: 
+            nPts = 101
 
-        scan.addText( text = comment, 
-                      x = 0.95, y = 0.95, 
-                      hAlign = 'right', vAlign = 'top', 
-                      color = 'black', fontSize = None)
-            
-    return scan
+        if 'yMin' in kwargs: 
+            yMin = kwargs[ 'yMin']
+            del kwargs[ 'yMin']
+
+        if 'yMax' in kwargs: 
+            yMax = kwargs[ 'yMax']
+            del kwargs[ 'yMax']
+
+        xLabel = 'x-axis'
+        if 'xlabel' in kwargs:
+            xLabel = kwargs[ 'xlabel']
+            del kwargs[ 'xlabel']
+        if 'xLabel' in kwargs:
+            xLabel = kwargs[ 'xLabel']
+            del kwargs[ 'xLabel']
+
+        yLabel = 'y-axis'
+        if 'ylabel' in kwargs:
+            yLabel = kwargs[ 'ylabel']
+            del kwargs[ 'ylabel']
+        if 'yLabel' in kwargs:
+            yLabel = kwargs[ 'yLabel']
+            del kwargs[ 'yLabel']
+
+        lineColor = 2
+        if 'colour' in kwargs:
+            lineColor = kwargs[ 'colour']
+            del kwargs[ 'colour']
+        if 'color' in kwargs:
+            lineColor = kwargs[ 'color']
+            del kwargs[ 'color']
+        if 'lineColor' in kwargs:
+            lineColor = kwargs[ 'lineColor']
+            del kwargs[ 'lineColor']
+
+        at = None
+        if 'at' in kwargs: 
+            at = kwargs[ 'at']
+            del kwargs[ 'at']
+
+        #
+        # do not use 'x' here because this causes recursion in the Scan()
+        # call caused by __getattr__()
+        #
+        xLocal = None
+        if 'x' in kwargs: 
+            xLocal = kwargs[ 'x'][:]
+            del kwargs[ 'x']
+        yLocal = None
+        if 'y' in kwargs: 
+            yLocal = kwargs[ 'y'][:]
+            del kwargs[ 'y']
+        #
+        # Spectra
+        #
+        if spectraInstalled and useSpectra:
+            reUse = False
+            if 'NoDelete' in kwargs: 
+                reUse = kwargs[ 'NoDelete']
+                del kwargs[ 'nodelete']
+
+            if kwargs:
+                raise ValueError( "graPyspIfs.Scan (Spectra): dct not empty %s" % str( kwargs))
+
+            colorGra = utils.colorPyspToSpectra( lineColor)
+            self.scan = Spectra.SCAN( name = name,
+                                      start = xMin, 
+                                      stop = xMax,
+                                      np = nPts,
+                                      xlabel = xLabel,
+                                      ylabel = yLabel,
+                                      NoDelete = reUse,
+                                      lineColour = colorGra,
+                                      at = at)
+            #
+            # set x and y to values provided by the user or to 
+            # some default, x: linspace(), y: zeros()
+            #
+            if xLocal is not None: 
+                for i in range( len( xLocal)): 
+                    self.scan.setX( i, xLocal[i])
+            else: 
+                x = np.linspace( xMin, xMax, nPts)
+                for i in range( len( x)): 
+                    self.scan.setX( i, x[i])
+                
+            if yLocal is not None: 
+                for i in range( len( yLocal)): 
+                    self.scan.setY( i, yLocal[i])
+            else: 
+                y = np.zeros( nPts, np.float64)
+                for i in range( len( y)): 
+                    self.scan.setY( i, y[i])
+
+        else:
+            #
+            # PySpectra
+            #
+            if type(lineColor) == int:
+                lineColor = utils.colorSpectraToPysp( lineColor)
+
+            reUse = False
+            if 'reUse' in kwargs: 
+                reUse = kwargs[ 'reUse']
+                del kwargs[ 'reUse']
+
+            motorNameList = None
+            if 'motorNameList' in kwargs:
+                motorNameList = kwargs[ 'motorNameList'][:]
+                del kwargs[ 'motorNameList']
+
+            logWidget = None
+            if 'logWidget' in kwargs:
+                logWidget = kwargs[ 'logWidget']
+                del kwargs[ 'logWidget']
+        
+            if kwargs:
+                raise ValueError( "graPyspIfs.Scan (PySPectra): dct not empty %s" % str( kwargs))
+
+            self.scan = PySpectra.Scan( name = name, 
+                                        xMin = xMin, 
+                                        xMax = xMax,
+                                        nPts = nPts,
+                                        xLabel = xLabel, 
+                                        yLabel = yLabel,
+                                        lineColor = lineColor,
+                                        autoscaleX = True, 
+                                        autoscaleY = True,
+                                        motorNameList = motorNameList,
+                                        logWidget = logWidget,
+                                        reUse = reUse, 
+                                        x = xLocal, 
+                                        y = yLocal, 
+                                        at = at)
+
+        return 
+
+    def display( self): 
+        self.scan.display()
+        return 
+
+    #
+    # recursion can be avoided by calling the super class of scan.
+    # hence, Scan needs to be an object
+    #
+    def __setattr__( self, name, value): 
+        #print( "graPyspIfc.Scan.__setattr__: name %s, value %s" % (name, repr(value)))
+        if name in [ 'x']:
+            if value is None: 
+                return 
+            if spectraInstalled and useSpectra:
+                for i in range( len( value)): 
+                    self.scan.setX( i, value[i])
+            else: 
+                self.scan.x = value[:]
+        if name in [ 'y']:
+            if value is None: 
+                return 
+            if spectraInstalled and useSpectra:
+                for i in range( len( value)): 
+                    self.scan.setY( i, value[i])
+            else: 
+                self.scan.y = value[:]
+        elif name in GQE.ScanAttrsPublic or \
+             name in GQE.ScanAttrsPrivate or \
+             name in [ 'scan']: 
+            super( Scan, self).__setattr__(name, value)
+        else: 
+            raise ValueError( "graPyspIfc.Scan.__setattr__: %s unknown attribute %s" % ( self.name, name))
+        return 
+
+    def __getattr__( self, name):
+        #print( "graPyspIfc.Scan.__getattr__() %s" % name)
+        argout = None
+        if name == 'x': 
+            if spectraInstalled and useSpectra:
+                argout = np.zeros( self.scan.np, np.float64)
+                for i in range( self.scan.np): 
+                    argout[i] = self.scan.getX( i)
+            else: 
+                argout = self.scan.x[:]
+        elif name == 'y': 
+            if spectraInstalled and useSpectra:
+                argout = np.zeros( self.scan.np, np.float64)
+                for i in range( self.scan.np): 
+                    argout[i] = self.scan.getY( i)
+            else: 
+                argout = self.scan.y[:]
+        return argout
 
 def setComment( line): 
     if spectraInstalled and useSpectra:

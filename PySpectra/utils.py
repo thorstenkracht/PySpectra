@@ -67,14 +67,41 @@ def colorSpectraToPysp( color):
         color = 'blue'
     elif color == 5:
         color = 'cyan'
-    elif color == 5:
-        color = 'cyan'
     elif color == 6:
         color = 'yellow'
     elif color == 7:
         color = 'magenta'
     else: 
         color = 'black'
+
+    return color
+
+def colorPyspToSpectra( color): 
+    '''
+    this functions translates color names (a la PySpectra) to number (a la Spectra)
+    '''
+    #
+    # 
+    #
+    if type(color) is int:
+        return color
+
+    if color == 'black':
+        color = 1
+    elif color == 'red':
+        color = 2
+    elif color == 'green':
+        color = 3
+    elif color == 'blue':
+        color = 4
+    elif color == 'cyan':
+        color = 5
+    elif color == 'yellow':
+        color = 6
+    elif color == 'magenta':
+        color = 7
+    else: 
+        color = 1
 
     return color
 

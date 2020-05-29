@@ -26,21 +26,23 @@ _scanInfo = None
 #
 _wsViewportFixed = False
 
-_ScanAttrsPublic = [ 'at', 'autoscaleX', 'autoscaleY', 'colSpan', 'currentIndex', 
-                     'dType', 'doty', 'fileName', 
-                     'flagDisplayVLines', 'flagMCA', 
-                     'lastIndex', 
-                     'nPts', 'name', 'ncol', 'nplot', 'nrow', 'overlay', 'useTargetWindow', 
+ScanAttrsPublic = [ 'at', 'autoscaleX', 'autoscaleY', 'colSpan', 'currentIndex', 
+                    'dType', 'doty', 'fileName', 
+                    'flagDisplayVLines', 'flagMCA', 
+                    'lastIndex', 
+                    'lineColor', 'lineStyle', 'lineWidth', 
+                    'logWidget', 'motorNameList', 
+                    'nPts', 'name', 'ncol', 'nplot', 'nrow', 'overlay', 
+                    'reUse', 
                      'showGridX', 'showGridY', 
-                     'lineColor', 'lineStyle', 'lineWidth', 
-                     'logWidget', 'motorNameList', 
                      'symbol', 'symbolColor', 'symbolSize', 
+                    'useTargetWindow', 
                      'textList', 'textOnly', 'viewBox', 
                      'x', 'xLog', 'xMax', 'xMin', 
                      'xLabel', 'y', 'yLabel', 'yLog', 'yMin', 'yMax',
                      'yTicksVisible'] 
 
-_ScanAttrsPrivate = [ 'attributeWidget', 'infLineLeft', 'infLineRight', 'infLineMouseX', 'infLineMouseY', 
+ScanAttrsPrivate = [ 'attributeWidget', 'infLineLeft', 'infLineRight', 'infLineMouseX', 'infLineMouseY', 
                       'arrowCurrent', 'labelArrowCurrent', 'arrowSetPoint', 'arrowMisc',    
                       'arrowInvisibleLeft', 'arrowInvisibleRight', 
                       'mousePrepared', 'mouseLabel', 'cb_mouseLabel', 
@@ -213,6 +215,13 @@ class Scan( object):
         if name is None:
             raise ValueError( "GQE.Scan: 'name' is missing")
         #
+        # in graPyspIfc.py some keywords are set to None
+        # this makes live easier when tailoring the interface
+        #
+        for key in list( kwargs.keys()): 
+            if kwargs[ key] is None: 
+                del kwargs[ key]
+        #
         #
         #
         self.textOnly = False
@@ -249,8 +258,7 @@ class Scan( object):
         # if 'x' and 'y' are supplied the scan is created using data
         # Note: a file name may be supplied, e.g. if the scan comes from a file.
         #
-        elif ('x' in kwargs and kwargs[ 'x'] is not None) or \
-             ('y' in kwargs and kwargs[ 'y'] is not None):
+        elif 'x' in kwargs or 'y' in kwargs:
             self._createScanFromData( kwargs)
         #    
         # 'fileName': data are read from a file
@@ -291,8 +299,8 @@ class Scan( object):
     #
     def __setattr__( self, name, value): 
         #print( "GQE.Scan.__setattr__: name %s, value %s" % (name, value))
-        if name in _ScanAttrsPublic or \
-           name in _ScanAttrsPrivate: 
+        if name in ScanAttrsPublic or \
+           name in ScanAttrsPrivate: 
             super( Scan, self).__setattr__(name, value)
         else: 
             raise ValueError( "GQE.Scan.__setattr__: %s unknown attribute %s" % ( self.name, name))
@@ -390,6 +398,12 @@ class Scan( object):
         if len( self.x) == 0:
             raise ValueError( "GQE.Scan._createScanFromData: %s len(x) == 0" % (self.name))
 
+        if 'nPts' in kwargs: 
+            if kwargs[ 'nPts'] != len( self.x): 
+                raise ValueError( "GQE.Scan._createScanFromData: %s, nPts %d != len(x)" % 
+                                  (self.name, kwargs[ 'nPts'], len( self.x)))
+            del kwargs[ 'nPts']
+                
         self.setLimits()
 
         self.dType = type( self.x[0])
@@ -578,8 +592,8 @@ class Scan( object):
                 if self.at[0] == scan.at[0] and \
                    self.at[1] == scan.at[1] and \
                    self.at[2] == scan.at[2]:
-                    raise ValueError( "GQE.Scan.setAttr: %s is already at %s %s" % 
-                                      (scan.name, str( self.at), self.name))
+                    raise ValueError( "GQE.Scan.setAttr: trouble with %s, %s is already at %s" % 
+                                      (self.name, scan.name, str( self.at)))
         return 
 
     def setLimits( self): 
@@ -1447,7 +1461,7 @@ def _infoScan( scan):
     scanAttrsPrinted.append( 'symbolSize')
     scanAttrsPrinted.append( 'symbol')
 
-    for attr in _ScanAttrsPublic:
+    for attr in ScanAttrsPublic:
         if attr in scanAttrsPrinted: 
             continue
         if attr == 'x' or attr == 'y':
