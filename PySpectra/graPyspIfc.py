@@ -35,7 +35,7 @@ def setSpectra( flag):
         useSpectra = True
     else:
         useSpectra = False
-    return 
+    return True
 
 def getSpectra(): 
     return useSpectra
@@ -50,9 +50,9 @@ def cls():
 def close(): 
 
     if spectraInstalled and useSpectra:
-        pass
+        argout = True
     else:
-        PySpectra.close()
+        argout = PySpectra.close()
     return 
 
 def createHardCopy( printer = None, flagPrint = False, format = 'DINA4'):
@@ -81,23 +81,31 @@ def deleteScan( scan):
     '''
     if spectraInstalled and useSpectra:
         del scan
+        argout = True
     else: 
-        PySpectra.delete( [scan.name])
+        argout = PySpectra.delete( [scan.name])
         PySpectra.cls()
 
-    return 
+    return argout
 
 def delete():
     '''
     delete all internal data
     '''
     if spectraInstalled and useSpectra:
-        Spectra.gra_command("delete *.*")
+        argout = Spectra.gra_command("delete *.*")
     else: 
         PySpectra.cls()
-        PySpectra.delete()
+        argout = PySpectra.delete()
 
-    return 
+    return argout
+
+def display(): 
+    if spectraInstalled and useSpectra:
+        argout = Spectra.gra_command("display")
+    else: 
+        argout = PySpectra.display()
+    return argout
 
 def getGqe( name): 
     '''
@@ -112,69 +120,153 @@ def Scan( **hsh):
     '''
     create a scan and return it
     '''
-    if spectraInstalled and useSpectra:
-        scan = Spectra.SCAN( name = hsh[ 'name'],
-                             start = hsh[ 'start'], 
-                             stop = hsh[ 'stop'],
-                             np = hsh[ 'np'],
-                             xlabel = hsh[ 'xlabel'],
-                             ylabel = hsh[ 'ylabel'],
-                             comment = hsh[ 'comment'],
-                             NoDelete = hsh[ 'NoDelete'],
-                             colour = hsh[ 'colour'],
-                             at = hsh[ 'at'])
-    else:
-        if not 'name' in hsh:
-            raise ValueError( "graPyspIfc.Scan: 'name' is missing")
+    if not 'name' in hsh:
+        raise ValueError( "graPyspIfc.Scan: 'name' is missing")
 
-        name = hsh[ 'name']
-        xMin = 0
-        if 'start' in hsh:
-            xMin = hsh[ 'start']
+    name = hsh[ 'name']
+    del hsh[ 'name']
+
+    if 'start' in hsh: 
+        xMin = hsh[ 'start']
+        del hsh[ 'start']
+    elif 'xMin' in hsh: 
+        xMin = hsh[ 'xMin']
+        del hsh[ 'xMin']
+    elif 'x' in hsh: 
+        xMin = hsh[ 'x'][0]
+    elif 'y' in hsh: 
+        xMin = 0.
+    else: 
+        xMin = 0.
+
+    if 'stop' in hsh: 
+        xMax = hsh[ 'stop']
+        del hsh[ 'stop']
+    elif 'xMax' in hsh: 
+        xMax = hsh[ 'xMax']
+        del hsh[ 'xMax']
+    elif 'x' in hsh: 
+        xMax = hsh[ 'x'][-1]
+    elif 'y' in hsh: 
+        xMax = float( len( hsh[ 'y']) - 1)
+    else: 
         xMax = 10.
-        if 'stop' in hsh:
-            xMax = hsh[ 'stop']
+
+    nPts = 101
+    if 'np' in hsh:
+        nPts = hsh[ 'np']
+        del hsh[ 'np']
+    elif 'nPts' in hsh:  
+        nPts = hsh[ 'nPts']
+        del hsh[ 'nPts']
+    elif 'x' in hsh: 
+        nPts = len( hsh[ 'x'])
+    elif 'y' in hsh: 
+        nPts = len( hsh[ 'y'])
+    else: 
         nPts = 101
-        if 'np' in hsh:
-            nPts = hsh[ 'np']
-        xLabel = 'x-axis'
-        if 'xlabel' in hsh:
-            xLabel = hsh[ 'xlabel']
-        yLabel = 'y-axis'
-        if 'ylabel' in hsh:
-            yLabel = hsh[ 'ylabel']
-        color = 2
-        if 'colour' in hsh:
-            color = hsh[ 'colour']
-        if 'color' in hsh:
-            color = hsh[ 'color']
+
+    xLabel = 'x-axis'
+    if 'xlabel' in hsh:
+        xLabel = hsh[ 'xlabel']
+        del hsh[ 'xlabel']
+    yLabel = 'y-axis'
+    if 'ylabel' in hsh:
+        yLabel = hsh[ 'ylabel']
+        del hsh[ 'ylabel']
+
+
+    color = 2
+    if 'colour' in hsh:
+        color = hsh[ 'colour']
+        del hsh[ 'colour']
+    if 'color' in hsh:
+        color = hsh[ 'color']
+        del hsh[ 'color']
+
+    at = "(1,1,1)"
+    if 'at' in hsh: 
+        at = hsh[ 'at']
+        del hsh[ 'at']
+
+    comment = "A comment"
+    if 'comment' in hsh: 
+        comment = hsh[ 'comment']
+        del hsh[ 'comment']
+
+    x = None
+    if 'x' in hsh: 
+        x = hsh[ 'x'][:]
+        del hsh[ 'x']
+    y = None
+    if 'y' in hsh: 
+        y = hsh[ 'y'][:]
+        del hsh[ 'y']
+
+    if spectraInstalled and useSpectra:
+        nodelete = False
+        if 'NoDelete' in hsh: 
+            nodelete = hsh[ 'NoDelete']
+            del hsh[ 'nodelete']
+
+        if hsh:
+            raise ValueError( "graPyspIfs.Scan (Spectra): dct not empty %s" % str( hsh))
+        scan = Spectra.SCAN( name = name,
+                             start = xMin, 
+                             stop = xMax,
+                             np = nPts,
+                             xlabel = xLabel,
+                             ylabel = yLabel,
+                             comment = comment,
+                             NoDelete = nodelete,
+                             colour = color,
+                             at = at)
+        if x is not None: 
+            for i in range( len( x)): 
+                scan.setX( i, x[i])
+        if y is not None: 
+            for i in range( len(y)): 
+                scan.setY( i, y[i])
+    else:
+
         if type(color) == int:
             utils.colorSpectraToPysp( color)
 
+        reUse = False
+        if 'reUser' in hsh: 
+            reUse = hsh[ 'reUse']
+            del hsh[ 'reUse']
+
         motorNameList = None
         if 'motorNameList' in hsh:
-            motorNameList = hsh[ 'motorNameList']
+            motorNameList = hsh[ 'motorNameList'][:]
+            del hsh[ 'motorNameList']
         logWidget = None
         if 'logWidget' in hsh:
             logWidget = hsh[ 'logWidget']
-        at = "(1,1,1)"
-        if 'at' in hsh: 
-            at = hsh[ 'at']
+            del hsh[ 'logWidget']
         
-        scan = PySpectra.Scan( name = name, 
-                         xMin = xMin, 
-                         xMax = xMax,
-                         nPts = nPts,
-                         xLabel = xLabel, 
-                         yLabel = yLabel,
-                         color = color,
-                         autoscaleX = True, 
-                         autoscaleY = True,
-                         motorNameList = motorNameList,
-                         logWidget = logWidget,
-                         at = at)
 
-        scan.addText( text = hsh[ 'comment'], 
+        if hsh:
+            raise ValueError( "graPyspIfs.Scan (PySPectra): dct not empty %s" % str( hsh))
+
+        scan = PySpectra.Scan( name = name, 
+                               xMin = xMin, 
+                               xMax = xMax,
+                               nPts = nPts,
+                               xLabel = xLabel, 
+                               yLabel = yLabel,
+                               color = color,
+                               autoscaleX = True, 
+                               autoscaleY = True,
+                               motorNameList = motorNameList,
+                               logWidget = logWidget,
+                               reUser = reUse, 
+                               x = x, 
+                               y = y, 
+                               at = at)
+
+        scan.addText( text = comment, 
                       x = 0.95, y = 0.95, 
                       hAlign = 'right', vAlign = 'top', 
                       color = 'black', fontSize = None)
@@ -182,23 +274,52 @@ def Scan( **hsh):
     return scan
 
 def setComment( line): 
-    return PySpectra.setComment( line) 
+    if spectraInstalled and useSpectra:
+        argout = None
+    else: 
+        argout = PySpectra.setComment( line) 
+    return argout
 
 def getComment( line): 
-    return PySpectra.getComment()
+    if spectraInstalled and useSpectra:
+        argout = "NoComment"
+    else: 
+        argout = PySpectra.getComment() 
+    return argout 
 
 def setTitle( line): 
-    return PySpectra.setTitle( line) 
+    if spectraInstalled and useSpectra:
+        argout = None
+    else: 
+        argout = PySpectra.setTitle( line) 
+    return argout
 
 def getTitle( line): 
-    return PySpectra.getTitle()
-
-def writeFile( nameGQE):
-
     if spectraInstalled and useSpectra:
-        Spectra.gra_command( "write/fio %s" % nameGQE)
+        argout = None
+    else: 
+        argout = PySpectra.getTitle()
+    return argout
+
+def write( names = None):
+    """
+    write a .fio file
+
+    names is None:        PySpectra only
+    type( names) is list: PySpectra only
+    type( names) is str:  PySpectra, Spectra
+    """
+    if spectraInstalled and useSpectra:
+        if names is None: 
+            raise ValueError( "graPyspIfc.write: expecting a name")
+        Spectra.gra_command( "write/fio %s" % names)
     else:
-        PySpectra.write( [nameGQE])
+        if names is None: 
+            PySpectra.write()
+        elif type( names) is list: 
+            PySpectra.write( names)
+        else:
+            PySpectra.write( [names])
 
     return 
     

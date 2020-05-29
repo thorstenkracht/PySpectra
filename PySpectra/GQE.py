@@ -139,11 +139,20 @@ A value of (0,0) sets the upper-left corner
 class Scan( object):
     '''
     A Scan contains 2 arrays, x and y, and graphics attributes
+      x and y can be numpy arrays or python lists
 
     PySpectra.Scan( name = 'name', filename = 'test.fio', x = 1, y = 2)
       read the data from a file
+
     PySpectra.Scan( name = 'name', x = xArr, y = yArr)
       pass the data as arrays
+
+    PySpectra.Scan( name = 'name', x = xArr)
+      y values assumed to be zero
+
+    PySpectra.Scan( name = 'name', y = yArr)
+      x values assumed to channel numbers
+
     PySpectra.Scan( name = 'name', xMin = 0., xMax = 10., nPts = 101)
     PySpectra.Scan( name = 'name')
       the same as PySpectra.Scan( name = 'name', xMin = 0., xMax = 10., nPts = 101)
@@ -229,9 +238,6 @@ class Scan( object):
             del kwargs[ 'reUse'] 
             
         self.name = name
-        if 'x' in kwargs and 'y' not in kwargs or \
-           'x' not in kwargs and 'y' in kwargs:
-            raise ValueError( "GQE.Scan.__init__(): if 'x' or 'y' then both have to be supplied")
         #
         # textOnly scans have no data, consist of Texts( in textList) only
         #
@@ -243,8 +249,8 @@ class Scan( object):
         # if 'x' and 'y' are supplied the scan is created using data
         # Note: a file name may be supplied, e.g. if the scan comes from a file.
         #
-        elif 'x' in kwargs and _isArrayLike( kwargs[ 'x']) and \
-             'y' in kwargs and _isArrayLike( kwargs[ 'y']):
+        elif ('x' in kwargs and kwargs[ 'x'] is not None) or \
+             ('y' in kwargs and kwargs[ 'y'] is not None):
             self._createScanFromData( kwargs)
         #    
         # 'fileName': data are read from a file
@@ -360,15 +366,26 @@ class Scan( object):
         creates a scan using x, y
         '''
 
-        if 'y' not in kwargs:
-            raise ValueError( "GQE.Scan._createScanFromData: 'y' not supplied")
+        
+        if 'y' not in kwargs and 'x' not in kwargs: 
+            raise ValueError( "GQE.Scan._createScanFromData: neither 'x' nor 'y' is supplied")
 
-        self.x = _numpy.copy( kwargs[ 'x'])
-        del kwargs[ 'x']
-        self.y = _numpy.copy( kwargs[ 'y'])
-        del kwargs[ 'y']
-        if len( self.x) != len( self.y):
-            raise ValueError( "GQE.Scan._createScanFromData: 'x' and 'y' differ in length %d (x) %d (y)" % (len( self.x), len( self.y)))
+        if 'x' not in kwargs: 
+            self.x = _numpy.linspace( 0., len( kwargs[ 'y']) - 1, len( kwargs[ 'y']))
+        else: 
+            self.x = _numpy.copy( kwargs[ 'x'])
+            del kwargs[ 'x']
+
+        if 'y' not in kwargs: 
+            self.y = _numpy.zeros( len( self.x), _numpy.float64)
+        else: 
+            self.y = _numpy.copy( kwargs[ 'y'])
+            del kwargs[ 'y']
+
+        if self.x is not None and self.y is not None: 
+            if len( self.x) != len( self.y):
+                raise ValueError( "GQE.Scan._createScanFromData: 'x' and 'y' differ in length %d (x) %d (y)" % 
+                                  (len( self.x), len( self.y)))
 
         if len( self.x) == 0:
             raise ValueError( "GQE.Scan._createScanFromData: %s len(x) == 0" % (self.name))
