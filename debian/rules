@@ -1,0 +1,17 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE=1
+export PYBUILD_NAME=lavue
+
+PYTHON2_VERSIONS = $(shell pyversions -r)
+PYTHON3_VERSIONS = $(shell py3versions -r)
+
+export DH_ALWAYS_EXCLUDE=.pyc:.pyo
+export PYBUILD_NAME=pyspectra
+
+%:
+	dh $@ --with python2,python3  --buildsystem=pybuild
+
+override_dh_auto_test:
+        #do nothing here
+

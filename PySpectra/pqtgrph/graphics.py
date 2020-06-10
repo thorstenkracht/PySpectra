@@ -304,7 +304,7 @@ def processEventsLoop( timeOut = None):
     loops over QApp.processEvents until a <return> is entered
     '''
     if timeOut is None:
-        print "\nPress <enter> to continue ",
+        print( "\nPress <enter> to continue ",)
     startTime = _time.time()
     while True:
         _time.sleep(0.01)
@@ -320,7 +320,7 @@ def processEventsLoop( timeOut = None):
         key = utils.inkey()        
         if key == 10:
             break
-    print ""
+    print( "")
 
 def processEvents(): 
     '''
@@ -862,10 +862,10 @@ def _isCellTaken( row, col):
             if item.getItem( row, col) is not None:
                 for elm in item.items:
                     if type( elm) == _pyqtgraph.graphicsItems.LabelItem.LabelItem:
-                        print "pqt_graphics.isCellTaken (%d, %d) %s" % (row, col, elm.text)
+                        print( "pqt_graphics.isCellTaken (%d, %d) %s" % (row, col, elm.text))
                         pass
                     else: 
-                        print "pqt_graphics.isCellTaken (%d, %d) %s " % (row, col, repr( elm))
+                        print( "pqt_graphics.isCellTaken (%d, %d) %s " % (row, col, repr( elm)))
                         pass
                 argout = True
                 break
@@ -1186,10 +1186,10 @@ def _displayImages( flagDisplaySingle, nameList = None):
             if imageGqe.log:
                 try:
                     imageGqe.img.setImage( _numpy.log( imageGqe.data))
-                except Exception, e: 
+                except Exception as e: 
                     imageGqe.log = False
-                    print "pqt_graphics: log failed"
-                    print repr( e)
+                    print( "pqt_graphics: log failed")
+                    print( repr( e))
                     return 
             else:
                 if imageGqe.modulo != -1:
@@ -1200,10 +1200,10 @@ def _displayImages( flagDisplaySingle, nameList = None):
             if imageGqe.log:
                 try:
                     imageGqe.img.setImage( _numpy.log( imageGqe.data))
-                except Exception, e: 
+                except Exception as e: 
                     imageGqe.log = False
-                    print "pqt_graphics: log failed"
-                    print repr( e)
+                    print( "pqt_graphics: log failed")
+                    print( repr( e))
                     return 
             else:
                 if imageGqe.modulo != -1:
@@ -1226,9 +1226,9 @@ def _displayImages( flagDisplaySingle, nameList = None):
             lut = _numpy.copy( lutTemp)
 
             imageGqe.img.setLookupTable( lut)
-        except Exception, e: 
-            print "pqt_graphics: problem accessing color map, using default"
-            print repr( e)
+        except Exception as e: 
+            print( "pqt_graphics: problem accessing color map, using default")
+            print( repr( e))
             lut = _numpy.zeros((256,3), dtype=_numpy.ubyte)
             lut[:128,0] = _numpy.arange(0,255,2)
             lut[128:,0] = 255
@@ -1308,9 +1308,9 @@ def _createPlotItem( gqe, nameList):
                                                        'bottom': _SmartFormat(orientation='bottom')})
 
             
-    except Exception, e:
-        print "graphics.createPlotItem: caught exception, row", row, "col", col, "colspan", gqe.colSpan
-        print repr( e)
+    except Exception as e:
+        print( "graphics.createPlotItem: caught exception, row", row, "col", col, "colspan", gqe.colSpan)
+        print( repr( e))
         raise ValueError( "graphics.createPlotItem, throwing exception")
 
     gqe.plotItem = plotItem 
@@ -1534,9 +1534,9 @@ def display( nameList = None):
         if scan.plotItem is None:
             try:
                 _createPlotItem( scan, nameList)
-            except ValueError, e:
-                print "graphics.display", repr( e)
-                print "graphics.display: exception from createPlotItem"
+            except ValueError as e:
+                print( "graphics.display", repr( e))
+                print( "graphics.display: exception from createPlotItem")
                 return 
             if not scan.textOnly:
                 if scan.symbolColor.upper() == 'NONE':

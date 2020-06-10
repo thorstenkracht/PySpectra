@@ -3,7 +3,7 @@
 a module containing 
 derivative(), antiderivative(), yToMinusY()
 '''
-import GQE 
+import PySpectra.GQE as GQE
 
 from numpy import diff as _diff
 from scipy import integrate as _integrate
@@ -764,7 +764,7 @@ def _smoothy(y, sw, ends):
         sw = 2
     # ---
     if debug == 1:
-        print sw, ends
+        print( "%s, %s" %  (str(sw), str(ends)))
     # --- check/control variable 'hw' (smoothing halfwidth)
     if sw % 2 == 0:  
         hw = int(sw/2)

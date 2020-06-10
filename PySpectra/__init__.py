@@ -65,8 +65,8 @@ In [2]: PySpectra.ipython.startup?
 #except: 
 #    from pqtgrph.graphics import *
  
-from pqtgrph.graphics import *
-from mtpltlb.graphics import createPDF
+from .pqtgrph.graphics import *
+from .mtpltlb.graphics import createPDF
 
 from PySpectra.GQE import *
 from PySpectra.ipython.ifc import *

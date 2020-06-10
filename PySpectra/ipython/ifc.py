@@ -175,7 +175,7 @@ def command( line):
             argout = _y2my( lineRest)
         else:
             raise ValueError( "ifc.command: failed to identify %s" % line)
-    except Exception, e: 
+    except Exception as e: 
         print( "ifc.command: error for '%s'" % line)
         print( "ifc.command: %s" % repr( e))
         argout = repr( e)

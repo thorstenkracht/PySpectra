@@ -13,7 +13,7 @@ import PySpectra
 import PySpectra.examples.exampleCode
 import PySpectra.definitions as definitions
 import PySpectra.calc as calc
-import mtpltlb.graphics as mpl_graphics # for pdf output
+import PySpectra.mtpltlb.graphics as mpl_graphics # for pdf output
 
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
