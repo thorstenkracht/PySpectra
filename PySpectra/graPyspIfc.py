@@ -112,141 +112,138 @@ class Scan( object):
     """
     def __init__( self, name = None, **kwargs):
 
-        # print( "+++graPyspIfc.Scan: %s" % repr( kwargs))
+        #print( "+++graPyspIfc.Scan: %s" % repr( kwargs))
         if name is None:
             raise ValueError( "graPyspIfc.Scan: 'name' is missing")
         
         self.name = name
 
+        DctOut = {}
+
         if 'start' in kwargs: 
-            xMin = kwargs[ 'start']
+            DctOut[ 'xMin'] = kwargs[ 'start']
             del kwargs[ 'start']
         elif 'xMin' in kwargs: 
-            xMin = kwargs[ 'xMin']
+            DctOut[ 'xMin'] = kwargs[ 'xMin']
             del kwargs[ 'xMin']
         elif 'x' in kwargs: 
-            xMin = kwargs[ 'x'][0]
+            DctOut[ 'xMin'] = kwargs[ 'x'][0]
         elif 'y' in kwargs: 
-            xMin = 0.
+            DctOut[ 'xMin'] = 0.
         else: 
-            xMin = 0.
+            DctOut[ 'xMin'] = 0.
 
         if 'stop' in kwargs: 
-            xMax = kwargs[ 'stop']
+            DctOut[ 'xMax'] = kwargs[ 'stop']
             del kwargs[ 'stop']
         elif 'xMax' in kwargs: 
-            xMax = kwargs[ 'xMax']
+            DctOut[ 'xMax'] = kwargs[ 'xMax']
             del kwargs[ 'xMax']
         elif 'x' in kwargs: 
-            xMax = kwargs[ 'x'][-1]
+            DctOut[ 'xMax'] = kwargs[ 'x'][-1]
         elif 'y' in kwargs: 
-            xMax = float( len( kwargs[ 'y']) - 1)
+            DctOut[ 'xMax'] = float( len( kwargs[ 'y']) - 1)
         else: 
-            xMax = 10.
+            DctOut[ 'xMax'] = 10.
         
-        nPts = 101
         if 'np' in kwargs:
-            nPts = kwargs[ 'np']
+            DctOut[ 'nPts'] = kwargs[ 'np']
             del kwargs[ 'np']
         elif 'nPts' in kwargs:  
-            nPts = kwargs[ 'nPts']
+            DctOut[ 'nPts'] = kwargs[ 'nPts']
             del kwargs[ 'nPts']
         elif 'x' in kwargs: 
-            nPts = len( kwargs[ 'x'])
+            DctOut[ 'nPts'] = len( kwargs[ 'x'])
         elif 'y' in kwargs: 
-            nPts = len( kwargs[ 'y'])
+            DctOut[ 'nPts'] = len( kwargs[ 'y'])
         else: 
-            nPts = 101
+            DctOut[ 'nPts'] = 101
 
         if 'yMin' in kwargs: 
-            yMin = kwargs[ 'yMin']
+            DctOut[ 'yMin'] = kwargs[ 'yMin']
             del kwargs[ 'yMin']
 
         if 'yMax' in kwargs: 
-            yMax = kwargs[ 'yMax']
+            DctOut[ 'yMax'] = kwargs[ 'yMax']
             del kwargs[ 'yMax']
 
-        xLabel = 'x-axis'
         if 'xlabel' in kwargs:
-            xLabel = kwargs[ 'xlabel']
+            DctOut[ 'xLabel'] = kwargs[ 'xlabel']
             del kwargs[ 'xlabel']
         if 'xLabel' in kwargs:
-            xLabel = kwargs[ 'xLabel']
+            DctOut[ 'xLabel'] = kwargs[ 'xLabel']
             del kwargs[ 'xLabel']
 
-        yLabel = 'y-axis'
         if 'ylabel' in kwargs:
-            yLabel = kwargs[ 'ylabel']
+            DctOut[ 'yLabel'] = kwargs[ 'ylabel']
             del kwargs[ 'ylabel']
         if 'yLabel' in kwargs:
-            yLabel = kwargs[ 'yLabel']
+            DctOut[ 'yLabel'] = kwargs[ 'yLabel']
             del kwargs[ 'yLabel']
 
-        lineColor = 2
         if 'colour' in kwargs:
-            lineColor = kwargs[ 'colour']
+            DctOut[ 'lineColor'] = kwargs[ 'colour']
             del kwargs[ 'colour']
         if 'color' in kwargs:
-            lineColor = kwargs[ 'color']
+            DctOut[ 'lineColor'] = kwargs[ 'color']
             del kwargs[ 'color']
         if 'lineColor' in kwargs:
-            lineColor = kwargs[ 'lineColor']
+            DctOut[ 'lineColor'] = kwargs[ 'lineColor']
             del kwargs[ 'lineColor']
 
-        at = None
         if 'at' in kwargs: 
-            at = kwargs[ 'at']
+            DctOut[ 'at'] = kwargs[ 'at']
             del kwargs[ 'at']
 
         #
         # do not use 'x' here because this causes recursion in the Scan()
         # call caused by __getattr__()
         #
-        xLocal = None
         if 'x' in kwargs: 
-            xLocal = kwargs[ 'x'][:]
+            DctOut[ 'xLocal'] = kwargs[ 'x'][:]
             del kwargs[ 'x']
-        yLocal = None
         if 'y' in kwargs: 
-            yLocal = kwargs[ 'y'][:]
+            DctOut[ 'yLocal'] = kwargs[ 'y'][:]
             del kwargs[ 'y']
         #
         # Spectra
         #
         if spectraInstalled and useSpectra:
-            reUse = False
             if 'NoDelete' in kwargs: 
-                reUse = kwargs[ 'NoDelete']
+                DctOut[ 'reUse'] = kwargs[ 'NoDelete']
                 del kwargs[ 'nodelete']
 
             if kwargs:
                 raise ValueError( "graPyspIfs.Scan (Spectra): dct not empty %s" % str( kwargs))
 
-            colorGra = utils.colorPyspToSpectra( lineColor)
-            self.scan = Spectra.SCAN( name = name,
-                                      start = xMin, 
-                                      stop = xMax,
-                                      np = nPts,
-                                      xlabel = xLabel,
-                                      ylabel = yLabel,
-                                      NoDelete = reUse,
-                                      lineColour = colorGra,
-                                      at = at)
+            DctOut[ 'lineColor'] = utils.colorPyspToSpectra( DctOut[ 'lineColor'])
+
+            #print( "+++graPyspIfc: %s" % repr( DctOut))
+            self.scan = Spectra.SCAN( name = name, 
+                                      start = DctOut[ 'xMin'], 
+                                      stop = DctOut[ 'xMax'],
+                                      np = DctOut[ 'nPts'],
+                                      #xlabel = DctOut[ 'xLabel'],
+                                      #ylabel = DctOut[ 'yLabel'],
+                                      #NoDelete = DctOut[ 'reUse'],
+                                      lineColour = DctOut[ 'lineColor'],
+                                      at = DctOut[ 'at'])
+
             #
             # set x and y to values provided by the user or to 
             # some default, x: linspace(), y: zeros()
             #
-            if xLocal is not None: 
-                for i in range( len( xLocal)): 
-                    self.scan.setX( i, xLocal[i])
+            if 'xLocal' in DctOut: 
+                for i in range( len( DctOut[ 'xLocal'])): 
+                    self.scan.setX( i, DctOut[ 'xLocal'][i])
             else: 
                 x = np.linspace( xMin, xMax, nPts)
                 for i in range( len( x)): 
                     self.scan.setX( i, x[i])
                 
-            if yLocal is not None: 
-                for i in range( len( yLocal)): 
-                    self.scan.setY( i, yLocal[i])
+            if 'yLocal' in DctOut:
+                for i in range( len( DctOut[ 'yLocal'])): 
+                    self.scan.setY( i, DctOut[ 'yLocal'][i])
             else: 
                 y = np.zeros( nPts, np.float64)
                 for i in range( len( y)): 
@@ -256,42 +253,33 @@ class Scan( object):
             #
             # PySpectra
             #
-            if type(lineColor) == int:
-                lineColor = utils.colorSpectraToPysp( lineColor)
+            if type( DctOut[ 'lineColor']) == int:
+                DctOut[ 'lineColor'] = utils.colorSpectraToPysp( DctOut[ 'lineColor'])
 
-            reUse = False
+            if 'NoDelete' in kwargs: 
+                DctOut[ 'reUse'] = kwargs[ 'NoDelete']
+                del kwargs[ 'NoDelete']
             if 'reUse' in kwargs: 
-                reUse = kwargs[ 'reUse']
+                DctOut[ 'reUse'] = kwargs[ 'reUse']
                 del kwargs[ 'reUse']
+            if 'comment' in kwargs: 
+                PySpectra.setComment( kwargs[ 'comment'])
+                del kwargs[ 'comment']
 
             motorNameList = None
             if 'motorNameList' in kwargs:
-                motorNameList = kwargs[ 'motorNameList'][:]
+                DctOut[ 'motorNameList'] = kwargs[ 'motorNameList'][:]
                 del kwargs[ 'motorNameList']
 
             logWidget = None
             if 'logWidget' in kwargs:
-                logWidget = kwargs[ 'logWidget']
+                DctOut[ 'logWidget'] = kwargs[ 'logWidget']
                 del kwargs[ 'logWidget']
         
             if kwargs:
                 raise ValueError( "graPyspIfs.Scan (PySPectra): dct not empty %s" % str( kwargs))
 
-            self.scan = PySpectra.Scan( name = name, 
-                                        xMin = xMin, 
-                                        xMax = xMax,
-                                        nPts = nPts,
-                                        xLabel = xLabel, 
-                                        yLabel = yLabel,
-                                        lineColor = lineColor,
-                                        autoscaleX = True, 
-                                        autoscaleY = True,
-                                        motorNameList = motorNameList,
-                                        logWidget = logWidget,
-                                        reUse = reUse, 
-                                        x = xLocal, 
-                                        y = yLocal, 
-                                        at = at)
+            self.scan = PySpectra.Scan( name = name, **DctOut)
 
         return 
 
