@@ -11,8 +11,6 @@ import PyTango as _PyTango
 import PySpectra 
 import PySpectra.definitions as definitions 
 import PySpectra.utils as utils
-import PySpectra.calc as calc
-import pyqtgraph as _pyqtgraph
 import HasyUtils as _HasyUtils
 
 _gqeList = []
@@ -800,6 +798,7 @@ class Scan( object):
             position which should be taken into account by the autoscale 
             procedure.
         '''
+        import PySpectra.pyqtgraph as _pyqtgraph
 
         if self.arrowInvisibleLeft is not None: 
             delta = 1.
@@ -835,6 +834,7 @@ class Scan( object):
         '''
         set the position of the arrow pointing to the set-point
         '''
+        import PySpectra.pyqtgraph as _pyqtgraph
         xScene = 300
         yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET
         if self.xLabel is not None: 
@@ -853,6 +853,7 @@ class Scan( object):
         '''
         set the position of the arrow pointing to Misc
         '''
+        import PySpectra.pyqtgraph as _pyqtgraph
         xScene = 300
         yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET
         if self.xLabel is not None: 
@@ -1042,6 +1043,7 @@ class Scan( object):
         the x-range may be determined by the VLines. Otherwise the whole
         x-range is taken.
         '''
+        import PySpectra.calc as calc
         lstX = []
         lstY = []
 

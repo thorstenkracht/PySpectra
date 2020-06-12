@@ -16,18 +16,9 @@ def main():
         usage='%(prog)s [options]', 
         description= "Install pyspectra debian package on some host")
     
-    parser.add_argument( '--p2', dest="p2", action="store_true", help='select python2 package')
-    parser.add_argument( '--p3', dest="p3", action="store_true", help='select python3 package')
     parser.add_argument( 'hostName', nargs=1, default='None', help='hostname where the package is to be installed')  
     args = parser.parse_args()
 
-    if not args.p2 and not args.p3:
-        print( "DoDebianInstall.py: select --p2 xor --p3")
-        return 
-    if args.p2 and args.p3:
-        print( "DoDebianInstall.py: select --p2 xor --p3")
-        return 
-        
     if args.hostName == "None": 
         print( "DoDebianInstall.py: specify hostname")
         sys.exit( 255)
@@ -48,19 +39,22 @@ def main():
         print( "DoDebinaInstall.py: %s no root login " % host)
         sys.exit( 255)
 
-    if args.p3: 
-        argout = os.popen('ssh root@%s "dpkg --status python3-sardana 2> /dev/null || echo failed"' % host).read()
-        argout = argout.strip()
-        if argout.find( 'failed') != -1:
-            print( "DoDebianInstall.py: python3-pyspectra does not match sardana version of %s" % host)
-            return 
-    else: 
-        argout = os.popen('ssh root@%s "dpkg --status python-sardana 2> /dev/null || echo failed"' % host).read()
-        argout = argout.strip()
-        if argout.find( 'failed') != -1:
-            print( "DoDebianInstall.py: python-pyspectra (python2) does not match sardana version of %s" % host)
-            return 
+    isP2Host = False
+    isP3Host = False
+    argout = os.popen('ssh root@%s "dpkg --status python3-sardana 2>/dev/null || echo failed"' % host).read()
+    argout = argout.strip()
+    if argout.find( 'failed') == -1:
+        isP3Host = True
 
+    argout = os.popen('ssh root@%s "dpkg --status python-sardana 2>/dev/null || echo failed"' % host).read()
+    argout = argout.strip()
+    if argout.find( 'failed') == -1:
+        isP2Host = True
+
+    if (isP2Host and isP3Host) or (not isP2Host and not isP3Host): 
+        print( "DoDebianInstall.py: failed to identify the sardana version on %s" % host)
+        return 
+        
     version = handleVersion.findVersion()
 
     argout = os.popen('ssh root@%s "uname -v"' % host).read()
@@ -70,7 +64,7 @@ def main():
         print( "DoDebinaInstall.py: %s does not run Debian " % host)
         sys.exit( 255)
 
-    if args.p3:
+    if isP3Host: 
         debName = "python3-pyspectra_%s_all.deb" % version
     else: 
         debName = "python-pyspectra_%s_all.deb" % version
@@ -83,9 +77,9 @@ def main():
     #
     # remove the existing package, may not exist on the host
     #
-    if os.system( 'ssh -l root %s "dpkg -r python-pyspectra"' % host): 
+    if os.system( 'ssh -l root %s "dpkg -r python-pyspectra > /dev/null 2>&1"' % host): 
         pass
-    if os.system( 'ssh -l root %s "dpkg -r python3-pyspectra"' % host): 
+    if os.system( 'ssh -l root %s "dpkg -r python3-pyspectra > /dev/null 2>&1"' % host): 
         pass
     #
     # install the new package
