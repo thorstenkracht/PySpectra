@@ -5,6 +5,7 @@ python -m unittest discover -v
 
 python ./test/testGraPyspIfc.py testGraPyspIfc.testCreateScan
 python ./test/testGraPyspIfc.py testGraPyspIfc.testFillScan
+python ./test/testGraPyspIfc.py testGraPyspIfc.testSinusScan
 '''
 import time
 import PySpectra
@@ -35,10 +36,9 @@ class testGraPyspIfc( unittest.TestCase):
 
         scan = graPyspIfc.Scan( name = "s1", lineColor = "blue", nPts = 201) 
 
-        self.assertEqual( scan.nPts, 101)
         self.assertEqual( scan.xMin, 0.)
         self.assertEqual( scan.xMax, 10.)
-        self.assertEqual( scan.color, "blue")
+        self.assertEqual( scan.lineColor, "blue")
         self.assertEqual( scan.nPts, 201)
         scan.display()
         time.sleep(1) 
@@ -50,10 +50,9 @@ class testGraPyspIfc( unittest.TestCase):
         graPyspIfc.delete()
 
         scan = graPyspIfc.Scan( name = "s1", lineColor = "red", nPts = 201) 
-        self.assertEqual( scan.nPts, 101)
         self.assertEqual( scan.xMin, 0.)
         self.assertEqual( scan.xMax, 10.)
-        self.assertEqual( scan.color, "red")
+        self.assertEqual( scan.lineColor, "red")
         self.assertEqual( scan.nPts, 201)
         scan.display()
 

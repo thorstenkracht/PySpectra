@@ -8,6 +8,7 @@ python ./test/testGQE.py testGQE.testNextPrevImage
 python ./test/testGQE.py testGQE.testFillData
 python ./test/testGQE.py testGQE.testCreateScansByColumns
 python ./test/testGQE.py testGQE.testCreateScansByGqes
+python ./test/testGQE.py testGQE.test_createScanByData
 python ./test/testGQE.py testGQE.testCreateDelete
 python ./test/testGQE.py testGQE.testWrite
 python ./test/testGQE.py testGQE.testRead
@@ -231,14 +232,6 @@ class testGQE( unittest.TestCase):
         PySpectra.cls()
         PySpectra.delete()
         PySpectra.setTitle( "create scan by data")
-        try:
-            scan = PySpectra.Scan( name = 't1', x = [0, 1, 2, 3, 4], at = "(2, 2, 4)")
-        except ValueError, e:
-            self.assertEqual( str( e), "GQE.Scan.__init__(): if 'x' or 'y' then both have to be supplied")
-        try:
-            scan = PySpectra.Scan( name = 't1', y = [0, 1, 2, 3, 4])
-        except ValueError, e:
-            self.assertEqual( str( e), "GQE.Scan.__init__(): if 'x' or 'y' then both have to be supplied")
 
         lst = PySpectra.getGqeList()
         self.assertEqual( len( lst), 0)
@@ -693,13 +686,6 @@ class testGQE( unittest.TestCase):
             scan = PySpectra.Scan( 't1')
         #print repr( context.exception)
         self.assertTrue( "GQE.Scan.__init__(): t1 exists already" in context.exception)
-
-        with self.assertRaises( ValueError) as context:
-            PySpectra.delete()
-            scan = PySpectra.Scan( 't1', y = None)
-        #print repr( context.exception)
-        self.assertTrue( "GQE.Scan.__init__(): if 'x' or 'y' then both have to be supplied"
-                         in context.exception)
 
         with self.assertRaises( ValueError) as context:
             PySpectra.delete()

@@ -194,6 +194,8 @@ class Scan( object):
         if 'at' in kwargs: 
             DctOut[ 'at'] = kwargs[ 'at']
             del kwargs[ 'at']
+        else: 
+            DctOut[ 'at'] = '(1,1,1)'
 
         #
         # do not use 'x' here because this causes recursion in the Scan()
@@ -226,7 +228,7 @@ class Scan( object):
                                       #xlabel = DctOut[ 'xLabel'],
                                       #ylabel = DctOut[ 'yLabel'],
                                       #NoDelete = DctOut[ 'reUse'],
-                                      lineColour = DctOut[ 'lineColor'],
+                                      colour = DctOut[ 'lineColor'],
                                       at = DctOut[ 'at'])
 
             #
@@ -237,7 +239,7 @@ class Scan( object):
                 for i in range( len( DctOut[ 'xLocal'])): 
                     self.scan.setX( i, DctOut[ 'xLocal'][i])
             else: 
-                x = np.linspace( xMin, xMax, nPts)
+                x = np.linspace( DctOut[ 'xMin'], DctOut[ 'xMax'], DctOut[ 'nPts'])
                 for i in range( len( x)): 
                     self.scan.setX( i, x[i])
                 
@@ -245,10 +247,14 @@ class Scan( object):
                 for i in range( len( DctOut[ 'yLocal'])): 
                     self.scan.setY( i, DctOut[ 'yLocal'][i])
             else: 
-                y = np.zeros( nPts, np.float64)
+                y = np.zeros( DctOut[ 'nPts'], np.float64)
                 for i in range( len( y)): 
                     self.scan.setY( i, y[i])
 
+            self.nPts = self.scan.np
+            self.xMin = self.scan.x_min
+            self.xMax = self.scan.x_max
+            self.lineColor = utils.colorSpectraToPysp( self.scan.colour)
         else:
             #
             # PySpectra
@@ -280,6 +286,11 @@ class Scan( object):
                 raise ValueError( "graPyspIfs.Scan (PySPectra): dct not empty %s" % str( kwargs))
 
             self.scan = PySpectra.Scan( name = name, **DctOut)
+
+            self.nPts = self.scan.nPts
+            self.xMin = self.scan.xMin
+            self.xMax = self.scan.xMax
+            self.lineColor = self.scan.lineColor
 
         return 
 

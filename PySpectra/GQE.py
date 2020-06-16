@@ -252,12 +252,6 @@ class Scan( object):
             self.textOnly = True
             del kwargs[ 'textOnly']
             pass
-        #
-        # if 'x' and 'y' are supplied the scan is created using data
-        # Note: a file name may be supplied, e.g. if the scan comes from a file.
-        #
-        elif 'x' in kwargs or 'y' in kwargs:
-            self._createScanFromData( kwargs)
         #    
         # 'fileName': data are read from a file
         #    
@@ -270,6 +264,12 @@ class Scan( object):
             fioCol = read( kwargs[ 'fileName'], kwargs[ 'x'], kwargs[ 'y'])
             kwargs[ 'x']= fioCol.x
             kwargs[ 'y']= fioCol.y
+            self._createScanFromData( kwargs)
+        #
+        # if 'x' and 'y' are supplied the scan is created using data
+        # Note: a file name may be supplied, e.g. if the scan comes from a file.
+        #
+        elif 'x' in kwargs or 'y' in kwargs:
             self._createScanFromData( kwargs)
         #
         # otherwise we use limits and the limits have defaults
@@ -798,7 +798,7 @@ class Scan( object):
             position which should be taken into account by the autoscale 
             procedure.
         '''
-        import PySpectra.pyqtgraph as _pyqtgraph
+        import pyqtgraph
 
         if self.arrowInvisibleLeft is not None: 
             delta = 1.
@@ -806,7 +806,7 @@ class Scan( object):
                 delta = (self.x[ self.currentIndex] - self.x[self.currentIndex - 1])*2.
             xScene = 300
             yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET*2
-            posVb = self.plotItem.vb.mapSceneToView( _pyqtgraph.Point( xScene, yScene))
+            posVb = self.plotItem.vb.mapSceneToView( pyqtgraph.Point( xScene, yScene))
             self.arrowInvisibleLeft.setPos( x - delta, posVb.y())
             self.arrowInvisibleRight.setPos( x + delta, posVb.y())
             self.arrowInvisibleLeft.show()
@@ -818,7 +818,7 @@ class Scan( object):
         yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET
         if self.xLabel is not None: 
             yScene = yScene - definitions.ARROW_Y_OFFSET_EXTRA
-        posScene = self.plotItem.vb.mapViewToScene( _pyqtgraph.Point( x, self.getYMin()))
+        posScene = self.plotItem.vb.mapViewToScene( pyqtgraph.Point( x, self.getYMin()))
         self.arrowCurrent.setPos( posScene.x(), yScene)
         self.labelArrowCurrent.setPos(  posScene.x(), yScene)
         self.labelArrowCurrent.setHtml( '<div>%s: %g</div>' % ( self.motorNameList[0], x))
@@ -834,14 +834,14 @@ class Scan( object):
         '''
         set the position of the arrow pointing to the set-point
         '''
-        import PySpectra.pyqtgraph as _pyqtgraph
+        import pyqtgraph
         xScene = 300
         yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET
         if self.xLabel is not None: 
             yScene = yScene - definitions.ARROW_Y_OFFSET_EXTRA
-        posScene = self.plotItem.vb.mapViewToScene( _pyqtgraph.Point( x, self.getYMin()))
+        posScene = self.plotItem.vb.mapViewToScene( pyqtgraph.Point( x, self.getYMin()))
         self.arrowSetPoint.setPos( posScene.x(), yScene)
-        #posVb = self.plotItem.vb.mapSceneToView( _pyqtgraph.Point( xScene, yScene)).toPoint()
+        #posVb = self.plotItem.vb.mapSceneToView( pyqtgraph.Point( xScene, yScene)).toPoint()
         #self.arrowSetPoint.setPos( x, posVb.y())
         self.arrowSetPoint.show()
 
@@ -853,15 +853,15 @@ class Scan( object):
         '''
         set the position of the arrow pointing to Misc
         '''
-        import PySpectra.pyqtgraph as _pyqtgraph
+        import pyqtgraph
         xScene = 300
         yScene = PySpectra.getGraphicsWindowHeight() - definitions.ARROW_Y_OFFSET
         if self.xLabel is not None: 
             yScene = yScene - definitions.ARROW_Y_OFFSET_EXTRA
-        posScene = self.plotItem.vb.mapViewToScene( _pyqtgraph.Point( x, self.getYMin()))
+        posScene = self.plotItem.vb.mapViewToScene( pyqtgraph.Point( x, self.getYMin()))
         self.arrowMisc.setPos( posScene.x(), yScene)
 
-        #posVb = self.plotItem.vb.mapSceneToView( _pyqtgraph.Point( xScene, yScene)).toPoint()
+        #posVb = self.plotItem.vb.mapSceneToView( pyqtgraph.Point( xScene, yScene)).toPoint()
         #self.arrowMisc.setPos( x, posVb.y())
         self.arrowMisc.show()
 
@@ -998,7 +998,7 @@ class Scan( object):
         '''
         put this functions in because it is in Spectra, I don't know
         whether we really need it in pysp. reserve scans do not make 
-        any problems in _pyqtgraph. however, in matplotlib it plots
+        any problems in pyqtgraph. however, in matplotlib it plots
         from the wrong direction.
         '''
         pass
@@ -1135,6 +1135,7 @@ class Scan( object):
         #
         # 'peak','cms','cen',  'dip','dipm','dipc',  'slit', 'slitm', 'slitc',   'step','stepm' and 'stepc'
         #
+        import PySpectra.calc as calc
         mode = 'peak'
 
 
@@ -1329,7 +1330,7 @@ def delete( nameLst = None):
             del _gqeList[i]
             break
         else:
-            print( "GQE.delete (single): %s" % repr( _HasyUtils.getTraceBackList()))
+            #print( "GQE.delete (single): %s" % repr( _HasyUtils.getTraceBackList()))
             raise ValueError( "GQE.delete: not found %s" % name)
         return 
     #
