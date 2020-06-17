@@ -10,6 +10,7 @@ python ./test/testGraPyspIfc.py testGraPyspIfc.testSinusScan
 import time
 import PySpectra
 import PySpectra.graPyspIfc as graPyspIfc
+import PySpectra.utils as utils
 import numpy 
 import unittest
 
