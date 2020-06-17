@@ -39,7 +39,7 @@ import PySpectra
 import pyqtgraph as pg
 import numpy as np
 import unittest
-import time, sys
+import time
 import math 
 
 class testGraphics( unittest.TestCase):

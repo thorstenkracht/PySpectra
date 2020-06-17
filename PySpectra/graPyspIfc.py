@@ -7,7 +7,7 @@ import PySpectra.utils as utils
 import PySpectra.GQE as GQE
 import numpy as np
 import sys
-
+ 
 try: 
     import Spectra
     spectraInstalled = True
@@ -16,7 +16,7 @@ except:
 
 useSpectra = False
 
-def setSpectra( flag):
+def setSpectra( flag): 
     global useSpectra
     
     if flag:
