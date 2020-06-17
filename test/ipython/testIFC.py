@@ -196,7 +196,7 @@ class testIFC( unittest.TestCase):
         PySpectra.command( "create s1")
         PySpectra.command( "createPDF testPDF")
         self.assertEqual( os.path.exists( 'testPDF.pdf'), True)
-        os.remove( 'testPDF.pdf') 
+        #os.remove( 'testPDF.pdf') 
         print "testIFC.test_pdf DONE"
 
         return 

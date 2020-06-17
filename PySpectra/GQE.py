@@ -1003,6 +1003,12 @@ class Scan( object):
         '''
         pass
 
+    def getCurrent( self): 
+        '''
+        be compatible with spectra
+        '''
+        return self.currentIndex 
+
     def setCurrent( self, i): 
         '''
         be compatible with spectra

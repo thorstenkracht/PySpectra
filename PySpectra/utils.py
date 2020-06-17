@@ -49,7 +49,7 @@ def _getNumberOfOverlaid( nameList = None):
 
 def colorSpectraToPysp( color): 
     '''
-    this functions translates color numbers (a ls Spectra) to strings a la Pysp
+    this functions translates color numbers (a la Spectra) to strings a la Pysp
     '''
     #
     # 

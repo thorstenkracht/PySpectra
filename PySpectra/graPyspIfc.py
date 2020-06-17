@@ -294,6 +294,13 @@ class Scan( object):
 
         return 
 
+    def getCurrent( self): 
+        return self.scan.getCurrent()
+
+    def setCurrent( self, index): 
+        self.scan.setCurrent( index)
+        return 
+
     def display( self): 
         self.scan.display()
         return 

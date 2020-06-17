@@ -101,7 +101,10 @@ class testGraPyspIfc( unittest.TestCase):
         sinus.y = numpy.sin( sinus.x)
 
         sinus.display()
+
         time.sleep(2) 
+
+        self.assertEqual( sinus.getCurrent(), 20)
 
         graPyspIfc.close()
 
@@ -115,6 +118,7 @@ class testGraPyspIfc( unittest.TestCase):
         sinus.y = numpy.sin( sinus.x)
 
         sinus.display()
+        self.assertEqual( sinus.getCurrent(), 20)
         PySpectra.processEventsLoop( 1)
 
 
