@@ -767,9 +767,8 @@ class testGraphics( unittest.TestCase):
             print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
             return 
         
-        hsh = { 'putData': 
+        hsh = { 'Image': 
                 { 'name': "MandelBrot",
-                  'type': 'image', 
                   'xMin': xmin, 'xMax': xmax, 'width': width, 
                   'yMin': ymin, 'yMax': ymax, 'height': height}}
         hsh = PySpectra.toPyspLocal( hsh)
@@ -782,10 +781,12 @@ class testGraphics( unittest.TestCase):
         for i in range(width):
             for j in range(height):
                 res = self.mandelbrot(r1[i] + 1j*r2[j],maxiter)
-                hsh = { 'putData': 
-                        { 'name': "MandelBrot",
-                          'noDisplay': True, 
-                          'setPixelWorld': ( r1[i], r2[j], res)}}
+
+                #hsh = { 'putData': 
+                #        { 'name': "MandelBrot",
+                #          'noDisplay': True, 
+                #          'setPixelWorld': ( r1[i], r2[j], res)}}
+                hsh = { 'command': "setPixelWorld Mandelbrot %g %g %g" % ( r1[i], r2[j], res)}
                 hsh = PySpectra.toPyspLocal( hsh)
                 if hsh[ 'result'] != "done":
                     print "error from setPixel"
@@ -796,7 +797,7 @@ class testGraphics( unittest.TestCase):
         return 
 
     def testToPysp2( self): 
-        print "testGraphics.testToPysp3"
+        print "testGraphics.testToPysp2"
 
         (xmin, xmax) = (-2.,-0.5)
         (ymin, ymax) = (0, 1.5)
@@ -812,9 +813,8 @@ class testGraphics( unittest.TestCase):
         #
         # create an empty image
         #
-        hsh = { 'putData': 
+        hsh = { 'Image': 
                 { 'name': "MandelBrot",
-                  'type': 'image', 
                   'xMin': xmin, 'xMax': xmax, 'width': width, 
                   'yMin': ymin, 'yMax': ymax, 'height': height}}
         hsh = PySpectra.toPyspLocal( hsh)

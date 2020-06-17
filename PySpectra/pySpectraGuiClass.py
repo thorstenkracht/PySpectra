@@ -2808,9 +2808,17 @@ class pySpectraGui( QtGui.QMainWindow):
         
     def cb_displayExampleCode( self): 
         fName = PySpectra.examples.exampleCode.__file__
+        #
+        # '/usr/lib/python2.7/dist-packages/PySpectra/examples/exampleCode.pyc'
+        # -- don't look at .pyc files
+        #
+        if fName[ -1] == 'c':
+            fName = fName[:-1]
+            
         editor = os.getenv( "EDITOR")
         if editor is None: 
             editor = 'emacs'
+        self.logWidget.append( "Opening %s" fName)
         os.system( "%s %s&" % (editor, fName))
 
     def _printHelper( self, frmt): 

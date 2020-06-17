@@ -376,7 +376,7 @@ def _putData( hsh):
                 PySpectra.Image( **h)
             argout = "done"
         else:
-            raise Exception( "zmqIfc._putData", "expecting 'columns', 'gqes', 'setPixelImage', 'setPixelWorld'")
+            raise Exception( "zmqIfc._putData", "expecting 'columns', 'gqes'")
     except Exception as e: 
         argout = "zmqIfc._putData: %s" % repr( e)
 

@@ -6,6 +6,7 @@ import PySpectra
 import PySpectra.utils as utils
 import PySpectra.GQE as GQE
 import numpy as np
+import sys
 
 try: 
     import Spectra
@@ -294,12 +295,39 @@ class Scan( object):
 
         return 
 
+    def updateArrowCurrent( self): 
+        if spectraInstalled and useSpectra:
+            pass
+        else: 
+            self.scan.updateArrowCurrent()
+        return 
+        
+    def autoscale( self):
+        self.scan.autoscale()
+        return
+
     def getCurrent( self): 
         return self.scan.getCurrent()
 
     def setCurrent( self, index): 
         self.scan.setCurrent( index)
         return 
+
+    def getX( self, index):
+        return self.scan.getX( index)
+
+    def getY( self, index):
+        return self.scan.getY( index)
+
+    def setX( self, index, x): 
+        self.scan.setX( index, x)
+        return 
+    def setY( self, index, x): 
+        self.scan.setY( index, x)
+        return 
+
+    def sort( self): 
+        return self.scan.sort()
 
     def display( self): 
         self.scan.display()
