@@ -29,6 +29,23 @@ class testGraPyspIfc( unittest.TestCase):
 
     def testCreateScan( self):
 
+        graPyspIfc.setSpectra( False)
+
+        graPyspIfc.cls()
+        graPyspIfc.delete()
+
+        scan = graPyspIfc.Scan( name = "s1", lineColor = "red", nPts = 201) 
+        self.assertEqual( scan.xMin, 0.)
+        self.assertEqual( scan.xMax, 10.)
+        self.assertEqual( scan.lineColor, "red")
+        self.assertEqual( scan.nPts, 201)
+        scan.display()
+
+        PySpectra.processEventsLoop( 1)
+
+        if utils.getHostname() != 'haso107tk': 
+            return 
+
         graPyspIfc.setSpectra( True)
 
         graPyspIfc.cls()
@@ -44,21 +61,23 @@ class testGraPyspIfc( unittest.TestCase):
         time.sleep(1) 
         graPyspIfc.close()
 
+    def testFillScan( self):
+
         graPyspIfc.setSpectra( False)
 
         graPyspIfc.cls()
         graPyspIfc.delete()
 
-        scan = graPyspIfc.Scan( name = "s1", lineColor = "red", nPts = 201) 
-        self.assertEqual( scan.xMin, 0.)
-        self.assertEqual( scan.xMax, 10.)
-        self.assertEqual( scan.lineColor, "red")
-        self.assertEqual( scan.nPts, 201)
-        scan.display()
+        scan = graPyspIfc.Scan( name = "s1", color = "blue", nPts = 101) 
 
+        scan.y = numpy.random.normal(size=(101))
+        scan.x  = numpy.linspace( 0., 10., 101)
+
+        scan.display()
         PySpectra.processEventsLoop( 1)
 
-    def testFillScan( self):
+        if utils.getHostname() != 'haso107tk': 
+            return 
 
         graPyspIfc.setSpectra( True)
 
@@ -75,20 +94,26 @@ class testGraPyspIfc( unittest.TestCase):
 
         graPyspIfc.close()
 
+    def testSinusScan( self):
+
+
+
         graPyspIfc.setSpectra( False)
 
         graPyspIfc.cls()
         graPyspIfc.delete()
+        sinus = graPyspIfc.Scan( name = "sinus", lineColor = 'blue', xMin = -5, xMax = 5., 
+                                 yMin = -1.5, yMax = 1.5, nPts = 21, yLabel = 'sin')
 
-        scan = graPyspIfc.Scan( name = "s1", color = "blue", nPts = 101) 
+        sinus.y = numpy.sin( sinus.x)
 
-        scan.y = numpy.random.normal(size=(101))
-        scan.x  = numpy.linspace( 0., 10., 101)
-
-        scan.display()
+        sinus.display()
+        self.assertEqual( sinus.getCurrent(), 20)
         PySpectra.processEventsLoop( 1)
 
-    def testSinusScan( self):
+        if utils.getHostname() != 'haso107tk': 
+            return 
+
 
         graPyspIfc.setSpectra( True)
 
@@ -107,19 +132,6 @@ class testGraPyspIfc( unittest.TestCase):
         self.assertEqual( sinus.getCurrent(), 20)
 
         graPyspIfc.close()
-
-        graPyspIfc.setSpectra( False)
-
-        graPyspIfc.cls()
-        graPyspIfc.delete()
-        sinus = graPyspIfc.Scan( name = "sinus", lineColor = 'blue', xMin = -5, xMax = 5., 
-                                 yMin = -1.5, yMax = 1.5, nPts = 21, yLabel = 'sin')
-
-        sinus.y = numpy.sin( sinus.x)
-
-        sinus.display()
-        self.assertEqual( sinus.getCurrent(), 20)
-        PySpectra.processEventsLoop( 1)
 
 
 if __name__ == "__main__":
