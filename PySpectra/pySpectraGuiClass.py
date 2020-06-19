@@ -2818,7 +2818,7 @@ class pySpectraGui( QtGui.QMainWindow):
         editor = os.getenv( "EDITOR")
         if editor is None: 
             editor = 'emacs'
-        self.logWidget.append( "Opening %s" fName)
+        self.logWidget.append( "Opening %s" % fName)
         os.system( "%s %s&" % (editor, fName))
 
     def _printHelper( self, frmt): 

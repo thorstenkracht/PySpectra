@@ -81,7 +81,7 @@ def toPyspLocal( hsh):
 
          {'Scan': {'name': 'eh_mca01', 'flagMCA': True, 'lineColor': 'blue', 
                    'y': array([  0., ..., 35.,  30.]), 
-                   'x': array([  0.0, ..., 2.047e+03]), 'reUse': True}}
+                   'x': array([  0.0, ..., 2.047e+03])}}
            create an MCA scan, which is re-used
 
          {'command': ['setY eh_c01 0 71.41']}

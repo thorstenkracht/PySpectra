@@ -427,7 +427,7 @@ def setGqeVPs( nameList, flagDisplaySingle, clsFunc):
                 gqe.ncol = gqe.at[1]
                 gqe.nplot = gqe.at[2]
             if gqe.nrow*gqe.ncol < gqe.nplot:
-                raise ValueError( "utils.setGqeVPs: nrow %d * ncol %d < nplot %d, atr %s" % \
+                raise ValueError( "utils.setGqeVPs: nrow %d * ncol %d < nplot %d, at %s" % \
                                   (gqe.nrow, gqe.ncol, gqe.nplot, gqe.at))
         nplot += 1
     #

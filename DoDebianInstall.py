@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Install the python-pyspectra package on a host
+Install the package on a host
 
 ./DoDebianInstall.py <hostName>
 
@@ -9,12 +9,15 @@ import argparse, sys, os
 import HasyUtils
 import handleVersion
 
+ROOT_DIR = "/home/kracht/Misc/pySpectra"
+PACKET_NAME = "pyspectra"
+
 def main(): 
 
     parser = argparse.ArgumentParser( 
         formatter_class = argparse.RawDescriptionHelpFormatter,
         usage='%(prog)s [options]', 
-        description= "Install pyspectra debian package on some host")
+        description= "Install %s debian package on some host" % PACKET_NAME)
     
     parser.add_argument( 'hostName', nargs=1, default='None', help='hostname where the package is to be installed')  
     args = parser.parse_args()
@@ -30,6 +33,8 @@ def main():
     host = args.hostName[0]
 
     print( ">>> DoDebianInstall.py %s" % (host))
+
+    os.chdir( ROOT_DIR)
 
     if not HasyUtils.checkHostOnline( host): 
         print( "DoDebinaInstall.py: %s is not online " % host)
@@ -65,21 +70,21 @@ def main():
         sys.exit( 255)
 
     if isP3Host: 
-        debName = "python3-pyspectra_%s_all.deb" % version
+        debName = "python3-%s_%s_all.deb" % (PACKET_NAME, version)
     else: 
-        debName = "python-pyspectra_%s_all.deb" % version
+        debName = "python-%s_%s_all.deb" % (PACKET_NAME, version)
     #
     # copy the package to the install host
     #
-    if os.system( "scp ./DebianPackages/%s root@%s:/tmp" % (debName, host)):
+    if os.system( "scp /tmp/DebianPackages/%s root@%s:/tmp" % (debName, host)):
         print( "trouble copying the package to %s" % host)
         sys.exit( 255)
     #
     # remove the existing package, may not exist on the host
     #
-    if os.system( 'ssh -l root %s "dpkg -r python-pyspectra > /dev/null 2>&1"' % host): 
+    if os.system( 'ssh -l root %s "dpkg -r python-%s > /dev/null 2>&1"' % (host, PACKET_NAME)): 
         pass
-    if os.system( 'ssh -l root %s "dpkg -r python3-pyspectra > /dev/null 2>&1"' % host): 
+    if os.system( 'ssh -l root %s "dpkg -r python3-%s > /dev/null 2>&1"' % (host, PACKET_NAME)): 
         pass
     #
     # install the new package

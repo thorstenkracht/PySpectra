@@ -53,7 +53,13 @@ def createHardCopy( printer = None, flagPrint = False, format = 'DINA4'):
     fName = None
     if spectraInstalled and useSpectra:
         Spectra.gra_command(" set 0.1/border=1")
-        Spectra.gra_command(" postscript/%s/redisplay/nolog/nocon/print/lp=%s" % (format, prnt))
+        if flagPrint: 
+            if printer is None: 
+                raise ValueError( "graPyspIfc.createHardCopy: flagPrint == True but no printer")
+
+            Spectra.gra_command(" postscript/%s/redisplay/nolog/nocon/print/lp=%s" % (format, printer))
+        else: 
+            Spectra.gra_command(" postscript/%s/redisplay/nolog/nocon/print" % (format))
         Spectra.gra_command(" set 0.1/border=0")
         Spectra.gra_command(" postscript/redisplay/nolog/nocon/print/lp=%s" % printer)
     else:
@@ -71,6 +77,7 @@ def deleteScan( scan):
     delete a single scan
     '''
     if spectraInstalled and useSpectra:
+        Spectra.gra_command( "delete %s.*" % scan.name)
         del scan
         argout = True
     else: 
@@ -92,18 +99,27 @@ def delete():
     return argout
 
 def display(): 
+    """
+    in PySpectra there is mostly autoscale when displaying things
+    therefore we do it when calling spectra as well
+    """
     if spectraInstalled and useSpectra:
-        argout = Spectra.gra_command("display/vp")
+        argout = Spectra.gra_command("display/autoscale/vp")
     else: 
         argout = PySpectra.display()
     return argout
 
 def getGqe( name): 
     '''
+    Spectra: 1, if the scan exist, 0 otherwise
+
     used by moveMotor() to see whether the signal scan is still existing
     '''
     if spectraInstalled and useSpectra:
-        return None
+        (sts, ret) = Spectra.gra_decode_int( "search_scan( %s)" % name)
+        if sts == 0: 
+            raise ValueError( "graPyspIfc.getGqe: failed to search for %s" % name)
+        return ret
     else: 
         return PySpectra.getGqe( name)
     
@@ -113,7 +129,7 @@ class Scan( object):
     """
     def __init__( self, name = None, **kwargs):
 
-        #print( "+++graPyspIfc.Scan: %s" % repr( kwargs))
+        #print( "graPyspIfc.Scan: %s" % repr( kwargs))
         if name is None:
             raise ValueError( "graPyspIfc.Scan: 'name' is missing")
         
@@ -199,36 +215,38 @@ class Scan( object):
             DctOut[ 'at'] = '(1,1,1)'
 
         #
-        # do not use 'x' here because this causes recursion in the Scan()
-        # call caused by __getattr__()
+        # do not use 'x' here because this causes recursion in the
+        # Scan() call caused by __getattr__()
         #
         if 'x' in kwargs: 
-            DctOut[ 'xLocal'] = kwargs[ 'x'][:]
+            DctOut[ 'x'] = kwargs[ 'x'][:]
             del kwargs[ 'x']
+        else: 
+            DctOut[ 'x'] = None
+
         if 'y' in kwargs: 
-            DctOut[ 'yLocal'] = kwargs[ 'y'][:]
+            DctOut[ 'y'] = kwargs[ 'y'][:]
             del kwargs[ 'y']
+        else: 
+            DctOut[ 'y'] = None
         #
         # Spectra
         #
         if spectraInstalled and useSpectra:
-            if 'NoDelete' in kwargs: 
-                DctOut[ 'reUse'] = kwargs[ 'NoDelete']
-                del kwargs[ 'nodelete']
-
             if kwargs:
                 raise ValueError( "graPyspIfs.Scan (Spectra): dct not empty %s" % str( kwargs))
 
             DctOut[ 'lineColor'] = utils.colorPyspToSpectra( DctOut[ 'lineColor'])
 
-            #print( "+++graPyspIfc: %s" % repr( DctOut))
+            #
+            # Spectra has to 'x' or 'y' parameter in the constructor
+            #
             self.scan = Spectra.SCAN( name = name, 
                                       start = DctOut[ 'xMin'], 
                                       stop = DctOut[ 'xMax'],
                                       np = DctOut[ 'nPts'],
                                       #xlabel = DctOut[ 'xLabel'],
                                       #ylabel = DctOut[ 'yLabel'],
-                                      #NoDelete = DctOut[ 'reUse'],
                                       colour = DctOut[ 'lineColor'],
                                       at = DctOut[ 'at'])
 
@@ -236,17 +254,17 @@ class Scan( object):
             # set x and y to values provided by the user or to 
             # some default, x: linspace(), y: zeros()
             #
-            if 'xLocal' in DctOut: 
-                for i in range( len( DctOut[ 'xLocal'])): 
-                    self.scan.setX( i, DctOut[ 'xLocal'][i])
+            if 'x' in DctOut and DctOut[ 'x'] is not None: 
+                for i in range( len( DctOut[ 'x'])): 
+                    self.scan.setX( i, DctOut[ 'x'][i])
             else: 
                 x = np.linspace( DctOut[ 'xMin'], DctOut[ 'xMax'], DctOut[ 'nPts'])
                 for i in range( len( x)): 
                     self.scan.setX( i, x[i])
                 
-            if 'yLocal' in DctOut:
-                for i in range( len( DctOut[ 'yLocal'])): 
-                    self.scan.setY( i, DctOut[ 'yLocal'][i])
+            if 'y' in DctOut and DctOut[ 'y'] is not None:
+                for i in range( len( DctOut[ 'y'])): 
+                    self.scan.setY( i, DctOut[ 'y'][i])
             else: 
                 y = np.zeros( DctOut[ 'nPts'], np.float64)
                 for i in range( len( y)): 
@@ -260,33 +278,40 @@ class Scan( object):
             #
             # PySpectra
             #
-            if type( DctOut[ 'lineColor']) == int:
-                DctOut[ 'lineColor'] = utils.colorSpectraToPysp( DctOut[ 'lineColor'])
+            if 'lineColor' in DctOut:
+                if type( DctOut[ 'lineColor']) == int:
+                    DctOut[ 'lineColor'] = utils.colorSpectraToPysp( DctOut[ 'lineColor'])
+            else: 
+                DctOut[ 'lineColor'] = 'blue'
 
-            if 'NoDelete' in kwargs: 
-                DctOut[ 'reUse'] = kwargs[ 'NoDelete']
-                del kwargs[ 'NoDelete']
-            if 'reUse' in kwargs: 
-                DctOut[ 'reUse'] = kwargs[ 'reUse']
-                del kwargs[ 'reUse']
             if 'comment' in kwargs: 
                 PySpectra.setComment( kwargs[ 'comment'])
                 del kwargs[ 'comment']
 
-            motorNameList = None
             if 'motorNameList' in kwargs:
                 DctOut[ 'motorNameList'] = kwargs[ 'motorNameList'][:]
                 del kwargs[ 'motorNameList']
+            else: 
+                DctOut[ 'motorNameList'] = None
 
-            logWidget = None
             if 'logWidget' in kwargs:
                 DctOut[ 'logWidget'] = kwargs[ 'logWidget']
                 del kwargs[ 'logWidget']
+            else: 
+                DctOut[ 'logWidget'] = None
         
             if kwargs:
                 raise ValueError( "graPyspIfs.Scan (PySPectra): dct not empty %s" % str( kwargs))
 
-            self.scan = PySpectra.Scan( name = name, **DctOut)
+            self.scan = PySpectra.Scan( name = name, 
+                                        x = DctOut[ 'x'], 
+                                        y = DctOut[ 'y'], 
+                                        xMin = DctOut[ 'xMin'], 
+                                        xMax = DctOut[ 'xMax'], 
+                                        lineColor = DctOut[ 'lineColor'], 
+                                        motorNameList = DctOut[ 'motorNameList'], 
+                                        logWidget = DctOut[ 'logWidget'],
+                                        nPts = DctOut[ 'nPts'])
 
             self.nPts = self.scan.nPts
             self.xMin = self.scan.xMin
@@ -331,8 +356,31 @@ class Scan( object):
 
     def display( self): 
         self.scan.display()
+        if spectraInstalled and useSpectra:
+            pass
+        else: 
+            self.plotDataItem = self.scan.plotDataItem
         return 
 
+    def smartUpdateDataAndDisplay( self, x = None, y = None): 
+        """
+        for PySpectra: smartUpdataDataAndDisplay() updates the
+        plotDataItem (created by the first display) and
+        processes the events to update the display also
+        """
+        if spectraInstalled and useSpectra:
+            if x is not None: 
+                for i in range( len( x)): 
+                    self.scan.setX( i, x[i])
+            if y is not None: 
+                for i in range( len( y)): 
+                    self.scan.setY( i, y[i])
+            Spectra.gra_command( "cls/graphic")            
+            Spectra.gra_command( "autoscale")            
+            self.scan.display()
+        else: 
+            self.scan.smartUpdateDataAndDisplay( x, y)
+        return 
     #
     # recursion can be avoided by calling the super class of scan.
     # hence, Scan needs to be an object
@@ -389,7 +437,7 @@ def setComment( line):
         argout = PySpectra.setComment( line) 
     return argout
 
-def getComment( line): 
+def getComment(): 
     if spectraInstalled and useSpectra:
         argout = "NoComment"
     else: 
@@ -403,7 +451,7 @@ def setTitle( line):
         argout = PySpectra.setTitle( line) 
     return argout
 
-def getTitle( line): 
+def getTitle(): 
     if spectraInstalled and useSpectra:
         argout = None
     else: 
@@ -420,8 +468,11 @@ def write( names = None):
     """
     if spectraInstalled and useSpectra:
         if names is None: 
-            raise ValueError( "graPyspIfc.write: expecting a name")
-        Spectra.gra_command( "write/fio %s" % names)
+            raise ValueError( "graPyspIfc.write: expecting a string containing the name")
+        elif type( names) is list:
+            raise ValueError( "graPyspIfc.write: input must no be a list")
+        else: 
+            Spectra.gra_command( "write/fio %s" % names)
     else:
         if names is None: 
             PySpectra.write()

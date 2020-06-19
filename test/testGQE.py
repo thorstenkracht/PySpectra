@@ -15,7 +15,8 @@ python ./test/testGQE.py testGQE.testRead
 python ./test/testGQE.py testGQE.testWriteReadImage
 python ./test/testGQE.py testGQE.test_read
 python ./test/testGQE.py testGQE.test_doty
-python ./test/testGQE.py testGQE.testReuse
+python ./test/testGQE.py testGQE.testReUse
+python ./test/testGQE.py testGQE.testReUseSmart
 python ./test/testGQE.py testGQE.testYGreaterThanZero
 python ./test/testGQE.py testGQE.testSetLimits
 python ./test/testGQE.py testGQE.testSetXY
@@ -541,21 +542,41 @@ class testGQE( unittest.TestCase):
 
         return 
 
-    def testReuse( self): 
-        print "testPySpectra.testReuse"
+    def testReUse( self): 
+        print "testPySpectra.testReUse"
         PySpectra.cls()
         PySpectra.delete()
         PySpectra.setTitle( "test re-use")
 
-        scan = PySpectra.Scan( name = 't1', xLabel = "100 pts, going to be re-used", 
-                               nPts = 100, yMin = -10., yMax = 10.)
-
+        nPts = 100
+        scan = PySpectra.Scan( name = 't1', xLabel = "%s pts, going to be re-used" % nPts, 
+                               nPts = nPts)
         for i in range( 10):
-            data = np.random.normal(size=(1,100))
-            x1  = np.linspace( 0., 10., 100)
+            PySpectra.cls()
             PySpectra.display()
             PySpectra.processEventsLoop( 1)
-            scan = PySpectra.Scan( name = 't1', reUse = True, x = x1, y = data[0])
+            scan.x = np.linspace( 0., 10., 100)
+            scan.y = np.random.normal(size=(101))
+
+        return 
+
+    def testReUseSmart( self): 
+        print "testPySpectra.testReUse"
+        PySpectra.cls()
+        PySpectra.delete()
+        PySpectra.setTitle( "test re-use")
+
+        nPts = 100
+        scan = PySpectra.Scan( name = 't1', xLabel = "%s pts, going to be re-used, smart" % nPts, 
+                               nPts = nPts)
+        scan.display()
+
+        for i in range( 10):
+            scan.smartUpdateDataAndDisplay(  x = np.linspace( 0., 10., nPts), 
+                                             y = np.random.normal(size=(nPts)))
+            time.sleep( 0.5)
+
+        return 
 
     def testYGreaterThanZero( self): 
         print "testPySpectra.testYGreaterThanZero"
@@ -735,26 +756,6 @@ class testGQE( unittest.TestCase):
             x1  = np.linspace( 0., 10., 100)
             y1  = np.linspace( 0., 10., 100)
             scan = PySpectra.Scan( 't1', x = x1, y = y1)
-            scan = PySpectra.Scan( 't1', reUse = True, x = x1[:99], y = y1[:99])
-        #print repr( context.exception)
-        self.assertTrue( "GQE.Scan: len( scan.x) 100 != len( kwargs[ 'x']) 99"
-                         in context.exception)
-
-        with self.assertRaises( ValueError) as context:
-            PySpectra.delete()
-            x1  = np.linspace( 0., 10., 100)
-            y1  = np.linspace( 0., 10., 100)
-            scan = PySpectra.Scan( 't1', x = x1, y = y1)
-            scan = PySpectra.Scan( 't1', reUse = True, x = x1, y = y1[:99])
-        #print repr( context.exception)
-        self.assertTrue( "GQE.Scan: len( scan.y) 100 != len( kwargs[ 'y']) 99"
-                         in context.exception)
-
-        with self.assertRaises( ValueError) as context:
-            PySpectra.delete()
-            x1  = np.linspace( 0., 10., 100)
-            y1  = np.linspace( 0., 10., 100)
-            scan = PySpectra.Scan( 't1', x = x1, y = y1)
             scan.attrNotExist = 12
         #print repr( context.exception)
         self.assertTrue( "GQE.Scan.__setattr__: t1 unknown attribute attrNotExist"
@@ -847,17 +848,49 @@ class testGQE( unittest.TestCase):
         print "testPySpectra.testMisc"
         PySpectra.cls()
         PySpectra.delete()
-        t1 = PySpectra.Scan( name = "t1", xMin = -5., xMax = 5., nPts = 101)
-        t2 = PySpectra.Scan( name = "t2", xMin = -5., xMax = 5., nPts = 101)
+        t1 = PySpectra.Scan( name = "t1", xMin = -5., xMax = 5., nPts = 101, color = 'red', at = "(1,2,1)")
+        t2 = PySpectra.Scan( name = "t2", xMin = -5., xMax = 5., nPts = 101, at = (1, 2, 2))
         PySpectra.display()
 
         lst = PySpectra.getDisplayList()
 
         self.assertTrue( len(lst) == 2)
-
         self.assertTrue( PySpectra.info() == 2)
-
         self.assertTrue( PySpectra.getIndex( 't1') == 0)
+        self.assertEqual( t1.at[0], 1)
+        self.assertEqual( t1.at[1], 2)
+        self.assertEqual( t1.at[2], 1)
+        self.assertEqual( t2.at[0], 1)
+        self.assertEqual( t2.at[1], 2)
+        self.assertEqual( t2.at[2], 2)
+        self.assertEqual( t1.lineColor, 'red')
+
+
+
+        with self.assertRaises( ValueError) as context:
+            t1.getX( 102)
+        #print repr( context.exception)
+        self.assertTrue( 'GQE.Scan.getX: t1, index 102 out of range [0, 101]'
+                         in context.exception)
+
+        with self.assertRaises( ValueError) as context:
+            t1.getX( -1)
+        #print repr( context.exception)
+        self.assertTrue( 'GQE.Scan.getX: t1, index -1 < 0'
+                         in context.exception)
+
+        with self.assertRaises( ValueError) as context:
+            t1.getY( 102)
+        #print repr( context.exception)
+        self.assertTrue( 'GQE.Scan.getY: t1, index 102 out of range [0, 101]'
+                         in context.exception)
+
+        with self.assertRaises( ValueError) as context:
+            t1.getY( -1)
+        #print repr( context.exception)
+        self.assertTrue( 'GQE.Scan.getY: t1, index -1 < 0'
+                         in context.exception)
+        return 
 
         
     def testDoubles( self) : 

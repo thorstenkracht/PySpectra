@@ -3,7 +3,6 @@
 GQE - contains the Scan() class and functions to handle scans: 
       delete(), getGqe(), getGqeList(), info(), overlay(), show()
 '''
-# 1.8.2
 
 import numpy as _numpy
 from PyQt4 import QtGui as _QtGui
@@ -31,7 +30,6 @@ ScanAttrsPublic = [ 'at', 'autoscaleX', 'autoscaleY', 'colSpan', 'currentIndex',
                     'lineColor', 'lineStyle', 'lineWidth', 
                     'logWidget', 'motorNameList', 
                     'nPts', 'name', 'ncol', 'nplot', 'nrow', 'overlay', 
-                    'reUse', 
                      'showGridX', 'showGridY', 
                      'symbol', 'symbolColor', 'symbolSize', 
                     'useTargetWindow', 
@@ -156,8 +154,7 @@ class Scan( object):
     PySpectra.Scan( name = 'name', xMin = 0., xMax = 10., nPts = 101)
     PySpectra.Scan( name = 'name')
       the same as PySpectra.Scan( name = 'name', xMin = 0., xMax = 10., nPts = 101)
-    PySpectra.Scan( name = 'name', reUse = True, xArr, y = yArr)
-      re-use the existing data struckture, useful for MCA scans
+
     PySpectra.Scan( name = "textContainer", textOnly = True)
       no data, just Texts, fill with gqe.addText()
 
@@ -209,9 +206,14 @@ class Scan( object):
     def __init__( self, name = None, **kwargs):
         global _gqeList
 
-        #print( "GQE.Scan: %s" % repr( kwargs))
+        #print( "GQE.Scan.__init__: %s" % repr( kwargs))
         if name is None:
             raise ValueError( "GQE.Scan: 'name' is missing")
+        #
+        # see, if a Scan with the same name exists
+        #
+        if getGqe( name) is not None: 
+            raise ValueError( "GQE.Scan.__init__(): %s exists already" % name)
         #
         # in graPyspIfc.py some keywords are set to None
         # this makes live easier when tailoring the interface
@@ -223,27 +225,7 @@ class Scan( object):
         #
         #
         self.textOnly = False
-        #
-        # We 'reUse' e.g. MCA scans
-        #
-        for i in range( len( _gqeList)): 
-            if name == _gqeList[i].name:
-                if 'reUse' in kwargs: 
-                    if len( _gqeList[i].x) != len( kwargs['x']):
-                        raise ValueError( "GQE.Scan: len( scan.x) %d != len( kwargs[ 'x']) %d" % \
-                                          ( len( _gqeList[i].x), len( kwargs['x'])))
-                    if len( _gqeList[i].y) != len( kwargs['y']):
-                        raise ValueError( "GQE.Scan: len( scan.y) %d != len( kwargs[ 'y']) %d" % \
-                                          ( len( _gqeList[i].y), len( kwargs['y'])))
-                    _gqeList[i].x = kwargs['x']
-                    _gqeList[i].y = kwargs['y']
-                    _gqeList[i].lastIndex = -1
-                    return
-                else:
-                    raise ValueError( "GQE.Scan.__init__(): %s exists already" % name)
-        if 'reUse' in kwargs:
-            del kwargs[ 'reUse'] 
-            
+
         self.name = name
         #
         # textOnly scans have no data, consist of Texts( in textList) only
@@ -292,18 +274,39 @@ class Scan( object):
         #print( "SCAN.destructor %s" % (self.name)
         return 
     #
+    # is always called, e.g.: 
+    # In [10]: scan.xMin = 0.1
+    # GQE.Scan.__setattr__: name xMin, value 0.1
+    #
     # recursion can be avoided by calling the super class of scan.
     # hence, Scan needs to be an object
     #
     def __setattr__( self, name, value): 
-        #print( "GQE.Scan.__setattr__: name %s, value %s" % (name, value))
+        # print( "GQE.Scan.__setattr__: name %s, value %s" % (name, value))
         if name in ScanAttrsPublic or \
            name in ScanAttrsPrivate: 
             super( Scan, self).__setattr__(name, value)
         else: 
             raise ValueError( "GQE.Scan.__setattr__: %s unknown attribute %s" % ( self.name, name))
-
+    #
+    # is called, if the member does not exist: 
+    # In [7]: scan.xMin
+    # Out[7]: 0.0
+    #
+    # In [8]: scan.xMinn
+    # GQE.Scan.__getattr__: xMinn 
+    # ---------------------------------------------------------------------------
+    # ValueError                                Traceback (most recent call last)
+    # <ipython-input-8-d615f38165b2> in <module>()
+    # ----> 1 scan.xMinn
+    #
+    # /home/kracht/Misc/pySpectra/PySpectra/GQE.py in __getattr__(self, name)
+    # 305     def __getattr__( self, name):
+    # 306         print( "GQE.Scan.__getattr__: %s " % name)
+    # --> 307         raise ValueError( "GQE.Scan.__getattr__: %s unknown attribute %s" % ( self.name, name))
+    #
     def __getattr__( self, name): 
+        # print( "GQE.Scan.__getattr__: %s " % name)
         raise ValueError( "GQE.Scan.__getattr__: %s unknown attribute %s" % ( self.name, name))
         #if name in _ScanAttrsPublic or \
         #   name in _ScanAttrsPrivate: 
@@ -398,7 +401,7 @@ class Scan( object):
 
         if 'nPts' in kwargs: 
             if kwargs[ 'nPts'] != len( self.x): 
-                raise ValueError( "GQE.Scan._createScanFromData: %s, nPts %d != len(x)" % 
+                raise ValueError( "GQE.Scan._createScanFromData: %s, nPts %d != len(x) %d" % 
                                   (self.name, kwargs[ 'nPts'], len( self.x)))
             del kwargs[ 'nPts']
                 
@@ -573,7 +576,11 @@ class Scan( object):
             if type( atStr) is tuple or type( atStr) is list:
                 self.at = list( atStr)
             else:
-                lstStr = atStr.strip()[1:-1].split( ',')
+                if atStr[0] == '(' and atStr[-1] == ')': 
+                    lstStr = atStr.strip()[1:-1].split( ',')
+                else: 
+                    lstStr = atStr.strip().split( ',')
+                print( "+++GQE %s %s" % (atStr, repr( lstStr)))
                 if len( lstStr) != 3:
                     self.at = [1, 1, 1]
                 else:
@@ -672,6 +679,8 @@ class Scan( object):
         if index >= self.y.size:
             raise ValueError( "GQE.Scan.getX: %s, index %d out of range [0, %d]" % 
                               ( self.name, index, self.x.size))
+        if index < 0:
+            raise ValueError( "GQE.Scan.getX: %s, index %d < 0" % ( self.name, index))
         return self.x[ index] 
 
     def getY( self, index):
@@ -686,6 +695,8 @@ class Scan( object):
         if index >= self.y.size:
             raise ValueError( "GQE.Scan.getY: %s, index %d out of range [0, %d]" % 
                               ( self.name, index, self.y.size))
+        if index < 0:
+            raise ValueError( "GQE.Scan.getY: %s, index %d < 0" % ( self.name, index))
         return self.y[ index] 
 
     def setXY( self, index, xValue, yValue):
@@ -1026,6 +1037,27 @@ class Scan( object):
         PySpectra.display( [self.name])
         return 
 
+    def smartUpdateDataAndDisplay( self, x = None, y = None): 
+        """
+        if self has already a plotDataItem:
+          just update it and process the events to update the display. 
+        otherwise 
+          call display() 
+
+        this is for lissajous-like applications
+        """
+        if x is not None: 
+            self.x = x[:]
+        if y is not None: 
+            self.y = y[:]
+
+        if self.plotDataItem is not None: 
+            self.plotDataItem.setData( self.x, self.y)
+            PySpectra.processEvents()
+        else: 
+            self.display()
+        return 
+            
     def yGreaterThanZero( self): 
         '''
         prepare for log display: remove points with y <= 0. 
@@ -1844,21 +1876,24 @@ def getData():
     '''
     hsh = {}
     for gqe in _gqeList:
-        if type( gqe) != Scan: 
-            continue
         name = gqe.name.upper() # needed by MVSA
         hsh[ name] = {}
-        #
-        # numpy array cannot be json-encoded
-        #
-        if gqe.currentIndex >= 0:
-            hsh[ name]['x'] = list( gqe.x[:(gqe.currentIndex + 1)])
-            hsh[ name]['y'] = list( gqe.y[:(gqe.currentIndex + 1)])
-        else:
-            hsh[ name]['x'] = []
-            hsh[ name]['y'] = []
-    # just to make mvsa happy
+        if type( gqe) == Scan: 
+            hsh[ name][ 'type'] = "Scan"
+            #
+            # numpy array cannot be json-encoded
+            #
+            if gqe.currentIndex >= 0:
+                hsh[ name]['x'] = list( gqe.x[:(gqe.currentIndex + 1)])
+                hsh[ name]['y'] = list( gqe.y[:(gqe.currentIndex + 1)])
+            else:
+                hsh[ name]['x'] = []
+                hsh[ name]['y'] = []
+        elif type( gqe) == Image: 
+            hsh[ name][ 'type'] = "Image"
+            hsh[ name][ 'data'] = list( gqe.data[:])
 
+    # just to make mvsa happy
     if _scanInfo is not None: 
         hsh[ 'symbols'] = {}
         temp = _scanInfo[ 'filename']

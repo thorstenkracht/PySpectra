@@ -619,8 +619,7 @@ def example_Lissajous():
     
     for i in range( 500):
         x = x + 0.005
-        scan.plotDataItem.setData(np.cos( x), np.sin( y))
-        PySpectra.processEvents()
+        scan.smartUpdateDataAndDisplay( np.cos( x), np.sin( y))
 
 def example_Overlay2BothLog(): 
     PySpectra.cls()
