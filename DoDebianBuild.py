@@ -8,13 +8,13 @@ import argparse
 
 ROOT_DIR = "/home/kracht/Misc/pySpectra"
 PACKET_NAME = "pyspectra"
+FILES2CHECK = [ 'bin/pyspMonitor.py', 
+                'pyspDoor.py']
 
 def checkDebContents( packageName): 
     """
     check whether the deb package contains some important files
     """
-    files2Check = [ 'bin/pyspMonitor.py', 
-                    'pyspDoor.py']
     ret = os.popen( "dpkg-deb -c %s" % (packageName)).read()
 
     for line in ret.split( '\n'): 
@@ -22,7 +22,7 @@ def checkDebContents( packageName):
 
     print( "checkDebContents: %s" % packageName)
     isOk = True
-    for fl in files2Check: 
+    for fl in FILES2CHECK: 
         if ret.find( fl) == -1: 
             print( "debian package does not contain %s " % fl)
             isOk = False
@@ -67,7 +67,7 @@ def main():
     # create the source distribution
     #
     print( ">>> Create the source distribution")
-    if os.system( "cd %s && python setup.py sdist" % (ROOT_DIR))):
+    if os.system( "cd %s && python setup.py sdist" % (ROOT_DIR)):
         print( "trouble running setup sdist")
         sys.exit( 255)
     #
@@ -90,7 +90,7 @@ def main():
     #
     print( ">>> rename the tarBall") 
     if os.system( "cd /tmp/DebianPackages && mv python-%s-%s.tar.gz python-%s_%s.orig.tar.gz" % 
-                  (PAKEY_NAME, version, PACKET_NAME, version)):
+                  (PACKET_NAME, version, PACKET_NAME, version)):
         print( "failed to rename the tar file")
         sys.exit( 255)
     #

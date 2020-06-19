@@ -788,6 +788,9 @@ def _prepareMouse( gqe):
     '''
     global _myScene
 
+    if utils.isTravis(): 
+        return 
+
     if gqe.mousePrepared: 
         return 
 
