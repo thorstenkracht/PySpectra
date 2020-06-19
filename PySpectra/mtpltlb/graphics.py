@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-#
+#!/usr/bin/env python#
+
 import matplotlib 
 matplotlib.use( 'TkAgg', warn=False)
 
@@ -101,6 +101,8 @@ def createPDF( printer = None, fileName = None, flagPrint = False, format = 'DIN
         if printer is None:
             printer = os.getenv( "PRINTER")
             if printer is None: 
+                if utils.getHostname() != definitions.hostTK:
+                    return 
                 raise ValueError( "mpl_graphics.createPDF: environment variable PRINTER not defined")
         if os.system( "/usr/bin/lpr -P %s %s" % (printer, fileName)):
             print( "mpl_graphics.createPDF: failed to print %s on %s" % (fileName, printer))

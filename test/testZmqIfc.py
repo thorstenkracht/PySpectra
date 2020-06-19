@@ -24,6 +24,7 @@ sys.path.append( pySpectraPath)
 
 import PySpectra
 import PySpectra.utils as utils
+import PySpectra.definitions as definitions
 import numpy as np
 import unittest, time
 
@@ -391,7 +392,7 @@ class testZmqIfc( unittest.TestCase):
         import random
         print "testZmqIfc.testToPyspMonitor1"
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
         hsh = PySpectra.toPyspMonitor( { 'command': ['cls', 'delete']})
@@ -436,7 +437,7 @@ class testZmqIfc( unittest.TestCase):
         import random
         print "testZmqIfc.testToPyspMonitor2"
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
         hsh = PySpectra.toPyspMonitor( { 'command': ['cls', 'delete']})
@@ -489,7 +490,7 @@ class testZmqIfc( unittest.TestCase):
         '''
         print "testZmqIfc.testToPyspMonitor3"
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
         hsh = PySpectra.toPyspMonitor( { 'command': ['cls', 'delete']})
@@ -545,7 +546,7 @@ class testZmqIfc( unittest.TestCase):
         '''
         print "testZmqIfc.testToPyspMonitor4"
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
         hsh = PySpectra.toPyspMonitor( { 'command': ['cls', 'delete']})
@@ -602,7 +603,7 @@ class testZmqIfc( unittest.TestCase):
         '''
         print "testZmqIfc.testToPyspMonitor6"
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
         hsh = PySpectra.toPyspMonitor( { 'command': ['cls', 'delete']})
@@ -652,7 +653,7 @@ class testZmqIfc( unittest.TestCase):
         '''
         print "testZmqIfc.testToPyspMonitor7"
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
         hsh = PySpectra.toPyspMonitor( { 'command': ['cls', 'delete']})

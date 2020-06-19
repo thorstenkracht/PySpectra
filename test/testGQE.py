@@ -39,6 +39,7 @@ import sys, time
 import PyTango
 import PySpectra
 import PySpectra.utils as utils
+import PySpectra.definitions as definitions
 import numpy as np
 import unittest
 import time, sys, os
@@ -971,7 +972,7 @@ class testGQE( unittest.TestCase):
 
         print( "testPySpectra.testMotorArrowCurrentAndSetPoint")
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
         PySpectra.cls()
@@ -1035,7 +1036,7 @@ class testGQE( unittest.TestCase):
 
         print( "testPySpectra.testCheckTargetWithinLimits")
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
         PySpectra.cls()

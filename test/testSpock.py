@@ -11,6 +11,7 @@ python ./test/testSpock.py testSpock.testMvsa
 import time, os
 import PySpectra
 import PySpectra.utils as utils
+import PySpectra.definitions as definitions
 import unittest
 import HasyUtils
 
@@ -27,7 +28,7 @@ class testSpock( unittest.TestCase):
     def testMv( self) : 
         print "testSpock.testMv"
 
-        if HasyUtils.getHostname() != 'haso107tk': 
+        if HasyUtils.getHostname() != definitions.hostTK: 
             return 
 
         print "testSpock.testMv, eh_mot66 to 50"
@@ -60,7 +61,7 @@ class testSpock( unittest.TestCase):
     def testAscan( self) : 
         print "testSpock.testAscan"
 
-        if HasyUtils.getHostname() != 'haso107tk': 
+        if HasyUtils.getHostname() != definitions.hostTK: 
             return 
 
         ( status, wasLaunched) = utils.assertProcessRunning( "/usr/bin/pyspMonitor.py")
@@ -86,7 +87,7 @@ class testSpock( unittest.TestCase):
     def testMvsa( self) : 
         print "testSpock.testMvsa"
 
-        if HasyUtils.getHostname() != 'haso107tk': 
+        if HasyUtils.getHostname() != definitions.hostTK: 
             return 
 
         ( status, wasLaunched) = utils.assertProcessRunning( "/usr/bin/pyspMonitor.py")

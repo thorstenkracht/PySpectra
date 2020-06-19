@@ -13,6 +13,7 @@ import sys
 
 import PySpectra
 import PySpectra.tangoIfc as tangoIfc
+import PySpectra.definitions as definitions
 import PySpectra.utils as utils
 import numpy as np
 import unittest
@@ -32,7 +33,7 @@ class testTangoIfc( unittest.TestCase):
     def testMoveMotorStart( self) : 
         print "testTangoIfc.testMoveMotorStart"
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
         PySpectra.cls()
@@ -71,7 +72,7 @@ class testTangoIfc( unittest.TestCase):
 
         print "testTangoIfc.testMoveMotorNameList"
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
         PySpectra.cls()
@@ -102,7 +103,7 @@ class testTangoIfc( unittest.TestCase):
 
         print "testTangoIfc.testMoveScanInfo"
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
         PySpectra.cls()

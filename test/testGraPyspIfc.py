@@ -16,6 +16,7 @@ import time
 import PySpectra
 import PySpectra.graPyspIfc as graPyspIfc
 import PySpectra.utils as utils
+import PySpectra.definitions as definitions
 import numpy 
 import unittest
 
@@ -49,7 +50,7 @@ class testGraPyspIfc( unittest.TestCase):
 
         PySpectra.processEventsLoop( 1)
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
         graPyspIfc.setSpectra( True)
@@ -82,7 +83,7 @@ class testGraPyspIfc( unittest.TestCase):
         scan.display()
         PySpectra.processEventsLoop( 1)
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
         graPyspIfc.setSpectra( True)
@@ -115,7 +116,7 @@ class testGraPyspIfc( unittest.TestCase):
         self.assertEqual( sinus.getCurrent(), 20)
         PySpectra.processEventsLoop( 1)
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
 
@@ -170,7 +171,7 @@ class testGraPyspIfc( unittest.TestCase):
 
         graPyspIfc.close()
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
         graPyspIfc.setSpectra( True)
@@ -213,7 +214,7 @@ class testGraPyspIfc( unittest.TestCase):
 
         graPyspIfc.close()
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
         graPyspIfc.setSpectra( True)
@@ -260,7 +261,7 @@ class testGraPyspIfc( unittest.TestCase):
         
         graPyspIfc.close()
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
         graPyspIfc.setSpectra( True)
@@ -305,7 +306,7 @@ class testGraPyspIfc( unittest.TestCase):
         
         graPyspIfc.close()
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
         graPyspIfc.setSpectra( True)
@@ -345,7 +346,7 @@ class testGraPyspIfc( unittest.TestCase):
         graPyspIfc.write( names = "rand")
         graPyspIfc.close()
 
-        if utils.getHostname() != 'haso107tk': 
+        if utils.getHostname() != definitions.hostTK: 
             return 
 
         graPyspIfc.setSpectra( True)
