@@ -203,14 +203,19 @@ def toPyspLocal( hsh):
     # Scan
     #
     elif 'Scan' in hsh:
-        try: 
-            #
-            # '**hsh' unpacked dictionary
-            #
-            PySpectra.Scan( **hsh[ 'Scan']) 
-            argout[ 'result'] = 'done'
-        except Exception as e:
-            argout[ 'result'] = "zmqIfc.toPyspLocal: error, %s" % repr( e)
+        #
+        if 'flagMCA' in hsh[ 'Scan'] and hsh[ 'Scan'][ 'flagMCA'] is True:
+            _storeMCAData( hsh[ 'Scan'])
+            argout[ 'result'] = 'done'; 
+        else:
+            try: 
+                #
+                # '**hsh' unpacked dictionary
+                #
+                PySpectra.Scan( **hsh[ 'Scan']) 
+                argout[ 'result'] = 'done'
+            except Exception as e:
+                argout[ 'result'] = "zmqIfc.toPyspLocal: error, %s" % repr( e)
     #
     # ... else
     #
@@ -226,6 +231,58 @@ def toPyspLocal( hsh):
 
     #print( "zmqIfc.toPyspLocal: return %s" % repr( argout))
     return argout
+
+def _storeMCAData( hsh): 
+    '''
+    handle MCA data
+      - create new Scan, if it does not exist.
+      - otherwise re-use it.
+
+    for the moment we assume that the whole sequence involving
+    this function starts at pyspDoor. Therefore we treat the 
+    case of a non-empty dictionary very relaxed. Just complain
+    and let TK fix it.
+    '''
+    scan = PySpectra.getGqe( hsh[ 'name']) 
+    if scan is None: 
+        PySpectra.Scan( **hsh)
+        return True
+    
+    del hsh[ 'name'] 
+    del hsh[ 'flagMCA'] 
+
+    if 'y' not in hsh: 
+        raise ValueError( "zmqIfc._storeMCAData: no data, 'y' is missing")
+
+    if len( hsh[ 'y']) != len( scan.y): 
+        raise ValueError( "zmqIfc._storeMCAData: len( scan.y) %d, len( hsh[ 'y']) %d" % 
+                          (len( scan.y), len( hsh[ 'y'])))
+
+    scan.y = hsh[ 'y'][:]
+    del hsh[ 'y']
+    #
+    # trigger a re-display
+    #
+    scan.lastIndex = -1
+
+    if 'x' not in hsh: 
+        return True
+    
+    if len( hsh[ 'x']) != len( scan.x): 
+        raise ValueError( "zmqIfc._storeMCAData: len( scan.x) %d, len( hsh[ 'x']) %d" % 
+                          (len( scan.x), len( hsh[ 'x'])))
+
+    scan.x = hsh[ 'x'][:]
+    del hsh[ 'x']
+
+    if 'lineColor' in hsh: 
+        scan.lineColor = hsh[ 'lineColor']
+        del hsh[ 'lineColor']
+
+    if hsh:
+        print( "zmqIfc._storeMCAData: dct not empty %s" % str( hsh))
+
+    return 
 
 def _replaceNumpyArrays( hsh): 
     """

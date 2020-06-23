@@ -175,7 +175,6 @@ class pyspDoor( sms.BaseDoor):
             # Re-use the scan. Otherwise we have these flickering displays
             #
             self.sendHshQueue( { 'Scan': { 'name': self.mcaAliases[n],
-                                           'reUse': True, 
                                            'flagMCA': True, 
                                            'lineColor': 'blue', 
                                            'x': x, 
@@ -1171,6 +1170,12 @@ class pyspDoor( sms.BaseDoor):
             cb_refreshMain( )
         '''
         #print( "pyspDoor.sendHshQueue: %s" % repr( hsh))
+        #
+        # the queue is emptied in 
+        #   /home/kracht/Misc/pySpectra/PySpectra/pyspMonitorClass.py
+        # from there a call is made to 
+        #   PySpectra.toPyspLocal( hsh)
+        #
         try:
             self.queue.put( hsh)
         except Exception as e:

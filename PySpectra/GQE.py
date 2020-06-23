@@ -580,7 +580,6 @@ class Scan( object):
                     lstStr = atStr.strip()[1:-1].split( ',')
                 else: 
                     lstStr = atStr.strip().split( ',')
-                print( "+++GQE %s %s" % (atStr, repr( lstStr)))
                 if len( lstStr) != 3:
                     self.at = [1, 1, 1]
                 else:
@@ -1026,6 +1025,12 @@ class Scan( object):
         '''
         self.currentIndex = i
         return 
+
+    def getTotalCounts( self): 
+        sum = 0.
+        for i in range( len( self.y)): 
+            sum += self.y[i]
+        return float( sum)
 
     def autoscale( self): 
         '''

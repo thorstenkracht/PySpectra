@@ -362,6 +362,16 @@ class Scan( object):
             self.plotDataItem = self.scan.plotDataItem
         return 
 
+    def getTotalCounts( self): 
+        argout = 0 
+        if spectraInstalled and useSpectra:
+            ( sts, argout) = Spectra.gra_decode_double( "sum( %s)" % self.name)
+            if sts == 0: 
+                raise ValueError( "graPyspIfc.Scan.getTotalCounts: sum() failed")
+        else: 
+            argout = self.scan.getTotalCounts()
+        return argout
+
     def smartUpdateDataAndDisplay( self, x = None, y = None): 
         """
         for PySpectra: smartUpdataDataAndDisplay() updates the

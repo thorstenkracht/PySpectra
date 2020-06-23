@@ -9,6 +9,7 @@ import numpy as _numpy
 import math as _math
 import datetime as _datetime
 import time as _time
+import sys as _sys
 import PySpectra
 import PySpectra.utils as utils
 import PySpectra.tangoIfc as tangoIfc
@@ -1457,7 +1458,11 @@ def display( nameList = None):
     #
     for nm in nameList:
         if PySpectra.getGqe( nm) is None:
-            raise ValueError( "graphics.display: %s is not in the gqeList" % nm)
+            print( "graphics.display: %s is not in the gqeList" % nm)
+            import HasyUtils
+            HasyUtils.printCallStack()
+            _sys.exit( 255)
+            #raise ValueError( "graphics.display: %s is not in the gqeList" % nm)
 
     gqeList = PySpectra.getGqeList()
     #

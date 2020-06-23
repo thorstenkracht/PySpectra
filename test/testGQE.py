@@ -849,11 +849,13 @@ class testGQE( unittest.TestCase):
         print "testPySpectra.testMisc"
         PySpectra.cls()
         PySpectra.delete()
-        t1 = PySpectra.Scan( name = "t1", xMin = -5., xMax = 5., nPts = 101, color = 'red', at = "(1,2,1)")
-        t2 = PySpectra.Scan( name = "t2", xMin = -5., xMax = 5., nPts = 101, at = (1, 2, 2))
+        t1 = PySpectra.Scan( name = "t1", xMin = 0., xMax = 5., nPts = 101, color = 'red', at = "(1,2,1)")
+        t2 = PySpectra.Scan( name = "t2", xMin = 0., xMax = 5., nPts = 101, at = (1, 2, 2))
         PySpectra.display()
 
         lst = PySpectra.getDisplayList()
+
+        self.assertEqual( t1.getTotalCounts(), 252.5)
 
         self.assertTrue( len(lst) == 2)
         self.assertTrue( PySpectra.info() == 2)
