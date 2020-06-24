@@ -2032,7 +2032,11 @@ class pySpectraGui( QtGui.QMainWindow):
 
         self.gqeList = None
         self.scanAttributes = None
-        self.proxyDoor = PyTango.DeviceProxy( HasyUtils.getDoorNames()[0])
+        doors = HasyUtils.getDoorNames()
+        if doors is not None and len( doors) > 0:
+            self.proxyDoor = PyTango.DeviceProxy( doors[0]) 
+        else: 
+            self.proxyDoor = None
         self.nMotor = 0
         
         self.useMatplotlib = True 
