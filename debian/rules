@@ -15,3 +15,7 @@ export PYBUILD_NAME=pyspectra
 override_dh_auto_test:
         #do nothing here
 
+override_dh_auto_install:
+	dh_auto_install
+	mv $(CURDIR)/debian/python3-pyspectra/usr/bin/pyspViewer.py $(CURDIR)/debian/python3-pyspectra/usr/bin/pyspViewer3.py
+	mv $(CURDIR)/debian/python3-pyspectra/usr/bin/pyspMonitor.py $(CURDIR)/debian/python3-pyspectra/usr/bin/pyspMonitor3.py
