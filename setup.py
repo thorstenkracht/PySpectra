@@ -3,7 +3,11 @@
 from distutils.core import setup
 import handleVersion
 
-version = handleVersion.findVersion()
+ROOT_DIR = "/home/kracht/Misc/pySpectra"
+
+#
+handleVers = handleVersion.handleVersion( ROOT_DIR)
+version = handleVers.findVersion()
 
 setup( name="python-pyspectra", 
        version=version,
