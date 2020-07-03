@@ -228,6 +228,10 @@ class pyspDoor( sms.BaseDoor):
         self.mcaProxies = []
         self.alias_dict = {}
         #
+        # just for display, calculated from counters
+        #
+        self.displayCounterHsh = {}
+        #
         # u'counters': [u'haso107klx:10000/expchan/hasysis3820ctrl/1',
         #               u'haso107klx:10000/expchan/hasyvfcadcctrl/1'],
         #
@@ -275,8 +279,53 @@ class pyspDoor( sms.BaseDoor):
         #print( "alias_dict %s" % repr( self.alias_dict))
         #print( "counters %s" % repr( self.counterAliases))
         #print( "mcas %s" % repr( self.mcaAliases))
-        # 
 
+        self.handleDisplayCounters()
+        return 
+
+    def handleDisplayCounters( self): 
+        """
+        called from findCountersAndMCAs and prepareNewScan
+
+
+        p09/door/haso107tk.01 [62]: senv useDisplayCounters True
+        useDisplayCounters = True
+        
+        p09/door/haso107tk.01 [63]: senv displayCounters "{ 'vfc_ratio': 'DataDict[ \'eh_vfc01\']/DataDict[ \'eh_vfc02\']'}"
+        displayCounters = {'vfc_ratio': "DataDict[ 'eh_vfc01']/DataDict[ 'eh_vfc02']"}
+
+
+        p09/door/haso107tk.01 [74]: import HasyUtils
+        p09/door/haso107tk.01 [75]: hsh = { 'vfc_ratio': "DataDict[ 'eh_vfc01']/DataDict[ 'eh_vfc02']"}
+        p09/door/haso107tk.01 [76]: HasyUtils.setEnv( "displayCounters", hsh)
+
+
+        """
+        self.useDisplayCounters = HasyUtils.getEnv( "useDisplayCounters")
+
+        if self.useDisplayCounters is None or \
+           type( self.useDisplayCounters) is bool and self.useDisplayCounters == False or \
+           type( self.useDisplayCounters) is str and self.useDisplayCounters == "False":
+            self.useDisplayCounters = False
+            self.displayCounterHsh = {}
+            return 
+            
+        self.useDisplayCounters = True
+        hsh = HasyUtils.getEnv( "displayCounters")
+        if hsh is not None: 
+            if type( hsh) is dict: 
+                self.displayCounterHsh = {}
+                for k in list( hsh.keys()):
+                    self.displayCounterHsh[ k] = {}
+                    self.displayCounterHsh[ k][ 'formular'] = hsh[ k]
+            else: 
+                print( "pyspDoor.__init__: displayCounters is not a dict, but %s" % repr( type( hsh)))
+                sys.exit( 255)
+        else: 
+            print( "pyspDoor.handleDisplayCounters: useDisplayCounters == True but no displayCounters dict")
+            sys.exit( 255)
+
+        return 
 
     def prepareTitleAndSo( self, dataRecord):
 
@@ -825,6 +874,8 @@ class pyspDoor( sms.BaseDoor):
         self.meshSweepCount = 1
         self.posOld = []
         
+        self.handleDisplayCounters()
+
         #
         # scrollAreaFiles.setEnabled( False)
         # scrollAreaScans.setEnabled( False)
@@ -886,6 +937,15 @@ class pyspDoor( sms.BaseDoor):
                                            'nPts': npTemp,
                                            'motorNameList': self.motorNameList, 
                                            'autoscaleX': False}})
+        if self.useDisplayCounters: 
+            for elm in list( self.displayCounterHsh.keys()):
+                self.sendHshQueue( { 'Scan': { 'name': elm,
+                                               'xMin': self.start,
+                                               'xMax': self.stop,
+                                               'lineColor': 'red',
+                                               'nPts': npTemp,
+                                               'motorNameList': self.motorNameList, 
+                                                'autoscaleX': False}})
             
         env = self.getEnvironment()
         if 'SignalCounter' in env:
@@ -1098,6 +1158,10 @@ class pyspDoor( sms.BaseDoor):
         # the loop over the counters, extract the data
         #
         signal = None
+        #
+        # DataDict for the displayCounters
+        #
+        DataDict = {}
         for alias in self.counterAliases:
                 
             if self.alias_dict[alias] not in dataRecord[1]['data']:
@@ -1132,24 +1196,42 @@ class pyspDoor( sms.BaseDoor):
             if data is None:
                 self.dumpDataRecord( "data == None", dataRecord)
                 self.sendHshQueue( { 'command': ['setY %s %d %s' % (alias, self.indexScan - 1, repr(0.))]})
+                DataDict[ alias] = 0.
             else:
                 if type( data) is list:
                     if len( data) == 1:
                         data = data[0]
+                        DataDict[ alias] = data[0]
                     else:
                         self.dumpDataRecord( "unexpected data type %s (%s) is not float" % 
                                              (type( data), str( data)), dataRecord)
+                        DataDict[ alias] = 0.
                         data = 0.
                         
                 if not type( data) is float:
                     self.dumpDataRecord( "type(data) (%s) is not float" % str( data), dataRecord)
                     self.sendHshQueue( { 'command': ['setY %s %d %s' % (alias, self.indexScan - 1, repr(0.))]})
+                    DataDict[ alias] = 0.
                 else:
                     self.sendHshQueue( { 'command': ['setY %s %d %s' % (alias, self.indexScan - 1, repr(data))]})
+                    DataDict[ alias] = data
                     pass
 
+            DataDict[ 'x'] = pos
             self.sendHshQueue( { 'command': ['setX %s %d %s' % (alias, self.indexScan - 1, repr(pos))]})
 
+        if self.useDisplayCounters: 
+            for alias in list( self.displayCounterHsh.keys()): 
+                cmd = "data = %s" % self.displayCounterHsh[ alias][ 'formular']
+                try: 
+                    exec cmd
+                except Exception as e: 
+                    print( "pyspDoor, evaluating \n  '%s'\n caused an error" % cmd)
+                    print( repr( e))
+                    break
+                self.sendHshQueue( { 'command': ['setX %s %d %s' % (alias, self.indexScan - 1, DataDict[ 'x'])]})
+                self.sendHshQueue( { 'command': ['setY %s %d %s' % (alias, self.indexScan - 1, data)]})
+            
         if self.isMesh:
             self.displayMeshScan( pos, posY, signal)
 
