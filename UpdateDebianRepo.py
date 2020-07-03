@@ -41,11 +41,12 @@ def main():
     flagExecute = False
     if options.execute is True:
         flagExecute = True
-        parser.print_help()
 
     os.chdir( ROOT_DIR)
 
-    version = handleVersion.findVersion()
+    #
+    handleVers = handleVersion.handleVersion( ROOT_DIR)
+    version = handleVers.findVersion()
     print ( "UpdateDebianPackage: version %s %s" % (version, os.getenv( "PWD")))
 
     for versOS in [ 'stretch', 'buster']: 
@@ -95,6 +96,12 @@ def main():
             sys.exit( 255)
 
     print( ">>> UpdateDebianRepo.py DONE")
+
+    if not flagExecute: 
+        print( "\n")
+        print( "this was just a test run, use '-x' to execute\n")
+        print( "\n")
+
     return 
 
 if __name__ == "__main__": 
