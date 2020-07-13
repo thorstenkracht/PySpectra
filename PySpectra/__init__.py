@@ -9,6 +9,8 @@ PySpectra displays 1D and 2D data
 $ pyspMonitor.py
   - listens to a Sardana Door and displays the 1D data
   - receives data and commands sent by PySpectra.toPyspMonitor()
+  - has the displayCounters feature, see the Sardana/Spock/Taurus at DESY manual
+  - uses the SignalCounter to display the a signal during mesh scans.
 
 $ TngGui.py
   gives access to various parts of our Tango/Sardana environment

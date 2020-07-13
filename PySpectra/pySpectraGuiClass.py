@@ -628,9 +628,17 @@ class ScanAttributes( QtGui.QMainWindow):
         #
         self.currentIndexLabel = QtGui.QLabel( "Current/LastIndex:")
         self.currentIndexLabel.setToolTip( "CurrentIndex refers to the last valid x-, y-values (Np == CurrentIndex + 1)")
-        self.layout_grid.addWidget( self.currentIndexLabel, row, 3)
+        self.layout_grid.addWidget( self.currentIndexLabel, row, 2)
         self.currentIndexValue = QtGui.QLabel( "%d/%d" % (self.scan.currentIndex, self.scan.lastIndex))
-        self.layout_grid.addWidget( self.currentIndexValue, row, 4)
+        self.layout_grid.addWidget( self.currentIndexValue, row, 3)
+        #
+        # sum
+        #
+        self.sumLabel = QtGui.QLabel( "Sum:")
+        self.sumLabel.setToolTip( "Sum of the y-values")
+        self.layout_grid.addWidget( self.sumLabel, row, 4)
+        self.sumValue = QtGui.QLabel( "%g" % (self.scan.getTotalCounts()))
+        self.layout_grid.addWidget( self.sumValue, row, 5)
         #
         # xMin
         #
@@ -1174,6 +1182,7 @@ class ScanAttributes( QtGui.QMainWindow):
             self.xValue.setText( self.scan.xLabel)
         self.lengthValue.setText( "%d" % len( self.scan.x))
         self.currentIndexValue.setText( "%d/%d" % (self.scan.currentIndex, self.scan.lastIndex))
+        self.sumValue.setText( "%g" % (self.scan.getTotalCounts()))
         self.xMinValue.setText( "%g" % self.scan.xMin)
         self.xMaxValue.setText( "%g" % self.scan.xMax)
         if self.scan.yMin is None:

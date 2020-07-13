@@ -3,6 +3,8 @@
 the Door which communicates to pyspMonitor via a queue
 
 the Door is the sender using sendHshQueue()
+
+be sure to 'senv JsonRecorder True' 
 '''
 import PyTango
 import time, sys, os, math
@@ -37,7 +39,7 @@ class pyspDoor( sms.BaseDoor):
     def __init__( self, name, **kw):
         global pyspDoorInstance
 
-        #print( "pyspDoor.__init__() %s" %s name)
+        #print( "pyspDoor.__init__() %s" % name)
         #pysp.setWsViewport( "DINA4L")
         self.queue = builtins.__dict__[ 'queue']
         
@@ -316,8 +318,7 @@ class pyspDoor( sms.BaseDoor):
             if type( hsh) is dict: 
                 self.displayCounterHsh = {}
                 for k in list( hsh.keys()):
-                    self.displayCounterHsh[ k] = {}
-                    self.displayCounterHsh[ k][ 'formular'] = hsh[ k]
+                    self.displayCounterHsh[ k] = hsh[ k]
             else: 
                 print( "pyspDoor.__init__: displayCounters is not a dict, but %s" % repr( type( hsh)))
                 sys.exit( 255)
@@ -1222,9 +1223,9 @@ class pyspDoor( sms.BaseDoor):
 
         if self.useDisplayCounters: 
             for alias in list( self.displayCounterHsh.keys()): 
-                cmd = "data = %s" % self.displayCounterHsh[ alias][ 'formular']
+                cmd = "data = %s" % self.displayCounterHsh[ alias]
                 try: 
-                    exec cmd
+                    exec( cmd)
                 except Exception as e: 
                     print( "pyspDoor, evaluating \n  '%s'\n caused an error" % cmd)
                     print( repr( e))
