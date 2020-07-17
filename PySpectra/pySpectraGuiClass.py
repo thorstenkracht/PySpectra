@@ -2235,7 +2235,7 @@ class pySpectraGui( QtGui.QMainWindow):
         self.abort = QtGui.QPushButton(self.tr("Abort"))
         hBox.addWidget( self.abort)
         self.abort.clicked.connect( self.cb_abort)
-        self.abort.setToolTip( "Send AbortMacro to the MacroServer")
+        self.abort.setToolTip( "Execute AbortMacro on Door")
 
         self.stop = QtGui.QPushButton(self.tr("Stop"))
         hBox.addWidget( self.stop)

@@ -9,28 +9,19 @@ Uploaders: Thorsten Kracht <thorsten.kracht@desy.de>
 Build-Depends: python (>=2.7), debhelper (>=9.0), python-all, dh-python, python-setuptools, python3-all,  python3-setuptools, python3-numpy, python-numpy, python-pytest, python3-pytest
 Standards-Version: 3.9.8
 
-
-#Package: python-pyspectra
-#Architecture: all
-#Depends: python-pkg-resources,
-#         ${misc:Depends},
-#         ${python:Depends},
-#Description: tool to operate Tango/Sardana
-# abc.
-
 Package: python-pyspectra
 Architecture: all
-Depends: ${python:Depends}, ${misc:Depends}, python (>= 2.7)
+Depends: ${python:Depends}, ${misc:Depends}, python (>= 2.7), ipython
 Provides: ${python:Provides}
-Description: Package to replace Spectra
- abc.
+Description: pyspMonitor, pyspViewer and corresponding libraries
 
 Package: python3-pyspectra
 Architecture: all
-Depends: ${python3:Depends}, ${misc:Depends}, python3 (>= 3.2~)
+Depends: ${python3:Depends}, ${misc:Depends}, python3 (>= 3.2~), ipython3
 Provides: ${python3:Provides}
-Description: Package to replace Spectra
- abc.
+Description: pyspMonitor, pyspViewer and corresponding libraries
+
+
 
 
 

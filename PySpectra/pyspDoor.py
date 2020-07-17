@@ -1227,9 +1227,9 @@ class pyspDoor( sms.BaseDoor):
                 try: 
                     exec( cmd)
                 except Exception as e: 
-                    print( "pyspDoor, evaluating \n  '%s'\n caused an error" % cmd)
+                    print( "pyspDoor, evaluating \n  '%s'\n caused an error, data to 0" % cmd)
                     print( repr( e))
-                    break
+                    data = 0.
                 self.sendHshQueue( { 'command': ['setX %s %d %s' % (alias, self.indexScan - 1, DataDict[ 'x'])]})
                 self.sendHshQueue( { 'command': ['setY %s %d %s' % (alias, self.indexScan - 1, data)]})
             
