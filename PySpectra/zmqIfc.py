@@ -321,6 +321,8 @@ def toPyspMonitor( hsh, node = None, testAlive = False):
           if not, pyspMonitor is launched
 
     Example: 
+      if not PySpectra.isPyspMonitorAlive():
+          return False
       ret = PySpectra.toPyspMonitor( {'command': ['delete', 'cls', 'create s1', 'display']})
       if ret[ 'result'] != 'done': 
           print( "error" % ret[ 'result'])
@@ -351,7 +353,10 @@ def toPyspMonitor( hsh, node = None, testAlive = False):
         sckt.connect('tcp://%s:7779' % node)
     except Exception as e:
         sckt.close()
+        print( "zmqIfc.toPyspMonitor: connected failed %s" % repr( e))
         return { 'result': "zmqIfc.toPyspMonitor: failed to connect to %s" % node}
+
+    # print( "zmqIfc.toPyspMonitor: connected to tcp://%s:7779" % node)
     
     _replaceNumpyArrays( hsh)
 
@@ -364,7 +369,6 @@ def toPyspMonitor( hsh, node = None, testAlive = False):
         sckt.close()
         return { 'result': "zmqIfc.toPyspMonitor: exception by send() %s" % repr(e)}
     #
-
     # PyspMonitor receives the Dct, processes it and then
     # returns the message. This may take some time. To pass
     # 4 arrays, each with 10000 pts takes 2.3s

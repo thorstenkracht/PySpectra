@@ -111,8 +111,15 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
         except Exception as e:
             print( "pyspMonitorClass.setupZMQ(): ZMQ error (json-dict receiver)")
             print( "message: %s" % repr( e))
-            print( "assuming another pyspMonitor is ready to receive json-dcts")
-            pass
+            # mayby helpful
+            # sudo lsof -i -P -n | grep LISTEN 
+            # sudo netstat -tulpn | grep LISTEN
+            # sudo lsof -i:7779 ## see a specific port such as 22 ##
+            # sudo nmap -sTU -O IP-address-Here
+            #
+            sys.exit( 255)
+            #print( "assuming another pyspMonitor is ready to receive json-dcts")
+            #pass
         return 
 
     def cb_timerZMQ( self):

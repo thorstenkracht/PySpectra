@@ -965,10 +965,10 @@ class ScanAttributes( QtGui.QMainWindow):
         self.vlines.clicked.connect( self.cb_vlines)
         self.vlines.setShortcut( "Alt+v")
 
-        self.showScan = QtGui.QPushButton(self.tr("Show")) 
-        self.showScan.setToolTip( "Prints a list i, x, y")
-        self.statusBar.addPermanentWidget( self.showScan) # 'permanent' to shift it right
-        self.showScan.clicked.connect( self.cb_showScan)
+        #self.showScan = QtGui.QPushButton(self.tr("Show")) 
+        #self.showScan.setToolTip( "Prints a list i, x, y")
+        #self.statusBar.addPermanentWidget( self.showScan) # 'permanent' to shift it right
+        #self.showScan.clicked.connect( self.cb_showScan)
 
         self.display = QtGui.QPushButton(self.tr("&Display")) 
         self.statusBar.addPermanentWidget( self.display) # 'permanent' to shift it right
@@ -1043,7 +1043,6 @@ class ScanAttributes( QtGui.QMainWindow):
     def cb_autoscaleXChanged( self): 
         self.scan.autoscaleX = self.autoscaleXCheckBox.isChecked()
         PySpectra.cls()
-        #PySpectra.display( self.parent.getCheckedNameList())
         PySpectra.display( [self.name])
 
     def cb_autoscaleYChanged( self): 
