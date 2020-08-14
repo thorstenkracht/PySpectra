@@ -964,7 +964,7 @@ class ScanAttributes( QtGui.QMainWindow):
         self.statusBar.addPermanentWidget( self.vlines) # 'permanent' to shift it right
         self.vlines.clicked.connect( self.cb_vlines)
         self.vlines.setShortcut( "Alt+v")
-
+       
         #self.showScan = QtGui.QPushButton(self.tr("Show")) 
         #self.showScan.setToolTip( "Prints a list i, x, y")
         #self.statusBar.addPermanentWidget( self.showScan) # 'permanent' to shift it right

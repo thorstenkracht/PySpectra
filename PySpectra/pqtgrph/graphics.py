@@ -1564,7 +1564,8 @@ def display( nameList = None):
                                                            symbolBrush = definitions.colorCode[ scan.symbolColor.lower()], 
                                                            symbolSize = scan.symbolSize)
         # 
-        scan.plotItem.vb.sigXRangeChanged.connect( _make_setYRange( scan))
+        if not scan.textOnly:
+            scan.plotItem.vb.sigXRangeChanged.connect( _make_setYRange( scan))
 
         if scan.textOnly:
             continue
