@@ -1093,6 +1093,14 @@ def _makeClsSceneFunc( scene, vb):
         return 
     return func
 
+def _make_setYRange( scan):
+    def func(): 
+        scan.plotItem.enableAutoRange( axis='y')
+        scan.plotItem.setAutoVisible( y = True)
+        return 
+    return func
+        
+        
 def _setAutoscaleForOverlaid( scan, target):
 
     if scan.autoscaleY is False:
@@ -1555,6 +1563,8 @@ def display( nameList = None):
                                                            symbolPen = definitions.colorCode[ scan.symbolColor.lower()], 
                                                            symbolBrush = definitions.colorCode[ scan.symbolColor.lower()], 
                                                            symbolSize = scan.symbolSize)
+        # 
+        scan.plotItem.vb.sigXRangeChanged.connect( _make_setYRange( scan))
 
         if scan.textOnly:
             continue
