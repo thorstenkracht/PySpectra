@@ -829,7 +829,7 @@ class testGQE( unittest.TestCase):
         self.assertAlmostEqual( xcms, 0.1234, 3)
         self.assertAlmostEqual( xcen, 0.1234, 3)
 
-        self.assertTrue( g.textList[0].text == 'FSA results')
+        self.assertTrue( g.textList[0].text.find( 'FSA results') == 0)
 
         lst = g.textList[1].text.split( ':')
         self.assertTrue( lst[0] == 'xpos')
