@@ -347,6 +347,9 @@ class pyspDoor( sms.BaseDoor):
         self.filename = "%s_%05d.%s" % (tpl[0], self.serialno, tpl[2])
         self.startTime = dataRecord[1]['data']['starttime']
         self.title = dataRecord[1]['data']['title']
+        if self.title.find( 'fscan') == 0: 
+            self.title = HasyUtils.repairFscanTitle(self.title)
+            self.isFscan = True
 
         self.sendHshQueue( { 'command': ["setTitle " + self.title]})
         self.sendHshQueue( { 'command': ["setComment \"%s, %s\"" % (self.filename, self.startTime)]})
@@ -384,6 +387,7 @@ class pyspDoor( sms.BaseDoor):
                 argout[hsh['name']] = [hsh['min_value'], hsh['max_value']]
         return argout
 
+
     def findScanLimits( self, dataRecord):
         '''
         look at the command line and find the start and stop values.
@@ -394,7 +398,13 @@ class pyspDoor( sms.BaseDoor):
         #
         # get the scan limits from the title
         #
-        cmd = dataRecord[1]['data']['title'].split()
+        #
+        # get the scan limits from the title
+        #
+        if dataRecord[1]['data']['title'].find( 'fscan') == 0: 
+            cmd = HasyUtils.repairFscanTitle( dataRecord[1]['data']['title']).split()
+        else: 
+            cmd = dataRecord[1]['data']['title'].split()
         #
         # ascan exp_dmy01 0 1 10 0.2
         #
@@ -851,6 +861,20 @@ class pyspDoor( sms.BaseDoor):
             raise Exception( "pyspDoor.findScanLimits",
                              "dmesh!!!", 
                               dataRecord[1]['data']['title'])
+
+        #
+        # a real fscan command line: 
+        #   fscan 'x=[0,1,2,3,4],y=[10,11,12,13,14]' 0.1 "exp_dmy01" 'x' "exp_dmy02" 'y'
+        # is reduced to 
+        #   fscan np=5 0.1 exp_dmy01 exp_dmy02 
+        # to save space
+        #
+        elif cmd[0] == 'fscan':
+            self.motors = cmd[3:]
+            self.np = int(cmd[1].split( '=')[1])
+            self.start = 0
+            self.stop =  100.
+            self.motorIndex = 0
         else:
             raise Exception( "pyspDoor.findScanLimits",
                              "failed to identify scan command", 
@@ -870,6 +894,7 @@ class pyspDoor( sms.BaseDoor):
 
         #print( "\n---------- prepareNewScan")
 
+        self.isFscan = False
         self.isMesh = False
         self.meshGoingUp = True 
         self.meshSweepCount = 1
@@ -922,12 +947,17 @@ class pyspDoor( sms.BaseDoor):
         # to prepare the motorsWidget of the GUI
         #
         self.scanInfo[ 'motorIndex'] = self.motorIndex
+        
         self.sendHshQueue( { 'ScanInfo': self.scanInfo})
         
         #
         # we may have scans using the condition feature
         #
         npTemp = 2*self.np
+
+        autox = False
+        if self.isFscan: 
+            autox = True
 
         self.scanNo += 1
         for elm in self.counterAliases:
@@ -937,7 +967,7 @@ class pyspDoor( sms.BaseDoor):
                                            'lineColor': 'red',
                                            'nPts': npTemp,
                                            'motorNameList': self.motorNameList, 
-                                           'autoscaleX': False}})
+                                           'autoscaleX': autox}})
         if self.useDisplayCounters: 
             for elm in list( self.displayCounterHsh.keys()):
                 self.sendHshQueue( { 'Scan': { 'name': elm,
@@ -946,7 +976,7 @@ class pyspDoor( sms.BaseDoor):
                                                'lineColor': 'red',
                                                'nPts': npTemp,
                                                'motorNameList': self.motorNameList, 
-                                                'autoscaleX': False}})
+                                                'autoscaleX': autox}})
             
         env = self.getEnvironment()
         if 'SignalCounter' in env:

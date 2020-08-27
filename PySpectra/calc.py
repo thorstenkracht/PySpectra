@@ -10,6 +10,7 @@ from scipy import integrate as _integrate
 from scipy.optimize import curve_fit as _curve_fit
 import bisect as _bisect
 import numpy as np
+import matplotlib.pyplot as _plt
 
 #def derivativeNumpy( name = None, nameNew = None):
 #    '''
@@ -638,7 +639,7 @@ def fastscananalysis(x,y,mode):
 
 # --------------------------------------------------------------------------- #
 def _check4peak(x,y):
-    debug  = 0
+    debug  = 1
     # --- initialize output variables
     ispeak = False
     peaki  = int(round(len(x)/2))                # --- Dummy peak index (center point) 
@@ -646,7 +647,7 @@ def _check4peak(x,y):
     # --- Calculate smoothed derivative 'sdy' of intensity signal (of identical length!)
     SmoothWidth, SmoothType, Ends = (5, 3, 1)
     sdy = _fastsmooth( _deriv(y), SmoothWidth, SmoothType, Ends)
-    if debug == 1:
+    if debug == 0:
         _plt.figure(102)
         xval = list( range(1,len(y)+1))
         _plt.plot(xval, _deriv(y), 'ro-')

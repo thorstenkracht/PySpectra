@@ -27,6 +27,30 @@ SLIDER_RESOLUTION = 256
 
 HISTORY_MAX = 100
 
+
+def make_cb_fsa_1( self, mode): 
+    def func(): 
+        self.scan.fsa( mode = mode, logWidget = self.logWidget)
+        PySpectra.cls()
+        PySpectra.display( [ self.scan.name])
+        return 
+    return func
+
+def make_cb_fsa_2( self, mode): 
+    def func(): 
+        displayList = PySpectra.getDisplayList()
+        if len( displayList) != 1:
+            self.logWidget.append( "cb_fsa_peak: expecting 1 displayed scan")
+            return 
+        scan = displayList[0]
+        scan.fsa( mode = 'peak', logWidget = self.logWidget)
+
+        PySpectra.cls()
+        PySpectra.display( [scan.name])
+        return 
+    return func
+
+
 class HLineTK( QtGui.QFrame):
     def __init__( self):
         QtGui.QFrame.__init__(self)
@@ -913,9 +937,10 @@ class ScanAttributes( QtGui.QMainWindow):
         self.ssaAction.triggered.connect( self.cb_ssa)
         self.utilsMenu.addAction( self.ssaAction)
 
-        self.fsaAction = QtGui.QAction('FSA', self)        
-        self.fsaAction.triggered.connect( self.cb_fsa)
-        self.utilsMenu.addAction( self.fsaAction)
+        for mode in definitions.fsaModes:
+            qa = QtGui.QAction('FSA(%s)' % mode, self)        
+            qa.triggered.connect( make_cb_fsa_1( self, mode))
+            self.utilsMenu.addAction( qa)
 
         self.detailsAction = QtGui.QAction('Details', self)        
         self.detailsAction.triggered.connect( self.cb_details)
@@ -1218,12 +1243,6 @@ class ScanAttributes( QtGui.QMainWindow):
 
     def cb_ssa( self): 
         self.scan.ssa( self.parent.logWidget)
-        PySpectra.cls()
-        PySpectra.display( [ self.scan.name])
-
-    def cb_fsa( self):
-        self.scan.fsa( self.logWidget)
-
         PySpectra.cls()
         PySpectra.display( [ self.scan.name])
 
@@ -2648,9 +2667,11 @@ class pySpectraGui( QtGui.QMainWindow):
         self.ssaAction.triggered.connect( self.cb_ssa)
         self.utilsMenu.addAction( self.ssaAction)
 
-        self.fsaAction = QtGui.QAction('FSA', self)        
-        self.fsaAction.triggered.connect( self.cb_fsa)
-        self.utilsMenu.addAction( self.fsaAction)
+        for mode in definitions.fsaModes:
+            qa = QtGui.QAction('FSA(%s)' % mode, self)        
+            qa.triggered.connect( make_cb_fsa_2( self, mode))
+            self.utilsMenu.addAction( qa)
+
         #
         # options
         #
@@ -3029,16 +3050,6 @@ class pySpectraGui( QtGui.QMainWindow):
         PySpectra.cls()
         PySpectra.display( [scan.name])
 
-    def cb_fsa( self):
-        displayList = PySpectra.getDisplayList()
-        if len( displayList) != 1:
-            self.logWidget.append( "cb_fsa: expecting 1 displayed scan")
-            return 
-        scan = displayList[0]
-        scan.fsa( self.logWidget)
-
-        PySpectra.cls()
-        PySpectra.display( [scan.name])
 
     def cb_writeFile( self):
         if len( self.getCheckedNameList()) > 0: 

@@ -222,7 +222,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
 
         length = len( self.scanInfo['motors'])
         if  length == 0 or length > 3:
-            _QtGui.QMessageBox.about( None, 'Info Box', 
+            QtGui.QMessageBox.about( None, 'Info Box', 
                                       "pyspMonitorClass: # of motors == 0 or > 3") 
             return
 

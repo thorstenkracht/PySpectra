@@ -1170,17 +1170,15 @@ class Scan( object):
         res.useTargetWindow = True
         return 
 
-    def fsa( self, logWidget = None):
+    def fsa( self, mode = 'peak', logWidget = None):
         '''
         calls HasyUtils.fastscananalysis(), author Michael Sprung
         returns: (message, xpos, xpeak, xcms, xcen)
         '''
         #
-        # 'peak','cms','cen',  'dip','dipm','dipc',  'slit', 'slitm', 'slitc',   'step','stepm' and 'stepc'
+        # 'peak','cms','cen', 'dip','dipm','dipc',  'slit', 'slitm', 'slitc',   'step','stepm' and 'stepc'
         #
         import PySpectra.calc as calc
-        mode = 'peak'
-
 
         lstX = []
         lstY = []
@@ -1219,13 +1217,17 @@ class Scan( object):
             print( "GQE.fsa: trouble with %s" % self.name)
             print( repr( e))
             
-
         if logWidget is not None: 
-            logWidget.append( " message:  %s" % message)
-            logWidget.append( " xpos:     %g" % xpos)
-            logWidget.append( " xpeak:    %g" % xpeak)
-            logWidget.append( " xcms:     %g" % xcms)
-            logWidget.append( " xcen:     %g" % xcen)
+            if message == 'success': 
+                logWidget.append( " mode:     %s" % mode)
+                logWidget.append( " message:  %s" % message)
+                logWidget.append( " xpos:     %g" % xpos)
+                logWidget.append( " xpeak:    %g" % xpeak)
+                logWidget.append( " xcms:     %g" % xcms)
+                logWidget.append( " xcen:     %g" % xcen)
+            else: 
+                logWidget.append( " mode:     %s" % mode)
+                logWidget.append( " message:  %s" % message)
         else:
             print( "GQE.fsa: message %s xpos %g xpeak %g xmcs %g xcen %g" % (message, xpos, xpeak, xcms, xcen))
 
@@ -1243,13 +1245,15 @@ class Scan( object):
                 lst.append( t)
             self.textList = lst[:]
 
-        self.addText( text = "FSA results", x = 0.02, y = 1.00, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
-        self.addText( text = "xpos: %g" % xpos, x = 0.02, y = 0.95, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
-        self.addText( text = "xpeak:   %g" % xpeak, x = 0.02, y = 0.90, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
-        self.addText( text = "xcms:      %g" % xcms, x = 0.02, y = 0.85, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
-        self.addText( text = "xcen:     %g" % xcen, x = 0.02, y = 0.80, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
-
-
+        if message == 'success': 
+            self.addText( text = "FSA results, mode %s" % mode, x = 0.02, y = 1.00, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+            self.addText( text = "xpos: %g" % xpos, x = 0.02, y = 0.95, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+            self.addText( text = "xpeak:   %g" % xpeak, x = 0.02, y = 0.90, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+            self.addText( text = "xcms:      %g" % xcms, x = 0.02, y = 0.85, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+            self.addText( text = "xcen:     %g" % xcen, x = 0.02, y = 0.80, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+        else: 
+            self.addText( text = "FSA results, mode %s" % mode, x = 0.02, y = 1.00, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+            self.addText( text = "%s" % message, x = 0.02, y = 0.95, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
 
         return (message, xpos, xpeak, xcms, xcen)
 
