@@ -43,7 +43,7 @@ def make_cb_fsa_2( self, mode):
             self.logWidget.append( "cb_fsa_peak: expecting 1 displayed scan")
             return 
         scan = displayList[0]
-        scan.fsa( mode = 'peak', logWidget = self.logWidget)
+        scan.fsa( mode = mode, logWidget = self.logWidget)
 
         PySpectra.cls()
         PySpectra.display( [scan.name])

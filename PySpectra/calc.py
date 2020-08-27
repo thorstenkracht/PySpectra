@@ -430,7 +430,7 @@ def fastscananalysis(x,y,mode):
     # --- Input variables:
     # --- x       : vector of motor positions
     # --- y       : vector of intensity values
-    # --- mode    : supported "PEAK","CMS","CEN","DIP","DIPM","DIPC","STEP","STEPM","STEPC"
+    # --- mode    : supported "PEAK","CMS","CEN","DIP","DIPM","DIPC","STEP","STEPM","STEPC", "STEPSSA","STEPMSSA","STEPCSSA" 
     # ---
     # --- Output variables:
     # --- xpos    : "goal" motor position according to the chosen mode
@@ -444,7 +444,7 @@ def fastscananalysis(x,y,mode):
     """
     # --- Debug switch
     debug   = 0
-    
+
     # --- Convert "x" and "y" to NUMPY arrays
     x = np.array(x)
     y = np.array(y)
@@ -458,9 +458,11 @@ def fastscananalysis(x,y,mode):
 
     # --- Check input variable "mode"
     if not mode.lower() in [ "peak", "cen", "cms", "dip", "dipc", "dipm",
-                             "step", "stepc", "stepm", "slit", "slitc", "slitm"]:
+                             "step", "stepc", "stepm", 
+                             "stepssa", "stepcssa", "stepmssa", 
+                             "slit", "slitc", "slitm"]:
         if debug == 1:    
-            print( "Scan analysis MODE not specified!\n Possible modes: peak, cen, cms, dip, dipc, dipm, step, stepc and stepm, slit, slitc and slitm!")
+            print( "Scan analysis MODE not specified!\n Possible modes: peak, cen, cms, dip, dipc, dipm, step, stepc and stepm, stepssa, stepcssa, stepssa, slit, slitc and slitm!")
             return message, xpos, xpeak, xcen, xcms
         mode = "peak"            
 
@@ -481,7 +483,7 @@ def fastscananalysis(x,y,mode):
         y = -y                          # --- invert the data
         y = y - np.nanmin(y)            # --- remove constant offset
         
-    if mode.lower() == "step" or mode.lower() == "stepc" or mode.lower() == "stepm":
+    if mode.lower() in [ "step", "stepc", "stepm", "stepssa", "stepcssa", "stepmssa"] :
         if y[0] > y[-1]:                # --- this is a negative slit scan
             y = -y                      # --- invert the data
         y = _deriv(y)                    # --- calculate derivative of signal of identical length
@@ -501,6 +503,34 @@ def fastscananalysis(x,y,mode):
         # y = _deriv( _fastsmooth( _deriv(y), SmoothWidth, SmoothType, Ends))          # --- calculate 2nd derivative of signal of identical length
         y = _fastsmooth( _deriv( _deriv(y)), SmoothWidth, SmoothType, Ends)          #--- calculate 2nd derivative of signal of identical length
         y = y - np.nanmin(y)            # --- remove constant offset
+
+    #
+    # use SSA for poor signals
+    #
+    if mode in [ 'stepssa', 'stepmssa', 'stepcssa']: 
+        hsh = ssa( x, y)
+        if hsh[ 'status'] != 1: 
+            return hsh[ 'reason'], None, None, None, None 
+
+        if mode.lower() == "stepssa":
+            xpos = hsh[ 'peak_x']
+        elif mode.lower() == "stepmssa":
+            xpos = hsh[ 'cms']
+        elif mode.lower() == "stepcssa":
+            xpos = hsh[ 'midpoint']
+
+        # --- Last check if xpos is within scanning range
+        if xpos < np.amin(x) or xpos > np.amax(x):
+            xpos  = np.mean(x)
+            xpeak = np.mean(x)
+            xcms  = np.mean(x)
+            xcen  = np.mean(x)
+            message = 'Error %s: Goal position outside of scan range!' % mode.upper()
+            return message, xpos, xpeak, xcen, xcms
+
+        message = 'success'
+        return message, xpos, hsh[ 'peak_x'], hsh[ 'cms'], hsh[ 'midpoint']
+        
 
     # --- Check if intensity signal contains a peak
     # --- Returns also an estimate for a possible peak index & peak width
