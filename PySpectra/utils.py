@@ -332,6 +332,19 @@ def createGauss( name = "gauss", xMin = -5, xMax = 5., nPts = 101,
 
     return g
 
+def createStep( name = "step", xMin = -10, xMax = 10., nPts = 101, 
+                 lineColor = 'red', amplitude = 3.):
+
+    g = PySpectra.Scan( name = name, xMin = xMin, xMax = xMax, nPts = nPts, 
+                        lineColor = lineColor)
+
+    g.y = (-np.arctan( g.x) + 1.5)*amplitude
+
+    g.yMin = yMin( g)
+    g.yMax = yMax( g)
+
+    return g
+
 _lenPlotted = -1
 
 def setGqeVPs( nameList, flagDisplaySingle, clsFunc):

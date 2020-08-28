@@ -510,7 +510,7 @@ def fastscananalysis(x,y,mode):
     if mode in [ 'stepssa', 'stepmssa', 'stepcssa']: 
         hsh = ssa( x, y)
         if hsh[ 'status'] != 1: 
-            return hsh[ 'reason'], None, None, None, None 
+            return hsh[ 'reasonString'], None, None, None, None 
 
         if mode.lower() == "stepssa":
             xpos = hsh[ 'peak_x']

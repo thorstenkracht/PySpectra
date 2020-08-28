@@ -457,6 +457,86 @@ def example_GaussNoisy():
     PySpectra.display()
     return 
 
+def example_StepNoisy():
+    '''
+    step function
+    '''
+    PySpectra.cls()
+    PySpectra.delete()
+    PySpectra.setTitle( "a noisy Step")
+    PySpectra.setComment( "See how FSA behaves with noisy data")
+    PySpectra.setWsViewport( "DINA5")
+    g = utils.createStep( name = "step", xMin = -10., xMax = 10., nPts = 101, 
+                          lineColor = 'red', amplitude = 3.)
+    g.y += np.random.random_sample( (len( g.x), ))*0.5
+    PySpectra.display()
+    return 
+
+def example_StepRealData():
+    '''
+    step function from P23 data
+    '''
+
+    data = [ "-2.4298828125 37681148972.8", 
+             "-2.4048828125 38401871477.4", 
+             "-2.3798828125 38288686270.4", 
+             "-2.3548828125 39185991728.4", 
+             "-2.3298828125 38456517187.0", 
+             "-2.3048828125 39194360929.6", 
+             "-2.2798828125 37675200637.4", 
+             "-2.2548828125 38996830621.8", 
+             "-2.2298828125 38551627446.6", 
+             "-2.2048828125 37100623732.0", 
+             "-2.1798828125 36825602737.3", 
+             "-2.1548828125 34963557105.2", 
+             "-2.1298828125 32163944722.6", 
+             "-2.1048828125 29299318167.0", 
+             "-2.0798828125 27794769897.0", 
+             "-2.0548828125 26176477795.0", 
+             "-2.0298828125 24897579745.6", 
+             "-2.0048828125 22452187722.0", 
+             "-1.9798828125 20009478027.1", 
+             "-1.9548828125 17694863875.7", 
+             "-1.9298828125 15497083354.3", 
+             "-1.9048828125 12901608052.8", 
+             "-1.8798828125 10673203037.1", 
+             "-1.8548828125 7980209447.64", 
+             "-1.8298828125 5662638085.9", 
+             "-1.8048828125 3098076234.4", 
+             "-1.7798828125 1296338340.95", 
+             "-1.7548828125 708398132.123", 
+             "-1.7298828125 592764964.744", 
+             "-1.7048828125 252664555.849", 
+             "-1.6798828125 81626386.5509", 
+             "-1.6548828125 971789.900217", 
+             "-1.6298828125 3887184.77659", 
+             "-1.6048828125 0.0", 
+             "-1.5798828125 0.0", 
+             "-1.5548828125 3887285.48112", 
+             "-1.5298828125 0.0", 
+             "-1.5048828125 4858729.21921", 
+             "-1.4798828125 2915256.41246", 
+             "-1.4548828125 0.0", 
+             "-1.4298828125 0.0"]
+
+    PySpectra.cls()
+    PySpectra.delete()
+    PySpectra.setTitle( "Real data")
+    PySpectra.setComment( "See that FSA(stepm) failes but FSA(stepmssa) produces a result")
+    PySpectra.setWsViewport( "DINA5")
+
+    xArr = []
+    yArr = []
+    for line in data: 
+        (x, y) = line.split( ' ')
+        xArr.append( float( x))
+        yArr.append( float( y))
+
+    g = PySpectra.Scan( name = 'realdata', x = xArr, y = yArr)
+
+    PySpectra.display()
+    return 
+
 def example_Gauss2():
     ''' 
     2 gauss plot
