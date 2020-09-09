@@ -12,12 +12,11 @@ import numpy as np
 
 try:
     import sardana.taurus.core.tango.sardana.macroserver as sms
-except:
-    try:
-        import taurus.core.tango.sardana.macroserver as sms
-    except:
-        print( "pyspDoor.py: failed to import macroserver.py")
-        sys.exit(255) 
+except Exception as e:
+    print( "pyspDoor.py: failed to import macroserver.py")
+    print( "  reason: %s" % repr( e))
+    print( "  exiting")
+    sys.exit(255) 
 
 import pprint, math
 import HasyUtils

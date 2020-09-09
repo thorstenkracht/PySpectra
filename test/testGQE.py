@@ -31,7 +31,6 @@ python ./test/testGQE.py testGQE.testGetIndex
 python ./test/testGQE.py testGQE.testMotorArrowCurrentAndSetPoint
 python ./test/testGQE.py testGQE.testMotorArrowMisc
 python ./test/testGQE.py testGQE.testCheckTargetWithinLimits
-python ./test/testGQE.py testGQE.testColorSpectraToPysp
 python ./test/testGQE.py testGQE.testAddText
 python ./test/testGQE.py testGQE.testTextOnlyScan
 '''

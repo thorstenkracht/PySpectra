@@ -18,6 +18,7 @@ import PySpectra.utils as utils
 import numpy as np
 import unittest
 import PyTango
+import HasyUtils
 import time, os
 
 class testTangoIfc( unittest.TestCase):
@@ -140,7 +141,7 @@ class testTangoIfc( unittest.TestCase):
         #
         count = 0
         while 1: 
-            ret = PySpectra.toPyspMonitor( { 'isAlive': True})
+            ret = HasyUtils.toPyspMonitor( { 'isAlive': True})
             if ret[ 'result'] == 'done':
                 break
             count += 1
@@ -149,19 +150,19 @@ class testTangoIfc( unittest.TestCase):
                 print( "testTangoIfc.testMoveScanInfo: isAlive failes")
                 return 
 
-        ret = PySpectra.toPyspMonitor( { 'command': 'display sig_gen'})
+        ret = HasyUtils.toPyspMonitor( { 'command': 'display sig_gen'})
         if ret[ 'result'] != 'done': 
             print( "testTangoIfc.testMoveScanInfo: 'display sig_gen' failed, %s" % repr( ret))
             return 
 
         PySpectra.setTitle( "moveStart sig_gen 50.5 False")
-        res = PySpectra.toPyspMonitor( { 'command': 'moveStart sig_gen 50.5 False'})
+        res = HasyUtils.toPyspMonitor( { 'command': 'moveStart sig_gen 50.5 False'})
         if res[ 'result'] != 'done':
             print( "testTangoIfc.testMoveScanInfo: moveStart failed failed")
             return 
 
         while 1: 
-            if PySpectra.toPyspMonitor( { 'getDoorState': True})[ 'result'] == 'ON':
+            if HasyUtils.toPyspMonitor( { 'getDoorState': True})[ 'result'] == 'ON':
                 break
             time.sleep( 0.5)
         

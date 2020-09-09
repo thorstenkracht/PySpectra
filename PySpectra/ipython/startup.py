@@ -6,7 +6,7 @@
 * -----------------------------------
 * This feature has been implemented for testing purposes.
 *   - It allows you to try commands before you use them in 
-*     toPyspMonitor().
+*     HasyUtils.toPyspMonitor().
 *   - you can also use this interface to discover things, 
 *     like the members of objects or the available functions.
 * 

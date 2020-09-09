@@ -448,12 +448,43 @@ def example_GaussNoisy():
     '''
     PySpectra.cls()
     PySpectra.delete()
-    PySpectra.setTitle( "a noisy Gauss")
-    PySpectra.setComment( "See how SSA behaves with noisy data")
+    PySpectra.setTitle( "a noisy Gauss at 0.12345")
+    PySpectra.setComment( "See how FSA/SSA behaves with noisy data")
     PySpectra.setWsViewport( "DINA5")
     g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
-                           lineColor = 'red', x0 = 0., sigma = 1., amplitude = 1.)
+                           lineColor = 'red', x0 = 0.12345, sigma = 1., amplitude = 1.)
     g.y += np.random.random_sample( (len( g.x), ))*0.05
+    PySpectra.display()
+    return 
+
+def example_DipNoisy():
+    '''
+    gauss plot
+    '''
+    PySpectra.cls()
+    PySpectra.delete()
+    PySpectra.setTitle( "a noisy Dip at 0.25")
+    PySpectra.setComment( "See how FSA behaves with noisy data")
+    PySpectra.setWsViewport( "DINA5")
+    g = utils.createGauss( name = "dip", xMin = -5., xMax = 5., nPts = 101, 
+                           lineColor = 'red', x0 = 0.25, sigma = 1., amplitude = 1.)
+    g.y += np.random.random_sample( (len( g.x), ))*0.05
+    g.y = -g.y + 1.
+    PySpectra.display()
+    return 
+
+def example_GaussVeryNoisy():
+    '''
+    gauss plot
+    '''
+    PySpectra.cls()
+    PySpectra.delete()
+    PySpectra.setTitle( "a very noisy Gauss at 0.12345")
+    PySpectra.setComment( "See how FSA/SSA behaves with noisy data")
+    PySpectra.setWsViewport( "DINA5")
+    g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
+                           lineColor = 'red', x0 = 0.12345, sigma = 1., amplitude = 1.)
+    g.y += np.random.random_sample( (len( g.x), ))*0.3
     PySpectra.display()
     return 
 
@@ -519,18 +550,19 @@ def example_StepRealData():
              "-1.4548828125 0.0", 
              "-1.4298828125 0.0"]
 
-    PySpectra.cls()
-    PySpectra.delete()
-    PySpectra.setTitle( "Real data")
-    PySpectra.setComment( "See that FSA(stepm) failes but FSA(stepmssa) produces a result")
-    PySpectra.setWsViewport( "DINA5")
-
     xArr = []
     yArr = []
     for line in data: 
         (x, y) = line.split( ' ')
         xArr.append( float( x))
         yArr.append( float( y))
+
+    PySpectra.cls()
+    PySpectra.delete()
+    PySpectra.setTitle( "Real data")
+    PySpectra.setComment( "See that FSA(stepm) failes but FSA(stepmssa) produces a result")
+    PySpectra.setWsViewport( "DINA5")
+
 
     g = PySpectra.Scan( name = 'realdata', x = xArr, y = yArr)
 

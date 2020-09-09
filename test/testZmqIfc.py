@@ -26,6 +26,7 @@ import PySpectra
 import PySpectra.utils as utils
 import PySpectra.definitions as definitions
 import numpy as np
+import HasyUtils
 import unittest, time
 
 wasLaunched = False
@@ -395,7 +396,7 @@ class testZmqIfc( unittest.TestCase):
         if utils.getHostname() != definitions.hostTK: 
             return 
 
-        hsh = PySpectra.toPyspMonitor( { 'command': ['cls', 'delete']})
+        hsh = HasyUtils.toPyspMonitor( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         MAX = 25
@@ -403,7 +404,7 @@ class testZmqIfc( unittest.TestCase):
         d1 = np.random.random_sample( (len( pos), ))*1000.
         d2 = np.random.random_sample( (len( pos), ))*1000.
 
-        hsh = PySpectra.toPyspMonitor( { 'putData': {'title': "testing putData & columns", 
+        hsh = HasyUtils.toPyspMonitor( { 'putData': {'title': "testing putData & columns", 
                                             'comment': "a comment", 
                                             'columns': 
                                             [ { 'name': "eh_mot01", 'data' : pos},
@@ -413,14 +414,14 @@ class testZmqIfc( unittest.TestCase):
                                                 'xLog': False, 'yLog': False, 
                                                 'showGridX': False, 'showGridY': False}]}})
         self.assertEqual( hsh[ 'result'], 'done')
-        PySpectra.toPyspMonitor( { 'command': ['display']})
+        HasyUtils.toPyspMonitor( { 'command': ['display']})
         self.assertEqual( hsh[ 'result'], 'done')
         time.sleep( 1)
         
         #
         # retrieve the data 
         #
-        hsh = PySpectra.toPyspMonitor( { 'getData': True})
+        hsh = HasyUtils.toPyspMonitor( { 'getData': True})
         self.assertEqual( hsh[ 'result'], 'done')
         #
         # ... and compare.
@@ -440,7 +441,7 @@ class testZmqIfc( unittest.TestCase):
         if utils.getHostname() != definitions.hostTK: 
             return 
 
-        hsh = PySpectra.toPyspMonitor( { 'command': ['cls', 'delete']})
+        hsh = HasyUtils.toPyspMonitor( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         MAX = 25
@@ -448,23 +449,23 @@ class testZmqIfc( unittest.TestCase):
         d1 = np.random.random_sample( (len( pos), ))*1000.
         d2 = np.random.random_sample( (len( pos), ))*1000.
 
-        PySpectra.toPyspMonitor( { 'command': ['setTitle "testing Scan command"']})
+        HasyUtils.toPyspMonitor( { 'command': ['setTitle "testing Scan command"']})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        hsh = PySpectra.toPyspMonitor( { 'Scan': { 'name': "d1", 'x': pos, 'y': d1}})
+        hsh = HasyUtils.toPyspMonitor( { 'Scan': { 'name': "d1", 'x': pos, 'y': d1}})
         self.assertEqual( hsh[ 'result'], 'done')
-        hsh = PySpectra.toPyspMonitor( { 'Scan': { 'name': "d2", 'x': pos, 'y': d2}})
+        hsh = HasyUtils.toPyspMonitor( { 'Scan': { 'name': "d2", 'x': pos, 'y': d2}})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        PySpectra.toPyspMonitor( { 'command': ['setComment \"a comment\"']})
+        HasyUtils.toPyspMonitor( { 'command': ['setComment \"a comment\"']})
         self.assertEqual( hsh[ 'result'], 'done')
-        PySpectra.toPyspMonitor( { 'command': ['display']})
+        HasyUtils.toPyspMonitor( { 'command': ['display']})
         self.assertEqual( hsh[ 'result'], 'done')
         time.sleep( 1)
         #
         # retrieve the data and compare
         #
-        hsh = PySpectra.toPyspMonitor( { 'getData': True})
+        hsh = HasyUtils.toPyspMonitor( { 'getData': True})
         for i in range( MAX):
             self.assertEqual( pos[i], hsh[ 'getData']['D1']['x'][i])
             self.assertEqual( d1[i], hsh[ 'getData']['D1']['y'][i])
@@ -472,12 +473,12 @@ class testZmqIfc( unittest.TestCase):
         #
         # set y-values 
         #
-        PySpectra.toPyspMonitor( { 'command': ['setTitle "set y-values to linear"']})
+        HasyUtils.toPyspMonitor( { 'command': ['setTitle "set y-values to linear"']})
         self.assertEqual( hsh[ 'result'], 'done')
         for i in range( MAX):
-            PySpectra.toPyspMonitor( { 'command': ['setY d1 %d %g' % (i, float(i)/10.)]})
+            HasyUtils.toPyspMonitor( { 'command': ['setY d1 %d %g' % (i, float(i)/10.)]})
         
-        PySpectra.toPyspMonitor( { 'command': ['cls', 'display']})
+        HasyUtils.toPyspMonitor( { 'command': ['cls', 'display']})
         self.assertEqual( hsh[ 'result'], 'done')
         time.sleep( 1)
         
@@ -493,9 +494,9 @@ class testZmqIfc( unittest.TestCase):
         if utils.getHostname() != definitions.hostTK: 
             return 
 
-        hsh = PySpectra.toPyspMonitor( { 'command': ['cls', 'delete']})
+        hsh = HasyUtils.toPyspMonitor( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
-        hsh = PySpectra.toPyspMonitor( { 'command': ['setWsViewport dina5s']})
+        hsh = HasyUtils.toPyspMonitor( { 'command': ['setWsViewport dina5s']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         (xmin, xmax) = (-2.,-0.5)
@@ -506,7 +507,7 @@ class testZmqIfc( unittest.TestCase):
         #
         # title: set pixels using pixel coordinates
         #
-        hsh =  PySpectra.toPyspMonitor( { 'command': ['setTitle "set pixels using pixel coordinates"']})
+        hsh =  HasyUtils.toPyspMonitor( { 'command': ['setTitle "set pixels using pixel coordinates"']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         #
@@ -517,7 +518,7 @@ class testZmqIfc( unittest.TestCase):
                   'xMin': xmin, 'xMax': xmax, 'width': width, 
                   'yMin': ymin, 'yMax': ymax, 'height': height}}
 
-        hsh = PySpectra.toPyspMonitor( hsh)
+        hsh = HasyUtils.toPyspMonitor( hsh)
         self.assertEqual( hsh[ 'result'], 'done')
         #
         # fill the image, pixel by pixel
@@ -529,9 +530,9 @@ class testZmqIfc( unittest.TestCase):
             for j in range(height):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
                 hsh = { 'command': [ 'setPixelImage MandelBrot %d %d %g' % ( i, j, res)]}
-                hsh = PySpectra.toPyspMonitor( hsh)
+                hsh = HasyUtils.toPyspMonitor( hsh)
                 self.assertEqual( hsh[ 'result'], 'done')
-            hsh =  PySpectra.toPyspMonitor( { 'command': ['display']})
+            hsh =  HasyUtils.toPyspMonitor( { 'command': ['display']})
             self.assertEqual( hsh[ 'result'], 'done')
         self.assertLess( (time.time() - startTime), 5)
 
@@ -549,14 +550,14 @@ class testZmqIfc( unittest.TestCase):
         if utils.getHostname() != definitions.hostTK: 
             return 
 
-        hsh = PySpectra.toPyspMonitor( { 'command': ['cls', 'delete']})
+        hsh = HasyUtils.toPyspMonitor( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
-        hsh = PySpectra.toPyspMonitor( { 'command': ['setWsViewport dina5s']})
+        hsh = HasyUtils.toPyspMonitor( { 'command': ['setWsViewport dina5s']})
         self.assertEqual( hsh[ 'result'], 'done')
         #
         # title: set pixels using world coordinates
         #
-        hsh =  PySpectra.toPyspMonitor( { 'command': ['setTitle "set pixels using world coordinates"']})
+        hsh =  HasyUtils.toPyspMonitor( { 'command': ['setTitle "set pixels using world coordinates"']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         (xmin, xmax) = (-2.,-0.5)
@@ -571,7 +572,7 @@ class testZmqIfc( unittest.TestCase):
                   'xMin': xmin, 'xMax': xmax, 'width': width, 
                   'yMin': ymin, 'yMax': ymax, 'height': height}}
 
-        hsh = PySpectra.toPyspMonitor( hsh)
+        hsh = HasyUtils.toPyspMonitor( hsh)
         self.assertEqual( hsh[ 'result'], 'done')
         #
         # fill the image, pixel by pixel
@@ -588,9 +589,9 @@ class testZmqIfc( unittest.TestCase):
                 #   (50, 50) need 7s, with testAlive = True
                 #
                 hsh = { 'command': [ 'setPixelWorld MandelBrot %g %g %g' % ( r1[i], r2[j], res)]}
-                hsh = PySpectra.toPyspMonitor( hsh)
+                hsh = HasyUtils.toPyspMonitor( hsh)
                 self.assertEqual( hsh[ 'result'], 'done')
-            hsh =  PySpectra.toPyspMonitor( { 'command': ['display']})
+            hsh =  HasyUtils.toPyspMonitor( { 'command': ['display']})
             self.assertEqual( hsh[ 'result'], 'done')
         self.assertLess( (time.time() - startTime), 5)
         time.sleep( 1)
@@ -606,9 +607,9 @@ class testZmqIfc( unittest.TestCase):
         if utils.getHostname() != definitions.hostTK: 
             return 
 
-        hsh = PySpectra.toPyspMonitor( { 'command': ['cls', 'delete']})
+        hsh = HasyUtils.toPyspMonitor( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
-        hsh = PySpectra.toPyspMonitor( { 'command': ['setWsViewport dina5s']})
+        hsh = HasyUtils.toPyspMonitor( { 'command': ['setWsViewport dina5s']})
         self.assertEqual( hsh[ 'result'], 'done')
 
         (xmin, xmax) = (-2.,-0.5)
@@ -629,17 +630,17 @@ class testZmqIfc( unittest.TestCase):
         #
         # title: putData transfers the complete image at once
         #
-        hsh =  PySpectra.toPyspMonitor( { 'command': ['setTitle "putData transfers the complete image at once"']})
+        hsh =  HasyUtils.toPyspMonitor( { 'command': ['setTitle "putData transfers the complete image at once"']})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        hsh = PySpectra.toPyspMonitor( { 'putData': 
+        hsh = HasyUtils.toPyspMonitor( { 'putData': 
                                          { 'images': [{'name': "MandelBrot", 'data': data,
                                                        'xMin': xmin, 'xMax': xmax, 
                                                        'yMin': ymin, 'yMax': ymax}]}})
         self.assertEqual( hsh[ 'result'], 'done')
 
 
-        hsh =  PySpectra.toPyspMonitor( { 'command': ['display']})
+        hsh =  HasyUtils.toPyspMonitor( { 'command': ['display']})
         self.assertEqual( hsh[ 'result'], 'done')
         time.sleep( 2)
 
@@ -656,14 +657,14 @@ class testZmqIfc( unittest.TestCase):
         if utils.getHostname() != definitions.hostTK: 
             return 
 
-        hsh = PySpectra.toPyspMonitor( { 'command': ['cls', 'delete']})
+        hsh = HasyUtils.toPyspMonitor( { 'command': ['cls', 'delete']})
         self.assertEqual( hsh[ 'result'], 'done')
-        hsh = PySpectra.toPyspMonitor( { 'command': ['setWsViewport dina5s']})
+        hsh = HasyUtils.toPyspMonitor( { 'command': ['setWsViewport dina5s']})
         self.assertEqual( hsh[ 'result'], 'done')
         #
         # setTitle
         #
-        hsh =  PySpectra.toPyspMonitor( { 'command': 
+        hsh =  HasyUtils.toPyspMonitor( { 'command': 
                                        ['setTitle "use Imageto transfer the complete image at once"']})
         self.assertEqual( hsh[ 'result'], 'done')
 
@@ -682,14 +683,14 @@ class testZmqIfc( unittest.TestCase):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
                 data[i][j] = int( res)
 
-        hsh = PySpectra.toPyspMonitor( { 'Image': 
+        hsh = HasyUtils.toPyspMonitor( { 'Image': 
                                       { 'name': "MandelBrot", 'data': data, 
                                         'xMin': xmin, 'xMax': xmax, 
                                         'yMin': ymin, 'yMax': ymax, 
                                       }})
         self.assertEqual( hsh[ 'result'], 'done')
 
-        hsh =  PySpectra.toPyspMonitor( { 'command': ['cls', 'display']})
+        hsh =  HasyUtils.toPyspMonitor( { 'command': ['cls', 'display']})
         self.assertEqual( hsh[ 'result'], 'done')
         PySpectra.processEventsLoop( 2)
 

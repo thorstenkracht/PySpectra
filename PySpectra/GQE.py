@@ -5,7 +5,6 @@ GQE - contains the Scan() class and functions to handle scans:
 '''
 
 import numpy as _numpy
-from PyQt4 import QtGui as _QtGui
 import PyTango as _PyTango
 import PySpectra 
 import PySpectra.definitions as definitions 
@@ -318,6 +317,7 @@ class Scan( object):
         '''
         return False, if the target position is outside the limits
         '''
+        from PyQt4 import QtGui as _QtGui
         #
         # tango servers have UnitLimitMin/Max
         #
@@ -1118,7 +1118,7 @@ class Scan( object):
             lstX = list( reversed( lstX))
             lstY = list( reversed( lstY))
                 
-        hsh = calc.ssa( _numpy.array( lstX), _numpy.array( lstY))
+        hsh = _HasyUtils.ssa( _numpy.array( lstX), _numpy.array( lstY))
 
         if hsh[ 'status'] != 1:
             if logWidget is not None:
@@ -1212,10 +1212,11 @@ class Scan( object):
             lstY = list( reversed( lstY))
                 
         try: 
-            message, xpos, xpeak, xcms, xcen = calc.fastscananalysis( lstX, lstY, mode)
+            message, xpos, xpeak, xcms, xcen = _HasyUtils.fastscananalysis( lstX, lstY, mode)
         except Exception as e:
             print( "GQE.fsa: trouble with %s" % self.name)
             print( repr( e))
+            return ( "GQE.fsa: error", None, None, None, None)
             
         if logWidget is not None: 
             if message == 'success': 

@@ -6,9 +6,9 @@ this module handles the access from remote:
   
 Further documentation
 
-  PySpectra.toPyspMonitor?
+  HasyUtils.toPyspMonitor?
   PySpectra.toPyspLocal?
-  PySpectra.isPyspMonitorAlive?
+  HasyUtils.isPyspMonitorAlive?
 ---
 '''
 import PyTango
@@ -16,6 +16,7 @@ import time
 import PySpectra 
 import PySpectra.utils as utils
 import numpy as np
+import HasyUtils
 
 def toPyspLocal( hsh): 
     '''
@@ -284,33 +285,8 @@ def _storeMCAData( hsh):
 
     return 
 
-def _replaceNumpyArrays( hsh): 
-    """
-    find numpy arrays in the hsh and replace the by lists
-    """
-    for k in list( hsh.keys()): 
-        if type( hsh[ k]) is dict:
-            _replaceNumpyArrays( hsh[ k])
-            continue
-        if type( hsh[ k]) is list:
-            for elm in hsh[ k]: 
-                if type( elm) is dict:
-                    _replaceNumpyArrays( elm)
-        if type( hsh[ k]) is np.ndarray: 
-            #
-            # Images, that have been created by tolist() need width and height
-            # if width and height are not supplied, take them from .shape
-            #
-            if len( hsh[ k].shape) == 2:
-                if not 'width' in hsh: 
-                    hsh[ 'width'] = hsh[ k].shape[0]
-                if not 'height' in hsh: 
-                    hsh[ 'height'] = hsh[ k].shape[1]
-            hsh[ k] = hsh[ k].tolist()
 
-    return
-
-def toPyspMonitor( hsh, node = None, testAlive = False):
+def toPyspMonitorNowInHasyUtils( hsh, node = None, testAlive = False):
     '''
     Send a dictionary to the pyspMonitor process via ZMQ. 
     pyspMonitor processes the dictionary by calling PySpectra.toPyspLocal()
@@ -323,7 +299,7 @@ def toPyspMonitor( hsh, node = None, testAlive = False):
     Example: 
       if not PySpectra.isPyspMonitorAlive():
           return False
-      ret = PySpectra.toPyspMonitor( {'command': ['delete', 'cls', 'create s1', 'display']})
+      ret = HasyUtils.toPyspMonitor( {'command': ['delete', 'cls', 'create s1', 'display']})
       if ret[ 'result'] != 'done': 
           print( "error" % ret[ 'result'])
 
@@ -358,7 +334,7 @@ def toPyspMonitor( hsh, node = None, testAlive = False):
 
     # print( "zmqIfc.toPyspMonitor: connected to tcp://%s:7779" % node)
     
-    _replaceNumpyArrays( hsh)
+    HasyUtils.replaceNumpyArrays( hsh)
 
     #print( "zmqIfc.toPyspMonitor: sending %s" % hsh)
 
@@ -400,11 +376,11 @@ def toPyspMonitor( hsh, node = None, testAlive = False):
     #print( "zmqIfc.toPyspMonitor: received %s" % argout)
     return argout
 
-def isPyspMonitorAlive( node = None):
+def isPyspMonitorAliveNowInHasyUtils( node = None):
     '''
     returns True, if there is a pyspMonitor responding to the isAlive prompt
     '''
-    hsh = toPyspMonitor( { 'isAlive': True}, node = node, testAlive = False)
+    hsh = HasyUtils.toPyspMonitor( { 'isAlive': True}, node = node, testAlive = False)
     if hsh[ 'result'] == 'notAlive':
         return False
     else:
@@ -518,7 +494,7 @@ def assertPyspMonitorRunning():
 
     Otherwise we call assertProcessRunning() which may take some time
     """
-    res = toPyspMonitor( { 'isAlive': True}, testAlive = False) 
+    res = HasyUtils.toPyspMonitor( { 'isAlive': True}, testAlive = False) 
     if res[ 'result'] == 'done': 
         return( True, False)
     else: 
@@ -528,8 +504,13 @@ def assertPyspMonitorRunning():
         #
         if utils.findProcessByName( "/usr/bin/pyspMonitor.py"):
             utils.killProcess( "/usr/bin/pyspMonitor.py")
+        if utils.findProcessByName( "/usr/bin/pyspMonitor3.py"):
+            utils.killProcess( "/usr/bin/pyspMonitor3.py")
         
-        return utils.assertProcessRunning( "/usr/bin/pyspMonitor.py")
+        if HasyUtils.getPythonVersionSardana() == '/usr/bin/python': 
+            return utils.assertProcessRunning( "/usr/bin/pyspMonitor.py")
+        else: 
+            return utils.assertProcessRunning( "/usr/bin/pyspMonitor3.py")
 
 def killPyspMonitor():
     ''' 

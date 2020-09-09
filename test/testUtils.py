@@ -8,6 +8,7 @@ import numpy as np
 import unittest
 import time, sys, os
 import math 
+import HasyUtils
 
 class testUtils( unittest.TestCase):
 
@@ -29,7 +30,7 @@ class testUtils( unittest.TestCase):
         sigma = 1.
         g.y = 1/(sigma*np.sqrt(2.*np.pi))*np.exp( -(g.y-mu)**2/(2.*sigma**2))
 
-        hsh = PySpectra.calc.ssa( g.x, g.y)
+        hsh = HasyUtils.ssa( g.x, g.y)
         self.assertEqual( hsh[ 'status'], 1)
         self.assertEqual( hsh[ 'midpoint'], 0.)
         self.assertAlmostEqual( hsh[ 'l_back'], 2.521e-5)

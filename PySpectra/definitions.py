@@ -218,4 +218,7 @@ zoomFactorList = [ 0.062, 0.125, 0.25, 0.5, 0.67, 0.83, 1., 1.2, 1.5, 2.0, 4., 8
 
 hostTK = "haso107tk"
 
-fsaModes = ['peak', 'cen', 'cms', 'dip', 'dipc', 'dipm', 'step', 'stepc', 'stepm', 'stepssa', 'stepcssa', 'stepmssa', 'slit', 'slitc', 'slitm']
+fsaModes = [ 'peak', 'cen', 'cms', 'peakssa', 'censsa', 'cmsssa', 
+             'dip', 'dipc', 'dipm', 'dipssa', 'dipcssa', 'dipmssa', 
+             'step', 'stepc', 'stepm', 'stepssa', 'stepcssa', 'stepmssa', 
+             'slit', 'slitc', 'slitm','slitssa', 'slitcssa', 'slitmssa']

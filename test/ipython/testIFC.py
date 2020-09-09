@@ -27,6 +27,7 @@ import numpy as np
 import unittest
 import PySpectra
 import PySpectra.utils as utils
+import HasyUtils
 
 def mandelbrot( c, maxiter):
     z = c
@@ -493,12 +494,12 @@ class testIFC( unittest.TestCase):
         #
         # see, if the pyspMonitor is running. If not, return silently
         #
-        hsh =  PySpectra.toPyspMonitor( { 'isAlive': True})
+        hsh =  HasyUtils.toPyspMonitor( { 'isAlive': True})
         if hsh[ 'result'] != "done":
             print "test_toPyspMonitorSetPixelWorld: no pyspMonitor running"
             return 
 
-        hsh =  PySpectra.toPyspMonitor( { 'command': ['cls', 'delete', 'setWsViewport DINA5S']})
+        hsh =  HasyUtils.toPyspMonitor( { 'command': ['cls', 'delete', 'setWsViewport DINA5S']})
         if hsh[ 'result'] != "done":
             print "error from ['delete', 'setWsViewport DINA5S', 'cls']"
             return 
@@ -511,7 +512,7 @@ class testIFC( unittest.TestCase):
         #
         # create the image
         #
-        hsh = PySpectra.toPyspMonitor( { 'Image': 
+        hsh = HasyUtils.toPyspMonitor( { 'Image': 
                                        { 'name': "MandelBrot",
                                          'xMin': xmin, 'xMax': xmax, 'width': width, 
                                          'yMin': ymin, 'yMax': ymax, 'height': height}})
@@ -526,14 +527,14 @@ class testIFC( unittest.TestCase):
         for i in range(width):
             for j in range(height):
                 res = mandelbrot(r1[i] + 1j*r2[j],maxiter)
-                hsh = PySpectra.toPyspMonitor( { 'command': 
+                hsh = HasyUtils.toPyspMonitor( { 'command': 
                                                ["setPixelWorld MandelBrot %g %g %s" % ( r1[i], r2[j], repr( res))]})
                 if hsh[ 'result'] != "done":
                     print "error from setPixelWorld"
                     return
-            PySpectra.toPyspMonitor( { 'command': ['cls','display']})
-        PySpectra.toPyspMonitor( { 'command': ['cls']})
-        PySpectra.toPyspMonitor( { 'command': ['display']})
+            HasyUtils.toPyspMonitor( { 'command': ['cls','display']})
+        HasyUtils.toPyspMonitor( { 'command': ['cls']})
+        HasyUtils.toPyspMonitor( { 'command': ['display']})
 
         print "testIFC.test_toPyspLocalSMonitorsetPixelWorld, DONE"
 
@@ -546,21 +547,21 @@ class testIFC( unittest.TestCase):
         #
         # see, if the pyspMonitor is running. If not, return silently
         #
-        hsh =  PySpectra.toPyspMonitor( { 'isAlive': True})
+        hsh =  HasyUtils.toPyspMonitor( { 'isAlive': True})
         if hsh[ 'result'] != "done":
             print "test_toPyspMonitorScan: no pyspMonitor running"
             return 
 
-        ret = PySpectra.toPyspMonitor( { 'command': ["cls", "delete"]}) 
+        ret = HasyUtils.toPyspMonitor( { 'command': ["cls", "delete"]}) 
         self.assertEqual( ret[ 'result'], 'done')
         
-        ret = PySpectra.toPyspMonitor( { 'command': ["setTitle \"An important title\"", 
+        ret = HasyUtils.toPyspMonitor( { 'command': ["setTitle \"An important title\"", 
                                                      "setComment \"An interesting comment\""]}) 
         self.assertEqual( ret[ 'result'], 'done')
 
         max = 101
         name = "TestScan"
-        ret = PySpectra.toPyspMonitor( {'Scan': { 'name': name,
+        ret = HasyUtils.toPyspMonitor( {'Scan': { 'name': name,
                                            'xMin': 0., 'xMax': 100., 
                                            'yMin': 0., 'yMax': 1.,
                                            'symbol': '+','symbolColor': 'red',
@@ -572,8 +573,8 @@ class testIFC( unittest.TestCase):
         for i in range( max): 
             pos = float(i)
             posY = random.random()*10
-            PySpectra.toPyspMonitor( { 'command': ['setXY %s %d %s %s' % (name, i, repr(pos), repr(posY))]})
-            PySpectra.toPyspMonitor( { 'command': ["display"]}) 
+            HasyUtils.toPyspMonitor( { 'command': ['setXY %s %d %s %s' % (name, i, repr(pos), repr(posY))]})
+            HasyUtils.toPyspMonitor( { 'command': ["display"]}) 
             time.sleep( 0.1)
 
         print "testIFC.test_toPyspMonitorScan DONE"

@@ -1,11 +1,9 @@
-#!/usr/bin/env python#
+#!/usr/bin/env python
 
 import matplotlib 
 matplotlib.use( 'TkAgg', warn=False)
 
 import matplotlib.pyplot as plt
-
-from PyQt4 import QtCore, QtGui
 
 import os, sys
 import numpy
@@ -27,6 +25,7 @@ def _initGraphic( figureIn = None, canvasIn = None):
     spectra: 640 x 450 def., A4:  680 x 471 
     '''
     global Fig, Canvas, _QApp
+    from PyQt4 import QtCore, QtGui
 
     if _QApp is None:
         _QApp = QtGui.QApplication.instance()

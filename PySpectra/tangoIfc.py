@@ -2,7 +2,6 @@
 '''
 this module contains some Tango-related functions
 '''
-from PyQt4 import QtCore, QtGui
 
 import pyqtgraph as _pg
 import PySpectra
@@ -51,6 +50,7 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
 
     to execute the move information provided by a Scan GQE is used.
     '''
+    from PyQt4 import QtCore, QtGui
 
     #print( "tangoIfc.move(), motorNameList %s " % repr( scan.motorNameList))
         
@@ -340,6 +340,7 @@ def moveImage( image, targetIX, targetIY, flagSync, flagConfirm = True):
     '''
     import PyTango as PyTango
     import time as _time
+    from PyQt4 import QtCore, QtGui
 
     if str(image.name).upper().find( "MANDELBROT") != -1:
         return image.zoomMb( targetIX, targetIY)

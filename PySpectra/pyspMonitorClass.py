@@ -146,7 +146,7 @@ class pyspMonitor( pySpectraGuiClass.pySpectraGui):
             else: 
                 argout = PySpectra.toPyspLocal( hsh)
             msg = json.dumps( argout)
-            self.sckt.send( msg)
+            self.sckt.send( bytearray( msg, encoding="utf-8"))
             lst = zmq.select([self.sckt], [], [], 0.1)
         #
         # mandelbrot 20x20: if we change 10 to 1, time from 15s to 10s

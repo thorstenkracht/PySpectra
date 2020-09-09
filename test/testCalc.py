@@ -5,6 +5,7 @@ python -m unittest discover -v
 
 python ./test/testCalc.py testCalc.testYToMinusY
 python ./test/testCalc.py testCalc.testDerivative
+python ./test/testCalc.py testCalc.testAntiDerivative
 python ./test/testCalc.py testCalc.testDerivativeAntiDerivative
 python ./test/testCalc.py testCalc.testSSAErrors
 python ./test/testCalc.py testCalc.testFSA
@@ -37,8 +38,20 @@ class testCalc( unittest.TestCase):
         PySpectra.delete()
         scan = PySpectra.Scan( name = "t1", xMin = 2., xMax = 10.0, nPts = 201)
         scan.y = np.sin( scan.y)
-        scanMY = calc.yToMinusY( name = scan.name, nameNew = "t1_y2MinusY")
 
+        with self.assertRaises( ValueError) as context:
+            calc.yToMinusY( name = None)
+        #print("testSetXY: %s" %  repr( context.exception))
+        self.assertTrue( "calc.yToMinusY: name not specified"
+                         in context.exception)
+
+        with self.assertRaises( ValueError) as context:
+            calc.yToMinusY( name = "notExist")
+        #print("testSetXY: %s" %  repr( context.exception))
+        self.assertTrue( "calc.yToMinusY: failed to find notExist"
+                         in context.exception)
+
+        scanMY = calc.yToMinusY( name = scan.name, nameNew = "t1_y2MinusY")
         self.assertEqual( len( scan.y), len( scanMY.y))
         self.assertEqual( len( scan.x), len( scanMY.x))
         
@@ -70,6 +83,20 @@ class testCalc( unittest.TestCase):
         '''
 
         print "testCalc.testDerivative"
+
+
+        with self.assertRaises( ValueError) as context:
+            calc.derivative( name = None)
+        #print("testSetXY: %s" %  repr( context.exception))
+        self.assertTrue( "calc.derivative: name not specified"
+                         in context.exception)
+
+        with self.assertRaises( ValueError) as context:
+            calc.derivative( name = "notExist")
+        #print("testSetXY: %s" %  repr( context.exception))
+        self.assertTrue( "calc.derivative: failed to find notExist"
+                         in context.exception)
+
 
         PySpectra.cls()
         PySpectra.delete()
@@ -104,10 +131,22 @@ class testCalc( unittest.TestCase):
 
         print "testCalc.testAntiDerivative"
 
+
         PySpectra.cls()
         PySpectra.delete()
         scan = PySpectra.Scan( name = "t1", xMin = 0., xMax = 10.0, nPts = 201)
         scan.y = np.sin( scan.y)
+
+        with self.assertRaises( ValueError) as context:
+            calc.antiderivative( name = None)
+        #print("testSetXY: %s" %  repr( context.exception))
+        self.assertTrue( "calc.antiderivative: name not specified"
+                         in context.exception)
+
+        with self.assertRaises( ValueError) as context:
+            calc.derivative( name = "notExist")
+        self.assertTrue( "calc.derivative: failed to find notExist"
+                         in context.exception)
         calc.antiderivative( name = scan.name, nameNew = "t1_ad")
         PySpectra.display()
         #PySpectra.show()
@@ -155,18 +194,20 @@ class testCalc( unittest.TestCase):
 
     def testSSAErrors( self):
 
+        import HasyUtils
+
         print "testCalc.testSSA1"
 
         PySpectra.cls()
         PySpectra.delete()
 
-        ret = calc.ssa( [1, 2, 3], [4, 5, 6])
+        ret = HasyUtils.ssa( [1, 2, 3], [4, 5, 6])
 
         self.assertEqual( ret[ 'status'], 0)
         self.assertEqual( ret[ 'reason'], 7)
         self.assertEqual( ret[ 'reasonString'], "not a numpy array")
 
-        ret = calc.ssa( np.asarray( [3, 2, 1]), np.asarray([4, 5, 6]))
+        ret = HasyUtils.ssa( np.asarray( [3, 2, 1]), np.asarray([4, 5, 6]))
         self.assertEqual( ret[ 'status'], 0)
         self.assertEqual( ret[ 'reason'], 1)
         self.assertEqual( ret[ 'reasonString'], "np < 6")
@@ -176,6 +217,7 @@ class testCalc( unittest.TestCase):
         return 
 
     def testFSA( self):
+        import HasyUtils
 
         xStep = [ 0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25,
                   3.5, 3.75, 4.0, 4.25, 4.5, 4.75, 5.0, 5.25, 5.5, 5.75, 6.0, 6.25, 6.5, 6.75,
@@ -189,23 +231,23 @@ class testCalc( unittest.TestCase):
                  -10.1427735622, -10.63666237, -10.8981355703, -12.1906796316, -12.5912225387, -12.9529943226, 
                  -12.8533949897, -11.6929638382, -13.6873233405, -12.492016025, -12.7775621703]
 
-        (message, xpos, xpeak, xcms, xcen) = calc.fastscananalysis( xStep, yStep, 'step')
+        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xStep, yStep, 'step')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 6.25, 3)
-        (message, xpos, xpeak, xcms, xcen) = calc.fastscananalysis( xStep, yStep, 'stepc')
+        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xStep, yStep, 'stepc')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 6.338455, 4)
-        (message, xpos, xpeak, xcms, xcen) = calc.fastscananalysis( xStep, yStep, 'stepm')
+        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xStep, yStep, 'stepm')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 5.49656, 4)
 
-        (message, xpos, xpeak, xcms, xcen) = calc.fastscananalysis( xStep, yStep, 'stepssa')
+        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xStep, yStep, 'stepssa')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 6.25, 3)
-        (message, xpos, xpeak, xcms, xcen) = calc.fastscananalysis( xStep, yStep, 'stepcssa')
+        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xStep, yStep, 'stepcssa')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 6.36096, 4)
-        (message, xpos, xpeak, xcms, xcen) = calc.fastscananalysis( xStep, yStep, 'stepmssa')
+        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xStep, yStep, 'stepmssa')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 6.3678, 4)
 
@@ -234,15 +276,15 @@ class testCalc( unittest.TestCase):
                        0.00833822923928,0.0151228204788,0.040092423947]
 
 
-        (message, xpos, xpeak, xcms, xcen) = calc.fastscananalysis( xNoisyGauss, yNoisyGauss, 'peak')
+        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xNoisyGauss, yNoisyGauss, 'peak')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 0.2, 4)
 
-        (message, xpos, xpeak, xcms, xcen) = calc.fastscananalysis( xNoisyGauss, yNoisyGauss, 'cen')
+        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xNoisyGauss, yNoisyGauss, 'cen')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 0.011957415, 4)
 
-        (message, xpos, xpeak, xcms, xcen) = calc.fastscananalysis( xNoisyGauss, yNoisyGauss, 'cms')
+        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xNoisyGauss, yNoisyGauss, 'cms')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, -0.01465730, 4)
 
@@ -296,17 +338,38 @@ class testCalc( unittest.TestCase):
             xArr.append( float( x))
             yArr.append( float( y))
 
-        (message, xpos, xpeak, xcms, xcen) = calc.fastscananalysis( xArr, yArr, 'stepssa')
+        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xArr, yArr, 'stepssa')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, -2.1298828125, 4)
 
-        (message, xpos, xpeak, xcms, xcen) = calc.fastscananalysis( xArr, yArr, 'stepcssa')
+        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xArr, yArr, 'stepcssa')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, -1.980878, 4)
 
-        (message, xpos, xpeak, xcms, xcen) = calc.fastscananalysis( xArr, yArr, 'stepmssa')
+        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xArr, yArr, 'stepmssa')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, -1.992848, 4)
+
+        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( [1, 2,3], [4, 5, 6], 'peak')
+        self.assertTrue( message, 'Not enough scan data points. Please scan over at least 9 points!')
+
+        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( [1,2,3], [ 5, 6], 'peak')
+        self.assertTrue( message, 'Error: Input vectors are not of identical length!')
+
+
+        yNoisyGauss = [ -yNoisyGauss[i] for i in range( len( yNoisyGauss))]
+
+        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xNoisyGauss, yNoisyGauss, 'dip')
+        self.assertEqual( message, 'success')
+        self.assertAlmostEqual( xpos, 0.2, 4)
+
+        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xNoisyGauss, yNoisyGauss, 'dipc')
+        self.assertEqual( message, 'success')
+        self.assertAlmostEqual( xpos, 0.0119574157, 4)
+
+        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xNoisyGauss, yNoisyGauss, 'dipm')
+        self.assertEqual( message, 'success')
+        self.assertAlmostEqual( xpos, -0.0146573, 4)
 
         return 
 

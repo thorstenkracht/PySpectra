@@ -7,7 +7,7 @@ import subprocess, signal, time, os, sys, math
 import PySpectra 
 import PySpectra.definitions as definitions
 
-def isTravis(): 
+def isTravis():  
     '''
     returns True, if called during a Travic run. 
     We assume that we are in a Travis run, if DISPLAY == ':99.0' (travis.yml)

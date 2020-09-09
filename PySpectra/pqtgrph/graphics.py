@@ -3,6 +3,7 @@
 from PyQt4 import QtGui as _QtGui
 from PyQt4 import QtCore as _QtCore
 
+
 import pyqtgraph as _pyqtgraph
 import os as _os
 import numpy as _numpy
@@ -752,7 +753,7 @@ def _make_cb_mouseClicked( gqe):
     '''
     def mouseClicked(evt):
 
-        #print( "+++pqtgraphics.mouseClicked: %s" % repr( evt.scenePos()))
+        print( "+++pqtgraphics.mouseClicked: %s" % repr( evt.scenePos()))
         
         # left mouse button
         if evt.button() == 1: 
@@ -1251,7 +1252,6 @@ def _displayImages( flagDisplaySingle, nameList = None):
             _prepareMouse( imageGqe)
 
     return 
-
 
 def _createPlotItem( gqe, nameList):            
     '''

@@ -8,7 +8,12 @@ PySpectra displays 1D and 2D data
 *
 $ pyspMonitor.py
   - listens to a Sardana Door and displays the 1D data
-  - receives data and commands sent by PySpectra.toPyspMonitor()
+  - receives data and commands sent by HasyUtils.toPyspMonitor()
+    The fact that toPyspMonitor() is part of HasyUtils and 
+    not PySpectra is due to: toPyspMonitor() should also be
+    called from Macros, Macros live in the MacroServer, the
+    Python3 MacroServer imports PyQt5 whereas PySpectra imports
+    PyQt4 producing a conflict related to QObject
   - has the displayCounters feature, see the Sardana/Spock/Taurus at DESY manual
   - uses the SignalCounter to display the a signal during mesh scans.
 
@@ -22,8 +27,8 @@ $ pyspViewer.py
 * Send data and commands to pyspMonitor
 * -------------------------------------
 *
-  In [1]: import PySpectra
-  In [2]: PySpectra.toPyspMonitor?
+  In [1]: import PySpectra, HasyUtils
+  In [2]: HasyUtils.toPyspMonitor?
   In [3]: PySpectra.toPyspLocal?
 
 *
@@ -45,7 +50,7 @@ In addition, all PySpectra functions and modules are python-documented
 *
 * PySpectra magic commands in ipython:
 * -----------------------------------
-* 
+*  
 In [1]: import PySpectra.ipython.startup
 In [2]: PySpectra.ipython.startup?
 
