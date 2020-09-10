@@ -753,8 +753,6 @@ def _make_cb_mouseClicked( gqe):
     '''
     def mouseClicked(evt):
 
-        print( "+++pqtgraphics.mouseClicked: %s" % repr( evt.scenePos()))
-        
         # left mouse button
         if evt.button() == 1: 
             #

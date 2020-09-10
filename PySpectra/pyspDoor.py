@@ -9,17 +9,19 @@ be sure to 'senv JsonRecorder True'
 import PyTango
 import time, sys, os, math
 import numpy as np
+import HasyUtils
 
 try:
     import sardana.taurus.core.tango.sardana.macroserver as sms
 except Exception as e:
     print( "pyspDoor.py: failed to import macroserver.py")
     print( "  reason: %s" % repr( e))
+    if HasyUtils.getPythonVersionSardana() == '/usr/bin/python3':
+        print( "  consider to start pyspMonitor3.py")
     print( "  exiting")
     sys.exit(255) 
 
 import pprint, math
-import HasyUtils
 import builtins
 
 pp = pprint.PrettyPrinter()
