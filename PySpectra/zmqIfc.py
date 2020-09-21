@@ -11,7 +11,10 @@ Further documentation
   HasyUtils.isPyspMonitorAlive?
 ---
 '''
-import PyTango
+try:
+    import PyTango
+except: 
+    pass
 import time
 import PySpectra 
 import PySpectra.utils as utils

@@ -442,14 +442,14 @@ def example_GaussManyOverlay():
     PySpectra.display()
     return 
 
-def example_GaussNoisy():
+def example_FSA_GaussNoisy():
     '''
     gauss plot
     '''
     PySpectra.cls()
     PySpectra.delete()
     PySpectra.setTitle( "a noisy Gauss at 0.12345")
-    PySpectra.setComment( "See how FSA/SSA behaves with noisy data")
+    PySpectra.setComment( "Input for Util->FSA/SSA")
     PySpectra.setWsViewport( "DINA5")
     g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
                            lineColor = 'red', x0 = 0.12345, sigma = 1., amplitude = 1.)
@@ -457,14 +457,14 @@ def example_GaussNoisy():
     PySpectra.display()
     return 
 
-def example_DipNoisy():
+def example_FSA_DipNoisy():
     '''
     gauss plot
     '''
     PySpectra.cls()
     PySpectra.delete()
     PySpectra.setTitle( "a noisy Dip at 0.25")
-    PySpectra.setComment( "See how FSA behaves with noisy data")
+    PySpectra.setComment( "Input for Util->FSA/SSA")
     PySpectra.setWsViewport( "DINA5")
     g = utils.createGauss( name = "dip", xMin = -5., xMax = 5., nPts = 101, 
                            lineColor = 'red', x0 = 0.25, sigma = 1., amplitude = 1.)
@@ -473,14 +473,14 @@ def example_DipNoisy():
     PySpectra.display()
     return 
 
-def example_GaussVeryNoisy():
+def example_FSA_GaussVeryNoisy():
     '''
     gauss plot
     '''
     PySpectra.cls()
     PySpectra.delete()
     PySpectra.setTitle( "a very noisy Gauss at 0.12345")
-    PySpectra.setComment( "See how FSA/SSA behaves with noisy data")
+    PySpectra.setComment( "Input for Util->FSA/SSA")
     PySpectra.setWsViewport( "DINA5")
     g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
                            lineColor = 'red', x0 = 0.12345, sigma = 1., amplitude = 1.)
@@ -488,14 +488,14 @@ def example_GaussVeryNoisy():
     PySpectra.display()
     return 
 
-def example_StepNoisy():
+def example_FSA_StepNoisy():
     '''
     step function
     '''
     PySpectra.cls()
     PySpectra.delete()
     PySpectra.setTitle( "a noisy Step")
-    PySpectra.setComment( "See how FSA behaves with noisy data")
+    PySpectra.setComment( "Input for Utils->FSA/SSA")
     PySpectra.setWsViewport( "DINA5")
     g = utils.createStep( name = "step", xMin = -10., xMax = 10., nPts = 101, 
                           lineColor = 'red', amplitude = 3.)
@@ -503,7 +503,7 @@ def example_StepNoisy():
     PySpectra.display()
     return 
 
-def example_StepRealData():
+def example_FSA_StepRealData():
     '''
     step function from P23 data
     '''

@@ -5,7 +5,10 @@ GQE - contains the Scan() class and functions to handle scans:
 '''
 
 import numpy as _numpy
-import PyTango as _PyTango
+try: 
+    import PyTango as _PyTango
+except: 
+    pass
 import PySpectra 
 import PySpectra.definitions as definitions 
 import PySpectra.utils as utils
@@ -1212,7 +1215,7 @@ class Scan( object):
             lstY = list( reversed( lstY))
                 
         try: 
-            message, xpos, xpeak, xcms, xcen = _HasyUtils.fastscananalysis( lstX, lstY, mode)
+            message, xpos, xpeak, xcms, xcen, npSig = _HasyUtils.fastscananalysis( lstX, lstY, mode)
         except Exception as e:
             print( "GQE.fsa: trouble with %s" % self.name)
             print( repr( e))
@@ -1226,11 +1229,12 @@ class Scan( object):
                 logWidget.append( " xpeak:    %g" % xpeak)
                 logWidget.append( " xcms:     %g" % xcms)
                 logWidget.append( " xcen:     %g" % xcen)
+                logWidget.append( " npSig     %d" % npSig)
             else: 
                 logWidget.append( " mode:     %s" % mode)
                 logWidget.append( " message:  %s" % message)
         else:
-            print( "GQE.fsa: message %s xpos %g xpeak %g xmcs %g xcen %g" % (message, xpos, xpeak, xcms, xcen))
+            print( "GQE.fsa: message %s xpos %g xpeak %g xmcs %g xcen %g npSig %d " % (message, xpos, xpeak, xcms, xcen, npSig))
 
 
         #
@@ -1248,15 +1252,56 @@ class Scan( object):
 
         if message == 'success': 
             self.addText( text = "FSA results, mode %s" % mode, x = 0.02, y = 1.00, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
-            self.addText( text = "xpos: %g" % xpos, x = 0.02, y = 0.95, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
-            self.addText( text = "xpeak:   %g" % xpeak, x = 0.02, y = 0.90, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
-            self.addText( text = "xcms:      %g" % xcms, x = 0.02, y = 0.85, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
-            self.addText( text = "xcen:     %g" % xcen, x = 0.02, y = 0.80, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+            if mode.lower() in [ 'dip', 'dipc', 'dipm']: 
+                self.addText( text = "xpos:  %g" % xpos, x = 0.02, y = 0.95, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xdip:  %g" % xpeak, x = 0.02, y = 0.90, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xdipm: %g" % xcms, x = 0.02, y = 0.85, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xdipc: %g" % xcen, x = 0.02, y = 0.80, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+            elif mode.lower() in [ 'dipssa', 'dipcssa', 'dipmssa']: 
+                self.addText( text = "xpos:  %g" % xpos, x = 0.02, y = 0.95, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xdipssa:  %g" % xpeak, x = 0.02, y = 0.90, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xdipmssa: %g" % xcms, x = 0.02, y = 0.85, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xdipcssa: %g" % xcen, x = 0.02, y = 0.80, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+            elif mode.lower() in [ 'slit', 'slitc', 'slitm']: 
+                self.addText( text = "xpos:   %g" % xpos, x = 0.02, y = 0.95, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xslit:  %g" % xpeak, x = 0.02, y = 0.90, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xslitm: %g" % xcms, x = 0.02, y = 0.85, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xslitc: %g" % xcen, x = 0.02, y = 0.80, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+            elif mode.lower() in [ 'slitssa', 'slitcssa', 'slitmssa']: 
+                self.addText( text = "xpos:   %g" % xpos, x = 0.02, y = 0.95, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xslitssa:  %g" % xpeak, x = 0.02, y = 0.90, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xslitmssa: %g" % xcms, x = 0.02, y = 0.85, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xslitcssa: %g" % xcen, x = 0.02, y = 0.80, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+            elif mode.lower() in [ 'step', 'stepc', 'stepm']: 
+                self.addText( text = "xpos:   %g" % xpos, x = 0.02, y = 0.95, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xstep:  %g" % xpeak, x = 0.02, y = 0.90, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xstepm: %g" % xcms, x = 0.02, y = 0.85, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xstepc: %g" % xcen, x = 0.02, y = 0.80, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+            elif mode.lower() in [ 'stepssa', 'stepcssa', 'stepmssa']: 
+                self.addText( text = "xpos:   %g" % xpos, x = 0.02, y = 0.95, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xstepssa:  %g" % xpeak, x = 0.02, y = 0.90, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xstepmssa: %g" % xcms, x = 0.02, y = 0.85, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xstepcssa: %g" % xcen, x = 0.02, y = 0.80, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+            elif mode.lower() in [ 'peak', 'cms', 'cen']: 
+                self.addText( text = "xpos:  %g" % xpos, x = 0.02, y = 0.95, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xpeak: %g" % xpeak, x = 0.02, y = 0.90, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xcms:  %g" % xcms, x = 0.02, y = 0.85, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xcen:  %g" % xcen, x = 0.02, y = 0.80, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+            elif mode.lower() in [ 'peakssa', 'cmsssa', 'censsa']: 
+                self.addText( text = "xpos:  %g" % xpos, x = 0.02, y = 0.95, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xpeakssa: %g" % xpeak, x = 0.02, y = 0.90, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xcmsssa:  %g" % xcms, x = 0.02, y = 0.85, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+                self.addText( text = "xcenssa:  %g" % xcen, x = 0.02, y = 0.80, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+            else: 
+                self.addText( text = "not identified mode %s" % mode, x = 0.02, y = 0.95, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+
+            self.addText( text = "npSig: %d" % npSig, x = 0.02, y = 0.75, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
+
         else: 
             self.addText( text = "FSA results, mode %s" % mode, x = 0.02, y = 1.00, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
             self.addText( text = "%s" % message, x = 0.02, y = 0.95, hAlign = 'left', vAlign = 'top', tag = 'fsa_result')
 
-        return (message, xpos, xpeak, xcms, xcen)
+        return (message, xpos, xpeak, xcms, xcen, npSig)
 
 
 def getGqeList():

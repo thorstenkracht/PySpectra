@@ -29,6 +29,9 @@ HISTORY_MAX = 100
 
 
 def make_cb_fsa_1( self, mode): 
+    #
+    # used from ScanAttributes()
+    #
     def func(): 
         self.scan.fsa( mode = mode, logWidget = self.logWidget)
         PySpectra.cls()
@@ -37,6 +40,9 @@ def make_cb_fsa_1( self, mode):
     return func
 
 def make_cb_fsa_2( self, mode): 
+    #
+    # used from pySpectraGui()
+    #
     def func(): 
         displayList = PySpectra.getDisplayList()
         if len( displayList) != 1:
@@ -2040,7 +2046,16 @@ class pySpectraGui( QtGui.QMainWindow):
     def __init__( self, files = None, parent = None, 
                   calledFromSardanaMonitor = False, 
                   flagExitOnClose = False):
-        import PyTango, HasyUtils
+        #
+        # for PCs without Tango
+        #
+        self.flagTango = False
+        try: 
+            import PyTango
+        except: 
+            self.flagTango = False
+
+        import HasyUtils
         #print( "pySpectraGui.__init__")
         super( pySpectraGui, self).__init__( parent)
         #
@@ -2059,11 +2074,12 @@ class pySpectraGui( QtGui.QMainWindow):
 
         self.gqeList = None
         self.scanAttributes = None
-        doors = HasyUtils.getDoorNames()
-        if doors is not None and len( doors) > 0:
-            self.proxyDoor = PyTango.DeviceProxy( doors[0]) 
-        else: 
-            self.proxyDoor = None
+        if self.flagTango: 
+            doors = HasyUtils.getDoorNames()
+            if doors is not None and len( doors) > 0:
+                self.proxyDoor = PyTango.DeviceProxy( doors[0]) 
+            else: 
+                self.proxyDoor = None
         self.nMotor = 0
         
         self.useMatplotlib = True 
@@ -2296,6 +2312,10 @@ class pySpectraGui( QtGui.QMainWindow):
         return argout
 
     def updateMotorWidgets( self): 
+
+        if not self.flagTango: 
+            return 
+
         import PyTango
 
         if self.msInfo is not None: 
@@ -2374,6 +2394,10 @@ class pySpectraGui( QtGui.QMainWindow):
         '''
         execute AbortMacro on Door
         '''
+
+        if not self.flagTango: 
+            return 
+
         import HasyUtils
         import PyTango
         if self.proxyDoor is None:
@@ -2389,6 +2413,8 @@ class pySpectraGui( QtGui.QMainWindow):
         '''
         execute StopMacro on Door
         '''
+        if not self.flagTango: 
+            return 
         import HasyUtils
         import PyTango
         if self.proxyDoor is None:
@@ -3063,6 +3089,10 @@ class pySpectraGui( QtGui.QMainWindow):
             
 
     def cb_matplotlib( self):
+        #
+        # clear things before we enter matplotlib
+        #
+        PySpectra.cls()
         self.mplWidget = MplWidget( self.logWidget)
         self.mplWidget.show()
         mpl_graphics.display( self.getCheckedNameList())

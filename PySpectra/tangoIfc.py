@@ -6,7 +6,10 @@ this module contains some Tango-related functions
 import pyqtgraph as _pg
 import PySpectra
 import PySpectra.definitions as _definitions
-import PyTango 
+try: 
+    import PyTango 
+except: 
+    pass
 import HasyUtils
 import time 
 
@@ -14,7 +17,6 @@ import time
 def moveStart( gqe, targetX, targetY = None, flagConfirm = True):
     '''
     start move and wait for completion
-
     this function is called from 
       - by ifc.move()
     '''
@@ -338,7 +340,6 @@ def moveImage( image, targetIX, targetIY, flagSync, flagConfirm = True):
     '''
     this function is invoked by a mouse click from pqtgrph/graphics.py
     '''
-    import PyTango as PyTango
     import time as _time
     from PyQt4 import QtCore, QtGui
 

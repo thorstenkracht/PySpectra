@@ -108,13 +108,18 @@ def clear( gqe):
         if gqe.infLineMouseY is not None: 
             gqe.plotItem.removeItem( gqe.infLineMouseY)
             gqe.infLineMouseY = None
+        #
+        # coming from matplotlib we have an exception
+        #
         if gqe.plotDataItem is not None: 
             try: 
                 gqe.plotItem.removeItem( gqe.plotDataItem)
             except Exception as e: 
-                print( "pqtgraphics.clear: trouble removing gqe.plotDataItem, %s " % repr( type( gqe.plotDataItem)))
-                print( "pqtgraphics.clear: type plotItem %s " % repr( type( gqe.plotItem)))
-                print( repr( e))
+                pass
+                #
+                #print( "pqtgraphics.clear: trouble removing gqe.plotDataItem, %s " % repr( type( gqe.plotDataItem)))
+                #print( "pqtgraphics.clear: type plotItem %s " % repr( type( gqe.plotItem)))
+                #print( repr( e))
             gqe.plotDataItem = None
         gqe.lastIndex = 0
 
