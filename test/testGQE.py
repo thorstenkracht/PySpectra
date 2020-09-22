@@ -820,7 +820,7 @@ class testGQE( unittest.TestCase):
         g = utils.createGauss( name = "gauss", xMin = -5., xMax = 5., nPts = 101, 
                                lineColor = 'red', x0 = 0.12345, sigma = 1.2345, amplitude = 1.)
         
-        (message, xpos, xpeak, xcms, xcen) = g.fsa()
+        (message, xpos, xpeak, xcms, xcen, npSig) = g.fsa()
 
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 0.1)

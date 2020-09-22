@@ -231,23 +231,23 @@ class testCalc( unittest.TestCase):
                  -10.1427735622, -10.63666237, -10.8981355703, -12.1906796316, -12.5912225387, -12.9529943226, 
                  -12.8533949897, -11.6929638382, -13.6873233405, -12.492016025, -12.7775621703]
 
-        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xStep, yStep, 'step')
+        (message, xpos, xpeak, xcms, xcen, npSig) = HasyUtils.fastscananalysis( xStep, yStep, 'step')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 6.25, 3)
-        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xStep, yStep, 'stepc')
+        (message, xpos, xpeak, xcms, xcen, npSig) = HasyUtils.fastscananalysis( xStep, yStep, 'stepc')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 6.338455, 4)
-        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xStep, yStep, 'stepm')
+        (message, xpos, xpeak, xcms, xcen, npSig) = HasyUtils.fastscananalysis( xStep, yStep, 'stepm')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 5.49656, 4)
 
-        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xStep, yStep, 'stepssa')
+        (message, xpos, xpeak, xcms, xcen, npSig) = HasyUtils.fastscananalysis( xStep, yStep, 'stepssa')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 6.25, 3)
-        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xStep, yStep, 'stepcssa')
+        (message, xpos, xpeak, xcms, xcen, npSig) = HasyUtils.fastscananalysis( xStep, yStep, 'stepcssa')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 6.36096, 4)
-        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xStep, yStep, 'stepmssa')
+        (message, xpos, xpeak, xcms, xcen, npSig) = HasyUtils.fastscananalysis( xStep, yStep, 'stepmssa')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 6.3678, 4)
 
@@ -276,15 +276,15 @@ class testCalc( unittest.TestCase):
                        0.00833822923928,0.0151228204788,0.040092423947]
 
 
-        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xNoisyGauss, yNoisyGauss, 'peak')
+        (message, xpos, xpeak, xcms, xcen, npSig) = HasyUtils.fastscananalysis( xNoisyGauss, yNoisyGauss, 'peak')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 0.2, 4)
 
-        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xNoisyGauss, yNoisyGauss, 'cen')
+        (message, xpos, xpeak, xcms, xcen, npSig) = HasyUtils.fastscananalysis( xNoisyGauss, yNoisyGauss, 'cen')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 0.011957415, 4)
 
-        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xNoisyGauss, yNoisyGauss, 'cms')
+        (message, xpos, xpeak, xcms, xcen, npSig) = HasyUtils.fastscananalysis( xNoisyGauss, yNoisyGauss, 'cms')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, -0.01465730, 4)
 
@@ -338,36 +338,36 @@ class testCalc( unittest.TestCase):
             xArr.append( float( x))
             yArr.append( float( y))
 
-        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xArr, yArr, 'stepssa')
+        (message, xpos, xpeak, xcms, xcen, npSig) = HasyUtils.fastscananalysis( xArr, yArr, 'stepssa')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, -2.1298828125, 4)
 
-        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xArr, yArr, 'stepcssa')
+        (message, xpos, xpeak, xcms, xcen, npSig) = HasyUtils.fastscananalysis( xArr, yArr, 'stepcssa')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, -1.980878, 4)
 
-        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xArr, yArr, 'stepmssa')
+        (message, xpos, xpeak, xcms, xcen, npSig) = HasyUtils.fastscananalysis( xArr, yArr, 'stepmssa')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, -1.992848, 4)
 
-        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( [1, 2,3], [4, 5, 6], 'peak')
+        (message, xpos, xpeak, xcms, xcen, npSig) = HasyUtils.fastscananalysis( [1, 2,3], [4, 5, 6], 'peak')
         self.assertTrue( message, 'Not enough scan data points. Please scan over at least 9 points!')
 
-        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( [1,2,3], [ 5, 6], 'peak')
+        (message, xpos, xpeak, xcms, xcen, npSig) = HasyUtils.fastscananalysis( [1,2,3], [ 5, 6], 'peak')
         self.assertTrue( message, 'Error: Input vectors are not of identical length!')
 
 
         yNoisyGauss = [ -yNoisyGauss[i] for i in range( len( yNoisyGauss))]
 
-        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xNoisyGauss, yNoisyGauss, 'dip')
+        (message, xpos, xpeak, xcms, xcen, npSig) = HasyUtils.fastscananalysis( xNoisyGauss, yNoisyGauss, 'dip')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 0.2, 4)
 
-        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xNoisyGauss, yNoisyGauss, 'dipc')
+        (message, xpos, xpeak, xcms, xcen, npSig) = HasyUtils.fastscananalysis( xNoisyGauss, yNoisyGauss, 'dipc')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, 0.0119574157, 4)
 
-        (message, xpos, xpeak, xcms, xcen) = HasyUtils.fastscananalysis( xNoisyGauss, yNoisyGauss, 'dipm')
+        (message, xpos, xpeak, xcms, xcen, npSig) = HasyUtils.fastscananalysis( xNoisyGauss, yNoisyGauss, 'dipm')
         self.assertEqual( message, 'success')
         self.assertAlmostEqual( xpos, -0.0146573, 4)
 
