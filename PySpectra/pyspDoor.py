@@ -381,13 +381,18 @@ class pyspDoor( sms.BaseDoor):
         #
         # the column_desc array can be found in prepareNewScan()
         #
+        # returns, e.g. 
+        #  {
+        #    exp_dmy01:[0.0, 2.0],
+        #    exp_dmy02:[-1.0, 3.0],
+        #  }
+        #
         colArray = dataRecord[1]['data']['column_desc']
         argout = {}
         for hsh in colArray:
             if 'max_value' in hsh and 'min_value' in hsh:
                 argout[hsh['name']] = [hsh['min_value'], hsh['max_value']]
         return argout
-
 
     def findScanLimits( self, dataRecord):
         '''
@@ -859,10 +864,40 @@ class pyspDoor( sms.BaseDoor):
         # 
         elif cmd[0] == 'dmesh':
             motorLimitDct = self.extractMotorLimitDct( dataRecord)
-            raise Exception( "pyspDoor.findScanLimits",
-                             "dmesh!!!", 
-                              dataRecord[1]['data']['title'])
+            self.start = float( motorLimitDct[ cmd[1]][0])
+            self.stop = float( motorLimitDct[ cmd[1]][1])
+            self.np =    int( cmd[4])
+            self.motorIndex = 0
+            self.motorNameList = [ cmd[1]]
+            self.isMesh = True
+            self.meshYMotor = cmd[5]
+            self.meshSweepCount = 1
+            self.meshSweepCountTotal = int( cmd[8]) + 1
+            if cmd[10].lower() == 'true':
+                self.meshSShape = True
+            else:
+                self.meshSShape = False
+            #
+            # during mesh scans the data is plotted only within sweeps.
+            # If a new sweep is started, the indexScan is reset. 
+            # 
+            if self.stop > self.start:
+                self.meshGoingUp = True
+            else:
+                self.meshGoingUp = False
+            #
+            # self.indexScan controlls the counter GQEs during sweeps
+            # self.indexMesh controlls the index of MeshScan
+            #
+            self.indexMesh = 0
 
+            self.sendHshQueue( { 'Image': { 'name': 'MeshImage',
+                                      'xMin': float( self.start), 
+                                      'xMax': float( self.stop), 
+                                      'yMin': float( motorLimitDct[ cmd[5]][0]), 
+                                      'yMax': float( motorLimitDct[ cmd[5]][1]), 
+                                      'width': (int( cmd[4]) + 1), 
+                                      'height': (int( cmd[8]) + 1)}}) 
         #
         # a real fscan command line: 
         #   fscan 'x=[0,1,2,3,4],y=[10,11,12,13,14]' 0.1 "exp_dmy01" 'x' "exp_dmy02" 'y'
