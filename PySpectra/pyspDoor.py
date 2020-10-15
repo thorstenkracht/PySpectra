@@ -988,8 +988,9 @@ class pyspDoor( sms.BaseDoor):
         
         #
         # we may have scans using the condition feature
+        # 12.10.2020: '2.*self.np' -> '3.*self.np' because p09 repeated every point
         #
-        npTemp = 2*self.np
+        npTemp = int( 3.*self.np)
 
         autox = False
         if self.isFscan: 

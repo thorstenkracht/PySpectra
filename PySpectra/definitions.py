@@ -39,7 +39,10 @@ marginBottom = 20
 spacingHorizontal = -30
 spacingVertical = -15
 
-dataFormats = [ 'fio', 'dat', 'iint', 'nxs']
+# 
+# asc: ADQ412 application 
+# 
+dataFormats = [ 'asc', 'fio', 'dat', 'iint', 'nxs']
 
 BLUE_MOVING = "#a0b0ff"
 RED_ALARM = "#ff8080"
