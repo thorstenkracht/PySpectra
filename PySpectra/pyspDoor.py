@@ -764,9 +764,33 @@ class pyspDoor( sms.BaseDoor):
                 raise Exception( "pyspDoor.findScanLimits",
                                  "diffH == diffK == diffL == 0.")
                 
-            if HasyUtils.isDevice( 'e6cctrl_h'):
+            #
+            self.env = self.getEnvironment()
+            if 'DiffracDevices' not in self.env:
+                raise Exception( "pyspDoor.findScanLimits",
+                                 "hklscan but no DiffracDevice")
+            if self.env[ 'DiffracDevice'] == 'controller/diffrace6c/e6cctrl': 
                 self.motorNameList = [ 'e6cctrl_h', 'e6cctrl_k', 'e6cctrl_l']
-            elif HasyUtils.isDevice( 'kozhue6cctrl_k'):
+
+            elif self.env[ 'DiffracDevice'] == 'controller/diffrace6c/e6cctrltk': 
+                self.motorNameList = [ 'e6cctrltk_h', 'e6cctrltk_k', 'e6cctrltk_l']
+
+            elif self.env[ 'DiffracDevice'] == 'controller/diffrac4cp23/h4c': 
+                self.motorNameList = [ 'h4c_h', 'h4c_k', 'h4c_l']
+
+            elif self.env[ 'DiffracDevice'] == 'controller/diffrac6cp23/e6c':
+                self.motorNameList = [ 'e6c_h', 'e6c_k', 'e6c_l']
+
+            elif self.env[ 'DiffracDevice'] == 'controller/diffrace6c/e6cctrleh2': 
+                self.motorNameList = [ 'e6cctrleh2_h', 'e6cctrleh2_k', 'e6cctrleh2_l']
+
+            elif self.env[ 'DiffracDevice'] == 'controller/diffrace6c/e6cctrleh1': 
+                self.motorNameList = [ 'e6cctrleh1_h', 'e6cctrleh1_k', 'e6cctrleh1_l']
+
+            elif self.env[ 'DiffracDevice'] == 'controller/diffrace4c/e4chctrl': 
+                self.motorNameList = [ 'e4chctrl_h', 'e4chctrl_k', 'e4chctrl_l']
+
+            elif self.env[ 'DiffracDevice'] == 'controller/diffrace6c/kozhue6cctrl':
                 self.motorNameList = [ 'kozhue6cctrl_h', 'kozhue6cctrl_k', 'kozhue6cctrl_l']
             else:
                 raise Exception( "pyspDoor.findScanLimits",

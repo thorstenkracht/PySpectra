@@ -18,7 +18,7 @@ import PySpectra.utils as utils
 
 def exampleDataVia_toPyspLocal(): 
     '''
-    replace toPyspLocal() with toPyspMonitor() to connect to pyspMonitor.py
+    replace PySpectra.toPyspLocal() with HasyUtils.toPyspMonitor() to connect to pyspMonitor.py
     '''
     import random
     MAX = 25
@@ -83,7 +83,7 @@ def exampleImageMBVia_toPyspLocal():
     '''
     this examples simulates the toPyspMonitor() interface
 
-    replace toPyspLocal() by toPyspMonitor() to connect to pyspMonitor.py 
+    replace PySpectra.toPyspLocal() with HasyUtils.toPyspMonitor() to connect to pyspMonitor.py
     '''
     PySpectra.setWsViewport( 'DINA5S')
 
@@ -136,7 +136,7 @@ def exampleImageMBVia_toPyspLocal_OneChunk():
     '''
     this examples simulates the toPyspMonitor() interface
 
-    replace toPyspLocal() by toPyspMonitor() to connect to pyspMonitor.py 
+    replace PySpectra.toPyspLocal() with HasyUtils.toPyspMonitor() to connect to pyspMonitor.py
     '''
     print( "toPyspLocal_OneChunk") 
     PySpectra.setWsViewport( 'DINA5S')
