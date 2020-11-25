@@ -2,6 +2,7 @@
 '''
 GQE - contains the Scan() class and functions to handle scans: 
       delete(), getGqe(), getGqeList(), info(), overlay(), show()
+
 '''
 
 import numpy as _numpy
