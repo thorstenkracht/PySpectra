@@ -264,7 +264,26 @@ class Scan( object):
         self.setAttr( kwargs)
 
         if kwargs:
-            raise ValueError( "GQE.Scan.__init__(): dct not empty %s" % str( kwargs))
+            if 'np' in kwargs or 'NP' in kwargs or 'npts' in kwargs: 
+                raise ValueError( "GQE.Scan.__init__(): dct not empty %s, one keyword similar to 'nPts'" % str( kwargs))
+            elif 'xlabel' in kwargs:
+                raise ValueError( "GQE.Scan.__init__(): dct not empty %s, one keyword similar to 'xLabel'" % str( kwargs))
+            elif 'ylabel' in kwargs:
+                raise ValueError( "GQE.Scan.__init__(): dct not empty %s, one keyword similar to 'yLabel'" % str( kwargs))
+            elif 'xlog' in kwargs:
+                raise ValueError( "GQE.Scan.__init__(): dct not empty %s, one keyword similar to 'xLog'" % str( kwargs))
+            elif 'ylog' in kwargs:
+                raise ValueError( "GQE.Scan.__init__(): dct not empty %s, one keyword similar to 'yLog'" % str( kwargs))
+            elif 'xmax' in kwargs:
+                raise ValueError( "GQE.Scan.__init__(): dct not empty %s, one keyword similar to 'xMax'" % str( kwargs))
+            elif 'xmin' in kwargs:
+                raise ValueError( "GQE.Scan.__init__(): dct not empty %s, one keyword similar to 'xMin'" % str( kwargs))
+            elif 'ymax' in kwargs:
+                raise ValueError( "GQE.Scan.__init__(): dct not empty %s, one keyword similar to 'yMax'" % str( kwargs))
+            elif 'ymin' in kwargs:
+                raise ValueError( "GQE.Scan.__init__(): dct not empty %s, one keyword similar to 'yMin'" % str( kwargs))
+            else: 
+                raise ValueError( "GQE.Scan.__init__(): dct not empty %s" % str( kwargs))
         
         self.textList = []
 
@@ -1755,7 +1774,7 @@ def _insertFioObj2Image( fioObj):
 
     return True
 
-def read( fileName, x = 1, y = None, flagMCA = False):
+def read( fileName, x = 1, y = None, flagMCA = False, flagLongGqeName = False):
     '''    
     this function reads files and creates Scans or Images
 
@@ -1774,6 +1793,8 @@ def read( fileName, x = 1, y = None, flagMCA = False):
     Supported extensions: .fio, .dat, iint
 
     if flagMCA, the input file contains MCA data, no x-axis
+    if flagLongGqeName, the GQE names wiil be extended by the file name.
+      this way GQEs from several files can be read.
     '''
     #
     # fioReader may throw an exception, e.g. if the file does not exist.
@@ -1793,18 +1814,27 @@ def read( fileName, x = 1, y = None, flagMCA = False):
             raise ValueError( "GQE.read: %s, y: %d > (len( columns) + 1): %d" % ( fileName, y, (len( fioObj.columns) + 1)))
         return fioObj.columns[ y - 2]
     #
+    # if we use the 'Keep' option we have to include the pathname into 
+    # the variable names to distinguish them
+    #
+    if flagLongGqeName: 
+        prefix = fileName.split( '.')[0]
+        prefix += "_"
+    else: 
+        prefix = ""
+    #
     # be sure not to call Scan() with fileName. Otherwise
     # you create a loop.
     #
     for elm in fioObj.columns:
-        scn =  Scan( name = elm.name, x = elm.x, y = elm.y, xLabel = fioObj.motorName)
+        scn =  Scan( name = "%s%s" % (prefix, elm.name), x = elm.x, y = elm.y, xLabel = fioObj.motorName)
 
     return True
     
-def write( lst = None): 
+def write( fileName = None, lst = None): 
     '''
     write the specified scans or all scans to a .fio file. 
-    the prefix is pysp
+    the default prefix is pysp
 
     PySpectra.write()
       write all scans
@@ -1851,7 +1881,10 @@ def write( lst = None):
     #
     # create an empty object
     #
-    obj = _HasyUtils.fioObj( namePrefix = "pysp")
+    prefix = "pysp"
+    if fileName is not None: 
+        prefix = fileName
+    obj = _HasyUtils.fioObj( namePrefix = prefix)
     if flagImage: 
         ima = outLst[0]
         obj.motorName = ima.name

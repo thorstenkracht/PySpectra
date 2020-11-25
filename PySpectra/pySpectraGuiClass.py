@@ -33,7 +33,7 @@ def make_cb_fsa_1( self, mode):
     # used from ScanAttributes()
     #
     def func(): 
-        self.scan.fsa( mode = mode, logWidget = self.logWidget)
+        self.scan.fsa( mode = mode, logWidgte = self.logWidget)
         PySpectra.cls()
         PySpectra.display( [ self.scan.name])
         return 
@@ -2183,6 +2183,7 @@ class pySpectraGui( QtGui.QMainWindow):
         #
         vBox = QtGui.QVBoxLayout()
         self.fileNameLabel = QtGui.QLabel( "ScanName")
+        
         vBox.addWidget( self.fileNameLabel)
         self.scrollAreaScans = QtGui.QScrollArea()
         vBox.addWidget( self.scrollAreaScans)
@@ -2458,9 +2459,11 @@ class pySpectraGui( QtGui.QMainWindow):
         #
         elif pathNameTokens[-1] in definitions.dataFormats:
             PySpectra.cls()
-            PySpectra.delete()
+            if not self.keepAction.isChecked():
+                PySpectra.delete()
             try: 
-                PySpectra.read( pathName, flagMCA = self.mcaAction.isChecked())
+                PySpectra.read( pathName, flagMCA = self.mcaAction.isChecked(), 
+                                flagLongGqeName = self.keepAction.isChecked())
             except Exception as e :
                 print( "pySpectraGui.newPathSelected: trouble reading %s" % pathName)
                 print( repr( e))
@@ -2703,12 +2706,19 @@ class pySpectraGui( QtGui.QMainWindow):
         #
         self.optionsMenu = self.menuBar.addMenu('&Options')
 
+        self.keepAction = QtGui.QAction('Keep', self, checkable = True)        
+        self.keepAction.triggered.connect( self.cb_keep)
+        self.keepAction.setStatusTip('Keep internal data when reading new file')
+        self.optionsMenu.addAction( self.keepAction)
+
         self.dotyAction = QtGui.QAction('DOTY', self, checkable = True)        
         self.dotyAction.triggered.connect( self.cb_doty)
+        self.dotyAction.setStatusTip('x-axis is interpreted as day-of-the-year')
         self.optionsMenu.addAction( self.dotyAction)
 
         self.gridAction = QtGui.QAction('GRID', self, checkable = True)        
         self.gridAction.triggered.connect( self.cb_grid)
+        self.gridAction.setStatusTip('Toggle grid display')
         self.optionsMenu.addAction( self.gridAction)
 
         self.mcaAction = QtGui.QAction('MCA File', self, checkable = True)        
@@ -3002,6 +3012,9 @@ class pySpectraGui( QtGui.QMainWindow):
                 elm.doty = False
         PySpectra.cls()
         PySpectra.display()
+        
+    def cb_keep( self):
+        self.keepAction.isChecked() 
 
     def cb_grid( self): 
         lst = PySpectra.getGqeList()

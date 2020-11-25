@@ -30,11 +30,16 @@ def parseCLI():
         epilog='''  ''')
     parser.add_argument( '-m', dest="matplotlib", action="store_true", help='graphics from matplotlib, def.: pyqtgraph')
     parser.add_argument( '-n', dest="flagNoDoor", action="store_true", help='do not receive data from a door')
+    parser.add_argument( '--fs', dest="fontSize", action="store", default=None, help='font size')
     args = parser.parse_args()
 
     return args
         
 def main( flagNoDoor):
+
+    if not HasyUtils.checkDistroVsPythonVersion( __file__): 
+        print( "pyspMonitor.main: %s does not match distro" % __file__)
+        exit( 255)
 
     for i in range( len( sys.argv)): 
         if sys.argv[i] == '-m':
@@ -46,6 +51,11 @@ def main( flagNoDoor):
     app = QtGui.QApplication.instance()
     if app is None:
         app = QtGui.QApplication(sys.argv)
+
+    if args.fontSize is not None:
+        font = QtGui.QFont( 'Sans Serif')
+        font.setPixelSize( int( args.fontSize))
+        app.setFont( font)
 
     o = pysp.pyspMonitorClass.pyspMonitor( app, flagNoDoor)
     o.show()

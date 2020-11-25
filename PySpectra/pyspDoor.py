@@ -766,7 +766,7 @@ class pyspDoor( sms.BaseDoor):
                 
             #
             self.env = self.getEnvironment()
-            if 'DiffracDevices' not in self.env:
+            if 'DiffracDevice' not in self.env:
                 raise Exception( "pyspDoor.findScanLimits",
                                  "hklscan but no DiffracDevice")
             if self.env[ 'DiffracDevice'] == 'controller/diffrace6c/e6cctrl': 

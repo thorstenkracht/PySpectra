@@ -141,23 +141,26 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
         if flagConfirm:
             if PySpectra.InfoBlock.monitorGui is None: 
                 if not HasyUtils.yesno( msg + " y/[n]: "):
-                    print( "MoveScan: move not confirmed")
+                    print( "%s MoveScan: %s move not confirmed" % ( HasyUtils.getDateTime(), proxy.name()))
                     return
             else: 
                 reply = QtGui.QMessageBox.question( None, 'YesNo', 
                                                     msg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)        
 
                 if reply != QtGui.QMessageBox.Yes:
-                    if scan.logWidget is not None:
-                        scan.logWidget.append( "MoveScan: move not confirmed") 
-                    else:
-                        print( "MoveScan: move not confirmed")
+                    PySpectra.InfoBlock.monitorGui.logWidget.append( "%s MoveScan: %s move not confirmed" % 
+                                                                     ( HasyUtils.getDateTime(), proxy.name())) 
                     return
 
-        if scan.logWidget is not None:
-            scan.logWidget.append( "Moving %s from %g to %g" % ( proxy.name(), 
-                                                                 float( proxy.read_attribute( 'Position').value), 
-                                                                 target))
+        if PySpectra.InfoBlock.monitorGui is None: 
+            print( "%s Moving %s from %g to %g" % ( HasyUtils.getDateTime(), proxy.name(), 
+                                                 float( proxy.read_attribute( 'Position').value), 
+                                                 target))
+        else: 
+            PySpectra.InfoBlock.monitorGui.logWidget.append( "%s Moving %s from %g to %g" %
+                                                             ( HasyUtils.getDateTime(), proxy.name(), 
+                                                               float( proxy.read_attribute( 'Position').value), 
+                                                               target))
         scan.display()
         #
         # before we hide the mouse lines, make sure that they are there
@@ -306,12 +309,12 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
         scan.arrowSetPoint.show()
 
     if not reply == QtGui.QMessageBox.Yes:
-        PySpectra.InfoBlock.monitorGui.logWidget.append( "Move: move not confirmed")
+        PySpectra.InfoBlock.monitorGui.logWidget.append( "% Move: move not confirmed" % HasyUtils.getDateTime())
         return
 
     if PySpectra.InfoBlock.monitorGui.scanInfo['title'].find( "hklscan") == 0:
-        PySpectra.InfoBlock.monitorGui.logWidget.append( "br %g %g %g" % 
-                                         (motorArr[0]['targetPos'],
+        PySpectra.InfoBlock.monitorGui.logWidget.append( "%s br %g %g %g" % 
+                                         ( HasyUtils.getDateTime(), motorArr[0]['targetPos'],
                                           motorArr[1]['targetPos'],
                                           motorArr[2]['targetPos']))
         door.RunMacro( ["br",  
@@ -323,7 +326,7 @@ def moveScan( scan, target, flagSync = None, flagConfirm = True):
         for hsh in motorArr:
             lst.append( "%s" % (hsh['name']))
             lst.append( "%g" % (hsh['targetPos']))
-            PySpectra.InfoBlock.monitorGui.logWidget.append( "%s to %g" % (hsh['name'], hsh['targetPos']))
+            PySpectra.InfoBlock.monitorGui.logWidget.append( "%s %s to %g" % ( HasyUtils.getDateTime(), hsh['name'], hsh['targetPos']))
         door.RunMacro( lst)
 
     if flagSync:
