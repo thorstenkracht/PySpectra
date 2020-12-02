@@ -298,8 +298,10 @@ def example_Create5Plots():
     PySpectra.cls()
     PySpectra.delete()
     PySpectra.setTitle( "5 Scans, t5 is overlaid to t3")
+    PySpectra.setComment( "Notice that sin has autoscalY == False")
     PySpectra.setWsViewport( "DINA5")
-    t1 = PySpectra.Scan( name = "t1", lineColor = 'blue', yLabel = 'sin')
+    t1 = PySpectra.Scan( name = "t1", lineColor = 'blue', yLabel = 'sin',
+                         yMin = -2, yMax=2, autoscaleY = False)
     t1.y = np.sin( t1.x)
     t2 = PySpectra.Scan( "t2", xLabel = 'Position', yLabel = 'cos', symbol = '+')
     t2.y = np.cos( t2.x)

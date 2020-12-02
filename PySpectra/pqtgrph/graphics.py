@@ -1096,11 +1096,20 @@ def _makeClsSceneFunc( scene, vb):
         scene.removeItem( vb)
         return 
     return func
-
+#
+# 2.12.2020
+#   This function is executed, if the x-range changes.
+#   It must not be active, if autoscaleY == False. 
+#   This is needed e.g. to display system statistics, 
+#   like memory usage, swap file usage, idle time, of
+#   several hosts.
+#   Somehow this affects the arrows for motor movements.
+#
 def _make_setYRange( scan):
     def func(): 
-        scan.plotItem.enableAutoRange( axis='y')
-        scan.plotItem.setAutoVisible( y = True)
+        if scan.autoscaleY: 
+            scan.plotItem.enableAutoRange( axis='y')
+            scan.plotItem.setAutoVisible( y = True)
         return 
     return func
         
@@ -1384,7 +1393,7 @@ def _createPlotItem( gqe, nameList):
             gqe.setLimits()
 
         if gqe.yMin is None or gqe.yMax is None:
-            arY = Trueo
+            arY = True
         #
         # autoRange, search below
         #
@@ -1521,7 +1530,7 @@ def display( nameList = None):
         #
         # if currentIndex == 0 it is a problem to draw the axes, escpecially 
         # to put text strings on the screen
-        # 3.4.2020 not so sure, seems to be workin
+        # 3.4.2020 not so sure, seems to be working
         #
         if not scan.textOnly and scan.currentIndex == 0:
             continue
@@ -1567,6 +1576,8 @@ def display( nameList = None):
                                                            symbolBrush = definitions.colorCode[ scan.symbolColor.lower()], 
                                                            symbolSize = scan.symbolSize)
         # 
+        # 2.12.2020: see comment withn make_setYRange()
+        #
         if not scan.textOnly:
             scan.plotItem.vb.sigXRangeChanged.connect( _make_setYRange( scan))
 
