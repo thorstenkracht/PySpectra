@@ -1059,7 +1059,7 @@ class testGQE( unittest.TestCase):
 
         self.assertEqual( g.checkTargetWithinLimits( g.motorNameList[ 0], 51., 
                                                      proxy, flagConfirm = False), True)
-        self.assertEqual( g.checkTargetWithinLimits( g.motorNameList[ 0], -1., 
+        self.assertEqual( g.checkTargetWithinLimits( g.motorNameList[ 0], -151., 
                                                      proxy, flagConfirm = False), False)
         self.assertEqual( g.checkTargetWithinLimits( g.motorNameList[ 0], 151., 
                                                      proxy, flagConfirm = False), False)

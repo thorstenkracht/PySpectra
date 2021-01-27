@@ -71,7 +71,7 @@ class testSpock( unittest.TestCase):
         self.assertEqual( hsh[ 'result'], 'done')
 
         hsh =  PySpectra.toPyspLocal( { 'getDoorState': True})
-        while hsh[ 'result'] != 'ON': 
+        while hsh[ 'result'] == 'RUNNING': 
             time.sleep( 0.5)
             hsh =  PySpectra.toPyspLocal( { 'getDoorState': True})
 

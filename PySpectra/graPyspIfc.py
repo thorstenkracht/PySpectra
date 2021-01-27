@@ -483,14 +483,14 @@ def write( names = None):
         elif type( names) is list:
             raise ValueError( "graPyspIfc.write: input must no be a list")
         else: 
-            Spectra.gra_command( "write/fio %s" % names)
+            Spectra.gra_command( "write/fio/nocon %s" % names)
     else:
         if names is None: 
             PySpectra.write()
         elif type( names) is list: 
-            PySpectra.write( names)
+            PySpectra.write( lst = names)
         else:
-            PySpectra.write( [names])
+            PySpectra.write( lst = [names])
 
     return 
     

@@ -1282,6 +1282,7 @@ def _createPlotItem( gqe, nameList):
     #print "graphics.createPlotItem", gqe.name, repr( gqe.at)
     #print "graphics.createPlotItem, nrow", gqe.nrow, "ncol", gqe.ncol, \
     #    "nplot", gqe.nplot
+
     row = int( _math.floor(float( gqe.nplot - 1)/float(gqe.ncol)))
     col = int( gqe.nplot - 1 - row*gqe.ncol) 
     #
@@ -1389,8 +1390,13 @@ def _createPlotItem( gqe, nameList):
         #
         if arY and gqe.yLog and len( PySpectra.getGqeList()) > 15:
             arY = False
-            #print "pqt_graphics.createPlotItem: changing autoRangeY to False"
-            gqe.setLimits()
+            #
+            # 26.2.2021: we don't want to autoscaleX just because yLog is True, 
+            #            remember the PythonCoreStats/genStats.py case
+            #gqe.setLimits() 
+            gqe.yMin = _numpy.min( gqe.y)
+            gqe.yMax = _numpy.max( gqe.y)
+            gqe.yMax += (gqe.yMax - gqe.yMin)*0.05
 
         if gqe.yMin is None or gqe.yMax is None:
             arY = True
@@ -1429,6 +1435,7 @@ def _createPlotItem( gqe, nameList):
 
     _setTitle( gqe, nameList)
     _addTexts( gqe, nameList)
+
 
     return
 

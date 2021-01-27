@@ -351,8 +351,6 @@ class testGraPyspIfc( unittest.TestCase):
 
         graPyspIfc.setSpectra( True)
 
-
-
         (xMin, xMax, nPts) = ( 0., 10., 20)
         x = numpy.linspace( xMin, xMax, nPts) 
         y = numpy.random.random_sample( nPts)
@@ -374,7 +372,6 @@ class testGraPyspIfc( unittest.TestCase):
 
         scan = graPyspIfc.getGqe( "rand")
         self.assertEqual( scan, 1)
-
         graPyspIfc.write( "rand")
 
         graPyspIfc.close()
